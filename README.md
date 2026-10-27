@@ -2,7 +2,7 @@
 
 AI agent that diagnoses faults in an industrial relay-contactor circuit (star-delta reversing motor starter) by choosing its own virtual measurements, under hard safety limits enforced in code. Built for the Meta Global AI Developer Hackathon 2026.
 
-Status: Day 2. Circuit simulator, fault catalog and schematic generator are done and tested. The agent, policy layer and UI are not built yet.
+Status: Day 3. Simulator, faults, tools, safety policy and the Muse Spark agent loop are done and tested. Baseline, evaluation harness and UI are next.
 
 ## Setup
 
@@ -47,6 +47,18 @@ c.resistance("KM1:A1", "KM1:A2")  # 550.0
 ```
 
 Faults (`src/probeforge/faults/`): the 8 hand-written scenarios live in `scenarios/s0*.yaml`. `all_faults()` enumerates every part in every failure mode (91 faults); `random_fault(netlist, seed, visible_only=True)` picks unseen holdout faults. About 15 of the 91 are latent (no visible symptom during normal operation), which `has_visible_symptom()` detects.
+
+## Tools, safety policy, agent
+
+- **Tools** (`src/probeforge/tools/`): `read_indicators`, `press_button` (with `hold_seconds`), `wait`, `set_power`, `measure_voltage`, `measure_resistance`, `get_schematic`, `update_hypotheses`, `perform_action`, `submit_diagnosis`. Every call gets a step number, goes through the policy and is logged. Outputs only contain what a technician at the panel could observe; a test drives every tool on all 91 faults and checks that no output, log or prompt names the fault.
+- **Policy** (`src/probeforge/policy/`): voltage only with power on, resistance only with power off, at most 3 consecutive Start presses, power-on after a protection trip and protection resets need human approval (auto-denied in batch runs), bypass / modify / replace / jumper are always blocked, a diagnosis must cite executed observation steps. Blocked calls come back to the agent as errors and are counted.
+- **Agent** (`src/probeforge/agent/`): Muse Spark (`muse-spark-1.3`) with native tool calling. It gets the panel state, the schematic as PNG (rendered from the SVG with resvg) plus the text netlist, the tools and the policy summary. It must call `update_hypotheses` after every measurement (the hypothesis history is stored for the UI); text replies without a tool call get a short nudge; at most 30 turns; `insufficient_information` is a valid outcome.
+
+```
+uv run python scripts/run_scenarios.py --effort low      # all 8 scenarios, prints a results table
+```
+
+Each run writes `runs/<timestamp>_<effort>/<scenario>.json` (tool calls, results, hypotheses, tokens, latency per turn; no fault inside) plus `results.md` / `results.json` with the score.
 
 ## Tests
 

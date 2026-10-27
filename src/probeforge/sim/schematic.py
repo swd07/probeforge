@@ -332,3 +332,10 @@ class _Renderer:
                 "",
             ]
         )
+
+
+def render_png(netlist: Netlist, zoom: float = 1.0) -> bytes:
+    """Rasterize the schematic SVG to PNG (the Meta API takes PNG, not SVG)."""
+    import resvg_py
+
+    return bytes(resvg_py.svg_to_bytes(svg_string=render_svg(netlist), zoom=zoom, background="#ffffff"))

@@ -214,11 +214,14 @@ class Netlist:
         for c in self.components.values():
             groups: dict[str, list[str]] = {}
             for p in c.parts:
-                groups.setdefault(kind_names[p.kind], []).append(p.name)
+                name = f"{p.name} ({p.resistance:g} ohm)" if p.resistance is not None else p.name
+                groups.setdefault(kind_names[p.kind], []).append(name)
             desc = "; ".join(f"{k} {', '.join(v)}" for k, v in groups.items())
             extra = ""
             if "delay" in c.params:
-                extra = f" (delay {c.params['delay']:g} s)"
+                extra = f" (on-delay {c.params['delay']:g} s)"
+            if "trip_time" in c.params:
+                extra = f" (trips after about {c.params['trip_time']:g} s of overcurrent)"
             lines.append(f"  {c.id} ({c.type}, {c.label}){extra}: {desc}")
         lines += ["", "Nets (net name: connected terminals):"]
         for net, members in self.nets.items():
