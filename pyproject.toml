@@ -1,0 +1,22 @@
+[project]
+name = "probeforge"
+version = "0.1.0"
+description = "AI agent that diagnoses faults in a simulated relay-contactor circuit under hard safety limits"
+authors = [
+    { name = "Eduard Kharaev", email = "181873841+swd07@users.noreply.github.com" }
+]
+requires-python = ">=3.11"
+dependencies = [
+    "openai>=3.40.0",
+    "python-dotenv>=1.2.4",
+]
+
+[build-system]
+requires = ["uv_build>=0.13.6,<0.14.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pillow>=13.0.0",
+    "pytest>=9.1.1",
+]
