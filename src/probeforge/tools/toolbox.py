@@ -16,6 +16,8 @@ FAILURE_MODES = ["open", "short", "stuck_open", "stuck_closed", "welded", "tripp
 MAX_HOLD_S = 15.0
 MAX_WAIT_S = 30.0
 MEASUREMENT_TOOLS = {"measure_voltage", "measure_resistance"}
+MAX_HELD_READINGS = 3
+EVIDENCE_TYPES = ("functional_test", "instrument_reading")
 
 
 class ToolError(ValueError):
@@ -66,6 +68,17 @@ TOOL_SPECS = [
         {
             "button": {"type": "string", "description": "Button id or label, e.g. 'SB2' or 'Start Fwd'."},
             "hold_seconds": {"type": "number", "description": f"How long to hold it, 0.2 to {MAX_HOLD_S:g} s. Default 0.2."},
+            "measure_while_held": {
+                "type": "array",
+                "description": f"Up to {MAX_HELD_READINGS} voltmeter readings taken while the button is held "
+                "(a helper holds it while you probe). Power must be on.",
+                "items": {
+                    "type": "object",
+                    "properties": {"point_a": POINT, "point_b": POINT},
+                    "required": ["point_a", "point_b"],
+                    "additionalProperties": False,
+                },
+            },
         },
         ["button"],
     ),
@@ -147,9 +160,15 @@ TOOL_SPECS = [
                     "type": "object",
                     "properties": {
                         "step": {"type": "integer", "description": "Step number of a tool result."},
+                        "type": {
+                            "type": "string",
+                            "enum": list(EVIDENCE_TYPES),
+                            "description": "functional_test: panel behaviour (lamps, motor, buttons, waiting). "
+                            "instrument_reading: a voltmeter or ohmmeter value.",
+                        },
                         "observation": {"type": "string"},
                     },
-                    "required": ["step", "observation"],
+                    "required": ["step", "type", "observation"],
                     "additionalProperties": False,
                 },
             },
@@ -178,7 +197,10 @@ class ToolBox:
         self.hypotheses_history: list[dict] = []
         self.diagnosis: dict | None = None
         self.measurements = 0
+        self.redundant_measurements = 0
         self.pending_hypotheses_update = False
+        self._state_version = 0  # bumped by every action that can change the circuit state
+        self._measured: set[tuple] = set()
         self._ops_at_start = len(circuit.events)
 
     # ---------------------------------------------------------------- dispatch
@@ -261,6 +283,17 @@ class ToolBox:
             args["button_role"] = "start" if label.startswith("start") else "stop" if label.startswith("stop") else "other"
             hold = float(args.get("hold_seconds") or 0.2)
             args["hold_seconds"] = min(max(hold, 0.2), MAX_HOLD_S)
+            readings = args.get("measure_while_held") or []
+            if not isinstance(readings, list) or len(readings) > MAX_HELD_READINGS:
+                raise ToolError(f"measure_while_held takes at most {MAX_HELD_READINGS} readings")
+            for r in readings:
+                if not isinstance(r, dict) or not str(r.get("point_a", "")).strip() or not str(r.get("point_b", "")).strip():
+                    raise ToolError("each measure_while_held item needs point_a and point_b")
+                try:
+                    self.circuit.net_of(r["point_a"]), self.circuit.net_of(r["point_b"])
+                except KeyError as e:
+                    raise ToolError(str(e).strip("'\"")) from None
+            args["measure_while_held"] = readings
         elif name == "wait":
             args["seconds"] = min(max(float(args.get("seconds") or 0.1), 0.1), MAX_WAIT_S)
         elif name == "set_power":
@@ -277,7 +310,7 @@ class ToolBox:
     def initial_observation(self) -> dict:
         """Step 0: the panel as the agent first sees it. Logged and citable as evidence."""
         view = self._panel_view()
-        self.policy.observation_steps.add(0)
+        self.policy.observation_steps[0] = {"functional_test"}
         self.log.append({"step": 0, "tool": "read_indicators", "args": {}, "verdict": "allow", "policy_reason": "",
                          "executed": True, "result": {"step": 0, **view}, "sim_time_s": round(self.circuit.time, 1)})
         return view
@@ -297,30 +330,49 @@ class ToolBox:
 
     def _tool_press_button(self, args: dict) -> dict:
         bid = args["button_id"]
+        self._state_version += 1
         self.circuit.hold(bid)
         self.circuit.step(args["hold_seconds"])
         held = self._panel_view()
+        result = {"button": bid, "held_s": args["hold_seconds"], "while_held": held}
+        if args["measure_while_held"]:
+            result["readings"] = [self._read_voltage(r["point_a"], r["point_b"]) for r in args["measure_while_held"]]
         self.circuit.release(bid)
-        return {"button": bid, "held_s": args["hold_seconds"], "while_held": held, "after_release": self._panel_view()}
+        self._state_version += 1
+        result["after_release"] = self._panel_view()
+        return result
 
     def _tool_wait(self, args: dict) -> dict:
+        self._state_version += 1
         self.circuit.step(args["seconds"])
         return self._panel_view()
 
     def _tool_set_power(self, args: dict) -> dict:
+        self._state_version += 1
         self.circuit.set_power(args["on"])
         return self._panel_view()
 
-    def _tool_measure_voltage(self, args: dict) -> dict:
-        volts = self.circuit.voltage(args["point_a"], args["point_b"])
+    def _count_measurement(self, kind: str, a: str, b: str) -> None:
+        """Count a meter reading; it is redundant if the same kind of reading on the same
+        pair of nets (terminal aliases resolved) was already taken in the same circuit state."""
+        key = (kind, frozenset((self.circuit.net_of(a), self.circuit.net_of(b))), self._state_version)
+        if key in self._measured:
+            self.redundant_measurements += 1
+        self._measured.add(key)
         self.measurements += 1
         self.pending_hypotheses_update = True
-        return {"point_a": args["point_a"], "point_b": args["point_b"], "volts": volts}
+
+    def _read_voltage(self, a: str, b: str) -> dict:
+        volts = self.circuit.voltage(a, b)
+        self._count_measurement("V", a, b)
+        return {"point_a": a, "point_b": b, "volts": volts}
+
+    def _tool_measure_voltage(self, args: dict) -> dict:
+        return self._read_voltage(args["point_a"], args["point_b"])
 
     def _tool_measure_resistance(self, args: dict) -> dict:
         ohms = self.circuit.resistance(args["point_a"], args["point_b"])
-        self.measurements += 1
-        self.pending_hypotheses_update = True
+        self._count_measurement("R", args["point_a"], args["point_b"])
         return {"point_a": args["point_a"], "point_b": args["point_b"], "ohms": "open" if ohms == float("inf") else ohms}
 
     def _tool_get_schematic(self, args: dict) -> dict:
@@ -347,6 +399,7 @@ class ToolBox:
     def _tool_perform_action(self, args: dict) -> dict:
         # only reached for actions the policy let through (after human approval)
         if args.get("action") == "reset_protection":
+            self._state_version += 1
             try:
                 self.circuit.reset(str(args.get("target", "")))
             except (KeyError, ValueError):

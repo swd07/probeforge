@@ -2,12 +2,20 @@
 
 import base64
 import json
+import re
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
 
 from probeforge.agent.client import MUSE_SPARK
-from probeforge.agent.prompts import HYPOTHESES_FIRST, NUDGE, SYSTEM_PROMPT, initial_user_text
+from probeforge.agent.prompts import (
+    HYPOTHESES_FIRST,
+    NUDGE,
+    SYSTEM_PROMPT,
+    TOO_MANY_MEASUREMENTS,
+    initial_user_text,
+    turns_left_warning,
+)
 from probeforge.sim import Circuit
 from probeforge.sim.schematic import render_png
 from probeforge.tools.toolbox import MEASUREMENT_TOOLS, TOOL_SPECS, Approver, ToolBox, deny_all
@@ -18,6 +26,14 @@ PRICES = {
     "muse-wonder-1.0": {"input": 4.00, "cached": 0.20, "output": 20.00},
 }
 MAX_CONSECUTIVE_NUDGES = 3
+# Muse Spark sometimes writes a tool call as text markup instead of a native tool call:
+#   <atem:function_calls><atem:invoke name="default.submit_diagnosis">
+#   <atem:parameter name="confidence">0.9</atem:parameter> ... </atem:invoke></atem:function_calls>
+INVOKE_RE = re.compile(r'<(\w+:)?invoke name="(?:\w+\.)?(\w+)">(.*?)</(?:\w+:)?invoke>', re.S)
+PARAM_RE = re.compile(r'<(?:\w+:)?parameter name="(\w+)">(.*?)</(?:\w+:)?parameter>', re.S)
+MAX_MEASUREMENTS_PER_TURN = 3
+WARN_AT_TURNS_LEFT = (5, 2)
+IMAGE_DROPPED_NOTE = "(The schematic image was attached to this message in your first turn; the text netlist above is the same circuit.)"
 
 
 @dataclass
@@ -28,6 +44,7 @@ class AgentRun:
     diagnosis: dict | None = None
     turns: int = 0
     nudges: int = 0
+    recovered_text_calls: int = 0  # tool calls the model wrote as text markup
     protocol_errors: int = 0
     prompt_tokens: int = 0
     cached_tokens: int = 0
@@ -46,13 +63,38 @@ def _cost(model: str, prompt: int, cached: int, completion: int) -> float:
     return ((prompt - cached) * p["input"] + cached * p["cached"] + completion * p["output"]) / 1e6
 
 
-def build_initial_messages(toolbox: ToolBox) -> list[dict]:
+def recover_text_tool_calls(text: str) -> list[dict]:
+    """Parse tool calls written as text markup into OpenAI-style tool_calls."""
+    string_params = {
+        t["function"]["name"]: {k for k, v in t["function"]["parameters"]["properties"].items() if v.get("type") == "string"}
+        for t in TOOL_SPECS
+    }
+    calls = []
+    for i, m in enumerate(INVOKE_RE.finditer(text or "")):
+        name = m.group(2)
+        if name not in string_params:
+            continue
+        args = {}
+        for key, raw in PARAM_RE.findall(m.group(3)):
+            raw = raw.strip()
+            if key in string_params[name]:
+                args[key] = raw
+                continue
+            try:
+                args[key] = json.loads(raw)
+            except ValueError:
+                args[key] = raw
+        calls.append({"id": f"recovered_{i}", "type": "function", "function": {"name": name, "arguments": json.dumps(args)}})
+    return calls
+
+
+def build_initial_messages(toolbox: ToolBox, max_turns: int = 30) -> list[dict]:
     """System and first user message: symptoms, schematic image, text netlist, policy summary."""
     netlist = toolbox.circuit.netlist
     indicators = toolbox.initial_observation()
     png = base64.b64encode(render_png(netlist)).decode()
     return [
-        {"role": "system", "content": SYSTEM_PROMPT.format(policy=toolbox.policy.summary())},
+        {"role": "system", "content": SYSTEM_PROMPT.format(policy=toolbox.policy.summary(), max_turns=max_turns)},
         {
             "role": "user",
             "content": [
@@ -71,11 +113,16 @@ def run_agent(
     max_turns: int = 30,
     approver: Approver = deny_all,
     on_event: Callable[[dict], None] | None = None,
+    image_once: bool = True,
 ) -> tuple[AgentRun, ToolBox]:
-    """Run one diagnosis session. The circuit should already be powered with its fault applied."""
+    """Run one diagnosis session. The circuit should already be powered with its fault applied.
+
+    image_once: send the schematic image only with the first request; later requests carry
+    the text netlist alone (the API is stateless, so otherwise the image is re-sent every turn).
+    """
     toolbox = ToolBox(circuit, approver=approver, on_event=on_event)
     run = AgentRun(model=model, effort=effort)
-    messages = build_initial_messages(toolbox)
+    messages = build_initial_messages(toolbox, max_turns)
     extra = {"reasoning_effort": effort} if effort else {}
     started = time.perf_counter()
     consecutive_nudges = 0
@@ -95,9 +142,24 @@ def run_agent(
             run.cached_tokens += cached
             run.completion_tokens += completion
 
+            if turn == 1 and image_once:
+                text = messages[1]["content"][0]["text"]
+                messages[1] = {"role": "user", "content": text + "\n\n" + IMAGE_DROPPED_NOTE}
+
             msg = resp.choices[0].message
-            calls = msg.tool_calls or []
-            messages.append(msg.model_dump(exclude_none=True))
+            assistant = msg.model_dump(exclude_none=True)
+            calls = [
+                {"id": c.id, "name": c.function.name, "arguments": c.function.arguments} for c in msg.tool_calls or []
+            ]
+            if not calls:
+                recovered = recover_text_tool_calls(msg.content or "")
+                if recovered:
+                    # keep the history valid: an assistant tool_calls message followed by tool results
+                    run.recovered_text_calls += len(recovered)
+                    assistant = {"role": "assistant", "content": "", "tool_calls": recovered}
+                    calls = [{"id": c["id"], "name": c["function"]["name"], "arguments": c["function"]["arguments"]}
+                             for c in recovered]
+            messages.append(assistant)
             turn_entry = {
                 "turn": turn,
                 "latency_s": round(latency, 2),
@@ -120,32 +182,42 @@ def run_agent(
                 continue
             consecutive_nudges = 0
 
-            turn_updates = any(c.function.name == "update_hypotheses" for c in calls)
+            turn_updates = any(c["name"] == "update_hypotheses" for c in calls)
             # parallel measurements in one turn are fine; results from earlier turns need an update first
             pending = toolbox.pending_hypotheses_update
+            measured_this_turn = 0
             for call in calls:
-                name = call.function.name
+                name = call["name"]
                 try:
-                    args = json.loads(call.function.arguments or "{}")
+                    args = json.loads(call["arguments"] or "{}")
                     if not isinstance(args, dict):
                         raise ValueError
                 except ValueError:
                     result = {"error": "arguments are not a valid JSON object"}
                     run.protocol_errors += 1
                 else:
-                    needs_update = name in MEASUREMENT_TOOLS or name == "submit_diagnosis"
+                    readings = len(args.get("measure_while_held") or []) if name == "press_button" else 0
+                    n_meas = 1 if name in MEASUREMENT_TOOLS else readings
+                    needs_update = n_meas > 0 or name == "submit_diagnosis"
                     if needs_update and pending and not turn_updates:
                         result = {"error": HYPOTHESES_FIRST}
                         run.protocol_errors += 1
+                    elif measured_this_turn + n_meas > MAX_MEASUREMENTS_PER_TURN:
+                        result = {"error": TOO_MANY_MEASUREMENTS}
+                        run.protocol_errors += 1
                     else:
+                        measured_this_turn += n_meas
                         result = toolbox.call(name, args)
-                turn_entry["tool_calls"].append({"name": name, "arguments": call.function.arguments, "result": result})
-                messages.append({"role": "tool", "tool_call_id": call.id, "content": json.dumps(result)})
+                turn_entry["tool_calls"].append({"name": name, "arguments": call["arguments"], "result": result})
+                messages.append({"role": "tool", "tool_call_id": call["id"], "content": json.dumps(result)})
 
             if toolbox.diagnosis is not None:
                 run.diagnosis = toolbox.diagnosis
                 run.outcome = toolbox.diagnosis.get("outcome", "diagnosed")
                 break
+            left = max_turns - turn
+            if left in WARN_AT_TURNS_LEFT:
+                messages.append({"role": "user", "content": turns_left_warning(left)})
     except Exception as e:  # API or simulator failure: keep the partial trace
         run.outcome = "error"
         run.error = f"{type(e).__name__}: {e}"

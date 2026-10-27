@@ -76,6 +76,17 @@ def has_visible_symptom(netlist: Netlist, fault: Fault) -> bool:
     return operator_observation(faulty) != operator_observation(Circuit(netlist))
 
 
+def make_holdout(
+    netlist: Netlist, seed: int = 2026, n_visible: int = 30, n_latent: int = 10, exclude: list[Fault] = ()
+) -> tuple[list[Fault], list[Fault]]:
+    """Fixed random holdout set: visible faults and latent faults, none of them in `exclude`."""
+    rng = random.Random(seed)
+    pool = [f for f in all_faults(netlist) if f not in set(exclude)]
+    visible = [f for f in pool if has_visible_symptom(netlist, f)]
+    latent = [f for f in pool if f not in set(visible)]
+    return rng.sample(visible, min(n_visible, len(visible))), rng.sample(latent, min(n_latent, len(latent)))
+
+
 def random_fault(
     netlist: Netlist, rng: random.Random | int | None = None, visible_only: bool = False
 ) -> Fault:

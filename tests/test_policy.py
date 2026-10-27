@@ -217,9 +217,61 @@ def test_valid_diagnosis_accepted(netlist):
     tb = toolbox(netlist)
     tb.call("measure_voltage", {"point_a": "FU1:2", "point_b": "N"})
     args = {"outcome": "diagnosed", "component": "FU1", "part": "1-2", "failure_mode": "open",
-            "confidence": 0.8, "evidence": [{"step": 1, "observation": "0 V after fuse"}]}
+            "confidence": 0.8, "evidence": [{"step": 1, "type": "instrument_reading", "observation": "0 V after fuse"}]}
     assert tb.call("submit_diagnosis", args)["accepted"]
     assert tb.diagnosis["component"] == "FU1"
+
+
+def test_functional_evidence_accepted(netlist):
+    tb = toolbox(netlist, Fault("KM1", "stuck_open", "13-14"))
+    tb.call("press_button", {"button": "Start Fwd", "hold_seconds": 1})
+    args = {"outcome": "diagnosed", "component": "KM1", "part": "13-14", "failure_mode": "stuck_open",
+            "confidence": 0.8, "evidence": [{"step": 1, "type": "functional_test", "observation": "runs only while held"}]}
+    assert tb.call("submit_diagnosis", args)["accepted"]
+
+
+def diagnose(tb, evidence):
+    return tb.call("submit_diagnosis", {"outcome": "diagnosed", "component": "FU1", "failure_mode": "open",
+                                        "confidence": 0.8, "evidence": evidence})
+
+
+def test_evidence_type_required(netlist):
+    tb = toolbox(netlist)
+    tb.call("measure_voltage", {"point_a": "FU1:2", "point_b": "N"})
+    r = diagnose(tb, [{"step": 1, "observation": "x"}])
+    assert r["blocked"] and "needs type" in r["error"]
+
+
+def test_evidence_type_must_match_step(netlist):
+    tb = toolbox(netlist)
+    tb.call("read_indicators", {})  # step 1: functional
+    tb.call("measure_voltage", {"point_a": "FU1:2", "point_b": "N"})  # step 2: instrument
+    r = diagnose(tb, [{"step": 1, "type": "instrument_reading", "observation": "x"}])
+    assert r["blocked"] and "not a instrument_reading" in r["error"]
+    r = diagnose(tb, [{"step": 2, "type": "functional_test", "observation": "x"}])
+    assert r["blocked"] and "not a functional_test" in r["error"]
+
+
+def test_readings_while_held_are_instrument_evidence(netlist):
+    tb = toolbox(netlist, Fault("KM1", "open", "A1-A2"))
+    r = tb.call("press_button", {"button": "Start Fwd", "hold_seconds": 0.5,
+                                 "measure_while_held": [{"point_a": "KM1:A1", "point_b": "KM1:A2"}]})
+    assert r["readings"][0]["volts"] == 230.0 and r["while_held"]["motor"] == "stopped"
+    assert tb.measurements == 1
+    assert diagnose(tb, [{"step": 1, "type": "instrument_reading", "observation": "230 V on coil"},
+                         {"step": 1, "type": "functional_test", "observation": "no pull-in"}])["accepted"]
+
+
+def test_readings_while_held_need_power(netlist):
+    tb = toolbox(netlist, power=False)
+    r = tb.call("press_button", {"button": "Start Fwd", "measure_while_held": [{"point_a": "1", "point_b": "N"}]})
+    assert r["blocked"]
+
+
+def test_too_many_held_readings_rejected(netlist):
+    tb = toolbox(netlist)
+    r = tb.call("press_button", {"button": "Start Fwd", "measure_while_held": [{"point_a": "1", "point_b": "N"}] * 4})
+    assert "at most 3" in r["error"]
 
 
 def test_insufficient_information_accepted(netlist):
@@ -243,3 +295,24 @@ def test_every_call_is_logged_with_step(netlist):
     tb.call("no_such_tool", {})
     assert [e["step"] for e in tb.log] == [1, 2, 3]
     assert [e["verdict"] for e in tb.log] == ["allow", "block", "error"]
+
+
+# Redundant measurement metric
+
+def test_redundant_measurement_counts_aliases(netlist):
+    tb = toolbox(netlist)
+    tb.call("measure_voltage", {"point_a": "2", "point_b": "N"})
+    tb.call("measure_voltage", {"point_a": "SB1:11", "point_b": "HL1:X2"})  # same nets 2 and N
+    tb.call("measure_voltage", {"point_a": "N", "point_b": "KK1:96"})  # same again, reversed
+    assert tb.measurements == 3 and tb.redundant_measurements == 2
+
+
+def test_measurement_after_state_change_not_redundant(netlist):
+    tb = toolbox(netlist)
+    tb.call("measure_voltage", {"point_a": "4", "point_b": "N"})
+    tb.call("press_button", {"button": "Start Fwd"})
+    tb.call("measure_voltage", {"point_a": "4", "point_b": "N"})
+    tb.call("set_power", {"on": False})
+    tb.call("measure_resistance", {"point_a": "4", "point_b": "N"})
+    tb.call("measure_resistance", {"point_a": "KM2:21", "point_b": "N"})  # alias of net 4
+    assert tb.redundant_measurements == 1

@@ -2,7 +2,7 @@
 
 AI agent that diagnoses faults in an industrial relay-contactor circuit (star-delta reversing motor starter) by choosing its own virtual measurements, under hard safety limits enforced in code. Built for the Meta Global AI Developer Hackathon 2026.
 
-Status: Day 3. Simulator, faults, tools, safety policy and the Muse Spark agent loop are done and tested. Baseline, evaluation harness and UI are next.
+Status: Day 4. Simulator, faults, tools, safety policy, Muse Spark agent, half-split baseline and evaluation harness are done and tested. The web UI is next.
 
 ## Setup
 
@@ -51,14 +51,34 @@ Faults (`src/probeforge/faults/`): the 8 hand-written scenarios live in `scenari
 ## Tools, safety policy, agent
 
 - **Tools** (`src/probeforge/tools/`): `read_indicators`, `press_button` (with `hold_seconds`), `wait`, `set_power`, `measure_voltage`, `measure_resistance`, `get_schematic`, `update_hypotheses`, `perform_action`, `submit_diagnosis`. Every call gets a step number, goes through the policy and is logged. Outputs only contain what a technician at the panel could observe; a test drives every tool on all 91 faults and checks that no output, log or prompt names the fault.
+- **Baseline** (`src/probeforge/baseline/`): deterministic. Runs a fixed functional test mirrored on a fault-free twin, half-splits the supply path of the first load whose voltage is missing, refines with fixed rules, and falls back to an exhaustive resistance comparison.
 - **Policy** (`src/probeforge/policy/`): voltage only with power on, resistance only with power off, at most 3 consecutive Start presses, power-on after a protection trip and protection resets need human approval (auto-denied in batch runs), bypass / modify / replace / jumper are always blocked, a diagnosis must cite executed observation steps. Blocked calls come back to the agent as errors and are counted.
-- **Agent** (`src/probeforge/agent/`): Muse Spark (`muse-spark-1.3`) with native tool calling. It gets the panel state, the schematic as PNG (rendered from the SVG with resvg) plus the text netlist, the tools and the policy summary. It must call `update_hypotheses` after every measurement (the hypothesis history is stored for the UI); text replies without a tool call get a short nudge; at most 30 turns; `insufficient_information` is a valid outcome.
+- **Agent** (`src/probeforge/agent/`): Muse Spark (`muse-spark-1.3`) with native tool calling. It gets the panel state, the schematic as PNG (rendered from the SVG with resvg) plus the text netlist, the tools and the policy summary. It must call `update_hypotheses` after every measurement (in the same turn as the next measurements; up to 3 measurements per turn), the image is sent only with the first request, text replies without a tool call get a short nudge, tool calls the model writes as text markup are recovered, it is warned 5 and 2 turns before the 30-turn cap, and `insufficient_information` is a valid outcome. Evidence items in a diagnosis are typed `functional_test` or `instrument_reading`.
 
 ```
 uv run python scripts/run_scenarios.py --effort low      # all 8 scenarios, prints a results table
 ```
 
 Each run writes `runs/<timestamp>_<effort>/<scenario>.json` (tool calls, results, hypotheses, tokens, latency per turn; no fault inside) plus `results.md` / `results.json` with the score.
+
+## Results
+
+Full tables and a failure analysis of every wrong answer: [docs/results/2026-10-27_comparison.md](docs/results/2026-10-27_comparison.md).
+
+| | Holdout visible (30) | Latent (10) | Confidently wrong | Meas per case | Cost per case |
+|---|---|---|---|---|---|
+| Agent (muse-spark-1.3, low) | 25/30 (28/30 incl. justified) | 10/10 | 1 | 6.9 | $0.09 |
+| Half-split baseline | 22/30 (24/30) | 10/10 | 4 | 10.3 | free |
+
+Holdout = 30 random visible + 10 random latent faults (seed 2026), none of the 8 hand-written scenarios. "Justified" = the true fault is
+observationally identical to another fault (checked by simulation) and the answer was insufficient_information or that twin. On the
+8 hand-written scenarios run 3 times, the agent solved 22/24 (s06 is the weak spot) and the baseline 8/8.
+
+```
+uv run python scripts/run_scenarios.py --suite holdout --effort low --workers 8
+uv run python scripts/run_scenarios.py --runner baseline --suite all
+uv run python scripts/run_scenarios.py --repeat 3 --effort low
+```
 
 ## Tests
 

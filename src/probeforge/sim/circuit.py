@@ -158,6 +158,22 @@ class Circuit:
         v = pot[ra]
         return math.inf if v is None else round(v.real, 1)
 
+    def net_of(self, point: str) -> str:
+        """Net a probe point (terminal id or net name) belongs to."""
+        return self._net_of(point)
+
+    def conducting_parts(self) -> set[str]:
+        """Switch-type parts (contacts, poles, heaters) that conduct right now."""
+        return {p.id for p in self.netlist.parts.values() if p.kind not in LOAD_KINDS and self._conducts(p)}
+
+    def energized_loads(self) -> list[str]:
+        """Coils and lamps with supply voltage across them right now, in netlist order."""
+        return [
+            p.id
+            for p in self._load_parts
+            if p.kind != "winding" and self._energized(p, self._uf, self._src)
+        ]
+
     # ---------------------------------------------------------------- internals
 
     def _button(self, name: str) -> str:

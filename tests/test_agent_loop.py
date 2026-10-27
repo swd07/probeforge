@@ -1,5 +1,6 @@
 """Agent loop with a scripted fake model (no API calls)."""
 
+import copy
 import json
 from types import SimpleNamespace
 
@@ -36,7 +37,7 @@ class FakeClient:
         self.chat = SimpleNamespace(completions=SimpleNamespace(create=self.create))
 
     def create(self, **kwargs):
-        self.requests.append(kwargs)
+        self.requests.append(copy.deepcopy(kwargs))
         msg = self.script.pop(0)
         usage = SimpleNamespace(prompt_tokens=1000, completion_tokens=100, prompt_tokens_details=None)
         return SimpleNamespace(choices=[SimpleNamespace(message=msg)], usage=usage)
@@ -62,8 +63,8 @@ def test_full_session_with_nudge_and_protocol_error(netlist, monkeypatch):
         FakeMessage(calls=[("update_hypotheses", HYP),  # step 3
                            ("submit_diagnosis", {"outcome": "diagnosed", "component": "FU1", "part": "1-2",
                                                  "failure_mode": "open", "confidence": 0.9,
-                                                 "evidence": [{"step": 1, "observation": "230 V before"},
-                                                              {"step": 2, "observation": "0 V after"}]})]),
+                                                 "evidence": [{"step": 1, "type": "instrument_reading", "observation": "230 V before"},
+                                                              {"step": 2, "type": "instrument_reading", "observation": "0 V after"}]})]),
     ])
     run, tb = loop.run_agent(fuse_circuit(netlist), client, model="muse-spark-1.3", effort="low")
 
@@ -77,6 +78,8 @@ def test_full_session_with_nudge_and_protocol_error(netlist, monkeypatch):
     first = client.requests[0]
     assert first["reasoning_effort"] == "low"
     assert first["messages"][1]["content"][1]["type"] == "image_url"
+    second = client.requests[1]["messages"][1]
+    assert isinstance(second["content"], str) and "image was attached" in second["content"]
     assert "tool_choice" not in first
 
     # every assistant tool call is followed by exactly its tool results (Meta API ordering rule)
@@ -117,7 +120,7 @@ def test_initial_observation_is_citable_as_step_0(netlist, monkeypatch):
     monkeypatch.setattr(loop, "render_png", lambda n: b"png")
     client = FakeClient([FakeMessage(calls=[("submit_diagnosis", {
         "outcome": "diagnosed", "component": "FU1", "failure_mode": "open", "confidence": 0.6,
-        "evidence": [{"step": 0, "observation": "all lamps off"}]})])])
+        "evidence": [{"step": 0, "type": "functional_test", "observation": "all lamps off"}]})])])
     run, tb = loop.run_agent(fuse_circuit(netlist), client)
     assert run.outcome == "diagnosed" and tb.policy.stats.blocked == 0
     assert tb.log[0]["step"] == 0
@@ -143,3 +146,60 @@ def test_api_error_keeps_partial_trace(netlist, monkeypatch):
 
     run, _ = loop.run_agent(fuse_circuit(netlist), Boom([]))
     assert run.outcome == "error" and "HTTP 500" in run.error
+
+
+def test_at_most_three_measurements_per_turn(netlist, monkeypatch):
+    monkeypatch.setattr(loop, "render_png", lambda n: b"png")
+    four = [("measure_voltage", {"point_a": net, "point_b": "N"}) for net in ("L1Q", "1", "2", "3")]
+    client = FakeClient([
+        FakeMessage(calls=four),
+        FakeMessage(calls=[("update_hypotheses", HYP),
+                           ("submit_diagnosis", {"outcome": "insufficient_information", "confidence": 0.1, "evidence": []})]),
+    ])
+    run, tb = loop.run_agent(fuse_circuit(netlist), client)
+    assert tb.measurements == 3 and run.protocol_errors == 1
+    assert "at most 3" in run.turn_log[0]["tool_calls"][3]["result"]["error"]
+
+
+def test_image_every_turn_option(netlist, monkeypatch):
+    monkeypatch.setattr(loop, "render_png", lambda n: b"png")
+    client = FakeClient([FakeMessage(calls=[("read_indicators", {})]),
+                         FakeMessage(calls=[("submit_diagnosis", {"outcome": "insufficient_information",
+                                                                  "confidence": 0.1, "evidence": []})])])
+    loop.run_agent(fuse_circuit(netlist), client, image_once=False)
+    assert client.requests[1]["messages"][1]["content"][1]["type"] == "image_url"
+
+
+LEAKED = """<atem:function_calls>
+<atem:invoke name="default.submit_diagnosis">
+<atem:parameter name="confidence">0.9</atem:parameter>
+<atem:parameter name="component">FU1</atem:parameter>
+<atem:parameter name="evidence">[{"observation": "0 V after fuse", "step": 2, "type": "instrument_reading"}]</atem:parameter>
+<atem:parameter name="failure_mode">open</atem:parameter>
+<atem:parameter name="outcome">diagnosed</atem:parameter>
+<atem:parameter name="part">1-2</atem:parameter>
+</atem:invoke>
+</atem:function_calls>"""
+
+
+def test_tool_call_written_as_text_is_recovered(netlist, monkeypatch):
+    monkeypatch.setattr(loop, "render_png", lambda n: b"png")
+    client = FakeClient([
+        FakeMessage(calls=[("update_hypotheses", HYP), ("measure_voltage", {"point_a": "FU1:2", "point_b": "N"})]),
+        FakeMessage(calls=[("update_hypotheses", HYP)]),
+        FakeMessage(content=LEAKED),
+    ])
+    run, tb = loop.run_agent(fuse_circuit(netlist), client)
+    assert run.outcome == "diagnosed" and run.recovered_text_calls == 1 and run.nudges == 0
+    assert run.diagnosis["part"] == "1-2"
+    assistant = run.messages[-2]
+    assert assistant["tool_calls"][0]["id"] == "recovered_0" and run.messages[-1]["tool_call_id"] == "recovered_0"
+
+
+def test_turn_budget_warnings(netlist, monkeypatch):
+    monkeypatch.setattr(loop, "render_png", lambda n: b"png")
+    client = FakeClient([FakeMessage(calls=[("read_indicators", {})]) for _ in range(8)])
+    run, _ = loop.run_agent(fuse_circuit(netlist), client, max_turns=8)
+    warnings = [m["content"] for m in run.messages if m["role"] == "user" and "turns left" in str(m["content"])]
+    assert warnings == [loop.turns_left_warning(5), loop.turns_left_warning(2)]
+    assert "at most 8 turns" in client.requests[0]["messages"][0]["content"]
