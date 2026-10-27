@@ -1,4 +1,4 @@
-# Half-split baseline on s01-s08 + holdout (2026-10-27)
+# [dev] Half-split baseline on s01-s08 + holdout (2026-10-27)
 
 Run 20261027_215736_baseline_all. Deterministic: one run is enough.
 

@@ -6,16 +6,23 @@ Usage:
   uv run python scripts/run_scenarios.py --runner baseline --suite all
   uv run python scripts/run_scenarios.py --repeat 3 --effort low
 
-Suites: scenarios (s01-s08), holdout (30 random visible + 10 latent faults, seed 2026,
-none of the 8 scenario faults), all (both). For latent faults, insufficient_information
-counts as correct.
+Suites: scenarios (s01-s08), dev (scenarios/holdout_dev.yaml: 30 visible + 10 latent faults, used
+while tuning, so dev results), clean (scenarios/holdout_clean.yaml: every fault never used before,
+the reported numbers), all (scenarios + dev). For latent faults, insufficient_information counts
+as correct.
+
+--approve: a simulated human approves every reset / re-power request (default: all denied).
 
 Writes runs/<timestamp>_<runner>_<suite>_<effort>/: one trace per case (no fault inside),
 results.json and results.md (with the expected fault and the score).
 """
 
 import argparse
+import hashlib
+import inspect
 import json
+
+import yaml
 import time
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
@@ -27,11 +34,12 @@ from probeforge.agent.loop import run_agent
 from probeforge.baseline import HalfSplitBaseline
 from probeforge.eval.scoring import score
 from probeforge.faults import Fault
-from probeforge.faults.catalog import load_scenarios, make_holdout
-from probeforge.sim import Circuit, Netlist
+from probeforge.faults.catalog import SCENARIOS_DIR, load_scenarios
+from probeforge.sim import Circuit
+from probeforge.tools import approve_all, deny_all
 
 ROOT = Path(__file__).resolve().parents[1]
-HOLDOUT_SEED = 2026
+HOLDOUT_FILES = {"dev": "holdout_dev.yaml", "clean": "holdout_clean.yaml"}
 
 
 @dataclass
@@ -42,16 +50,35 @@ class Case:
     latent: bool
 
 
+def holdout_cases(name: str) -> list[Case]:
+    data = yaml.safe_load((SCENARIOS_DIR / HOLDOUT_FILES[name]).read_text(encoding="utf-8"))
+    circuit = (SCENARIOS_DIR / data["circuit"]).resolve()
+    return [Case(c["id"], circuit, Fault.from_dict(c), bool(c["latent"])) for c in data["cases"]]
+
+
+def frozen_hashes() -> dict:
+    """Fingerprints of what must not change between dev and clean runs."""
+    from probeforge.agent import prompts
+    from probeforge.baseline import halfsplit
+    from probeforge.tools.toolbox import TOOL_SPECS
+
+    def sha(text: str) -> str:
+        return hashlib.sha256(text.encode()).hexdigest()[:12]
+
+    return {
+        "prompt": sha(inspect.getsource(prompts) + json.dumps(TOOL_SPECS, sort_keys=True)),
+        "baseline": sha(inspect.getsource(halfsplit)),
+    }
+
+
 def build_cases(suite: str) -> list[Case]:
-    scenarios = load_scenarios()
     cases = []
     if suite in ("scenarios", "all"):
-        cases += [Case(s.id, s.circuit, s.fault, False) for s in scenarios]
-    if suite in ("holdout", "all"):
-        circuit = scenarios[0].circuit
-        visible, latent = make_holdout(Netlist.load(circuit), HOLDOUT_SEED, exclude=[s.fault for s in scenarios])
-        cases += [Case(f"h{i:02d}", circuit, f, False) for i, f in enumerate(visible, 1)]
-        cases += [Case(f"l{i:02d}", circuit, f, True) for i, f in enumerate(latent, 1)]
+        cases += [Case(s.id, s.circuit, s.fault, False) for s in load_scenarios()]
+    if suite in ("dev", "all"):
+        cases += holdout_cases("dev")
+    if suite == "clean":
+        cases += holdout_cases("clean")
     return cases
 
 
@@ -66,25 +93,27 @@ def run_case(case: Case, args, client, out_dir: Path, rep: int) -> dict:
     circuit.set_power(True)
     t0 = time.perf_counter()
     if args.runner == "agent":
-        run, tb = run_agent(circuit, client, model=args.model, effort=args.effort, max_turns=args.max_turns)
+        run, tb = run_agent(circuit, client, model=args.model, effort=args.effort, max_turns=args.max_turns,
+                            approver=approve_all if args.approve else deny_all)
         diagnosis, outcome, error = run.diagnosis, run.outcome, run.error
         tokens = {"prompt": run.prompt_tokens, "cached": run.cached_tokens, "completion": run.completion_tokens}
         cost, turns, protocol_errors, turn_log = run.cost_usd, run.turns, run.protocol_errors, run.turn_log
-        notes, recovered = [], run.recovered_text_calls
+        notes, recovered, missing = [], run.recovered_text_calls, run.missing_hypothesis_updates
     else:
-        baseline = HalfSplitBaseline(circuit)
+        baseline = HalfSplitBaseline(circuit, approver=approve_all if args.approve else deny_all)
         diagnosis = baseline.run()
         tb = baseline.tb
         outcome, error = diagnosis.get("outcome"), None
         tokens, cost, turns, protocol_errors, turn_log = {"prompt": 0, "cached": 0, "completion": 0}, 0.0, 0, 0, []
-        notes, recovered = baseline.notes, 0
+        notes, recovered, missing = baseline.notes, 0, 0
     seconds = round(time.perf_counter() - t0, 1)
 
     name = case.id if args.repeat == 1 else f"{case.id}_r{rep}"
     trace = {
         "case": name, "runner": args.runner, "model": args.model if args.runner == "agent" else None,
-        "effort": args.effort, "outcome": outcome, "diagnosis": diagnosis, "turns": turns,
-        "protocol_errors": protocol_errors, "recovered_text_calls": recovered, "measurements": tb.measurements,
+        "effort": args.effort, "approve": args.approve, "outcome": outcome, "diagnosis": diagnosis, "turns": turns,
+        "protocol_errors": protocol_errors, "recovered_text_calls": recovered,
+        "missing_hypothesis_updates": missing, "measurements": tb.measurements,
         "redundant_measurements": tb.redundant_measurements, "tool_calls": tb.step,
         "policy": {"blocked": tb.policy.stats.blocked, "approval_requests": tb.policy.stats.approval_requests,
                    "approvals_denied": tb.policy.stats.approvals_denied,
@@ -106,7 +135,8 @@ def run_case(case: Case, args, client, out_dir: Path, rep: int) -> dict:
         "confidence": d.get("confidence"), **s, "correct": correct, "outcome": outcome,
         "measurements": tb.measurements, "redundant": tb.redundant_measurements, "tool_calls": tb.step,
         "turns": turns, "policy_blocked": tb.policy.stats.blocked, "approvals_denied": tb.policy.stats.approvals_denied,
-        "protocol_errors": protocol_errors, "recovered_text_calls": recovered,
+        "protocol_errors": protocol_errors, "recovered_text_calls": recovered, "missing_hypothesis_updates": missing,
+        "approval_requests": tb.policy.stats.approval_requests,
         "evidence_functional": func, "evidence_instrument": inst,
         "tokens": tokens["prompt"] + tokens["completion"], "cost_usd": cost, "seconds": seconds, "error": error,
     }
@@ -141,6 +171,8 @@ def render(rows: list[dict], title: str, wall: float) -> str:
         f"- Evidence items: {sum(r['evidence_functional'] for r in rows)} functional_test, {sum(r['evidence_instrument'] for r in rows)} instrument_reading",
         f"- Policy blocks: {sum(r['policy_blocked'] for r in rows)}, protocol errors: {sum(r['protocol_errors'] for r in rows)}, "
         f"tool calls recovered from text: {sum(r['recovered_text_calls'] for r in rows)}, "
+        f"missing hypothesis updates: {sum(r['missing_hypothesis_updates'] for r in rows)}, "
+        f"approval requests: {sum(r['approval_requests'] for r in rows)} (denied {sum(r['approvals_denied'] for r in rows)}), "
         f"errors: {sum(1 for r in rows if r['error'])}",
         f"- Tokens: {sum(r['tokens'] for r in rows)}, cost ${sum(r['cost_usd'] for r in rows):.3f} "
         f"(${sum(r['cost_usd'] for r in rows) / max(n, 1):.3f} per case)",
@@ -152,7 +184,8 @@ def render(rows: list[dict], title: str, wall: float) -> str:
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--runner", choices=["agent", "baseline"], default="agent")
-    ap.add_argument("--suite", choices=["scenarios", "holdout", "all"], default="scenarios")
+    ap.add_argument("--suite", choices=["scenarios", "dev", "clean", "all"], default="scenarios")
+    ap.add_argument("--approve", action="store_true", help="simulated human approves reset / re-power requests")
     ap.add_argument("--model", default=MUSE_SPARK)
     ap.add_argument("--effort", default=None, help="reasoning_effort: minimal, low, medium, high, xhigh")
     ap.add_argument("--only", nargs="*", default=None, help="case ids, e.g. s01 h05")
@@ -164,7 +197,8 @@ def main() -> None:
     cases = [c for c in build_cases(args.suite) if not args.only or c.id in args.only]
     jobs = [(c, rep) for rep in range(1, args.repeat + 1) for c in cases]
     stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    tag = f"{stamp}_{args.runner}_{args.suite}" + (f"_{args.effort or 'default'}" if args.runner == "agent" else "")
+    tag = (f"{stamp}_{args.runner}_{args.suite}" + (f"_{args.effort or 'default'}" if args.runner == "agent" else "")
+           + ("_approve" if args.approve else ""))
     out_dir = ROOT / "runs" / tag
     out_dir.mkdir(parents=True, exist_ok=True)
     client = make_client() if args.runner == "agent" else None
@@ -183,10 +217,12 @@ def main() -> None:
     wall = time.perf_counter() - started
 
     who = f"{args.model}, effort {args.effort or 'default'}" if args.runner == "agent" else "half-split baseline"
+    who += ", approvals granted" if args.approve else ", approvals denied"
     table = render(rows, f"{args.runner} on {args.suite} ({who}), {len(rows)} runs", wall)
     print("\n" + table)
     (out_dir / "results.md").write_text(table, encoding="utf-8")
-    (out_dir / "results.json").write_text(json.dumps({"args": vars(args), "wall_s": wall, "rows": rows}, indent=2), encoding="utf-8")
+    (out_dir / "results.json").write_text(json.dumps({"args": vars(args), "frozen": frozen_hashes(), "wall_s": wall, "rows": rows}, indent=2), encoding="utf-8")
+    print(f"Frozen: {frozen_hashes()}")
     print(f"Traces: {out_dir}")
 
 

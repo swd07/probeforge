@@ -29,7 +29,12 @@ from probeforge.sim.solver import UnionFind, node_potentials
 TICK = 0.1  # seconds per simulation tick
 ENERGIZE_FRACTION = 0.65  # a load needs this fraction of phase voltage to pick up
 MAX_SETTLE = 50
-FORWARD_SEQUENCES = {("L1", "L2", "L3"), ("L2", "L3", "L1"), ("L3", "L1", "L2")}
+A = cmath.exp(2j * math.pi / 3)  # 120 degree rotation for sequence components
+HUMMING_RATIO = 0.7  # negative/positive sequence above this: pulsating field, rotor stalls
+UNBALANCED_RATIO = 0.1  # above this: runs, but unbalanced
+STAR_DELTA_SPLIT = (1 + 3**0.5) / 2  # positive sequence magnitude between star (1) and delta (sqrt 3)
+LOCKED_ROTOR_FACTOR = 6.0  # stalled motor draws about 6x running current
+OVERCURRENT_FACTOR = 1.15  # line current above 1.15 x rated counts as overcurrent
 
 
 class CircuitError(RuntimeError):
@@ -63,6 +68,7 @@ class Circuit:
         self._lamps = [c for c in n.components.values() if c.type == "lamp"]
         motors = n.components_of("motor")
         self._windings: list[Part] = motors[0].parts if motors else []
+        self._motor_params = motors[0].params if motors else {}
         self._load_parts = [p for p in n.parts.values() if p.kind in LOAD_KINDS]
 
         self._settle()
@@ -131,15 +137,14 @@ class Circuit:
             "lamps": dict(self._lamp_state),
             "motor": self._motor_state,
             "phase_currents": dict(self._currents),
+            "line_currents_a": dict(self._amps),
         }
 
     def voltage(self, a: str, b: str) -> float:
         """RMS voltage a voltmeter would read between two points (terminal or net name)."""
         ra, rb = self._uf.find(self._net_of(a)), self._uf.find(self._net_of(b))
-        if self._potential_cache is None:
-            fixed = {root: self._sources[next(iter(s))] for root, s in self._src.items() if len(s) == 1}
-            self._potential_cache = node_potentials(self._roots(), self._load_edges(), fixed)
-        va, vb = self._potential_cache[ra], self._potential_cache[rb]
+        pot = self._potentials()
+        va, vb = pot[ra], pot[rb]
         if va is None or vb is None:
             return 0.0
         return round(abs(va - vb), 1)
@@ -298,7 +303,7 @@ class Circuit:
                 self._uf, self._src = uf, src
                 self._potential_cache = None
                 self._lamp_state = {c.label: self._energized(c.parts[0], uf, src) for c in self._lamps}
-                self._motor_state, self._currents = self._motor(uf, src)
+                self._motor_state, self._currents, self._amps = self._motor(uf, src)
                 return
             for tid, on in new_timer_on.items():
                 if not on:
@@ -306,54 +311,78 @@ class Circuit:
             self.closed, self.timer_on = new_closed, new_timer_on
         raise CircuitError("circuit did not settle (relay chatter)")
 
-    def _motor(self, uf, src) -> tuple[str, dict[str, str]]:
+    def _motor(self, uf, src) -> tuple[str, dict[str, str], dict[str, float]]:
+        """Motor state and line currents from the winding currents.
+
+        Winding currents come from nodal analysis (windings are resistors), in units of the
+        rated star winding current. Their positive and negative sequence components give the
+        rotating field: one dominant sequence is a running motor (direction from which one),
+        both comparable is a pulsating field (humming, rotor stalled, locked-rotor current),
+        in between is an unbalanced but running motor. Line currents are the currents leaving
+        each motor line terminal into the windings, scaled so a healthy delta run draws the
+        rated current.
+        """
         w = self._windings
         if not w:
-            return "stopped", {}
+            return "stopped", {}, {}
         tn = self.netlist.terminal_net
         names = [p.name[0] for p in w]  # "U1-U2" -> "U"
-        lines = [uf.find(tn[p.a]) for p in w]
-        ends = [uf.find(tn[p.b]) for p in w]
-        phase = [self._phase(r, src) for r in lines]
-        phase = [ph if ph in self.netlist.phases else None for ph in phase]
-        intact = [self._part_fault.get(p.id) != "open" for p in w]
-        zero = {n: "zero" for n in names}
-        forward = tuple(phase) in FORWARD_SEQUENCES
-        direction = "forward" if forward else "reverse"
+        zero = {n: 0.0 for n in names}
+        live = any(self._phase(uf.find(tn[t]), src) in self.netlist.phases for p in w for t in (p.a, p.b))
+        if not live:
+            return "stopped", self._current_labels(zero), zero
 
-        star = ends[0] == ends[1] == ends[2] and not src.get(ends[0])
-        delta = all(ends[i] == lines[(i + 1) % 3] for i in range(3))
+        pot = self._potentials()
+        unit = self.netlist.voltage / w[0].resistance  # rated star winding current
+        cur = []
+        for p in w:
+            pa, pb = pot[uf.find(tn[p.a])], pot[uf.find(tn[p.b])]
+            if self._part_fault.get(p.id) == "open" or pa is None or pb is None:
+                cur.append(0j)
+            else:
+                cur.append((pa - pb) / w[0].resistance / unit)
+        pos = abs(cur[0] + A * cur[1] + A * A * cur[2]) / 3
+        neg = abs(cur[0] + A * A * cur[1] + A * cur[2]) / 3
+        big, small = max(pos, neg), min(pos, neg)
+        if sum(abs(c) for c in cur) < 0.05:
+            state = "stopped"
+        elif big < 0.05 or small / big > HUMMING_RATIO:
+            state = "humming"
+        else:
+            direction = "forward" if pos >= neg else "reverse"
+            if small / big > UNBALANCED_RATIO:
+                state = f"unbalanced_{direction}"
+            else:
+                state = f"{'star' if big < STAR_DELTA_SPLIT else 'delta'}_{direction}"
 
-        if star:
-            live = [i for i in range(3) if phase[i] and intact[i]]
-            distinct = {phase[i] for i in live}
-            if len(live) == 3 and len(distinct) == 3:
-                return f"star_{direction}", {n: "nominal" for n in names}
-            if len(distinct) >= 2:
-                return "humming", {names[i]: "overcurrent" if i in live else "zero" for i in range(3)}
-            return "stopped", zero
+        rated = float(self._motor_params.get("rated_current", 10.0))
+        factor = LOCKED_ROTOR_FACTOR if state == "humming" else 1.0
+        amps = {}
+        line_groups = [uf.find(tn[p.a]) for p in w]
+        for k, group in enumerate(line_groups):
+            leaving = 0j
+            for j, q in enumerate(w):
+                if uf.find(tn[q.a]) == group:
+                    leaving += cur[j]
+                if uf.find(tn[q.b]) == group:
+                    leaving -= cur[j]
+            leaving /= line_groups.count(group)  # lines tied to the same node share its current
+            # a healthy delta line carries 3 units (sqrt(3) x line-voltage winding current)
+            amps[names[k]] = round(abs(leaving) * rated / 3 * factor, 1)
+        return state, self._current_labels(amps), amps
 
-        if delta:
-            # winding i sits between line i and line i+1
-            energ = [
-                bool(intact[i] and phase[i] and phase[(i + 1) % 3] and phase[i] != phase[(i + 1) % 3])
-                for i in range(3)
-            ]
-            distinct = {ph for ph in phase if ph}
-            if len(distinct) == 3 and sum(energ) >= 2:
-                if all(energ):
-                    return f"delta_{direction}", {n: "nominal" for n in names}
-                # open delta: the line feeding both healthy windings carries more current
-                cur = {}
-                for i in range(3):
-                    k = energ[i] + energ[i - 1]
-                    cur[names[i]] = "overcurrent" if k == 2 else "nominal" if k == 1 else "zero"
-                return f"delta_{direction}", cur
-            if len(distinct) >= 2 and any(energ):
-                return "humming", {names[i]: "overcurrent" if phase[i] else "zero" for i in range(3)}
-            return "stopped", zero
+    def _current_labels(self, amps: dict[str, float]) -> dict[str, str]:
+        rated = float(self._motor_params.get("rated_current", 10.0))
+        return {
+            k: "zero" if a < 0.05 * rated else "overcurrent" if a > OVERCURRENT_FACTOR * rated else "nominal"
+            for k, a in amps.items()
+        }
 
-        return "stopped", zero
+    def _potentials(self) -> dict:
+        if self._potential_cache is None:
+            fixed = {root: self._sources[next(iter(s))] for root, s in self._src.items() if len(s) == 1}
+            self._potential_cache = node_potentials(self._roots(), self._load_edges(), fixed)
+        return self._potential_cache
 
     def _tick(self, dt: float) -> None:
         self.time += dt

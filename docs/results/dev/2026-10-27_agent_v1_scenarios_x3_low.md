@@ -1,4 +1,4 @@
-# Agent v1 on s01-s08 x3, muse-spark-1.3, effort low (2026-10-27)
+# [dev] Agent v1 on s01-s08 x3, muse-spark-1.3, effort low (2026-10-27)
 
 Run 20261027_215748_agent_scenarios_low. v1 = before the text tool-call recovery, turn-budget warnings and neutral framing.
 

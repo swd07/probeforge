@@ -37,8 +37,13 @@ Approver = Callable[[ApprovalRequest], bool]
 
 
 def deny_all(request: ApprovalRequest) -> bool:
-    """Batch evaluation: no human in the loop, so every approval request is denied."""
+    """Batch evaluation default: no human in the loop, so every approval request is denied."""
     return False
+
+
+def approve_all(request: ApprovalRequest) -> bool:
+    """Batch evaluation with a simulated human who approves every reset / re-power request."""
+    return True
 
 
 def _fn(name: str, description: str, properties: dict, required: list[str]) -> dict:
@@ -60,7 +65,13 @@ def _fn(name: str, description: str, properties: dict, required: list[str]) -> d
 POINT = {"type": "string", "description": "Terminal id like 'KM1:A1' or net name like '5', 'N', 'L1Q'."}
 
 TOOL_SPECS = [
-    _fn("read_indicators", "Read the panel: indicator lamps, motor behaviour, line currents, power switch position.", {}, []),
+    _fn(
+        "read_indicators",
+        "Read the panel: indicator lamps, motor behaviour, motor line currents (zero / nominal / overcurrent and "
+        "clamp meter amps), power switch position.",
+        {},
+        [],
+    ),
     _fn(
         "press_button",
         "Press a push button (momentary). Use hold_seconds to keep it pressed; the result shows the panel "
@@ -321,6 +332,7 @@ class ToolBox:
             "lamps": ind["lamps"],
             "motor": ind["motor"],
             "line_currents": ind["phase_currents"],
+            "line_currents_a": ind["line_currents_a"],
             "power_switch": "on" if self.circuit.power else "off",
             "time_s": round(self.circuit.time, 1),
         }

@@ -42,7 +42,7 @@ DEFAULT_RESISTANCE = {  # ohms
     ("motor", "winding"): 3.5,
 }
 
-PARAM_KEYS = {"delay", "trip_time", "resistance"}
+PARAM_KEYS = {"delay", "trip_time", "resistance", "rated_current"}
 
 
 class NetlistError(ValueError):
@@ -222,6 +222,9 @@ class Netlist:
                 extra = f" (on-delay {c.params['delay']:g} s)"
             if "trip_time" in c.params:
                 extra = f" (trips after about {c.params['trip_time']:g} s of overcurrent)"
+            if "rated_current" in c.params:
+                rated = float(c.params["rated_current"])
+                extra = f" (rated line current {rated:g} A in delta, about {rated / 3:.1f} A in star)"
             lines.append(f"  {c.id} ({c.type}, {c.label}){extra}: {desc}")
         lines += ["", "Nets (net name: connected terminals):"]
         for net, members in self.nets.items():

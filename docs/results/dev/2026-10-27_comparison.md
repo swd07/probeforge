@@ -1,4 +1,4 @@
-# Agent vs baseline, 2026-10-27
+# [dev] Agent vs baseline, 2026-10-27
 
 Agent: muse-spark-1.3, reasoning effort low. Baseline: deterministic golden-twin half-split (src/probeforge/baseline/).
 Holdout: 30 random visible faults + 10 random latent faults (seed 2026), none of the 8 hand-written scenarios.

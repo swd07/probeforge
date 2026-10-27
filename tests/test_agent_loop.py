@@ -59,7 +59,7 @@ def test_full_session_with_nudge_and_protocol_error(netlist, monkeypatch):
         FakeMessage(content="Let me think about this."),  # no tool call -> nudge
         FakeMessage(calls=[("measure_voltage", {"point_a": "FU1:1", "point_b": "N"}),
                            ("measure_voltage", {"point_a": "FU1:2", "point_b": "N"})]),  # steps 1, 2 (parallel ok)
-        FakeMessage(calls=[("measure_voltage", {"point_a": "1", "point_b": "N"})]),  # no update first -> error
+        FakeMessage(calls=[("measure_voltage", {"point_a": "1", "point_b": "N"})]),  # no update first: runs, counted
         FakeMessage(calls=[("update_hypotheses", HYP),  # step 3
                            ("submit_diagnosis", {"outcome": "diagnosed", "component": "FU1", "part": "1-2",
                                                  "failure_mode": "open", "confidence": 0.9,
@@ -69,10 +69,11 @@ def test_full_session_with_nudge_and_protocol_error(netlist, monkeypatch):
     run, tb = loop.run_agent(fuse_circuit(netlist), client, model="muse-spark-1.3", effort="low")
 
     assert run.outcome == "diagnosed"
-    assert run.turns == 4 and run.nudges == 1 and run.protocol_errors == 1
-    assert tb.measurements == 2
+    assert run.turns == 4 and run.nudges == 1 and run.protocol_errors == 0
+    assert run.missing_hypothesis_updates == 1
+    assert tb.measurements == 3
     assert score(run.diagnosis, Fault("FU1", "open", "1-2")) == {"component_ok": True, "mode_ok": True, "part_ok": True}
-    assert [h["step"] for h in tb.hypotheses_history] == [3]
+    assert [h["step"] for h in tb.hypotheses_history] == [4]
     assert run.prompt_tokens == 4000 and run.completion_tokens == 400 and run.cost_usd > 0
 
     first = client.requests[0]

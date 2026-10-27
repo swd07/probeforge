@@ -9,7 +9,6 @@ from dataclasses import dataclass, field
 
 from probeforge.agent.client import MUSE_SPARK
 from probeforge.agent.prompts import (
-    HYPOTHESES_FIRST,
     NUDGE,
     SYSTEM_PROMPT,
     TOO_MANY_MEASUREMENTS,
@@ -46,6 +45,7 @@ class AgentRun:
     nudges: int = 0
     recovered_text_calls: int = 0  # tool calls the model wrote as text markup
     protocol_errors: int = 0
+    missing_hypothesis_updates: int = 0  # turns that measured without updating hypotheses first
     prompt_tokens: int = 0
     cached_tokens: int = 0
     completion_tokens: int = 0
@@ -186,6 +186,7 @@ def run_agent(
             # parallel measurements in one turn are fine; results from earlier turns need an update first
             pending = toolbox.pending_hypotheses_update
             measured_this_turn = 0
+            counted_missing = False
             for call in calls:
                 name = call["name"]
                 try:
@@ -199,10 +200,11 @@ def run_agent(
                     readings = len(args.get("measure_while_held") or []) if name == "press_button" else 0
                     n_meas = 1 if name in MEASUREMENT_TOOLS else readings
                     needs_update = n_meas > 0 or name == "submit_diagnosis"
-                    if needs_update and pending and not turn_updates:
-                        result = {"error": HYPOTHESES_FIRST}
-                        run.protocol_errors += 1
-                    elif measured_this_turn + n_meas > MAX_MEASUREMENTS_PER_TURN:
+                    if needs_update and pending and not turn_updates and not counted_missing:
+                        # not blocked: the call runs, the skipped update is only counted
+                        run.missing_hypothesis_updates += 1
+                        counted_missing = True
+                    if measured_this_turn + n_meas > MAX_MEASUREMENTS_PER_TURN:
                         result = {"error": TOO_MANY_MEASUREMENTS}
                         run.protocol_errors += 1
                     else:

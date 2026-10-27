@@ -2,7 +2,7 @@
 
 AI agent that diagnoses faults in an industrial relay-contactor circuit (star-delta reversing motor starter) by choosing its own virtual measurements, under hard safety limits enforced in code. Built for the Meta Global AI Developer Hackathon 2026.
 
-Status: Day 4. Simulator, faults, tools, safety policy, Muse Spark agent, half-split baseline and evaluation harness are done and tested. The web UI is next.
+Status: Day 4. Simulator, faults, tools, safety policy, Muse Spark agent, half-split baseline and evaluation harness are done and tested, with clean holdout results. The web UI is next.
 
 ## Setup
 
@@ -29,7 +29,7 @@ The simulator (`src/probeforge/sim/`) is pure Python and deterministic:
 - Closed contacts merge nets; coils pick up when their terminals see different phases; contactor states iterate until stable. Mechanical interlocks KM1/KM2 and KM3/KM4.
 - Short circuits blow the first protection device that clears them (FU1, FU2, then QF1).
 - On-delay timer KT and thermal overload KK1 advance in 0.1 s ticks.
-- Motor state: stopped, star / delta, forward / reverse, or humming on phase loss, with per-line current (zero / nominal / overcurrent).
+- Motor state from the winding currents (nodal analysis, positive and negative sequence components): stopped, star / delta, forward / reverse, unbalanced, or humming (stalled, locked-rotor current). Line currents in amps (clamp meter, 10 A rated in delta) plus zero / nominal / overcurrent.
 - Measurements use nodal analysis over the same model, so a voltmeter across an open contact reads 230 V and an ohmmeter sees parallel paths through coils and lamps, like on a real panel.
 
 ```python
@@ -46,14 +46,14 @@ c.set_power(False)
 c.resistance("KM1:A1", "KM1:A2")  # 550.0
 ```
 
-Faults (`src/probeforge/faults/`): the 8 hand-written scenarios live in `scenarios/s0*.yaml`. `all_faults()` enumerates every part in every failure mode (91 faults); `random_fault(netlist, seed, visible_only=True)` picks unseen holdout faults. About 15 of the 91 are latent (no visible symptom during normal operation), which `has_visible_symptom()` detects.
+Faults (`src/probeforge/faults/`): the 8 hand-written scenarios live in `scenarios/s0*.yaml`. `all_faults()` enumerates every part in every failure mode (91 faults); `random_fault(netlist, seed, visible_only=True)` picks unseen holdout faults. 15 of the 91 are latent (no visible symptom during normal operation), which `has_visible_symptom()` detects.
 
 ## Tools, safety policy, agent
 
 - **Tools** (`src/probeforge/tools/`): `read_indicators`, `press_button` (with `hold_seconds`), `wait`, `set_power`, `measure_voltage`, `measure_resistance`, `get_schematic`, `update_hypotheses`, `perform_action`, `submit_diagnosis`. Every call gets a step number, goes through the policy and is logged. Outputs only contain what a technician at the panel could observe; a test drives every tool on all 91 faults and checks that no output, log or prompt names the fault.
 - **Baseline** (`src/probeforge/baseline/`): deterministic. Runs a fixed functional test mirrored on a fault-free twin, half-splits the supply path of the first load whose voltage is missing, refines with fixed rules, and falls back to an exhaustive resistance comparison.
 - **Policy** (`src/probeforge/policy/`): voltage only with power on, resistance only with power off, at most 3 consecutive Start presses, power-on after a protection trip and protection resets need human approval (auto-denied in batch runs), bypass / modify / replace / jumper are always blocked, a diagnosis must cite executed observation steps. Blocked calls come back to the agent as errors and are counted.
-- **Agent** (`src/probeforge/agent/`): Muse Spark (`muse-spark-1.3`) with native tool calling. It gets the panel state, the schematic as PNG (rendered from the SVG with resvg) plus the text netlist, the tools and the policy summary. It must call `update_hypotheses` after every measurement (in the same turn as the next measurements; up to 3 measurements per turn), the image is sent only with the first request, text replies without a tool call get a short nudge, tool calls the model writes as text markup are recovered, it is warned 5 and 2 turns before the 30-turn cap, and `insufficient_information` is a valid outcome. Evidence items in a diagnosis are typed `functional_test` or `instrument_reading`.
+- **Agent** (`src/probeforge/agent/`): Muse Spark (`muse-spark-1.3`) with native tool calling. It gets the panel state, the schematic as PNG (rendered from the SVG with resvg) plus the text netlist, the tools and the policy summary. It must call `update_hypotheses` after every measurement (in the same turn as the next measurements; up to 3 measurements per turn; skipping it is not blocked but counted as `missing_hypothesis_updates`), the image is sent only with the first request, text replies without a tool call get a short nudge, tool calls the model writes as text markup are recovered, it is warned 5 and 2 turns before the 30-turn cap, and `insufficient_information` is a valid outcome. Evidence items in a diagnosis are typed `functional_test` or `instrument_reading`.
 
 ```
 uv run python scripts/run_scenarios.py --effort low      # all 8 scenarios, prints a results table
@@ -61,24 +61,54 @@ uv run python scripts/run_scenarios.py --effort low      # all 8 scenarios, prin
 
 Each run writes `runs/<timestamp>_<effort>/<scenario>.json` (tool calls, results, hypotheses, tokens, latency per turn; no fault inside) plus `results.md` / `results.json` with the score.
 
-## Results
+## Results (clean holdout)
 
-Full tables and a failure analysis of every wrong answer: [docs/results/2026-10-27_comparison.md](docs/results/2026-10-27_comparison.md).
+Full report with failure analysis: [docs/results/2026-10-27_clean.md](docs/results/2026-10-27_clean.md).
 
-| | Holdout visible (30) | Latent (10) | Confidently wrong | Meas per case | Cost per case |
-|---|---|---|---|---|---|
-| Agent (muse-spark-1.3, low) | 25/30 (28/30 incl. justified) | 10/10 | 1 | 6.9 | $0.09 |
-| Half-split baseline | 22/30 (24/30) | 10/10 | 4 | 10.3 | free |
+The clean holdout is every fault never used during development: 91 possible single faults minus the 8 hand-written
+scenarios minus the 40 dev holdout faults = 43 faults (38 visible, 5 latent), listed in
+[scenarios/holdout_clean.yaml](scenarios/holdout_clean.yaml). The agent prompt and the baseline rules were frozen before
+the run. Agent: `muse-spark-1.3`, reasoning effort low, approval requests denied.
 
-Holdout = 30 random visible + 10 random latent faults (seed 2026), none of the 8 hand-written scenarios. "Justified" = the true fault is
-observationally identical to another fault (checked by simulation) and the answer was insufficient_information or that twin. On the
-8 hand-written scenarios run 3 times, the agent solved 22/24 (s06 is the weak spot) and the baseline 8/8.
+| | Visible correct | incl. justified | Latent | Confidently wrong | Meas per case | Cost per case |
+|---|---|---|---|---|---|---|
+| Agent | **30/38** | **33/38** | 5/5 | **4** | **8.3** | $0.068 |
+| Half-split baseline | 25/38 | 25/38 | 5/5 | 9 | 11.0 | free |
+
+"Justified": the true fault gives exactly the same readings as another fault in every state the tools can reach (checked
+by simulation) and the answer was insufficient_information or that twin. Single run per case; reruns show individual cases
+flip between runs. Known weak spots: welded L1/L3 main poles that cause a fuse-blowing short (the agent tends to blame the
+blown fuse), and "voltage present is not coil intact" (dev scenario s06 fails 2 of 3). Everything before the clean run is in
+[docs/results/dev/](docs/results/dev/), labelled dev because the prompt and baseline were tuned with those faults visible.
 
 ```
-uv run python scripts/run_scenarios.py --suite holdout --effort low --workers 8
-uv run python scripts/run_scenarios.py --runner baseline --suite all
-uv run python scripts/run_scenarios.py --repeat 3 --effort low
+uv run python scripts/run_scenarios.py --suite clean --effort low --workers 8      # agent, clean holdout
+uv run python scripts/run_scenarios.py --runner baseline --suite clean             # baseline
+uv run python scripts/run_scenarios.py --suite scenarios --repeat 3 --effort low   # dev scenarios, variance
+uv run python scripts/run_scenarios.py --suite clean --only c02 --approve          # simulated human approves
 ```
+
+## Known Muse Spark behaviour: tool calls written as text
+
+With native tool calling on (`tools=[...]`, `tool_choice` auto), `muse-spark-1.3` sometimes answers with no `tool_calls` and
+the call written into the message text instead, in an internal markup:
+
+```
+<atem:function_calls>
+<atem:invoke name="default.submit_diagnosis">
+<atem:parameter name="confidence">0.95</atem:parameter>
+<atem:parameter name="component">KK1</atem:parameter>
+<atem:parameter name="evidence">[{"step": 0, "type": "functional_test", "observation": "..."}]</atem:parameter>
+...
+</atem:invoke>
+</atem:function_calls>
+```
+
+We saw it mostly for `submit_diagnosis` (the largest schema, with a nested evidence array). A plain "call the tool" nudge
+does not help: the model repeats the same text until the turn limit. The agent loop therefore parses this markup
+(`recover_text_tool_calls` in `src/probeforge/agent/loop.py`), turns it into a native tool call in the history (so the
+API's rule that every tool call is followed by its tool result still holds) and runs it. Every run counts these as
+`recovered_text_calls`; the results tables show the total.
 
 ## Tests
 

@@ -54,6 +54,8 @@ def block(label: str, rows: list[dict]) -> list[str]:
         f"| {sum(r['measurements'] for r in rows) / n:.1f} | {sum(r['redundant'] for r in rows)} "
         f"| {sum(r['evidence_functional'] for r in rows)}/{sum(r['evidence_instrument'] for r in rows)} "
         f"| {sum(r['policy_blocked'] for r in rows)} "
+        f"| {sum(r.get('approval_requests', 0) for r in rows)}/{sum(r['approvals_denied'] for r in rows)} "
+        f"| {sum(r.get('missing_hypothesis_updates', 0) for r in rows)} | {sum(r.get('recovered_text_calls', 0) for r in rows)} "
         f"| {sum(r['cost_usd'] for r in rows) / n:.3f} | {sum(r['seconds'] for r in rows) / n:.1f} |"
     ]
 
@@ -79,8 +81,9 @@ def main() -> None:
     runs = [(a.split("=", 1)[0], ROOT / a.split("=", 1)[1]) for a in sys.argv[2:]]
     lines = [
         "| Run | Visible correct | Visible correct or justified | Latent correct | Confidently wrong "
-        "| Visible not diagnosed | Meas per case | Redundant | Evidence F/I | Policy blocks | Cost $ per case | Seconds per case |",
-        "|---|---|---|---|---|---|---|---|---|---|---|---|",
+        "| Visible not diagnosed | Meas per case | Redundant | Evidence F/I | Policy blocks | Approvals asked/denied "
+        "| Missing hyp. updates | Text tool calls | Cost $ per case | Seconds per case |",
+        "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|",
     ]
     details = []
     for label, d in runs:

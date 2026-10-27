@@ -30,11 +30,6 @@ NUDGE = (
     "submit_diagnosis when you are done (outcome insufficient_information is allowed)."
 )
 
-HYPOTHESES_FIRST = (
-    "call update_hypotheses with your updated hypotheses before the next measurement or the diagnosis "
-    "(you can do both in the same turn)"
-)
-
 TOO_MANY_MEASUREMENTS = "at most 3 measurements per turn; take this one in your next turn"
 
 

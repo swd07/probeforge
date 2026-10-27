@@ -114,7 +114,7 @@ class HalfSplitBaseline:
     @staticmethod
     def view(r: dict) -> dict:
         r = r.get("after_release", r)
-        return {k: r[k] for k in ("lamps", "motor", "line_currents", "power_switch")}
+        return {k: r[k] for k in ("lamps", "motor", "line_currents", "line_currents_a", "power_switch")}
 
     def functional(self, step: int, text: str) -> None:
         self.evidence.append({"step": step, "type": "functional_test", "observation": text})

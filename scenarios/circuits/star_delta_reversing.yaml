@@ -43,7 +43,7 @@ components:
   HL3: {type: lamp, label: Forward, terminals: X1-X2}
   HL4: {type: lamp, label: Reverse, terminals: X1-X2}
 
-  M1: {type: motor, label: Motor, windings: ["U1-U2", "V1-V2", "W1-W2"]}
+  M1: {type: motor, label: Motor, windings: ["U1-U2", "V1-V2", "W1-W2"], rated_current: 10}
 
 nets:
   # supply
