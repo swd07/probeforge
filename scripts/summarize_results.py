@@ -14,6 +14,7 @@ from collections import defaultdict
 from pathlib import Path
 
 from probeforge.eval.ambiguity import justified, observational_twins
+from probeforge.eval.engineer import engineer_reference, load_engineer_traces
 from probeforge.faults import Fault
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -76,6 +77,23 @@ def variance(rows: list[dict]) -> list[str]:
     return out
 
 
+def engineer_section(runs) -> list[str]:
+    """Engineer reference column: cases whose fault has a manual-mode trace in scenarios/engineer_traces/."""
+    traces = load_engineer_traces()
+    if not traces:
+        return []
+    out = ["", "### Engineer reference (manual mode traces)", "",
+           "| Run | Case | Expected | Engineer verdict | Engineer meas | Run correct | Run meas |",
+           "|---|---|---|---|---|---|---|"]
+    for label, d in runs:
+        for r in json.loads((d / "results.json").read_text(encoding="utf-8"))["rows"]:
+            ref = engineer_reference(parse_fault(r["expected"]), traces)
+            if ref:
+                out.append(f"| {label} | {r['case']} | {r['expected']} | {ref['verdict']} ({ref['engineer']}) "
+                           f"| {ref['measurements']} | {'yes' if r['correct'] else 'no'} | {r['measurements']} |")
+    return out if len(out) > 5 else []
+
+
 def main() -> None:
     out = Path(sys.argv[1])
     runs = [(a.split("=", 1)[0], ROOT / a.split("=", 1)[1]) for a in sys.argv[2:]]
@@ -96,6 +114,7 @@ def main() -> None:
             details += ["", f"### Not correct: {label}", "", "| Case | Expected | Answer | Observational twins | Justified |", "|---|---|---|---|---|"]
             details += [f"| {r['case']} | {r['expected']} | {r['diagnosed']} | {', '.join(r['twins']) or '-'} | "
                         f"{'yes' if r['justified'] else 'no'} |" for r in wrong]
+    details += engineer_section(runs)
     text = "\n".join(lines + details) + "\n"
     out.write_text(text, encoding="utf-8")
     print(text)

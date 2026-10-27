@@ -37,7 +37,17 @@ const VERDICT_TEXT: Record<string, string> = {
   "no diagnosis": "No diagnosis",
 };
 
-export function ResultCard({ done, showTruth, onToggleTruth, onClose }: { done: Done; showTruth: boolean; onToggleTruth: () => void; onClose: () => void }) {
+interface ResultProps {
+  done: Done;
+  showTruth: boolean;
+  onToggleTruth: () => void;
+  onClose: () => void;
+  saved?: string;
+  onCompare?: () => void;
+}
+
+export function ResultCard({ done, showTruth, onToggleTruth, onClose, saved, onCompare }: ResultProps) {
+  const manual = done.mode === "manual";
   const d = done.diagnosis ?? {};
   const said =
     done.outcome === "diagnosed"
@@ -60,7 +70,7 @@ export function ResultCard({ done, showTruth, onToggleTruth, onClose }: { done: 
           {done.latent && <span className="tag">latent</span>}
         </div>
         <div>
-          <span className="lbl">Agent diagnosis</span>
+          <span className="lbl">{manual ? "Your diagnosis" : "Agent diagnosis"}</span>
           <span className="val">{said}</span>
           {typeof d.confidence === "number" && <span className="tag">{(Number(d.confidence) * 100).toFixed(0)}%</span>}
         </div>
@@ -71,16 +81,24 @@ export function ResultCard({ done, showTruth, onToggleTruth, onClose }: { done: 
       <div className="figures">
         <div><b>{done.measurements}</b><span>measurements</span></div>
         <div><b>{done.redundant}</b><span>redundant</span></div>
-        <div><b>{done.turns}</b><span>turns</span></div>
-        <div><b>{(done.tokens / 1000).toFixed(0)}k</b><span>tokens</span></div>
-        <div><b>${done.cost_usd.toFixed(3)}</b><span>cost</span></div>
+        {!manual && <div><b>{done.turns}</b><span>turns</span></div>}
+        {!manual && <div><b>{(done.tokens / 1000).toFixed(0)}k</b><span>tokens</span></div>}
+        {!manual && <div><b>${done.cost_usd.toFixed(3)}</b><span>cost</span></div>}
         <div><b>{done.seconds.toFixed(0)} s</b><span>time</span></div>
         <div><b>{done.policy_blocked}</b><span>blocked</span></div>
         <div><b>{done.approvals}</b><span>approvals asked</span></div>
       </div>
-      <button className="btn ghost" onClick={onToggleTruth}>
-        {showTruth ? "Show the agent's measurements" : "Show true live wiring"}
-      </button>
+      {saved && <p className="muted saved">Trace saved: {saved}</p>}
+      <div className="result-actions">
+        <button className="btn ghost" onClick={onToggleTruth}>
+          {showTruth ? "Show the measurements" : "Show true live wiring"}
+        </button>
+        {onCompare && (
+          <button className="btn primary" onClick={onCompare}>
+            Compare with agent and baseline
+          </button>
+        )}
+      </div>
     </div>
   );
 }

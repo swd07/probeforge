@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type MouseEvent as ReactMouseEvent } from "react";
 import type { NetState, Probe } from "../types";
 
 interface Props {
@@ -6,6 +6,8 @@ interface Props {
   nets: Record<string, NetState>;
   probes: Probe[];
   truthLive: string[] | null; // set after the run: the real live wiring
+  onPick?: (point: string) => void; // manual mode: click a terminal or a wire to place a meter probe
+  selected?: (string | null)[];
 }
 
 const SVG_NS = "http://www.w3.org/2000/svg";
@@ -18,15 +20,29 @@ function formatValue(p: Probe) {
 
 /** The schematic is the server-rendered SVG. Every wire carries data-net and every terminal data-terminal,
  * so the agent's probes and what it learned about each net are painted straight onto it. */
-export function Schematic({ svg, nets, probes, truthLive }: Props) {
+export function Schematic({ svg, nets, probes, truthLive, onPick, selected = [] }: Props) {
   const host = useRef<HTMLDivElement>(null);
+
+  const click = (e: ReactMouseEvent) => {
+    if (!onPick) return;
+    const target = e.target as Element;
+    const terminal = target.closest("[data-terminal]");
+    if (terminal) return onPick(terminal.getAttribute("data-terminal")!);
+    const wire = target.closest("[data-net]");
+    if (wire) onPick(wire.getAttribute("data-net")!);
+  };
 
   useEffect(() => {
     const root = host.current?.querySelector("svg");
     if (!root) return;
     root.querySelectorAll(".probe-overlay").forEach((n) => n.remove());
     root.querySelectorAll("[data-net]").forEach((el) => el.classList.remove(...NET_CLASSES));
-    root.querySelectorAll("circle[data-terminal]").forEach((el) => el.classList.remove("probe-active", "probe-old"));
+    root.querySelectorAll("circle[data-terminal]").forEach((el) => el.classList.remove("probe-active", "probe-old", "picked"));
+    root.querySelectorAll("[data-net]").forEach((el) => el.classList.remove("picked"));
+    for (const point of selected) {
+      if (!point) continue;
+      root.querySelectorAll(`[data-terminal="${CSS.escape(point)}"], [data-net="${CSS.escape(point)}"]`).forEach((el) => el.classList.add("picked"));
+    }
 
     if (truthLive) {
       for (const net of truthLive) root.querySelectorAll(`[data-net="${CSS.escape(net)}"]`).forEach((el) => el.classList.add("net-truth"));
@@ -79,7 +95,7 @@ export function Schematic({ svg, nets, probes, truthLive }: Props) {
       overlay.append(g);
     }
     root.append(overlay);
-  }, [svg, nets, probes, truthLive]);
+  }, [svg, nets, probes, truthLive, selected]);
 
   return (
     <section className="schematic-card">
@@ -97,7 +113,7 @@ export function Schematic({ svg, nets, probes, truthLive }: Props) {
           )}
         </span>
       </div>
-      <div className="schematic" ref={host} dangerouslySetInnerHTML={{ __html: svg }} />
+      <div className={`schematic ${onPick ? "pickable" : ""}`} ref={host} onClick={click} dangerouslySetInnerHTML={{ __html: svg }} />
     </section>
   );
 }

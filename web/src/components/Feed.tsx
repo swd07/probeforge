@@ -13,7 +13,7 @@ const ICON: Record<string, string> = {
   submit_diagnosis: "✔",
 };
 
-function summarize(ev: ToolEvent): { title: string; detail: string } {
+export function describeTool(ev: ToolEvent): { title: string; detail: string } {
   const a = ev.args as Record<string, any>;
   const r = ev.result as Record<string, any>;
   switch (ev.tool) {
@@ -53,7 +53,7 @@ function summarize(ev: ToolEvent): { title: string; detail: string } {
 /** Model text is shown as written, except dashes used as punctuation (project style rule). */
 const plain = (text: string) => text.replace(/\s*[\u2014\u2013]\s*/g, ", ");
 
-export function Feed({ items }: { items: FeedItem[] }) {
+export function Feed({ items, manual = false }: { items: FeedItem[]; manual?: boolean }) {
   const end = useRef<HTMLDivElement>(null);
   useEffect(() => {
     // braces matter: newer browsers return a Promise from scrollIntoView, which React would call as cleanup
@@ -63,7 +63,7 @@ export function Feed({ items }: { items: FeedItem[] }) {
   return (
     <section className="feed-card">
       <div className="card-title">
-        <span>Agent reasoning</span>
+        <span>{manual ? "Your steps" : "Agent reasoning"}</span>
         <span className="muted">every tool call passes the safety policy</span>
       </div>
       <div className="feed">
@@ -92,7 +92,7 @@ export function Feed({ items }: { items: FeedItem[] }) {
               </div>
             );
           const ev = it.ev;
-          const { title, detail } = summarize(ev);
+          const { title, detail } = describeTool(ev);
           const cls = ev.verdict === "block" ? "blocked" : ev.verdict === "needs_approval" ? "needs-approval" : ev.verdict === "error" ? "error" : "";
           return (
             <div key={it.id} className={`item tool ${cls} ${ev.tool}`}>

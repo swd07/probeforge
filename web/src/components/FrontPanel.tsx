@@ -23,7 +23,15 @@ function Motor({ state }: { state: string }) {
   );
 }
 
-export function FrontPanel({ meta, panel, pressed }: { meta: Meta | null; panel: Panel | null; pressed: { button: string; at: number } | null }) {
+interface Props {
+  meta: Meta | null;
+  panel: Panel | null;
+  pressed: { button: string; at: number } | null;
+  onPress?: (button: string) => void; // manual mode: the engineer presses the buttons
+  onPower?: () => void;
+}
+
+export function FrontPanel({ meta, panel, pressed, onPress, onPower }: Props) {
   const [active, setActive] = useState<string | null>(null);
   useEffect(() => {
     if (!pressed) return;
@@ -47,12 +55,22 @@ export function FrontPanel({ meta, panel, pressed }: { meta: Meta | null; panel:
         <div className="buttons">
           {meta?.buttons.map((b) => (
             <div key={b.id} className="pb-wrap">
-              <div className={`pushbutton ${b.label.startsWith("Stop") ? "red" : "green"} ${active === b.id ? "pressed" : ""}`} />
+              <div
+                className={`pushbutton ${b.label.startsWith("Stop") ? "red" : "green"} ${active === b.id ? "pressed" : ""} ${onPress ? "clickable" : ""}`}
+                onClick={onPress ? () => onPress(b.id) : undefined}
+                role={onPress ? "button" : undefined}
+                aria-label={b.label}
+              />
               <span>{b.label}</span>
             </div>
           ))}
         </div>
-        <div className={`breaker ${panel?.power ? "on" : "off"}`}>
+        <div
+          className={`breaker ${panel?.power ? "on" : "off"} ${onPower ? "clickable" : ""}`}
+          onClick={onPower}
+          role={onPower ? "button" : undefined}
+          aria-label="Main breaker"
+        >
           <div className="breaker-handle" />
           <span>QF1 {panel?.power ? "ON" : "OFF"}</span>
         </div>

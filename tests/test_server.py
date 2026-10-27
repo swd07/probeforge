@@ -4,9 +4,22 @@ import json
 
 from fastapi.testclient import TestClient
 
+import pytest
+
 from probeforge.agent import loop
+from probeforge.eval.spend import SpendLedger
 from probeforge.server import app as server
 from tests.test_agent_loop import FakeClient, FakeMessage
+
+@pytest.fixture(autouse=True)
+def isolated(monkeypatch, tmp_path):
+    """Never touch the real spend ledger or the engineer reference folder from tests."""
+    ledger = SpendLedger(tmp_path / "spend.json")
+    monkeypatch.setattr(server, "ledger", lambda: ledger)
+    monkeypatch.setattr(server, "ENGINEER_DIR", tmp_path / "engineer_traces")
+    monkeypatch.setattr(server, "COMPARE_DIR", tmp_path / "compare")
+    return tmp_path
+
 
 HYP = {"hypotheses": [{"component": "FU2", "part": "5-6", "failure_mode": "open", "probability": 0.8, "reason": "W zero"}]}
 

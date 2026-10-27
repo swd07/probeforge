@@ -1,10 +1,15 @@
 import { useCallback, useEffect, useReducer, useRef } from "react";
-import type { ApprovalRequest, Done, FeedItem, Hypothesis, NetState, Panel, Probe, ToolEvent } from "./types";
+import type { ApprovalRequest, CompareResult, Done, FeedItem, Hypothesis, Mode, NetState, Panel, Probe, ToolEvent } from "./types";
 
 export type Status = "idle" | "running" | "approval" | "done" | "error";
 
 export interface State {
   status: Status;
+  mode: Mode;
+  engineer: string;
+  saved: string;
+  compare: CompareResult | null;
+  compareProgress: { baseline: boolean; agentTurn: number } | null;
   source: string;
   model: string;
   effort: string;
@@ -27,6 +32,11 @@ export interface State {
 
 const initial: State = {
   status: "idle",
+  mode: "agent",
+  engineer: "",
+  saved: "",
+  compare: null,
+  compareProgress: null,
   source: "",
   model: "",
   effort: "",
@@ -47,16 +57,34 @@ const initial: State = {
   error: "",
 };
 
+export interface StartOptions {
+  mode: Mode;
+  source: "scenario" | "random";
+  scenario?: string;
+  effort: string;
+  includeLatent: boolean;
+  engineer?: string;
+}
+
 export const hypKey = (h: Hypothesis) => `${h.component}${h.part ? ":" + h.part : ""} ${h.failure_mode}`;
 
-type Action = { type: "reset" } | { type: "event"; ev: any; neutral: string };
+type Action = { type: "reset"; mode: Mode } | { type: "event"; ev: any; neutral: string };
 
 function reducer(s: State, a: Action): State {
-  if (a.type === "reset") return { ...initial, status: "running" };
+  if (a.type === "reset") return { ...initial, status: "running", mode: a.mode };
   const ev = a.ev;
   switch (ev.type) {
     case "session":
-      return { ...initial, status: "running", source: ev.source, model: ev.model, effort: ev.effort, panel: ev.panel };
+      return {
+        ...initial,
+        status: "running",
+        mode: ev.mode ?? "agent",
+        engineer: ev.engineer ?? "",
+        source: ev.source,
+        model: ev.model ?? "",
+        effort: ev.effort ?? "",
+        panel: ev.panel,
+      };
     case "turn": {
       const feed = ev.text?.trim()
         ? [...s.feed, { kind: "thought" as const, id: `t${ev.turn}`, text: ev.text.trim(), turn: ev.turn }]
@@ -118,7 +146,21 @@ function reducer(s: State, a: Action): State {
       };
     case "done":
       return { ...s, status: "done", done: ev, panel: ev.panel, approval: null };
+    case "saved":
+      return { ...s, saved: ev.path };
+    case "compare_progress":
+      return {
+        ...s,
+        compareProgress: {
+          baseline: s.compareProgress?.baseline || ev.runner === "baseline",
+          agentTurn: ev.runner === "agent" ? ev.turn : s.compareProgress?.agentTurn ?? 0,
+        },
+      };
+    case "compare":
+      return { ...s, compare: ev, compareProgress: null };
     case "error":
+      if (s.status === "done") return { ...s, error: ev.message }; // e.g. compare refused after the run
+
       return { ...s, status: "error", error: ev.message, approval: null };
     default:
       return s;
@@ -147,15 +189,34 @@ export function useSession(neutral: string) {
   useEffect(() => () => ws.current?.close(), []);
 
   const start = useCallback(
-    async (opts: { source: "scenario" | "random"; scenario?: string; effort: string; includeLatent: boolean }) => {
-      dispatch({ type: "reset" });
+    async (opts: StartOptions) => {
+      dispatch({ type: "reset", mode: opts.mode });
       const sock = await connect();
       // ?fault=QF1:5-6%20open picks a specific fault for reproducible demos and tests; the UI never offers it
       const fault = new URLSearchParams(location.search).get("fault") ?? undefined;
-      sock.send(JSON.stringify({ action: "start", source: opts.source, scenario: opts.scenario, effort: opts.effort, include_latent: opts.includeLatent, fault }));
+      sock.send(
+        JSON.stringify({
+          action: opts.mode === "manual" ? "start_manual" : "start",
+          source: opts.source,
+          scenario: opts.scenario,
+          effort: opts.effort,
+          include_latent: opts.includeLatent,
+          engineer: opts.engineer,
+          fault,
+        }),
+      );
     },
     [connect],
   );
+
+  const tool = useCallback((name: string, args: Record<string, unknown>) => {
+    ws.current?.send(JSON.stringify({ action: "tool", name, args }));
+  }, []);
+
+  const compare = useCallback(() => {
+    dispatch({ type: "event", ev: { type: "compare_progress", runner: "start" }, neutral: neutralRef.current });
+    ws.current?.send(JSON.stringify({ action: "compare" }));
+  }, []);
 
   const answer = useCallback((id: number, approve: boolean) => {
     ws.current?.send(JSON.stringify({ action: "approval", id, approve }));
@@ -163,5 +224,5 @@ export function useSession(neutral: string) {
 
   const stop = useCallback(() => ws.current?.send(JSON.stringify({ action: "stop" })), []);
 
-  return { state, start, answer, stop };
+  return { state, start, answer, stop, tool, compare };
 }

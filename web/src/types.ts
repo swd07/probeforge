@@ -5,6 +5,8 @@ export interface Meta {
   scenarios: { id: string; symptom: string }[];
   buttons: { id: string; label: string }[];
   lamps: { id: string; label: string }[];
+  components: ComponentInfo[];
+  thermal_relays: string[];
 }
 
 export interface Panel {
@@ -60,6 +62,7 @@ export interface ApprovalRequest {
 }
 
 export interface Done {
+  mode: Mode;
   fault: string;
   latent: boolean;
   twins: string[];
@@ -91,3 +94,34 @@ export type FeedItem =
   | { kind: "info"; id: string; text: string };
 
 export type NetState = "live" | "dead" | "probed";
+
+export interface ComponentInfo {
+  id: string;
+  type: string;
+  label: string;
+  modes: string[];
+  parts: { name: string; kind: string; modes: string[] }[];
+}
+
+export interface CompareColumn {
+  runner: string;
+  diagnosis?: string;
+  confidence?: number | null;
+  verdict?: string;
+  measurements?: number;
+  redundant?: number;
+  blocked?: number;
+  approvals?: number;
+  seconds?: number;
+  cost_usd?: number;
+  sequence?: string[];
+  error?: string;
+}
+
+export interface CompareResult {
+  fault: string;
+  columns: Record<string, CompareColumn>;
+  note: string;
+}
+
+export type Mode = "agent" | "manual";

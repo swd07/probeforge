@@ -34,6 +34,21 @@ One screen showing the agent working, streamed step by step over a WebSocket fro
 |---|---|
 | ![Approval](docs/screenshots/qf1_approval_card.png) | ![Result](docs/screenshots/qf1_result.png) |
 
+**Engineer mode** (same screen, a human instead of the agent): click two terminals or wires on the schematic to place the
+meter probes and measure volts or ohms, press the panel buttons, switch the breaker, wait, request a protection reset,
+then submit a diagnosis from a form (component, part, failure mode, confidence, and evidence picked from your own steps).
+Every action goes through the same tools and safety policy as the agent, so a resistance reading on a live circuit is
+blocked with the same red flash. The trace is saved in the agent trace format to `scenarios/engineer_traces/` and becomes
+the engineer reference column. **Compare** then runs the baseline and the agent on the same fault and shows engineer,
+agent and baseline side by side: verdict, measurements, redundant readings, blocked attempts, time, cost and the full
+sequence of meter readings.
+
+| Engineer mode: blocked reading | Engineer vs agent vs baseline |
+|---|---|
+| ![Blocked](docs/screenshots/manual_2_blocked.png) | ![Compare](docs/screenshots/manual_6_compare.png) |
+
+The UI replaces em dashes in the model's text with commas for display; the content is not otherwise changed.
+
 Run it:
 
 ```
@@ -114,6 +129,12 @@ uv run python scripts/run_scenarios.py --runner baseline --suite clean          
 uv run python scripts/run_scenarios.py --suite scenarios --repeat 3 --effort low   # dev scenarios, variance
 uv run python scripts/run_scenarios.py --suite clean --only c02 --approve          # simulated human approves
 ```
+
+## Spend guard
+
+Every agent run records its API cost in `runs/spend.json` (started at the $21 spent before the ledger existed).
+`run_scenarios.py` estimates a batch at $0.10 per agent run and refuses to start if the total would pass $110, unless
+`--force`. The UI refuses agent and compare runs over the limit.
 
 ## Known Muse Spark behaviour: tool calls written as text
 

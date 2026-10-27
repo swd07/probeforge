@@ -33,6 +33,8 @@ from probeforge.agent.client import MUSE_SPARK, make_client
 from probeforge.agent.loop import run_agent
 from probeforge.baseline import HalfSplitBaseline
 from probeforge.eval.scoring import score
+from probeforge.eval.spend import EST_PER_AGENT_RUN_USD, SpendLedger, SpendLimitError
+from probeforge.eval.trace import make_trace
 from probeforge.faults import Fault
 from probeforge.faults.catalog import SCENARIOS_DIR, load_scenarios
 from probeforge.sim import Circuit
@@ -87,41 +89,32 @@ def evidence_counts(diagnosis: dict | None) -> tuple[int, int]:
     return (sum(e.get("type") == "functional_test" for e in ev), sum(e.get("type") == "instrument_reading" for e in ev))
 
 
-def run_case(case: Case, args, client, out_dir: Path, rep: int) -> dict:
+def run_case(case: Case, args, client, out_dir: Path, rep: int, ledger: SpendLedger | None) -> dict:
     circuit = Circuit.load(case.circuit)
     circuit.apply_fault(case.fault)
     circuit.set_power(True)
     t0 = time.perf_counter()
+    name = case.id if args.repeat == 1 else f"{case.id}_r{rep}"
+    approver = approve_all if args.approve else deny_all
     if args.runner == "agent":
         run, tb = run_agent(circuit, client, model=args.model, effort=args.effort, max_turns=args.max_turns,
-                            approver=approve_all if args.approve else deny_all)
-        diagnosis, outcome, error = run.diagnosis, run.outcome, run.error
-        tokens = {"prompt": run.prompt_tokens, "cached": run.cached_tokens, "completion": run.completion_tokens}
-        cost, turns, protocol_errors, turn_log = run.cost_usd, run.turns, run.protocol_errors, run.turn_log
-        notes, recovered, missing = [], run.recovered_text_calls, run.missing_hypothesis_updates
+                            approver=approver)
+        diagnosis, outcome, notes = run.diagnosis, run.outcome, []
+        if ledger:
+            ledger.record(run.cost_usd, f"{out_dir.name}/{name}")
     else:
-        baseline = HalfSplitBaseline(circuit, approver=approve_all if args.approve else deny_all)
-        diagnosis = baseline.run()
-        tb = baseline.tb
-        outcome, error = diagnosis.get("outcome"), None
-        tokens, cost, turns, protocol_errors, turn_log = {"prompt": 0, "cached": 0, "completion": 0}, 0.0, 0, 0, []
-        notes, recovered, missing = baseline.notes, 0, 0
-    seconds = round(time.perf_counter() - t0, 1)
-
-    name = case.id if args.repeat == 1 else f"{case.id}_r{rep}"
-    trace = {
-        "case": name, "runner": args.runner, "model": args.model if args.runner == "agent" else None,
-        "effort": args.effort, "approve": args.approve, "outcome": outcome, "diagnosis": diagnosis, "turns": turns,
-        "protocol_errors": protocol_errors, "recovered_text_calls": recovered,
-        "missing_hypothesis_updates": missing, "measurements": tb.measurements,
-        "redundant_measurements": tb.redundant_measurements, "tool_calls": tb.step,
-        "policy": {"blocked": tb.policy.stats.blocked, "approval_requests": tb.policy.stats.approval_requests,
-                   "approvals_denied": tb.policy.stats.approvals_denied,
-                   "blocked_actions": tb.policy.stats.blocked_actions},
-        "tokens": tokens, "cost_usd": cost, "seconds": seconds, "error": error, "notes": notes,
-        "turn_log": turn_log, "tool_log": tb.log, "hypotheses_history": tb.hypotheses_history,
-    }
+        baseline = HalfSplitBaseline(circuit, approver=approver)
+        diagnosis, run = baseline.run(), None
+        tb, outcome, notes = baseline.tb, diagnosis.get("outcome"), baseline.notes
+    seconds = time.perf_counter() - t0
+    trace = make_trace(case=name, runner=args.runner, tb=tb, diagnosis=diagnosis, outcome=outcome, seconds=seconds,
+                       run=run, notes=notes, extra={"approve": args.approve})
     (out_dir / f"{name}.json").write_text(json.dumps(trace, indent=2, ensure_ascii=False), encoding="utf-8")
+    error = trace["error"]
+    tokens, cost, turns = trace["tokens"], trace["cost_usd"], trace["turns"]
+    protocol_errors, recovered = trace["protocol_errors"], trace["recovered_text_calls"]
+    missing = trace["missing_hypothesis_updates"]
+    seconds = trace["seconds"]
 
     s = score(diagnosis, case.fault)
     exact = s["component_ok"] and s["mode_ok"]
@@ -192,6 +185,7 @@ def main() -> None:
     ap.add_argument("--max-turns", type=int, default=30)
     ap.add_argument("--repeat", type=int, default=1)
     ap.add_argument("--workers", type=int, default=8)
+    ap.add_argument("--force", action="store_true", help="run even if the spend limit would be exceeded")
     args = ap.parse_args()
 
     cases = [c for c in build_cases(args.suite) if not args.only or c.id in args.only]
@@ -201,13 +195,20 @@ def main() -> None:
            + ("_approve" if args.approve else ""))
     out_dir = ROOT / "runs" / tag
     out_dir.mkdir(parents=True, exist_ok=True)
-    client = make_client() if args.runner == "agent" else None
+    client, ledger = None, None
+    if args.runner == "agent":
+        ledger = SpendLedger()
+        try:
+            ledger.check(len(jobs) * EST_PER_AGENT_RUN_USD, force=args.force, what=f"{len(jobs)} agent runs")
+        except SpendLimitError as e:
+            raise SystemExit(f"Refusing to start: {e}")
+        client = make_client()
 
     started = time.perf_counter()
 
     def job(item):
         case, rep = item
-        row = run_case(case, args, client, out_dir, rep)
+        row = run_case(case, args, client, out_dir, rep, ledger)
         print(f"{row['case']}: {row['diagnosed']} (expected {row['expected']}) correct={yes(row['correct'])} "
               f"meas={row['measurements']} {row['seconds']}s" + (f" ERROR {row['error']}" if row["error"] else ""), flush=True)
         return row
@@ -223,6 +224,8 @@ def main() -> None:
     (out_dir / "results.md").write_text(table, encoding="utf-8")
     (out_dir / "results.json").write_text(json.dumps({"args": vars(args), "frozen": frozen_hashes(), "wall_s": wall, "rows": rows}, indent=2), encoding="utf-8")
     print(f"Frozen: {frozen_hashes()}")
+    if ledger:
+        print(f"Spend: ${ledger.total:.2f} of ${ledger.limit_usd:.2f}")
     print(f"Traces: {out_dir}")
 
 
