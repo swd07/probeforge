@@ -1,0 +1,6 @@
+id: s05
+title: KM1 self-hold auxiliary contact not closing
+circuit: circuits/star_delta_reversing.yaml
+fault: {component: KM1, part: "13-14", mode: stuck_open}
+symptom: Motor runs only while Start is held
+engineer_trace: []   # to be filled in by an electrical engineer

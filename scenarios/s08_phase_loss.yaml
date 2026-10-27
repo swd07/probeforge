@@ -1,0 +1,6 @@
+id: s08
+title: Phase loss in power circuit (FU2 L3 fuse blown)
+circuit: circuits/star_delta_reversing.yaml
+fault: {component: FU2, part: "5-6", mode: open}
+symptom: Motor hums, thermal relay trips
+engineer_trace: []   # to be filled in by an electrical engineer

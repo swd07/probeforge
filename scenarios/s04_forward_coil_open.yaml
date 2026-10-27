@@ -1,0 +1,6 @@
+id: s04
+title: Forward contactor KM1 coil open
+circuit: circuits/star_delta_reversing.yaml
+fault: {component: KM1, part: A1-A2, mode: open}
+symptom: Forward does not start, reverse works
+engineer_trace: []   # to be filled in by an electrical engineer

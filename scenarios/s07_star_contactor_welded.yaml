@@ -1,0 +1,6 @@
+id: s07
+title: Star contactor KM3 contacts welded
+circuit: circuits/star_delta_reversing.yaml
+fault: {component: KM3, mode: welded}
+symptom: Interlock blocks delta, motor stays in star
+engineer_trace: []   # to be filled in by an electrical engineer

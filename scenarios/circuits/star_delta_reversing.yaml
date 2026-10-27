@@ -1,0 +1,124 @@
+# Star-delta reversing motor starter.
+#
+# Single source of truth for the simulator, the text netlist given to the agent
+# and the schematic SVG. Terminals are written COMPONENT:TERMINAL, two-terminal
+# parts are written COMPONENT:A-B (for example KM1:13-14).
+
+name: star_delta_reversing
+title: Star-delta reversing motor starter
+
+supply:
+  voltage: 230            # phase to neutral, volts (400 V phase to phase)
+  phases: {L1: 0, L2: -120, L3: 120}   # phase angle, degrees
+  neutral: N
+
+power_switch: QF1         # set_power(on/off) closes / opens this breaker
+protection: [FU1, FU2, QF1]   # on a short circuit the first device that clears it opens
+interlocks:               # mechanical interlocks: at most one of each pair can be closed
+  - [KM1, KM2]
+  - [KM3, KM4]
+
+components:
+  QF1: {type: breaker, label: Main breaker, poles: ["1-2", "3-4", "5-6"]}
+  FU2: {type: fuse, label: Power fuses, poles: ["1-2", "3-4", "5-6"]}
+  FU1: {type: fuse, label: Control fuse, poles: ["1-2"]}
+
+  KM1: {type: contactor, label: Forward, coil: A1-A2, main: ["1-2", "3-4", "5-6"],
+        no_contacts: ["13-14", "43-44", "53-54"], nc_contacts: ["21-22"]}
+  KM2: {type: contactor, label: Reverse, coil: A1-A2, main: ["1-2", "3-4", "5-6"],
+        no_contacts: ["13-14", "43-44", "53-54"], nc_contacts: ["21-22"]}
+  KM3: {type: contactor, label: Star, coil: A1-A2, main: ["1-2", "3-4", "5-6"], nc_contacts: ["21-22"]}
+  KM4: {type: contactor, label: Delta, coil: A1-A2, main: ["1-2", "3-4", "5-6"], nc_contacts: ["21-22"]}
+  KT:  {type: timer, label: Star-delta timer, coil: A1-A2, delay: 5.0,
+        nc_delayed: ["55-56"], no_delayed: ["67-68"]}
+  KK1: {type: thermal_relay, label: Motor overload, heaters: ["1-2", "3-4", "5-6"],
+        trip_time: 8.0, nc_contacts: ["95-96"], no_contacts: ["97-98"]}
+
+  SB1: {type: button, label: Stop, nc_contacts: ["11-12"]}
+  SB2: {type: button, label: Start Fwd, no_contacts: ["13-14"]}
+  SB3: {type: button, label: Start Rev, no_contacts: ["13-14"]}
+
+  HL1: {type: lamp, label: Power, terminals: X1-X2}
+  HL2: {type: lamp, label: Fault, terminals: X1-X2}
+  HL3: {type: lamp, label: Forward, terminals: X1-X2}
+  HL4: {type: lamp, label: Reverse, terminals: X1-X2}
+
+  M1: {type: motor, label: Motor, windings: ["U1-U2", "V1-V2", "W1-W2"]}
+
+nets:
+  # supply
+  L1: [QF1:1]
+  L2: [QF1:3]
+  L3: [QF1:5]
+  N: [KM1:A2, KM2:A2, KM3:A2, KM4:A2, KT:A2, HL1:X2, HL2:X2, HL3:X2, HL4:X2]
+
+  # power circuit
+  L1Q: [QF1:2, FU2:1, FU1:1]          # L1 after the main breaker also feeds the control fuse
+  L2Q: [QF1:4, FU2:3]
+  L3Q: [QF1:6, FU2:5]
+  L1F: [FU2:2, KM1:1, KM2:5]          # KM2 swaps L1 and L3 for reverse
+  L2F: [FU2:4, KM1:3, KM2:3]
+  L3F: [FU2:6, KM1:5, KM2:1]
+  T1: [KM1:2, KM2:2, KK1:1]
+  T2: [KM1:4, KM2:4, KK1:3]
+  T3: [KM1:6, KM2:6, KK1:5]
+  U1: [KK1:2, M1:U1, KM4:1]
+  V1: [KK1:4, M1:V1, KM4:3]
+  W1: [KK1:6, M1:W1, KM4:5]
+  U2: [M1:U2, KM4:4, KM3:3]           # delta: U2-V1, V2-W1, W2-U1 through KM4
+  V2: [M1:V2, KM4:6, KM3:5]
+  W2: [M1:W2, KM4:2, KM3:1]
+  STAR: [KM3:2, KM3:4, KM3:6]         # star point made by KM3
+
+  # control circuit (wire numbers)
+  "1": [FU1:2, KK1:95, KK1:97, HL1:X1, KM1:53, KM2:53]
+  "2": [KK1:96, SB1:11]
+  "3": [SB1:12, SB2:13, KM1:13, SB3:13, KM2:13, KM1:43, KM2:43]
+  "4": [SB2:14, KM1:14, KM2:21]       # KM1 self-hold 13-14 in parallel with Start Fwd
+  "5": [KM2:22, KM1:A1]               # KM2 21-22 electrical interlock
+  "6": [SB3:14, KM2:14, KM1:21]
+  "7": [KM1:22, KM2:A1]
+  "8": [KM1:44, KM2:44, KT:A1, KT:55, KT:67]   # live while KM1 or KM2 is closed
+  "9": [KT:56, KM4:21]
+  "10": [KM4:22, KM3:A1]
+  "11": [KT:68, KM3:21]
+  "12": [KM3:22, KM4:A1]
+  "13": [KK1:98, HL2:X1]
+  "14": [KM1:54, HL3:X1]
+  "15": [KM2:54, HL4:X1]
+
+# Drawing positions only. All wires in the SVG are drawn from `nets` above.
+layout:
+  power:
+    origin: [120, 130]
+    pole_pitch: 44
+    pole_height: 50
+    blocks:
+      - {parts: [QF1:1-2, QF1:3-4, QF1:5-6], at: [60, 0]}
+      - {parts: [FU2:1-2, FU2:3-4, FU2:5-6], at: [60, 110]}
+      - {parts: [KM1:1-2, KM1:3-4, KM1:5-6], at: [0, 230]}
+      - {parts: [KM2:1-2, KM2:3-4, KM2:5-6], at: [180, 230]}
+      - {parts: [KK1:1-2, KK1:3-4, KK1:5-6], at: [0, 350]}
+      - {parts: [M1:U1-U2, M1:V1-V2, M1:W1-W2], at: [0, 470]}
+      - {parts: [KM4:1-2, KM4:3-4, KM4:5-6], at: [180, 470]}
+      - {parts: [KM3:1-2, KM3:3-4, KM3:5-6], at: [0, 600]}
+  control:
+    origin: [540, 130]
+    col_width: 112
+    row_height: 70
+    columns: 9
+    left_rail: L1Q
+    right_rail: N
+    rows:
+      - [FU1:1-2@0, KK1:95-96@1, SB1:11-12@2, SB2:13-14@3, KM2:21-22@4, KM1:A1-A2@8]
+      - [KM1:13-14@3]
+      - [SB3:13-14@3, KM1:21-22@4, KM2:A1-A2@8]
+      - [KM2:13-14@3]
+      - [KM1:43-44@3, KT:A1-A2@8]
+      - [KM2:43-44@3]
+      - [KT:55-56@4, KM4:21-22@5, KM3:A1-A2@8]
+      - [KT:67-68@4, KM3:21-22@5, KM4:A1-A2@8]
+      - [KK1:97-98@1, HL2:X1-X2@8]
+      - [HL1:X1-X2@8]
+      - [KM1:53-54@1, HL3:X1-X2@8]
+      - [KM2:53-54@1, HL4:X1-X2@8]

@@ -132,6 +132,26 @@ Not a dashboard. One main screen:
 
 Kill rule: if by end of Oct 29 the agent cannot correctly diagnose at least 5 of the 8 scenarios, simplify the circuit before adding anything else.
 
+## Verified API facts
+
+Checked against https://dev.meta.ai/docs and a live run of `scripts/check_meta_api.py` on 2026-10-27 (all four checks passed).
+
+- Base URL: `https://api.meta.ai/v1`. Use the Chat Completions endpoint (`/chat/completions`) through the OpenAI Python SDK. The Responses and Anthropic-style Messages endpoints also exist.
+- Model ids: `muse-spark-1.3` (main), `muse-spark-1.2`, `muse-spark-1.1`; Muse Wonder preview `muse-wonder-1.0`.
+- Auth: bearer token. The docs call the env var `MODEL_API_KEY`; this project reads `META_API_KEY` from `.env` and falls back to `MODEL_API_KEY` (see `src/probeforge/agent/client.py`).
+- Tool calling: `tool_choice` supports only `"auto"` (`"none"`, `"required"` and named functions return HTTP 400). Parallel tool calls are on by default (`parallel_tool_calls: false` to disable). Streamed tool-call arguments arrive as deltas keyed by `index`.
+- Tool result ordering: every assistant message with `tool_calls` must be followed immediately by one `tool` message per call id, or the request returns HTTP 400.
+- Structured output: `response_format={"type": "json_schema", "json_schema": {"name", "schema", "strict": true}}`. With strict, every object needs `additionalProperties: false` and all properties in `required`. No recursive schemas.
+- Image input: `image_url` content parts with a `data:image/png;base64,...` URL (png, jpeg, gif, webp; no SVG). Muse Spark read a generated ladder schematic correctly (all labels, terminals and wire numbers).
+- Muse Spark always reasons: `reasoning_effort` accepts `minimal`, `low`, `medium`, `high`, `xhigh`; `"none"` returns HTTP 400. Reasoning tokens are counted in `completion_tokens` and dominate cost (3.7k to 4.7k per structured or image call at default effort).
+- Unsupported params (HTTP 400): `stop`, `n > 1`, `verbosity`, `logit_bias`, `prediction`, `web_search_options`, `modalities`, `audio`, `logprobs: true`, `max_output_tokens`, `text.format`, `top_p: 0`. Leave `frequency_penalty` and `presence_penalty` unset. Use `max_completion_tokens`, not `max_tokens`.
+- Chat Completions does not carry reasoning across turns.
+
+## Local environment
+
+- uv is installed via pip and is not on PATH: run it as `python -m uv` (for example `python -m uv run pytest`, `python -m uv add <pkg>`).
+- Project uses the uv `src/` layout: package code lives in `src/probeforge/` (so `sim/`, `faults/`, `tools/`, ... from the architecture above are `src/probeforge/sim/` etc.). `scenarios/`, `scripts/`, `tests/` and `web/` stay at the repo root.
+
 ## Plan
 
 - Oct 28: repo setup, Day 1 API checks, simulator core (control circuit propagation), scenario YAML format.

@@ -1,0 +1,6 @@
+id: s06
+title: Timer relay KT failed (coil open)
+circuit: circuits/star_delta_reversing.yaml
+fault: {component: KT, part: A1-A2, mode: open}
+symptom: Motor stays in star
+engineer_trace: []   # to be filled in by an electrical engineer

@@ -1,0 +1,6 @@
+id: s03
+title: Thermal overload relay tripped
+circuit: circuits/star_delta_reversing.yaml
+fault: {component: KK1, mode: tripped}
+symptom: Fault lamp on, no start
+engineer_trace: []   # to be filled in by an electrical engineer

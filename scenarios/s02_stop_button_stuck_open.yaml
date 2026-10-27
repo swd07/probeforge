@@ -1,0 +1,6 @@
+id: s02
+title: Stop button NC contact stuck open
+circuit: circuits/star_delta_reversing.yaml
+fault: {component: SB1, part: "11-12", mode: stuck_open}
+symptom: Nothing responds, Power lamp on
+engineer_trace: []   # to be filled in by an electrical engineer

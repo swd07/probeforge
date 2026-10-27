@@ -1,0 +1,680 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1628" height="955" viewBox="0 0 1628 955" data-circuit="star_delta_reversing">
+<style>
+.wire, .sym { stroke: #1d2430; stroke-width: 2; fill: none; stroke-linecap: round; }
+.link { stroke: #1d2430; stroke-width: 1.2; stroke-dasharray: 5 4; fill: none; }
+.dot { fill: #1d2430; }
+.terminal { fill: #ffffff; stroke: #1d2430; stroke-width: 1.2; }
+text { font-family: Arial, Helvetica, sans-serif; fill: #1d2430; }
+.id { font-size: 15px; font-weight: bold; }
+.lbl { font-size: 12px; fill: #4a5568; }
+.tn { font-size: 11px; fill: #4a5568; }
+.net { font-size: 12px; fill: #2b6cb0; font-weight: bold; }
+.title { font-size: 20px; font-weight: bold; }
+.region { font-size: 14px; fill: #4a5568; font-weight: bold; }
+</style>
+<rect width="1628" height="955" fill="#ffffff"/>
+<g class="wires">
+<line class="wire" x1="540" y1="90" x2="540" y2="916" data-net="L1Q"/>
+<line class="wire" x1="1588" y1="90" x2="1588" y2="916" data-net="N"/>
+<path class="wire" data-net="L1" d="M 180 130 V 112"/>
+<path class="wire" data-net="L2" d="M 224 130 V 112"/>
+<path class="wire" data-net="L3" d="M 268 130 V 112"/>
+<path class="wire" data-net="N" d="M 1588 130 H 1542"/>
+<circle class="dot" cx="1588" cy="130" r="3.6"/>
+<path class="wire" data-net="N" d="M 1588 270 H 1542"/>
+<circle class="dot" cx="1588" cy="270" r="3.6"/>
+<path class="wire" data-net="N" d="M 1588 550 H 1542"/>
+<circle class="dot" cx="1588" cy="550" r="3.6"/>
+<path class="wire" data-net="N" d="M 1588 620 H 1542"/>
+<circle class="dot" cx="1588" cy="620" r="3.6"/>
+<path class="wire" data-net="N" d="M 1588 410 H 1542"/>
+<circle class="dot" cx="1588" cy="410" r="3.6"/>
+<path class="wire" data-net="N" d="M 1588 760 H 1542"/>
+<circle class="dot" cx="1588" cy="760" r="3.6"/>
+<path class="wire" data-net="N" d="M 1588 690 H 1542"/>
+<circle class="dot" cx="1588" cy="690" r="3.6"/>
+<path class="wire" data-net="N" d="M 1588 830 H 1542"/>
+<circle class="dot" cx="1588" cy="830" r="3.6"/>
+<path class="wire" data-net="N" d="M 1588 900 H 1542"/>
+<circle class="dot" cx="1588" cy="900" r="3.6"/>
+<path class="wire" data-net="L1Q" d="M 180 180 V 194 M 180 240 V 194"/>
+<path class="wire" data-net="L1Q" d="M 180 194 H 146"/>
+<path class="wire" data-net="L1Q" d="M 540 130 H 586"/>
+<circle class="dot" cx="540" cy="130" r="3.6"/>
+<path class="wire" data-net="L2Q" d="M 224 180 V 202 M 224 240 V 202"/>
+<path class="wire" data-net="L3Q" d="M 268 180 V 210 M 268 240 V 210"/>
+<path class="wire" data-net="L1F" d="M 120 304 H 388 M 180 290 V 304 M 120 360 V 304 M 388 360 V 304"/>
+<circle class="dot" cx="180" cy="304" r="3.6"/>
+<path class="wire" data-net="L2F" d="M 164 312 H 344 M 224 290 V 312 M 164 360 V 312 M 344 360 V 312"/>
+<circle class="dot" cx="224" cy="312" r="3.6"/>
+<path class="wire" data-net="L3F" d="M 208 320 H 300 M 268 290 V 320 M 208 360 V 320 M 300 360 V 320"/>
+<circle class="dot" cx="268" cy="320" r="3.6"/>
+<path class="wire" data-net="T1" d="M 120 424 H 300 M 120 410 V 424 M 300 410 V 424 M 120 480 V 424"/>
+<circle class="dot" cx="120" cy="424" r="3.6"/>
+<path class="wire" data-net="T2" d="M 164 432 H 344 M 164 410 V 432 M 344 410 V 432 M 164 480 V 432"/>
+<circle class="dot" cx="164" cy="432" r="3.6"/>
+<path class="wire" data-net="T3" d="M 208 440 H 388 M 208 410 V 440 M 388 410 V 440 M 208 480 V 440"/>
+<circle class="dot" cx="208" cy="440" r="3.6"/>
+<path class="wire" data-net="U1" d="M 120 544 H 300 M 120 530 V 544 M 120 600 V 544 M 300 600 V 544"/>
+<circle class="dot" cx="120" cy="544" r="3.6"/>
+<path class="wire" data-net="V1" d="M 164 552 H 344 M 164 530 V 552 M 164 600 V 552 M 344 600 V 552"/>
+<circle class="dot" cx="164" cy="552" r="3.6"/>
+<path class="wire" data-net="W1" d="M 208 560 H 388 M 208 530 V 560 M 208 600 V 560 M 388 600 V 560"/>
+<circle class="dot" cx="208" cy="560" r="3.6"/>
+<path class="wire" data-net="U2" d="M 120 664 H 344 M 120 650 V 664 M 344 650 V 664 M 164 730 V 664"/>
+<circle class="dot" cx="164" cy="664" r="3.6"/>
+<path class="wire" data-net="V2" d="M 164 672 H 388 M 164 650 V 672 M 388 650 V 672 M 208 730 V 672"/>
+<circle class="dot" cx="208" cy="672" r="3.6"/>
+<path class="wire" data-net="W2" d="M 120 680 H 300 M 208 650 V 680 M 300 650 V 680 M 120 730 V 680"/>
+<circle class="dot" cx="208" cy="680" r="3.6"/>
+<path class="wire" data-net="STAR" d="M 120 780 H 208"/>
+<circle class="dot" cx="646" cy="130" r="3.6"/>
+<circle class="dot" cx="646" cy="690" r="3.6"/>
+<circle class="dot" cx="646" cy="760" r="3.6"/>
+<circle class="dot" cx="646" cy="830" r="3.6"/>
+<path class="wire" data-net="1" d="M 646 130 V 900 M 646 130 H 698 M 646 690 H 698 M 646 760 H 1482 M 646 830 H 698 M 646 900 H 698"/>
+<path class="wire" data-net="2" d="M 758 130 H 810"/>
+<circle class="dot" cx="870" cy="130" r="3.6"/>
+<circle class="dot" cx="870" cy="200" r="3.6"/>
+<circle class="dot" cx="870" cy="270" r="3.6"/>
+<circle class="dot" cx="870" cy="340" r="3.6"/>
+<circle class="dot" cx="870" cy="410" r="3.6"/>
+<path class="wire" data-net="3" d="M 870 130 V 480 M 870 130 H 922 M 870 200 H 922 M 870 270 H 922 M 870 340 H 922 M 870 410 H 922 M 870 480 H 922"/>
+<circle class="dot" cx="982" cy="130" r="3.6"/>
+<path class="wire" data-net="4" d="M 982 130 V 200 M 982 130 H 1034"/>
+<path class="wire" data-net="5" d="M 1094 130 H 1482"/>
+<circle class="dot" cx="982" cy="270" r="3.6"/>
+<path class="wire" data-net="6" d="M 982 270 V 340 M 982 270 H 1034"/>
+<path class="wire" data-net="7" d="M 1094 270 H 1482"/>
+<circle class="dot" cx="982" cy="410" r="3.6"/>
+<circle class="dot" cx="982" cy="480" r="3.6"/>
+<circle class="dot" cx="982" cy="550" r="3.6"/>
+<path class="wire" data-net="8" d="M 982 410 V 620 M 982 410 H 1482 M 982 550 H 1034 M 982 620 H 1034"/>
+<path class="wire" data-net="9" d="M 1094 550 H 1146"/>
+<path class="wire" data-net="10" d="M 1206 550 H 1482"/>
+<path class="wire" data-net="11" d="M 1094 620 H 1146"/>
+<path class="wire" data-net="12" d="M 1206 620 H 1482"/>
+<path class="wire" data-net="13" d="M 758 690 H 1482"/>
+<path class="wire" data-net="14" d="M 758 830 H 1482"/>
+<path class="wire" data-net="15" d="M 758 900 H 1482"/>
+</g>
+<g class="parts">
+<g class="part kind-breaker_pole" data-part="QF1:1-2">
+<line class="sym" x1="180" y1="130" x2="180" y2="144"/>
+<line class="sym" x1="180" y1="180" x2="180" y2="166"/>
+<line class="sym" x1="180" y1="166" x2="169" y2="146"/>
+<line class="sym" x1="176" y1="140" x2="184" y2="148"/>
+<line class="sym" x1="176" y1="148" x2="184" y2="140"/>
+<circle class="terminal" data-terminal="QF1:1" cx="180" cy="130" r="2.6"/>
+<circle class="terminal" data-terminal="QF1:2" cx="180" cy="180" r="2.6"/>
+</g>
+<g class="part kind-breaker_pole" data-part="QF1:3-4">
+<line class="sym" x1="224" y1="130" x2="224" y2="144"/>
+<line class="sym" x1="224" y1="180" x2="224" y2="166"/>
+<line class="sym" x1="224" y1="166" x2="213" y2="146"/>
+<line class="sym" x1="220" y1="140" x2="228" y2="148"/>
+<line class="sym" x1="220" y1="148" x2="228" y2="140"/>
+<circle class="terminal" data-terminal="QF1:3" cx="224" cy="130" r="2.6"/>
+<circle class="terminal" data-terminal="QF1:4" cx="224" cy="180" r="2.6"/>
+</g>
+<g class="part kind-breaker_pole" data-part="QF1:5-6">
+<line class="sym" x1="268" y1="130" x2="268" y2="144"/>
+<line class="sym" x1="268" y1="180" x2="268" y2="166"/>
+<line class="sym" x1="268" y1="166" x2="257" y2="146"/>
+<line class="sym" x1="264" y1="140" x2="272" y2="148"/>
+<line class="sym" x1="264" y1="148" x2="272" y2="140"/>
+<circle class="terminal" data-terminal="QF1:5" cx="268" cy="130" r="2.6"/>
+<circle class="terminal" data-terminal="QF1:6" cx="268" cy="180" r="2.6"/>
+</g>
+<line class="link" x1="171" y1="155" x2="259" y2="155"/>
+<g class="part kind-fuse_pole" data-part="FU2:1-2">
+<line class="sym" x1="180" y1="240" x2="180" y2="290"/>
+<rect class="sym" x="174" y="251" width="12" height="28"/>
+<circle class="terminal" data-terminal="FU2:1" cx="180" cy="240" r="2.6"/>
+<circle class="terminal" data-terminal="FU2:2" cx="180" cy="290" r="2.6"/>
+</g>
+<g class="part kind-fuse_pole" data-part="FU2:3-4">
+<line class="sym" x1="224" y1="240" x2="224" y2="290"/>
+<rect class="sym" x="218" y="251" width="12" height="28"/>
+<circle class="terminal" data-terminal="FU2:3" cx="224" cy="240" r="2.6"/>
+<circle class="terminal" data-terminal="FU2:4" cx="224" cy="290" r="2.6"/>
+</g>
+<g class="part kind-fuse_pole" data-part="FU2:5-6">
+<line class="sym" x1="268" y1="240" x2="268" y2="290"/>
+<rect class="sym" x="262" y="251" width="12" height="28"/>
+<circle class="terminal" data-terminal="FU2:5" cx="268" cy="240" r="2.6"/>
+<circle class="terminal" data-terminal="FU2:6" cx="268" cy="290" r="2.6"/>
+</g>
+<g class="part kind-main" data-part="KM1:1-2">
+<line class="sym" x1="120" y1="360" x2="120" y2="376"/>
+<line class="sym" x1="120" y1="394" x2="120" y2="410"/>
+<line class="sym" x1="120" y1="394" x2="110" y2="375"/>
+<circle class="terminal" data-terminal="KM1:1" cx="120" cy="360" r="2.6"/>
+<circle class="terminal" data-terminal="KM1:2" cx="120" cy="410" r="2.6"/>
+</g>
+<g class="part kind-main" data-part="KM1:3-4">
+<line class="sym" x1="164" y1="360" x2="164" y2="376"/>
+<line class="sym" x1="164" y1="394" x2="164" y2="410"/>
+<line class="sym" x1="164" y1="394" x2="154" y2="375"/>
+<circle class="terminal" data-terminal="KM1:3" cx="164" cy="360" r="2.6"/>
+<circle class="terminal" data-terminal="KM1:4" cx="164" cy="410" r="2.6"/>
+</g>
+<g class="part kind-main" data-part="KM1:5-6">
+<line class="sym" x1="208" y1="360" x2="208" y2="376"/>
+<line class="sym" x1="208" y1="394" x2="208" y2="410"/>
+<line class="sym" x1="208" y1="394" x2="198" y2="375"/>
+<circle class="terminal" data-terminal="KM1:5" cx="208" cy="360" r="2.6"/>
+<circle class="terminal" data-terminal="KM1:6" cx="208" cy="410" r="2.6"/>
+</g>
+<line class="link" x1="111" y1="385" x2="199" y2="385"/>
+<g class="part kind-main" data-part="KM2:1-2">
+<line class="sym" x1="300" y1="360" x2="300" y2="376"/>
+<line class="sym" x1="300" y1="394" x2="300" y2="410"/>
+<line class="sym" x1="300" y1="394" x2="290" y2="375"/>
+<circle class="terminal" data-terminal="KM2:1" cx="300" cy="360" r="2.6"/>
+<circle class="terminal" data-terminal="KM2:2" cx="300" cy="410" r="2.6"/>
+</g>
+<g class="part kind-main" data-part="KM2:3-4">
+<line class="sym" x1="344" y1="360" x2="344" y2="376"/>
+<line class="sym" x1="344" y1="394" x2="344" y2="410"/>
+<line class="sym" x1="344" y1="394" x2="334" y2="375"/>
+<circle class="terminal" data-terminal="KM2:3" cx="344" cy="360" r="2.6"/>
+<circle class="terminal" data-terminal="KM2:4" cx="344" cy="410" r="2.6"/>
+</g>
+<g class="part kind-main" data-part="KM2:5-6">
+<line class="sym" x1="388" y1="360" x2="388" y2="376"/>
+<line class="sym" x1="388" y1="394" x2="388" y2="410"/>
+<line class="sym" x1="388" y1="394" x2="378" y2="375"/>
+<circle class="terminal" data-terminal="KM2:5" cx="388" cy="360" r="2.6"/>
+<circle class="terminal" data-terminal="KM2:6" cx="388" cy="410" r="2.6"/>
+</g>
+<line class="link" x1="291" y1="385" x2="379" y2="385"/>
+<g class="part kind-heater" data-part="KK1:1-2">
+<line class="sym" x1="120" y1="480" x2="120" y2="491"/>
+<line class="sym" x1="120" y1="530" x2="120" y2="519"/>
+<polyline class="sym" points="120,491 127,491 127,505 113,505 113,519 120,519"/>
+<circle class="terminal" data-terminal="KK1:1" cx="120" cy="480" r="2.6"/>
+<circle class="terminal" data-terminal="KK1:2" cx="120" cy="530" r="2.6"/>
+</g>
+<g class="part kind-heater" data-part="KK1:3-4">
+<line class="sym" x1="164" y1="480" x2="164" y2="491"/>
+<line class="sym" x1="164" y1="530" x2="164" y2="519"/>
+<polyline class="sym" points="164,491 171,491 171,505 157,505 157,519 164,519"/>
+<circle class="terminal" data-terminal="KK1:3" cx="164" cy="480" r="2.6"/>
+<circle class="terminal" data-terminal="KK1:4" cx="164" cy="530" r="2.6"/>
+</g>
+<g class="part kind-heater" data-part="KK1:5-6">
+<line class="sym" x1="208" y1="480" x2="208" y2="491"/>
+<line class="sym" x1="208" y1="530" x2="208" y2="519"/>
+<polyline class="sym" points="208,491 215,491 215,505 201,505 201,519 208,519"/>
+<circle class="terminal" data-terminal="KK1:5" cx="208" cy="480" r="2.6"/>
+<circle class="terminal" data-terminal="KK1:6" cx="208" cy="530" r="2.6"/>
+</g>
+<g class="part kind-winding" data-part="M1:U1-U2">
+<line class="sym" x1="120" y1="600" x2="120" y2="609"/>
+<line class="sym" x1="120" y1="650" x2="120" y2="641"/>
+<rect class="sym" x="114" y="609" width="12" height="32"/>
+<circle class="terminal" data-terminal="M1:U1" cx="120" cy="600" r="2.6"/>
+<circle class="terminal" data-terminal="M1:U2" cx="120" cy="650" r="2.6"/>
+</g>
+<g class="part kind-winding" data-part="M1:V1-V2">
+<line class="sym" x1="164" y1="600" x2="164" y2="609"/>
+<line class="sym" x1="164" y1="650" x2="164" y2="641"/>
+<rect class="sym" x="158" y="609" width="12" height="32"/>
+<circle class="terminal" data-terminal="M1:V1" cx="164" cy="600" r="2.6"/>
+<circle class="terminal" data-terminal="M1:V2" cx="164" cy="650" r="2.6"/>
+</g>
+<g class="part kind-winding" data-part="M1:W1-W2">
+<line class="sym" x1="208" y1="600" x2="208" y2="609"/>
+<line class="sym" x1="208" y1="650" x2="208" y2="641"/>
+<rect class="sym" x="202" y="609" width="12" height="32"/>
+<circle class="terminal" data-terminal="M1:W1" cx="208" cy="600" r="2.6"/>
+<circle class="terminal" data-terminal="M1:W2" cx="208" cy="650" r="2.6"/>
+</g>
+<rect class="link" x="104" y="604" width="120" height="42" rx="6"/>
+<g class="part kind-main" data-part="KM4:1-2">
+<line class="sym" x1="300" y1="600" x2="300" y2="616"/>
+<line class="sym" x1="300" y1="634" x2="300" y2="650"/>
+<line class="sym" x1="300" y1="634" x2="290" y2="615"/>
+<circle class="terminal" data-terminal="KM4:1" cx="300" cy="600" r="2.6"/>
+<circle class="terminal" data-terminal="KM4:2" cx="300" cy="650" r="2.6"/>
+</g>
+<g class="part kind-main" data-part="KM4:3-4">
+<line class="sym" x1="344" y1="600" x2="344" y2="616"/>
+<line class="sym" x1="344" y1="634" x2="344" y2="650"/>
+<line class="sym" x1="344" y1="634" x2="334" y2="615"/>
+<circle class="terminal" data-terminal="KM4:3" cx="344" cy="600" r="2.6"/>
+<circle class="terminal" data-terminal="KM4:4" cx="344" cy="650" r="2.6"/>
+</g>
+<g class="part kind-main" data-part="KM4:5-6">
+<line class="sym" x1="388" y1="600" x2="388" y2="616"/>
+<line class="sym" x1="388" y1="634" x2="388" y2="650"/>
+<line class="sym" x1="388" y1="634" x2="378" y2="615"/>
+<circle class="terminal" data-terminal="KM4:5" cx="388" cy="600" r="2.6"/>
+<circle class="terminal" data-terminal="KM4:6" cx="388" cy="650" r="2.6"/>
+</g>
+<line class="link" x1="291" y1="625" x2="379" y2="625"/>
+<g class="part kind-main" data-part="KM3:1-2">
+<line class="sym" x1="120" y1="730" x2="120" y2="746"/>
+<line class="sym" x1="120" y1="764" x2="120" y2="780"/>
+<line class="sym" x1="120" y1="764" x2="110" y2="745"/>
+<circle class="terminal" data-terminal="KM3:1" cx="120" cy="730" r="2.6"/>
+<circle class="terminal" data-terminal="KM3:2" cx="120" cy="780" r="2.6"/>
+</g>
+<g class="part kind-main" data-part="KM3:3-4">
+<line class="sym" x1="164" y1="730" x2="164" y2="746"/>
+<line class="sym" x1="164" y1="764" x2="164" y2="780"/>
+<line class="sym" x1="164" y1="764" x2="154" y2="745"/>
+<circle class="terminal" data-terminal="KM3:3" cx="164" cy="730" r="2.6"/>
+<circle class="terminal" data-terminal="KM3:4" cx="164" cy="780" r="2.6"/>
+</g>
+<g class="part kind-main" data-part="KM3:5-6">
+<line class="sym" x1="208" y1="730" x2="208" y2="746"/>
+<line class="sym" x1="208" y1="764" x2="208" y2="780"/>
+<line class="sym" x1="208" y1="764" x2="198" y2="745"/>
+<circle class="terminal" data-terminal="KM3:5" cx="208" cy="730" r="2.6"/>
+<circle class="terminal" data-terminal="KM3:6" cx="208" cy="780" r="2.6"/>
+</g>
+<line class="link" x1="111" y1="755" x2="199" y2="755"/>
+<g class="part kind-fuse_pole" data-part="FU1:1-2">
+<line class="sym" x1="586" y1="130" x2="646" y2="130"/>
+<rect class="sym" x="596" y="123" width="40" height="14"/>
+<circle class="terminal" data-terminal="FU1:1" cx="586" cy="130" r="2.6"/>
+<circle class="terminal" data-terminal="FU1:2" cx="646" cy="130" r="2.6"/>
+</g>
+<g class="part kind-contact_nc" data-part="KK1:95-96">
+<line class="sym" x1="698" y1="130" x2="720" y2="130"/>
+<line class="sym" x1="736" y1="130" x2="758" y2="130"/>
+<line class="sym" x1="720" y1="117" x2="720" y2="143"/>
+<line class="sym" x1="736" y1="117" x2="736" y2="143"/>
+<line class="sym" x1="713" y1="145" x2="743" y2="115"/>
+<circle class="terminal" data-terminal="KK1:95" cx="698" cy="130" r="2.6"/>
+<circle class="terminal" data-terminal="KK1:96" cx="758" cy="130" r="2.6"/>
+</g>
+<g class="part kind-contact_nc" data-part="SB1:11-12">
+<line class="sym" x1="810" y1="130" x2="832" y2="130"/>
+<line class="sym" x1="848" y1="130" x2="870" y2="130"/>
+<line class="sym" x1="832" y1="117" x2="832" y2="143"/>
+<line class="sym" x1="848" y1="117" x2="848" y2="143"/>
+<line class="sym" x1="825" y1="145" x2="855" y2="115"/>
+<line class="link" x1="840" y1="117" x2="840" y2="107"/>
+<line class="sym" x1="834" y1="107" x2="846" y2="107"/>
+<circle class="terminal" data-terminal="SB1:11" cx="810" cy="130" r="2.6"/>
+<circle class="terminal" data-terminal="SB1:12" cx="870" cy="130" r="2.6"/>
+</g>
+<g class="part kind-contact_no" data-part="SB2:13-14">
+<line class="sym" x1="922" y1="130" x2="944" y2="130"/>
+<line class="sym" x1="960" y1="130" x2="982" y2="130"/>
+<line class="sym" x1="944" y1="117" x2="944" y2="143"/>
+<line class="sym" x1="960" y1="117" x2="960" y2="143"/>
+<line class="link" x1="952" y1="117" x2="952" y2="107"/>
+<line class="sym" x1="946" y1="107" x2="958" y2="107"/>
+<circle class="terminal" data-terminal="SB2:13" cx="922" cy="130" r="2.6"/>
+<circle class="terminal" data-terminal="SB2:14" cx="982" cy="130" r="2.6"/>
+</g>
+<g class="part kind-contact_nc" data-part="KM2:21-22">
+<line class="sym" x1="1034" y1="130" x2="1056" y2="130"/>
+<line class="sym" x1="1072" y1="130" x2="1094" y2="130"/>
+<line class="sym" x1="1056" y1="117" x2="1056" y2="143"/>
+<line class="sym" x1="1072" y1="117" x2="1072" y2="143"/>
+<line class="sym" x1="1049" y1="145" x2="1079" y2="115"/>
+<circle class="terminal" data-terminal="KM2:21" cx="1034" cy="130" r="2.6"/>
+<circle class="terminal" data-terminal="KM2:22" cx="1094" cy="130" r="2.6"/>
+</g>
+<g class="part kind-coil" data-part="KM1:A1-A2">
+<line class="sym" x1="1482" y1="130" x2="1490" y2="130"/>
+<line class="sym" x1="1534" y1="130" x2="1542" y2="130"/>
+<rect class="sym" x="1490" y="117" width="44" height="26"/>
+<circle class="terminal" data-terminal="KM1:A1" cx="1482" cy="130" r="2.6"/>
+<circle class="terminal" data-terminal="KM1:A2" cx="1542" cy="130" r="2.6"/>
+</g>
+<g class="part kind-contact_no" data-part="KM1:13-14">
+<line class="sym" x1="922" y1="200" x2="944" y2="200"/>
+<line class="sym" x1="960" y1="200" x2="982" y2="200"/>
+<line class="sym" x1="944" y1="187" x2="944" y2="213"/>
+<line class="sym" x1="960" y1="187" x2="960" y2="213"/>
+<circle class="terminal" data-terminal="KM1:13" cx="922" cy="200" r="2.6"/>
+<circle class="terminal" data-terminal="KM1:14" cx="982" cy="200" r="2.6"/>
+</g>
+<g class="part kind-contact_no" data-part="SB3:13-14">
+<line class="sym" x1="922" y1="270" x2="944" y2="270"/>
+<line class="sym" x1="960" y1="270" x2="982" y2="270"/>
+<line class="sym" x1="944" y1="257" x2="944" y2="283"/>
+<line class="sym" x1="960" y1="257" x2="960" y2="283"/>
+<line class="link" x1="952" y1="257" x2="952" y2="247"/>
+<line class="sym" x1="946" y1="247" x2="958" y2="247"/>
+<circle class="terminal" data-terminal="SB3:13" cx="922" cy="270" r="2.6"/>
+<circle class="terminal" data-terminal="SB3:14" cx="982" cy="270" r="2.6"/>
+</g>
+<g class="part kind-contact_nc" data-part="KM1:21-22">
+<line class="sym" x1="1034" y1="270" x2="1056" y2="270"/>
+<line class="sym" x1="1072" y1="270" x2="1094" y2="270"/>
+<line class="sym" x1="1056" y1="257" x2="1056" y2="283"/>
+<line class="sym" x1="1072" y1="257" x2="1072" y2="283"/>
+<line class="sym" x1="1049" y1="285" x2="1079" y2="255"/>
+<circle class="terminal" data-terminal="KM1:21" cx="1034" cy="270" r="2.6"/>
+<circle class="terminal" data-terminal="KM1:22" cx="1094" cy="270" r="2.6"/>
+</g>
+<g class="part kind-coil" data-part="KM2:A1-A2">
+<line class="sym" x1="1482" y1="270" x2="1490" y2="270"/>
+<line class="sym" x1="1534" y1="270" x2="1542" y2="270"/>
+<rect class="sym" x="1490" y="257" width="44" height="26"/>
+<circle class="terminal" data-terminal="KM2:A1" cx="1482" cy="270" r="2.6"/>
+<circle class="terminal" data-terminal="KM2:A2" cx="1542" cy="270" r="2.6"/>
+</g>
+<g class="part kind-contact_no" data-part="KM2:13-14">
+<line class="sym" x1="922" y1="340" x2="944" y2="340"/>
+<line class="sym" x1="960" y1="340" x2="982" y2="340"/>
+<line class="sym" x1="944" y1="327" x2="944" y2="353"/>
+<line class="sym" x1="960" y1="327" x2="960" y2="353"/>
+<circle class="terminal" data-terminal="KM2:13" cx="922" cy="340" r="2.6"/>
+<circle class="terminal" data-terminal="KM2:14" cx="982" cy="340" r="2.6"/>
+</g>
+<g class="part kind-contact_no" data-part="KM1:43-44">
+<line class="sym" x1="922" y1="410" x2="944" y2="410"/>
+<line class="sym" x1="960" y1="410" x2="982" y2="410"/>
+<line class="sym" x1="944" y1="397" x2="944" y2="423"/>
+<line class="sym" x1="960" y1="397" x2="960" y2="423"/>
+<circle class="terminal" data-terminal="KM1:43" cx="922" cy="410" r="2.6"/>
+<circle class="terminal" data-terminal="KM1:44" cx="982" cy="410" r="2.6"/>
+</g>
+<g class="part kind-coil" data-part="KT:A1-A2">
+<line class="sym" x1="1482" y1="410" x2="1490" y2="410"/>
+<line class="sym" x1="1534" y1="410" x2="1542" y2="410"/>
+<rect class="sym" x="1490" y="397" width="44" height="26"/>
+<line class="sym" x1="1490" y1="397" x2="1500" y2="423"/>
+<circle class="terminal" data-terminal="KT:A1" cx="1482" cy="410" r="2.6"/>
+<circle class="terminal" data-terminal="KT:A2" cx="1542" cy="410" r="2.6"/>
+</g>
+<g class="part kind-contact_no" data-part="KM2:43-44">
+<line class="sym" x1="922" y1="480" x2="944" y2="480"/>
+<line class="sym" x1="960" y1="480" x2="982" y2="480"/>
+<line class="sym" x1="944" y1="467" x2="944" y2="493"/>
+<line class="sym" x1="960" y1="467" x2="960" y2="493"/>
+<circle class="terminal" data-terminal="KM2:43" cx="922" cy="480" r="2.6"/>
+<circle class="terminal" data-terminal="KM2:44" cx="982" cy="480" r="2.6"/>
+</g>
+<g class="part kind-delayed_nc" data-part="KT:55-56">
+<line class="sym" x1="1034" y1="550" x2="1056" y2="550"/>
+<line class="sym" x1="1072" y1="550" x2="1094" y2="550"/>
+<line class="sym" x1="1056" y1="537" x2="1056" y2="563"/>
+<line class="sym" x1="1072" y1="537" x2="1072" y2="563"/>
+<line class="sym" x1="1049" y1="565" x2="1079" y2="535"/>
+<path class="sym" d="M 1056 531 A 8 6 0 0 1 1072 531"/>
+<circle class="terminal" data-terminal="KT:55" cx="1034" cy="550" r="2.6"/>
+<circle class="terminal" data-terminal="KT:56" cx="1094" cy="550" r="2.6"/>
+</g>
+<g class="part kind-contact_nc" data-part="KM4:21-22">
+<line class="sym" x1="1146" y1="550" x2="1168" y2="550"/>
+<line class="sym" x1="1184" y1="550" x2="1206" y2="550"/>
+<line class="sym" x1="1168" y1="537" x2="1168" y2="563"/>
+<line class="sym" x1="1184" y1="537" x2="1184" y2="563"/>
+<line class="sym" x1="1161" y1="565" x2="1191" y2="535"/>
+<circle class="terminal" data-terminal="KM4:21" cx="1146" cy="550" r="2.6"/>
+<circle class="terminal" data-terminal="KM4:22" cx="1206" cy="550" r="2.6"/>
+</g>
+<g class="part kind-coil" data-part="KM3:A1-A2">
+<line class="sym" x1="1482" y1="550" x2="1490" y2="550"/>
+<line class="sym" x1="1534" y1="550" x2="1542" y2="550"/>
+<rect class="sym" x="1490" y="537" width="44" height="26"/>
+<circle class="terminal" data-terminal="KM3:A1" cx="1482" cy="550" r="2.6"/>
+<circle class="terminal" data-terminal="KM3:A2" cx="1542" cy="550" r="2.6"/>
+</g>
+<g class="part kind-delayed_no" data-part="KT:67-68">
+<line class="sym" x1="1034" y1="620" x2="1056" y2="620"/>
+<line class="sym" x1="1072" y1="620" x2="1094" y2="620"/>
+<line class="sym" x1="1056" y1="607" x2="1056" y2="633"/>
+<line class="sym" x1="1072" y1="607" x2="1072" y2="633"/>
+<path class="sym" d="M 1056 601 A 8 6 0 0 1 1072 601"/>
+<circle class="terminal" data-terminal="KT:67" cx="1034" cy="620" r="2.6"/>
+<circle class="terminal" data-terminal="KT:68" cx="1094" cy="620" r="2.6"/>
+</g>
+<g class="part kind-contact_nc" data-part="KM3:21-22">
+<line class="sym" x1="1146" y1="620" x2="1168" y2="620"/>
+<line class="sym" x1="1184" y1="620" x2="1206" y2="620"/>
+<line class="sym" x1="1168" y1="607" x2="1168" y2="633"/>
+<line class="sym" x1="1184" y1="607" x2="1184" y2="633"/>
+<line class="sym" x1="1161" y1="635" x2="1191" y2="605"/>
+<circle class="terminal" data-terminal="KM3:21" cx="1146" cy="620" r="2.6"/>
+<circle class="terminal" data-terminal="KM3:22" cx="1206" cy="620" r="2.6"/>
+</g>
+<g class="part kind-coil" data-part="KM4:A1-A2">
+<line class="sym" x1="1482" y1="620" x2="1490" y2="620"/>
+<line class="sym" x1="1534" y1="620" x2="1542" y2="620"/>
+<rect class="sym" x="1490" y="607" width="44" height="26"/>
+<circle class="terminal" data-terminal="KM4:A1" cx="1482" cy="620" r="2.6"/>
+<circle class="terminal" data-terminal="KM4:A2" cx="1542" cy="620" r="2.6"/>
+</g>
+<g class="part kind-contact_no" data-part="KK1:97-98">
+<line class="sym" x1="698" y1="690" x2="720" y2="690"/>
+<line class="sym" x1="736" y1="690" x2="758" y2="690"/>
+<line class="sym" x1="720" y1="677" x2="720" y2="703"/>
+<line class="sym" x1="736" y1="677" x2="736" y2="703"/>
+<circle class="terminal" data-terminal="KK1:97" cx="698" cy="690" r="2.6"/>
+<circle class="terminal" data-terminal="KK1:98" cx="758" cy="690" r="2.6"/>
+</g>
+<g class="part kind-lamp" data-part="HL2:X1-X2">
+<line class="sym" x1="1482" y1="690" x2="1499" y2="690"/>
+<line class="sym" x1="1525" y1="690" x2="1542" y2="690"/>
+<circle class="sym" cx="1512" cy="690" r="13"/>
+<line class="sym" x1="1503" y1="681" x2="1521" y2="699"/>
+<line class="sym" x1="1503" y1="699" x2="1521" y2="681"/>
+<circle class="terminal" data-terminal="HL2:X1" cx="1482" cy="690" r="2.6"/>
+<circle class="terminal" data-terminal="HL2:X2" cx="1542" cy="690" r="2.6"/>
+</g>
+<g class="part kind-lamp" data-part="HL1:X1-X2">
+<line class="sym" x1="1482" y1="760" x2="1499" y2="760"/>
+<line class="sym" x1="1525" y1="760" x2="1542" y2="760"/>
+<circle class="sym" cx="1512" cy="760" r="13"/>
+<line class="sym" x1="1503" y1="751" x2="1521" y2="769"/>
+<line class="sym" x1="1503" y1="769" x2="1521" y2="751"/>
+<circle class="terminal" data-terminal="HL1:X1" cx="1482" cy="760" r="2.6"/>
+<circle class="terminal" data-terminal="HL1:X2" cx="1542" cy="760" r="2.6"/>
+</g>
+<g class="part kind-contact_no" data-part="KM1:53-54">
+<line class="sym" x1="698" y1="830" x2="720" y2="830"/>
+<line class="sym" x1="736" y1="830" x2="758" y2="830"/>
+<line class="sym" x1="720" y1="817" x2="720" y2="843"/>
+<line class="sym" x1="736" y1="817" x2="736" y2="843"/>
+<circle class="terminal" data-terminal="KM1:53" cx="698" cy="830" r="2.6"/>
+<circle class="terminal" data-terminal="KM1:54" cx="758" cy="830" r="2.6"/>
+</g>
+<g class="part kind-lamp" data-part="HL3:X1-X2">
+<line class="sym" x1="1482" y1="830" x2="1499" y2="830"/>
+<line class="sym" x1="1525" y1="830" x2="1542" y2="830"/>
+<circle class="sym" cx="1512" cy="830" r="13"/>
+<line class="sym" x1="1503" y1="821" x2="1521" y2="839"/>
+<line class="sym" x1="1503" y1="839" x2="1521" y2="821"/>
+<circle class="terminal" data-terminal="HL3:X1" cx="1482" cy="830" r="2.6"/>
+<circle class="terminal" data-terminal="HL3:X2" cx="1542" cy="830" r="2.6"/>
+</g>
+<g class="part kind-contact_no" data-part="KM2:53-54">
+<line class="sym" x1="698" y1="900" x2="720" y2="900"/>
+<line class="sym" x1="736" y1="900" x2="758" y2="900"/>
+<line class="sym" x1="720" y1="887" x2="720" y2="913"/>
+<line class="sym" x1="736" y1="887" x2="736" y2="913"/>
+<circle class="terminal" data-terminal="KM2:53" cx="698" cy="900" r="2.6"/>
+<circle class="terminal" data-terminal="KM2:54" cx="758" cy="900" r="2.6"/>
+</g>
+<g class="part kind-lamp" data-part="HL4:X1-X2">
+<line class="sym" x1="1482" y1="900" x2="1499" y2="900"/>
+<line class="sym" x1="1525" y1="900" x2="1542" y2="900"/>
+<circle class="sym" cx="1512" cy="900" r="13"/>
+<line class="sym" x1="1503" y1="891" x2="1521" y2="909"/>
+<line class="sym" x1="1503" y1="909" x2="1521" y2="891"/>
+<circle class="terminal" data-terminal="HL4:X1" cx="1482" cy="900" r="2.6"/>
+<circle class="terminal" data-terminal="HL4:X2" cx="1542" cy="900" r="2.6"/>
+</g>
+</g>
+<g class="labels">
+<text class="region" x="30" y="58" text-anchor="start">Power circuit</text>
+<text class="tn" x="185" y="126" text-anchor="start">1</text>
+<text class="tn" x="185" y="192" text-anchor="start">2</text>
+<text class="tn" x="229" y="126" text-anchor="start">3</text>
+<text class="tn" x="229" y="192" text-anchor="start">4</text>
+<text class="tn" x="273" y="126" text-anchor="start">5</text>
+<text class="tn" x="273" y="192" text-anchor="start">6</text>
+<text class="id" x="158" y="155" text-anchor="end">QF1</text>
+<text class="lbl" x="158" y="169" text-anchor="end">Main breaker</text>
+<text class="tn" x="185" y="236" text-anchor="start">1</text>
+<text class="tn" x="185" y="302" text-anchor="start">2</text>
+<text class="tn" x="229" y="236" text-anchor="start">3</text>
+<text class="tn" x="229" y="302" text-anchor="start">4</text>
+<text class="tn" x="273" y="236" text-anchor="start">5</text>
+<text class="tn" x="273" y="302" text-anchor="start">6</text>
+<text class="id" x="158" y="265" text-anchor="end">FU2</text>
+<text class="lbl" x="158" y="279" text-anchor="end">Power fuses</text>
+<text class="tn" x="125" y="356" text-anchor="start">1</text>
+<text class="tn" x="125" y="422" text-anchor="start">2</text>
+<text class="tn" x="169" y="356" text-anchor="start">3</text>
+<text class="tn" x="169" y="422" text-anchor="start">4</text>
+<text class="tn" x="213" y="356" text-anchor="start">5</text>
+<text class="tn" x="213" y="422" text-anchor="start">6</text>
+<text class="id" x="98" y="385" text-anchor="end">KM1</text>
+<text class="lbl" x="98" y="399" text-anchor="end">Forward</text>
+<text class="tn" x="305" y="356" text-anchor="start">1</text>
+<text class="tn" x="305" y="422" text-anchor="start">2</text>
+<text class="tn" x="349" y="356" text-anchor="start">3</text>
+<text class="tn" x="349" y="422" text-anchor="start">4</text>
+<text class="tn" x="393" y="356" text-anchor="start">5</text>
+<text class="tn" x="393" y="422" text-anchor="start">6</text>
+<text class="id" x="278" y="385" text-anchor="end">KM2</text>
+<text class="lbl" x="278" y="399" text-anchor="end">Reverse</text>
+<text class="tn" x="125" y="476" text-anchor="start">1</text>
+<text class="tn" x="125" y="542" text-anchor="start">2</text>
+<text class="tn" x="169" y="476" text-anchor="start">3</text>
+<text class="tn" x="169" y="542" text-anchor="start">4</text>
+<text class="tn" x="213" y="476" text-anchor="start">5</text>
+<text class="tn" x="213" y="542" text-anchor="start">6</text>
+<text class="id" x="98" y="505" text-anchor="end">KK1</text>
+<text class="lbl" x="98" y="519" text-anchor="end">Motor overload</text>
+<text class="tn" x="125" y="596" text-anchor="start">U1</text>
+<text class="tn" x="125" y="662" text-anchor="start">U2</text>
+<text class="tn" x="169" y="596" text-anchor="start">V1</text>
+<text class="tn" x="169" y="662" text-anchor="start">V2</text>
+<text class="tn" x="213" y="596" text-anchor="start">W1</text>
+<text class="tn" x="213" y="662" text-anchor="start">W2</text>
+<text class="id" x="98" y="625" text-anchor="end">M1</text>
+<text class="lbl" x="98" y="639" text-anchor="end">Motor</text>
+<text class="tn" x="305" y="596" text-anchor="start">1</text>
+<text class="tn" x="305" y="662" text-anchor="start">2</text>
+<text class="tn" x="349" y="596" text-anchor="start">3</text>
+<text class="tn" x="349" y="662" text-anchor="start">4</text>
+<text class="tn" x="393" y="596" text-anchor="start">5</text>
+<text class="tn" x="393" y="662" text-anchor="start">6</text>
+<text class="id" x="278" y="625" text-anchor="end">KM4</text>
+<text class="lbl" x="278" y="639" text-anchor="end">Delta</text>
+<text class="tn" x="125" y="726" text-anchor="start">1</text>
+<text class="tn" x="125" y="792" text-anchor="start">2</text>
+<text class="tn" x="169" y="726" text-anchor="start">3</text>
+<text class="tn" x="169" y="792" text-anchor="start">4</text>
+<text class="tn" x="213" y="726" text-anchor="start">5</text>
+<text class="tn" x="213" y="792" text-anchor="start">6</text>
+<text class="id" x="98" y="755" text-anchor="end">KM3</text>
+<text class="lbl" x="98" y="769" text-anchor="end">Star</text>
+<text class="region" x="540" y="58" text-anchor="start">Control circuit</text>
+<text class="id" x="616" y="99" text-anchor="middle">FU1</text>
+<text class="tn" x="589" y="155" text-anchor="start">1</text>
+<text class="tn" x="643" y="155" text-anchor="end">2</text>
+<text class="id" x="728" y="99" text-anchor="middle">KK1</text>
+<text class="tn" x="701" y="155" text-anchor="start">95</text>
+<text class="tn" x="755" y="155" text-anchor="end">96</text>
+<text class="id" x="840" y="99" text-anchor="middle">SB1 Stop</text>
+<text class="tn" x="813" y="155" text-anchor="start">11</text>
+<text class="tn" x="867" y="155" text-anchor="end">12</text>
+<text class="id" x="952" y="99" text-anchor="middle">SB2 Start Fwd</text>
+<text class="tn" x="925" y="155" text-anchor="start">13</text>
+<text class="tn" x="979" y="155" text-anchor="end">14</text>
+<text class="id" x="1064" y="99" text-anchor="middle">KM2</text>
+<text class="tn" x="1037" y="155" text-anchor="start">21</text>
+<text class="tn" x="1091" y="155" text-anchor="end">22</text>
+<text class="id" x="1512" y="99" text-anchor="middle">KM1 Forward</text>
+<text class="tn" x="1485" y="155" text-anchor="start">A1</text>
+<text class="tn" x="1539" y="155" text-anchor="end">A2</text>
+<text class="id" x="952" y="169" text-anchor="middle">KM1</text>
+<text class="tn" x="925" y="225" text-anchor="start">13</text>
+<text class="tn" x="979" y="225" text-anchor="end">14</text>
+<text class="id" x="952" y="239" text-anchor="middle">SB3 Start Rev</text>
+<text class="tn" x="925" y="295" text-anchor="start">13</text>
+<text class="tn" x="979" y="295" text-anchor="end">14</text>
+<text class="id" x="1064" y="239" text-anchor="middle">KM1</text>
+<text class="tn" x="1037" y="295" text-anchor="start">21</text>
+<text class="tn" x="1091" y="295" text-anchor="end">22</text>
+<text class="id" x="1512" y="239" text-anchor="middle">KM2 Reverse</text>
+<text class="tn" x="1485" y="295" text-anchor="start">A1</text>
+<text class="tn" x="1539" y="295" text-anchor="end">A2</text>
+<text class="id" x="952" y="309" text-anchor="middle">KM2</text>
+<text class="tn" x="925" y="365" text-anchor="start">13</text>
+<text class="tn" x="979" y="365" text-anchor="end">14</text>
+<text class="id" x="952" y="379" text-anchor="middle">KM1</text>
+<text class="tn" x="925" y="435" text-anchor="start">43</text>
+<text class="tn" x="979" y="435" text-anchor="end">44</text>
+<text class="id" x="1512" y="379" text-anchor="middle">KT Star-delta timer</text>
+<text class="tn" x="1485" y="435" text-anchor="start">A1</text>
+<text class="tn" x="1539" y="435" text-anchor="end">A2</text>
+<text class="id" x="952" y="449" text-anchor="middle">KM2</text>
+<text class="tn" x="925" y="505" text-anchor="start">43</text>
+<text class="tn" x="979" y="505" text-anchor="end">44</text>
+<text class="id" x="1064" y="519" text-anchor="middle">KT</text>
+<text class="tn" x="1037" y="575" text-anchor="start">55</text>
+<text class="tn" x="1091" y="575" text-anchor="end">56</text>
+<text class="id" x="1176" y="519" text-anchor="middle">KM4</text>
+<text class="tn" x="1149" y="575" text-anchor="start">21</text>
+<text class="tn" x="1203" y="575" text-anchor="end">22</text>
+<text class="id" x="1512" y="519" text-anchor="middle">KM3 Star</text>
+<text class="tn" x="1485" y="575" text-anchor="start">A1</text>
+<text class="tn" x="1539" y="575" text-anchor="end">A2</text>
+<text class="id" x="1064" y="589" text-anchor="middle">KT</text>
+<text class="tn" x="1037" y="645" text-anchor="start">67</text>
+<text class="tn" x="1091" y="645" text-anchor="end">68</text>
+<text class="id" x="1176" y="589" text-anchor="middle">KM3</text>
+<text class="tn" x="1149" y="645" text-anchor="start">21</text>
+<text class="tn" x="1203" y="645" text-anchor="end">22</text>
+<text class="id" x="1512" y="589" text-anchor="middle">KM4 Delta</text>
+<text class="tn" x="1485" y="645" text-anchor="start">A1</text>
+<text class="tn" x="1539" y="645" text-anchor="end">A2</text>
+<text class="id" x="728" y="659" text-anchor="middle">KK1</text>
+<text class="tn" x="701" y="715" text-anchor="start">97</text>
+<text class="tn" x="755" y="715" text-anchor="end">98</text>
+<text class="id" x="1512" y="659" text-anchor="middle">HL2 Fault</text>
+<text class="tn" x="1485" y="715" text-anchor="start">X1</text>
+<text class="tn" x="1539" y="715" text-anchor="end">X2</text>
+<text class="id" x="1512" y="729" text-anchor="middle">HL1 Power</text>
+<text class="tn" x="1485" y="785" text-anchor="start">X1</text>
+<text class="tn" x="1539" y="785" text-anchor="end">X2</text>
+<text class="id" x="728" y="799" text-anchor="middle">KM1</text>
+<text class="tn" x="701" y="855" text-anchor="start">53</text>
+<text class="tn" x="755" y="855" text-anchor="end">54</text>
+<text class="id" x="1512" y="799" text-anchor="middle">HL3 Forward</text>
+<text class="tn" x="1485" y="855" text-anchor="start">X1</text>
+<text class="tn" x="1539" y="855" text-anchor="end">X2</text>
+<text class="id" x="728" y="869" text-anchor="middle">KM2</text>
+<text class="tn" x="701" y="925" text-anchor="start">53</text>
+<text class="tn" x="755" y="925" text-anchor="end">54</text>
+<text class="id" x="1512" y="869" text-anchor="middle">HL4 Reverse</text>
+<text class="tn" x="1485" y="925" text-anchor="start">X1</text>
+<text class="tn" x="1539" y="925" text-anchor="end">X2</text>
+<text class="net" x="180" y="107" text-anchor="middle">L1</text>
+<text class="net" x="224" y="107" text-anchor="middle">L2</text>
+<text class="net" x="268" y="107" text-anchor="middle">L3</text>
+<text class="net" x="1588" y="82" text-anchor="middle">N</text>
+<text class="net" x="142" y="198" text-anchor="end">L1Q to FU1:1</text>
+<text class="net" x="540" y="82" text-anchor="start">L1Q from QF1:2, FU2:1</text>
+<text class="net" x="652" y="124" text-anchor="start">1</text>
+<text class="net" x="764" y="124" text-anchor="start">2</text>
+<text class="net" x="876" y="124" text-anchor="start">3</text>
+<text class="net" x="988" y="124" text-anchor="start">4</text>
+<text class="net" x="1100" y="124" text-anchor="start">5</text>
+<text class="net" x="988" y="264" text-anchor="start">6</text>
+<text class="net" x="1100" y="264" text-anchor="start">7</text>
+<text class="net" x="988" y="404" text-anchor="start">8</text>
+<text class="net" x="1100" y="544" text-anchor="start">9</text>
+<text class="net" x="1212" y="544" text-anchor="start">10</text>
+<text class="net" x="1100" y="614" text-anchor="start">11</text>
+<text class="net" x="1212" y="614" text-anchor="start">12</text>
+<text class="net" x="764" y="684" text-anchor="start">13</text>
+<text class="net" x="764" y="824" text-anchor="start">14</text>
+<text class="net" x="764" y="894" text-anchor="start">15</text>
+<text class="title" x="20" y="32" text-anchor="start">Star-delta reversing motor starter</text>
+</g>
+</svg>
