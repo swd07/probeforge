@@ -15,7 +15,6 @@ export function App() {
   const [meta, setMeta] = useState<Meta | null>(null);
   const [svg, setSvg] = useState("");
   const [showTruth, setShowTruth] = useState(false);
-  const [showResult, setShowResult] = useState(true);
   const [diagnosing, setDiagnosing] = useState(false);
   const [comparing, setComparing] = useState(false);
   const [meter, setMeter] = useState<MeterState>({ kind: "V", a: null, b: null, hold: 0.2, wait: 6, reason: "manual check" });
@@ -29,7 +28,6 @@ export function App() {
   useEffect(() => {
     if (state.status === "done") {
       setShowTruth(false);
-      setShowResult(true);
       setDiagnosing(false);
     }
   }, [state.status]);
@@ -71,28 +69,29 @@ export function App() {
               truthLive={state.done && showTruth ? state.done.truth_live_nets : null}
               onPick={manualActive ? pick : undefined}
               selected={manualActive ? [meter.a, meter.b] : []}
+              followDefault={!manual}
+              fitKey={state.done ? "reveal" : state.feed.length === 0 ? "start" : "run"}
             />
-            {state.done && showResult && (
-              <ResultCard
-                done={state.done}
-                showTruth={showTruth}
-                onToggleTruth={() => setShowTruth((v) => !v)}
-                onClose={() => setShowResult(false)}
-                saved={manual ? state.saved : undefined}
-                onCompare={
-                  manual
-                    ? () => {
-                        if (!state.compare) compare();
-                        setComparing(true);
-                      }
-                    : undefined
-                }
-              />
-            )}
             {state.error && <div className="error-banner">{state.error}</div>}
           </div>
         </div>
         <aside className="right">
+          {state.done && (
+            <ResultCard
+              done={state.done}
+              showTruth={showTruth}
+              onToggleTruth={() => setShowTruth((v) => !v)}
+              saved={manual ? state.saved : undefined}
+              onCompare={
+                manual
+                  ? () => {
+                      if (!state.compare) compare();
+                      setComparing(true);
+                    }
+                  : undefined
+              }
+            />
+          )}
           {manual ? (
             <ManualPanel
               meta={meta}

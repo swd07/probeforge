@@ -35,7 +35,7 @@ from probeforge.agent.client import MUSE_SPARK, make_client
 from probeforge.agent.loop import run_agent
 from probeforge.baseline import HalfSplitBaseline
 from probeforge.eval.spend import EST_PER_AGENT_RUN_USD, SpendLedger, SpendLimitError
-from probeforge.eval.trace import make_trace, summary, verdict
+from probeforge.eval.trace import decisive_measurement, make_trace, summary, verdict
 from probeforge.faults import Fault
 from probeforge.faults.catalog import SCENARIOS_DIR, all_faults, has_visible_symptom, load_scenarios
 from probeforge.faults.model import COMPONENT_MODES, PART_MODES
@@ -193,6 +193,7 @@ class Session:
             "recovered_text_calls": trace["recovered_text_calls"], "error": trace["error"],
             "panel": panel_snapshot(self.circuit),
             "truth_live_nets": [n for n, v in self.circuit.net_voltages().items() if v > LIVE_V],
+            "decisive": decisive_measurement(trace["tool_log"], trace["hypotheses_history"], trace["diagnosis"], NETLIST),
             **(extra or {}),
         })
         self.done = True

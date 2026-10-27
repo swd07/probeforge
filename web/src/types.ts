@@ -84,6 +84,17 @@ export interface Done {
   error: string | null;
   panel: Panel;
   truth_live_nets: string[];
+  decisive: {
+    step: number;
+    reading: string;
+    healthy: string | null;
+    meter: boolean;
+    shared_with: number;
+    reason: string;
+    before: number;
+    after: number;
+    delta: number;
+  } | null;
 }
 
 export type FeedItem =

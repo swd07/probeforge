@@ -204,3 +204,33 @@ def test_turn_budget_warnings(netlist, monkeypatch):
     warnings = [m["content"] for m in run.messages if m["role"] == "user" and "turns left" in str(m["content"])]
     assert warnings == [loop.turns_left_warning(5), loop.turns_left_warning(2)]
     assert "at most 8 turns" in client.requests[0]["messages"][0]["content"]
+
+
+def test_decisive_measurement():
+    from probeforge.eval.trace import decisive_measurement
+
+    def meas(step, a, b, volts):
+        return {"step": step, "tool": "measure_voltage", "executed": True, "args": {"point_a": a, "point_b": b},
+                "result": {"point_a": a, "point_b": b, "volts": volts}}
+
+    def hyp(step, p, reason):
+        return {"step": step, "hypotheses": [{"component": "SB1", "part": "11-12", "failure_mode": "stuck_open",
+                                              "probability": p, "reason": reason},
+                                             {"component": "KK1", "failure_mode": "tripped", "probability": 1 - p, "reason": ""}]}
+
+    log = [meas(1, "1", "N", 230.0), meas(3, "2", "N", 230.0), meas(4, "3", "N", 0.0), meas(6, "SB1:11", "SB1:12", 230.0)]
+    history = [hyp(2, 0.4, "wire 1 live"), hyp(5, 0.9, "wire 3 dead while 2 live"), hyp(7, 0.95, "confirmed")]
+    diagnosis = {"outcome": "diagnosed", "component": "SB1", "part": "11-12", "failure_mode": "stuck_open"}
+    d = decisive_measurement(log, history, diagnosis)
+    assert d["step"] == 4 and d["reading"] == "3 -> N: 0.0 V"  # cited first in the reason ("wire 3 dead")
+    assert (d["before"], d["after"], d["shared_with"]) == (0.4, 0.9, 1)
+    # with the netlist, readings are compared with a healthy panel: net 3 should be live at rest
+    from probeforge.sim import Netlist
+    from tests.conftest import CIRCUIT_YAML
+
+    log2 = [meas(1, "1", "N", 230.0), meas(3, "3", "N", 0.0), meas(4, "2", "N", 230.0), meas(6, "SB1:11", "SB1:12", 230.0)]
+    history2 = [hyp(2, 0.4, "wire 1 live"), hyp(5, 0.9, "net 2 live (230 V) but net 3 dead"), hyp(7, 0.95, "confirmed")]
+    d2 = decisive_measurement(log2, history2, diagnosis, Netlist.load(CIRCUIT_YAML))
+    assert d2["reading"] == "3 -> N: 0.0 V" and d2["healthy"] == "230.0 V"  # abnormal beats first mention
+    assert decisive_measurement(log, [], diagnosis) is None
+    assert decisive_measurement(log, history, {"outcome": "insufficient_information"}) is None

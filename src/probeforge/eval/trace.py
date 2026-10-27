@@ -101,3 +101,138 @@ def summary(trace: dict, judged: dict) -> dict:
         "cost_usd": trace["cost_usd"],
         "sequence": measurement_sequence(trace["tool_log"]),
     }
+
+
+def _same_hypothesis(h: dict, diagnosis: dict) -> bool:
+    if str(h.get("component", "")).upper() != str(diagnosis.get("component", "")).upper():
+        return False
+    if h.get("failure_mode") != diagnosis.get("failure_mode"):
+        return False
+    hp, dp = str(h.get("part") or ""), str(diagnosis.get("part") or "")
+    return not hp or not dp or hp == dp
+
+
+def _observation_text(e: dict) -> tuple[str, bool]:
+    """Readable text for one logged step and whether it is a meter reading."""
+    r = e["result"]
+    if e["tool"] == "measure_voltage":
+        return f"{r['point_a']} -> {r['point_b']}: {r['volts']} V", True
+    if e["tool"] == "measure_resistance":
+        ohms = r["ohms"]
+        return f"{r['point_a']} -> {r['point_b']}: {ohms if ohms == 'open' else str(ohms) + ' ohm'}", True
+    if e["tool"] == "press_button" and r.get("readings"):
+        return "; ".join(f"{x['point_a']} -> {x['point_b']} with {r['button']} held: {x['volts']} V"
+                         for x in r["readings"]), True
+    if e["tool"] == "press_button":
+        return f"press {r.get('button')}: motor {r['while_held']['motor']} while held, {r['after_release']['motor']} after", False
+    if e["tool"] in ("wait", "read_indicators"):
+        return f"{e['tool'].replace('_', ' ')}: motor {r.get('motor')}", False
+    return e["tool"], False
+
+
+def _readings(e: dict) -> list:
+    r = e["result"]
+    if e["tool"] == "measure_voltage":
+        return [r["volts"]]
+    if e["tool"] == "measure_resistance":
+        return [r["ohms"]]
+    if e["tool"] == "press_button":
+        return [x["volts"] for x in r.get("readings", [])]
+    return []
+
+
+def healthy_readings(netlist: Netlist, tool_log: list[dict]) -> dict[int, list]:
+    """Replay the logged actions on a fault-free circuit: what each reading would have been
+    on a healthy panel. The electrician's expected value, computed from the schematic."""
+    from probeforge.sim import Circuit
+
+    c = Circuit(netlist)
+    c.set_power(True)
+    out: dict[int, list] = {}
+    for e in tool_log:
+        if not e["executed"] or e["step"] == 0:
+            continue
+        a, r, tool = e["args"], e["result"], e["tool"]
+        try:
+            if tool == "press_button":
+                c.hold(r["button"])
+                c.step(r["held_s"])
+                out[e["step"]] = [c.voltage(x["point_a"], x["point_b"]) for x in r.get("readings", [])]
+                c.release(r["button"])
+            elif tool == "wait":
+                c.step(min(max(float(a.get("seconds") or 0.1), 0.1), 30.0))
+            elif tool == "set_power":
+                c.set_power(bool(a.get("on")))
+            elif tool == "perform_action" and a.get("action") == "reset_protection":
+                c.reset(str(a.get("target")))
+            elif tool == "measure_voltage":
+                out[e["step"]] = [c.voltage(a["point_a"], a["point_b"])]
+            elif tool == "measure_resistance":
+                ohms = c.resistance(a["point_a"], a["point_b"])
+                out[e["step"]] = ["open" if ohms == float("inf") else ohms]
+        except (KeyError, ValueError, TypeError):
+            continue
+    return out
+
+
+def _differs(measured, healthy) -> bool:
+    if isinstance(measured, str) or isinstance(healthy, str):
+        return measured != healthy
+    return abs(float(measured) - float(healthy)) > max(2.0, 0.05 * abs(float(healthy)))
+
+
+def _most_cited(entries: list[dict], reason: str, healthy: dict[int, list]) -> dict:
+    """Pick one observation: an abnormal reading (differs from a healthy panel) first, then the one
+    the winning hypothesis' reason names most, then the one it mentions first, then the latest."""
+    text = reason.upper()
+
+    def score(item: tuple[int, dict]) -> tuple:
+        index, e = item
+        a, r = e["args"], e["result"]
+        points = [a.get("point_a"), a.get("point_b")] + [x.get("point_a") for x in r.get("readings", [])]
+        hits = [text.find(pt.upper()) for pt in points if pt and pt.upper() != "N" and pt.upper() in text]
+        expected = healthy.get(e["step"], [])
+        abnormal = any(_differs(m, h) for m, h in zip(_readings(e), expected))
+        return (abnormal, len(hits), -min(hits, default=len(text)), index)
+
+    return max(enumerate(entries), key=score)[1]
+
+
+def decisive_measurement(tool_log: list[dict], hypotheses_history: list[dict], diagnosis: dict | None,
+                         netlist: Netlist | None = None) -> dict | None:
+    """The observation that raised the winning hypothesis the most.
+
+    The winner is the submitted diagnosis. Each update_hypotheses call reflects every result
+    the agent had seen before it, so the change in the winner's probability between two updates
+    is credited to the observations made in between (meter readings preferred over panel checks).
+    Returns None without a diagnosis or a hypothesis history (human runs keep no history).
+    """
+    if not diagnosis or diagnosis.get("outcome") != "diagnosed" or not hypotheses_history:
+        return None
+    healthy = healthy_readings(netlist, tool_log) if netlist else {}
+    observed = [e for e in tool_log if e["executed"] and e["tool"] in
+                ("measure_voltage", "measure_resistance", "press_button", "wait", "read_indicators")]
+    best, prev_p, prev_step = None, 0.0, -1
+    for update in hypotheses_history:
+        p = max((h["probability"] for h in update["hypotheses"] if _same_hypothesis(h, diagnosis)), default=0.0)
+        between = [e for e in observed if prev_step < e["step"] < update["step"]]
+        meters = [e for e in between if _observation_text(e)[1]]
+        cause = meters or between
+        if cause and (best is None or p - prev_p > best["delta"]):
+            reason = " ".join(h.get("reason", "") for h in update["hypotheses"] if _same_hypothesis(h, diagnosis))
+            pick = _most_cited(cause, reason, healthy)
+            expected = healthy.get(pick["step"])
+            best = {
+                "step": pick["step"],
+                "reading": _observation_text(pick)[0],
+                "healthy": ", ".join(f"{v} V" if pick["tool"] != "measure_resistance" else
+                                     (v if v == "open" else f"{v} ohm") for v in expected) if expected else None,
+                "meter": bool(meters),
+                "shared_with": len(cause) - 1,  # other observations made since the previous update
+                "reason": reason,
+                "before": round(prev_p, 3),
+                "after": round(p, 3),
+                "delta": round(p - prev_p, 3),
+            }
+        prev_p, prev_step = p, update["step"]
+    return best if best and best["delta"] > 0 else None

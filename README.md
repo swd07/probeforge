@@ -20,19 +20,20 @@ META_API_KEY=your_key_here
 
 ## Live web UI
 
-![Agent at work](docs/screenshots/s08_2_midrun.png)
+![Agent at work](docs/screenshots/w1920_2_midrun.png)
 
 One screen showing the agent working, streamed step by step over a WebSocket from FastAPI to a Vite + React + TypeScript frontend:
 
 - **Front panel** (top): lamps, push buttons (they light up when the agent presses them), main breaker, motor (spins in star / delta, shakes when humming) and clamp-meter line currents.
-- **Schematic** (center): the same SVG generated from the netlist. Every probe point the agent measures lights up with the reading next to it; nets the agent measured turn red (live) or blue (dead). The true live wiring is only shown after the run, because colouring it during the run would give the fault away.
+- **Schematic** (center): the same SVG generated from the netlist. Every probe point the agent measures lights up with the reading next to it; nets the agent measured turn red (live) or blue (dead). The true live wiring is only shown after the run, because colouring it during the run would give the fault away. Mouse wheel zooms, drag pans, Fit shows the whole drawing; in agent mode "follow probes" zooms to each new measurement and the view zooms out at the reveal.
 - **Right panel**: hypothesis bars that move after each measurement, and the reasoning feed: the model's short notes, every tool call with its result, policy blocks in red, approval requests in amber.
 - **Approval card**: when the agent asks to reset a protection device or re-apply power after a trip, the run pauses until a human clicks Approve or Deny.
-- **Top bar**: "Inject random fault" picks an unseen fault on the server and the browser does not learn which one until the end; or pick one of the 8 scenarios by its symptom. At the end: the injected fault, the verdict (correct / justified / wrong), measurements, tokens, cost and time.
+- **Top bar**: "Inject random fault" picks an unseen fault on the server and the browser does not learn which one until the end; or pick one of the 8 scenarios by its symptom.
+- **Result card** (docked over the right panel, collapsible): the injected fault, the verdict (correct / justified / wrong), measurements, tokens, cost and time, and the decisive measurement: the reading that raised the winning hypothesis the most, shown next to what a healthy panel reads at the same point (the logged actions replayed on a fault-free circuit).
 
 | Approval card | Result and reveal |
 |---|---|
-| ![Approval](docs/screenshots/qf1_approval_card.png) | ![Result](docs/screenshots/qf1_result.png) |
+| ![Approval](docs/screenshots/qf1_approval_card.png) | ![Result](docs/screenshots/w1920_8_result.png) |
 
 **Engineer mode** (same screen, a human instead of the agent): click two terminals or wires on the schematic to place the
 meter probes and measure volts or ohms, press the panel buttons, switch the breaker, wait, request a protection reset,

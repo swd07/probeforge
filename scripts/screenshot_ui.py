@@ -25,13 +25,15 @@ def main() -> None:
     ap.add_argument("--answer", choices=["approve", "deny"], default="approve")
     ap.add_argument("--timeout", type=int, default=420)
     ap.add_argument("--fault", default=None, help="test hook: inject this fault, e.g. 'QF1:5-6 open'")
+    ap.add_argument("--width", type=int, default=1680)
+    ap.add_argument("--height", type=int, default=1000)
     args = ap.parse_args()
     out = ROOT / "docs" / "screenshots"
     out.mkdir(parents=True, exist_ok=True)
 
     with sync_playwright() as p:
         browser = p.chromium.launch(channel="msedge", headless=True)
-        page = browser.new_page(viewport={"width": 1680, "height": 1000}, device_scale_factor=1)
+        page = browser.new_page(viewport={"width": args.width, "height": args.height}, device_scale_factor=1)
         page.goto(args.url + (f"/?fault={args.fault}" if args.fault else ""))
         page.wait_for_selector(".schematic svg")
         page.screenshot(path=out / f"{args.name}_0_ready.png")
