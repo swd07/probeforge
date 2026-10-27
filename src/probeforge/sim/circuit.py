@@ -167,6 +167,11 @@ class Circuit:
         """Net a probe point (terminal id or net name) belongs to."""
         return self._net_of(point)
 
+    def net_voltages(self) -> dict[str, float]:
+        """Voltage of every net to neutral (0 for floating nets), for visualisation."""
+        pot = self._potentials()
+        return {net: round(abs(pot[self._uf.find(net)] or 0), 1) for net in self.netlist.nets}
+
     def conducting_parts(self) -> set[str]:
         """Switch-type parts (contacts, poles, heaters) that conduct right now."""
         return {p.id for p in self.netlist.parts.values() if p.kind not in LOAD_KINDS and self._conducts(p)}

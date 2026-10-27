@@ -2,7 +2,7 @@
 
 AI agent that diagnoses faults in an industrial relay-contactor circuit (star-delta reversing motor starter) by choosing its own virtual measurements, under hard safety limits enforced in code. Built for the Meta Global AI Developer Hackathon 2026.
 
-Status: Day 4. Simulator, faults, tools, safety policy, Muse Spark agent, half-split baseline and evaluation harness are done and tested, with clean holdout results. The web UI is next.
+Status: Day 4. Simulator, faults, tools, safety policy, Muse Spark agent, half-split baseline, evaluation harness (clean holdout results) and the live web UI are done and tested.
 
 ## Setup
 
@@ -17,6 +17,33 @@ Create `.env` in the project root:
 ```
 META_API_KEY=your_key_here
 ```
+
+## Live web UI
+
+![Agent at work](docs/screenshots/s08_2_midrun.png)
+
+One screen showing the agent working, streamed step by step over a WebSocket from FastAPI to a Vite + React + TypeScript frontend:
+
+- **Front panel** (top): lamps, push buttons (they light up when the agent presses them), main breaker, motor (spins in star / delta, shakes when humming) and clamp-meter line currents.
+- **Schematic** (center): the same SVG generated from the netlist. Every probe point the agent measures lights up with the reading next to it; nets the agent measured turn red (live) or blue (dead). The true live wiring is only shown after the run, because colouring it during the run would give the fault away.
+- **Right panel**: hypothesis bars that move after each measurement, and the reasoning feed: the model's short notes, every tool call with its result, policy blocks in red, approval requests in amber.
+- **Approval card**: when the agent asks to reset a protection device or re-apply power after a trip, the run pauses until a human clicks Approve or Deny.
+- **Top bar**: "Inject random fault" picks an unseen fault on the server and the browser does not learn which one until the end; or pick one of the 8 scenarios by its symptom. At the end: the injected fault, the verdict (correct / justified / wrong), measurements, tokens, cost and time.
+
+| Approval card | Result and reveal |
+|---|---|
+| ![Approval](docs/screenshots/qf1_approval_card.png) | ![Result](docs/screenshots/qf1_result.png) |
+
+Run it:
+
+```
+cd web && npm install && npm run build && cd ..
+uv run python -m probeforge.server          # http://127.0.0.1:8000
+```
+
+For frontend development run `npm run dev` in `web/` (Vite on :5173, proxied to the backend on :8000).
+`scripts/screenshot_ui.py` drives a full live run in headless Edge with Playwright and saves screenshots to `docs/screenshots/`.
+For reproducible demos `?fault=QF1:5-6%20open` in the URL injects a specific fault (shown as "fault chosen by URL"; the UI itself never offers this).
 
 ## Circuit and simulator
 
