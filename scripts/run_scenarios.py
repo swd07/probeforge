@@ -37,7 +37,9 @@ from probeforge.eval.spend import EST_PER_AGENT_RUN_USD, SpendLedger, SpendLimit
 from probeforge.eval.trace import make_trace
 from probeforge.faults import Fault
 from probeforge.faults.catalog import SCENARIOS_DIR, load_scenarios
-from probeforge.sim import Circuit
+from probeforge.hybrid import run_hybrid
+from probeforge.sim import Circuit, Netlist
+from probeforge.sim.schematic import render_png
 from probeforge.tools import approve_all, deny_all
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -104,13 +106,23 @@ def run_case(case: Case, args, client, out_dir: Path, rep: int, ledger: SpendLed
         diagnosis, outcome, notes = run.diagnosis, run.outcome, []
         if ledger:
             ledger.record(run.cost_usd, f"{out_dir.name}/{name}")
+    elif args.runner == "hybrid":
+        true_netlist, true_data = circuit.netlist, yaml.safe_load(case.circuit.read_text(encoding="utf-8"))
+        h = run_hybrid(circuit, client, hybrid_model(args.transcription), schematic_png(case.circuit), approver=approver,
+                       repair=not args.no_repair, do_explain=not args.no_explain,
+                       true_netlist=true_netlist, true_data=true_data)
+        diagnosis, outcome, run, tb, notes = h.diagnosis, h.outcome, h.usage, h.planner.tb, h.planner.notes
+        hybrid_extra = {**h.trace_extra(), "transcription": args.transcription, "conflicts": h.planner.conflicts}
+        if ledger:
+            ledger.record(run.cost_usd, f"{out_dir.name}/{name}")
     else:
         baseline = (HalfSplitBaseline if args.runner == "baseline" else InfoGainBaseline)(circuit, approver=approver)
         diagnosis, run = baseline.run(), None
         tb, outcome, notes = baseline.tb, diagnosis.get("outcome"), baseline.notes
     seconds = time.perf_counter() - t0
     trace = make_trace(case=name, runner=args.runner, tb=tb, diagnosis=diagnosis, outcome=outcome, seconds=seconds,
-                       run=run, notes=notes, extra={"approve": args.approve})
+                       run=run, notes=notes, extra={"approve": args.approve,
+                                                    **(hybrid_extra if args.runner == "hybrid" else {})})
     (out_dir / f"{name}.json").write_text(json.dumps(trace, indent=2, ensure_ascii=False), encoding="utf-8")
     error = trace["error"]
     tokens, cost, turns = trace["tokens"], trace["cost_usd"], trace["turns"]
@@ -134,6 +146,52 @@ def run_case(case: Case, args, client, out_dir: Path, rep: int, ledger: SpendLed
         "approval_requests": tb.policy.stats.approval_requests,
         "evidence_functional": func, "evidence_instrument": inst,
         "tokens": tokens["prompt"] + tokens["completion"], "cost_usd": cost, "seconds": seconds, "error": error,
+        **(hybrid_row(trace) if args.runner == "hybrid" else {}),
+    }
+
+
+_png_cache: dict = {}
+
+
+def schematic_png(circuit_path: Path) -> bytes:
+    """The schematic image of the real circuit, as given to the hybrid pipeline (rendered once)."""
+    if circuit_path not in _png_cache:
+        _png_cache[circuit_path] = render_png(Netlist.load(circuit_path))
+    return _png_cache[circuit_path]
+
+
+def hybrid_model(path: str) -> dict:
+    return yaml.safe_load((ROOT / path).read_text(encoding="utf-8"))
+
+
+def hybrid_summary(rows: list[dict]) -> str:
+    n = len(rows)
+    return "\n".join([
+        "", "**Verify step**", "",
+        f"- Cases with a reading that contradicted every candidate: {sum(r['conflicts'] > 0 for r in rows)}/{n} "
+        f"({sum(r['conflicts'] for r in rows)} conflicts)",
+        f"- Netlist corrections proposed: {sum(r['corrections'] for r in rows)}; resolved the conflict on replay: "
+        f"{sum(r['corrections_resolved'] for r in rows)}; changed wiring: {sum(r['corrections_wiring_changed'] for r in rows)}; "
+        f"every rewired net is a true net: {sum(r['corrections_wiring_ok'] for r in rows)}; "
+        f"healthy panel sequence right after the correction: {sum(r['corrections_panel_right'] for r in rows)}",
+        f"- Netlist exactly right at the end: {sum(r['netlist_right_at_end'] for r in rows)}/{n}; "
+        f"handed over to a human (no consistent model): {sum(r['gave_up'] for r in rows)}",
+        f"- Explanations citing at least one step: {sum(bool(r['cited_steps']) for r in rows)}/{n}", "",
+    ])
+
+
+def hybrid_row(trace: dict) -> dict:
+    """Verify-step metrics for one case (the truth comparison is logged after each model answer)."""
+    corr = trace["corrections"]
+    truth = [c.get("truth") or {} for c in corr]
+    return {
+        "conflicts": trace["conflicts"], "corrections": len(corr),
+        "corrections_resolved": sum(c.get("candidates_after_replay", 0) > 0 for c in corr),
+        "corrections_wiring_ok": sum(bool(t.get("wiring_ok")) for t in truth),
+        "corrections_wiring_changed": sum(t.get("nets_added", 0) > 0 for t in truth),
+        "corrections_panel_right": sum(t.get("panel_steps_same") == t.get("panel_steps") for t in truth if t),
+        "netlist_right_at_end": bool(truth and truth[-1].get("netlist_fully_right")),
+        "gave_up": trace["gave_up"], "cited_steps": trace["cited_steps"],
     }
 
 
@@ -178,8 +236,13 @@ def render(rows: list[dict], title: str, wall: float) -> str:
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--runner", choices=["agent", "baseline", "infogain"], default="agent",
-                    help="baseline = half-split; infogain = perfect-model information-gain search")
+    ap.add_argument("--runner", choices=["agent", "baseline", "infogain", "hybrid"], default="agent",
+                    help="baseline = half-split; infogain = perfect-model information-gain search; "
+                         "hybrid = transcribed netlist + info-gain planner + Muse Spark repair and explanation")
+    ap.add_argument("--transcription", default="scenarios/transcriptions/star_delta_run2.yaml",
+                    help="hybrid: the transcribed netlist used as the model")
+    ap.add_argument("--no-repair", action="store_true", help="hybrid: no netlist corrections (stop at a conflict)")
+    ap.add_argument("--no-explain", action="store_true", help="hybrid: skip the technician explanation")
     ap.add_argument("--suite", choices=["scenarios", "dev", "clean", "all"], default="scenarios")
     ap.add_argument("--approve", action="store_true", help="simulated human approves reset / re-power requests")
     ap.add_argument("--model", default=MUSE_SPARK)
@@ -197,11 +260,12 @@ def main() -> None:
     jobs = [(c, rep) for rep in range(1, args.repeat + 1) for c in cases]
     stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     tag = (f"{stamp}_{args.runner}_{args.suite}" + (f"_{args.effort or 'default'}" if args.runner == "agent" else "")
-           + ("_approve" if args.approve else "") + ("_noimage" if args.no_image else "") + ("_nonetlist" if args.no_netlist else ""))
+           + ("_approve" if args.approve else "") + ("_noimage" if args.no_image else "") + ("_nonetlist" if args.no_netlist else "")
+           + ("_norepair" if args.runner == "hybrid" and args.no_repair else ""))
     out_dir = ROOT / "runs" / tag
     out_dir.mkdir(parents=True, exist_ok=True)
     client, ledger = None, None
-    if args.runner == "agent":
+    if args.runner in ("agent", "hybrid"):
         ledger = SpendLedger()
         try:
             ledger.check(len(jobs) * EST_PER_AGENT_RUN_USD, force=args.force, what=f"{len(jobs)} agent runs")
@@ -223,9 +287,12 @@ def main() -> None:
     wall = time.perf_counter() - started
 
     who = {"agent": f"{args.model}, effort {args.effort or 'default'}", "baseline": "half-split baseline",
-           "infogain": "information-gain baseline (perfect fault model)"}[args.runner]
+           "infogain": "information-gain baseline (perfect fault model)",
+           "hybrid": f"transcription {args.transcription}, " + ("no repair" if args.no_repair else f"repair by {MUSE_SPARK}")}[args.runner]
     who += ", approvals granted" if args.approve else ", approvals denied"
     table = render(rows, f"{args.runner} on {args.suite} ({who}), {len(rows)} runs", wall)
+    if args.runner == "hybrid":
+        table += hybrid_summary(rows)
     print("\n" + table)
     (out_dir / "results.md").write_text(table, encoding="utf-8")
     (out_dir / "results.json").write_text(json.dumps({"args": vars(args), "frozen": frozen_hashes(), "wall_s": wall, "rows": rows}, indent=2), encoding="utf-8")
