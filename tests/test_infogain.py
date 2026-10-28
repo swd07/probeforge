@@ -27,7 +27,7 @@ def test_solves_scenarios_within_policy(netlist, scenario):
 def test_observational_twins_stay_ambiguous(netlist):
     d, b = run(netlist, Fault("SB2", "stuck_closed", "13-14"))
     assert d["outcome"] == "insufficient_information"  # KM1 13-14 welded reads the same everywhere
-    assert set(b.cands) == {Fault("SB2", "stuck_closed", "13-14"), Fault("KM1", "stuck_closed", "13-14")}
+    assert set(b.faults_left) == {Fault("SB2", "stuck_closed", "13-14"), Fault("KM1", "stuck_closed", "13-14")}
 
 
 def test_clone_is_independent(netlist):

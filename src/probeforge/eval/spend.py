@@ -6,7 +6,10 @@ existed (Oct 27, from the run logs).
 """
 
 import json
+import os
 import threading
+import time
+from contextlib import contextmanager
 from datetime import datetime
 from pathlib import Path
 
@@ -36,11 +39,33 @@ class SpendLedger:
                              "what": "spent before the ledger existed (Oct 27, from run logs)"}],
             })
 
+    @contextmanager
+    def _file_lock(self, timeout_s: float = 30.0):
+        """Cross-process lock (several batch scripts may record at once): a lock file created exclusively."""
+        lock = self.path.with_suffix(".lock")
+        deadline = time.monotonic() + timeout_s
+        while True:
+            try:
+                fd = os.open(lock, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+                break
+            except FileExistsError:
+                if time.monotonic() > deadline:  # a crashed writer left it behind
+                    lock.unlink(missing_ok=True)
+                    continue
+                time.sleep(0.02)
+        try:
+            yield
+        finally:
+            os.close(fd)
+            lock.unlink(missing_ok=True)
+
     def _read(self) -> dict:
         return json.loads(self.path.read_text(encoding="utf-8"))
 
     def _write(self, data: dict) -> None:
-        self.path.write_text(json.dumps(data, indent=2), encoding="utf-8")
+        tmp = self.path.with_suffix(".tmp")
+        tmp.write_text(json.dumps(data, indent=2), encoding="utf-8")
+        os.replace(tmp, self.path)  # atomic: a reader never sees a half-written file
 
     @property
     def total(self) -> float:
@@ -55,7 +80,7 @@ class SpendLedger:
             )
 
     def record(self, usd: float, what: str) -> float:
-        with self._lock:
+        with self._lock, self._file_lock():
             data = self._read()
             data["total_usd"] = round(data["total_usd"] + usd, 4)
             data["entries"].append({"when": datetime.now().isoformat(timespec="seconds"), "usd": round(usd, 4), "what": what})
