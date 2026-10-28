@@ -230,7 +230,7 @@ class AgentSession(Session):
 
     def run(self) -> None:
         try:
-            ledger().check(EST_PER_AGENT_RUN_USD, what="an agent run")
+            ledger().check(EST_PER_AGENT_RUN_USD, what="an agent run", demo=True)
         except SpendLimitError as e:
             self.emit({"type": "error", "message": str(e)})
             self.done = True
@@ -244,7 +244,7 @@ class AgentSession(Session):
             self.emit({"type": "error", "message": f"{type(e).__name__}: {e}"})
             self.done = True
             return
-        ledger().record(run.cost_usd, f"ui agent run ({self.source})")
+        ledger().record(run.cost_usd, f"ui agent run ({self.source})", demo=True)
         if self.cancelled or (run.error and "Cancelled" in run.error):
             self.emit({"type": "error", "message": "session stopped"})
             self.done = True
@@ -335,7 +335,7 @@ class HybridSession(Session):
 
     def run(self) -> None:
         try:
-            ledger().check(EST_PER_AGENT_RUN_USD, what="a hybrid run")
+            ledger().check(EST_PER_AGENT_RUN_USD, what="a hybrid run", demo=True)
         except SpendLimitError as e:
             self.emit({"type": "error", "message": str(e)})
             self.done = True
@@ -358,11 +358,11 @@ class HybridSession(Session):
             self.done = True
             return
         except Exception as e:  # missing key, API down, unusable transcription
-            ledger().record(usage.cost_usd, f"ui hybrid run ({self.source}, failed)")
+            ledger().record(usage.cost_usd, f"ui hybrid run ({self.source}, failed)", demo=True)
             self.emit({"type": "error", "message": f"{type(e).__name__}: {e}"})
             self.done = True
             return
-        ledger().record(usage.cost_usd, f"ui hybrid run ({self.source})")
+        ledger().record(usage.cost_usd, f"ui hybrid run ({self.source})", demo=True)
         trace = make_trace(case="ui", runner="hybrid", tb=result.planner.tb, diagnosis=result.diagnosis,
                            outcome=result.outcome, seconds=result.seconds, run=usage, notes=result.planner.notes,
                            extra=result.trace_extra())
@@ -449,7 +449,7 @@ class ManualSession(Session):
         self.emit({"type": "compare_progress", "runner": "baseline", "done": True})
 
         try:
-            ledger().check(EST_PER_AGENT_RUN_USD, what="an agent run")
+            ledger().check(EST_PER_AGENT_RUN_USD, what="an agent run", demo=True)
             c = Circuit(NETLIST)
             c.apply_fault(self.fault)
             c.set_power(True)
@@ -459,7 +459,7 @@ class ManualSession(Session):
                     self.emit({"type": "compare_progress", "runner": "agent", "turn": ev["turn"]})
 
             run, tb = run_agent(c, client(), effort="low", approver=deny_all, on_event=progress)
-            ledger().record(run.cost_usd, "ui compare agent run")
+            ledger().record(run.cost_usd, "ui compare agent run", demo=True)
             a_trace = make_trace(case="compare", runner="agent", tb=tb, diagnosis=run.diagnosis, outcome=run.outcome,
                                  seconds=run.seconds, run=run)
             columns["agent"] = summary(a_trace, verdict(NETLIST, str(CIRCUIT_PATH), self.fault, run.diagnosis, run.outcome))

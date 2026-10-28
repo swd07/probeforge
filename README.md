@@ -240,7 +240,8 @@ uv run python scripts/run_scenarios.py --suite clean --only c02 --approve       
 
 Every agent run records its API cost in `runs/spend.json` (started at the $21 spent before the ledger existed).
 `run_scenarios.py` estimates a batch at $0.10 per agent run and refuses to start if the total would pass $110, unless
-`--force`. The UI refuses agent, hybrid and compare runs over the limit. Hybrid runs record their transcription,
+`--force`. The total limit is $130: the last $20 is reserved for the public demo, where live UI runs (agent, hybrid,
+compare) may use it up to a daily cap ($5 by default, `PROBEFORGE_DEMO_DAILY_USD`). Hybrid runs record their transcription,
 repair and explanation calls. Spend so far: $43.62.
 
 ## Known Muse Spark behaviour: tool calls written as text

@@ -11,6 +11,16 @@ AI agent that diagnoses faults in an industrial relay-contactor circuit by choos
 - Discouraged formats: Streamlit apps, dashboards as the main feature, basic RAG, chatbot wrappers. Do not build any of these.
 - Budget: $150 Meta Model API credit. Not a binding constraint, but log token usage per run.
 
+## Budget rules (from 2026-10-28, about $106 of credit left; a card is attached after that)
+
+- Always smoke-test on 5 cases first; run a full batch only if the smoke test looks right.
+- Tell the user the estimated cost before any batch over $2.
+- One full run per configuration; no variance reruns.
+- No Muse Wonder, no medium reasoning effort (low or below only).
+- Spend guard (`src/probeforge/eval/spend.py`): $130 total limit, of which $20 is reserved for the public demo.
+  Batches and scripts stop at $110; live UI runs record as demo spend and may use the reserve, capped per day
+  (`DEMO_DAILY_USD`, default $5, env `PROBEFORGE_DEMO_DAILY_USD`).
+
 ## Writing style rule
 
 Never use the em dash character in any text (README, UI, comments, commit messages). Use commas, colons, periods or parentheses.

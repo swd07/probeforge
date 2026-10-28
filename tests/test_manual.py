@@ -111,7 +111,7 @@ def test_manual_approval_flow(env):
 def test_spend_ledger(tmp_path):
     ledger = SpendLedger(tmp_path / "spend.json")
     assert ledger.total == 21.0
-    ledger.check(80.0)  # 101 <= 110
+    ledger.check(80.0)  # 101 <= 110 (130 total minus the 20 reserved for the demo)
     with pytest.raises(SpendLimitError):
         ledger.check(90.0)
     ledger.check(90.0, force=True)
@@ -123,8 +123,23 @@ def test_spend_ledger(tmp_path):
 
 def test_ui_agent_run_refused_over_limit(env):
     tmp, ledger = env
-    ledger.record(89.0, "pretend")  # 110 total
+    ledger.record(109.0, "pretend")  # 130 total: even the demo reserve is used up
     with TestClient(server.app).websocket_connect("/ws") as ws:
         ws.send_json({"action": "start", "source": "scenario", "scenario": "s01"})
         ev = until(ws, "error", "done")[-1]
-    assert ev["type"] == "error" and "limit" in ev["message"]
+    assert ev["type"] == "error" and "demo runs are stopped" in ev["message"]
+
+
+def test_spend_ledger_demo_reserve_and_daily_cap(tmp_path, monkeypatch):
+    from probeforge.eval import spend
+
+    monkeypatch.setattr(spend, "DEMO_DAILY_USD", 5.0)
+    ledger = SpendLedger(tmp_path / "spend.json")
+    ledger.record(88.0, "batches")  # 109 total: batches are nearly at their 110 cap
+    with pytest.raises(SpendLimitError):
+        ledger.check(2.0)
+    ledger.check(2.0, demo=True)  # live runs may use the reserve
+    ledger.record(4.5, "ui run", demo=True)
+    assert ledger.demo_today() == 4.5
+    with pytest.raises(SpendLimitError, match="daily cap"):
+        ledger.check(1.0, demo=True)
