@@ -16,7 +16,9 @@ AI agent that diagnoses faults in an industrial relay-contactor circuit by choos
 - Always smoke-test on 5 cases first; run a full batch only if the smoke test looks right.
 - Tell the user the estimated cost before any batch over $2.
 - One full run per configuration; no variance reruns.
-- No Muse Wonder, no medium reasoning effort (low or below only).
+- No Muse Wonder. No medium reasoning effort in the agent loop (low or below). The hybrid's transcription and
+  repair (correction) calls stay at medium, as in all reported runs: they are few and cheap, and lowering them
+  would change the pipeline behind the dev numbers. Explanations stay at low.
 - Spend guard (`src/probeforge/eval/spend.py`): $130 total limit, of which $20 is reserved for the public demo.
   Batches and scripts stop at $110; live UI runs record as demo spend and may use the reserve, capped per day
   (`DEMO_DAILY_USD`, default $5, env `PROBEFORGE_DEMO_DAILY_USD`).

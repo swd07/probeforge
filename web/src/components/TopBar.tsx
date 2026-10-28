@@ -98,7 +98,6 @@ export function TopBar({ meta, state, onStart, onStop }: Props) {
         ) : mode === "agent" ? (
           <select value={effort} onChange={(e) => setEffort(e.target.value)} disabled={busy} aria-label="Reasoning effort">
             <option value="low">effort low</option>
-            <option value="medium">effort medium</option>
           </select>
         ) : (
           <input
