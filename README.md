@@ -2,7 +2,9 @@
 
 AI agent that diagnoses faults in an industrial relay-contactor circuit (star-delta reversing motor starter) by choosing its own virtual measurements, under hard safety limits enforced in code. Built for the Meta Global AI Developer Hackathon 2026.
 
-Status: Day 4. Simulator, faults, tools, safety policy, Muse Spark agent, baselines, evaluation harness (clean holdout results), the live web UI and phase 1 of the hybrid pipeline (Muse Spark reads the schematic, a planner measures, Muse Spark repairs the netlist and explains) are done and tested.
+Status (Oct 28): simulator, faults, tools, safety policy, Muse Spark agent, baselines, evaluation harness, live web UI and the hybrid pipeline (Muse Spark reads the schematic three times, a planner measures over joint fault x wiring hypotheses, Muse Spark repairs and explains) are done, tested and frozen. Next: a second circuit as the final unseen test.
+
+Design and data flow: [ARCHITECTURE.md](ARCHITECTURE.md). Why it is built this way: [DECISIONS.md](DECISIONS.md).
 
 ## Setup
 

@@ -65,9 +65,14 @@ def holdout_cases(name: str) -> list[Case]:
 
 
 def frozen_hashes() -> dict:
-    """Fingerprints of what must not change between dev and clean runs."""
+    """Fingerprints of what must not change between dev and final runs (see ARCHITECTURE.md, Invariants).
+    Agent: prompt and tools, half-split baseline. Hybrid (frozen 2026-10-28): planner incl. joint mode,
+    consensus, wiring check, acceptance rule, repair step (prompt and region rule), transcription and
+    explanation prompts, pipeline orchestration."""
     from probeforge.agent import prompts
-    from probeforge.baseline import halfsplit
+    from probeforge.baseline import halfsplit, infogain
+    from probeforge.hybrid import acceptance, consensus, explain, pipeline, repair, uncertainty
+    from probeforge.hybrid.netlist_io import spec
     from probeforge.tools.toolbox import TOOL_SPECS
 
     def sha(text: str) -> str:
@@ -77,6 +82,14 @@ def frozen_hashes() -> dict:
         "prompt": sha(inspect.getsource(prompts) + json.dumps(TOOL_SPECS, sort_keys=True)),
         "baseline": sha(inspect.getsource(halfsplit)),
         "image_only_prompt_edits": sha(json.dumps(IMAGE_ONLY_PROMPT_EDITS)),  # applied only with --no-netlist
+        "hybrid_planner": sha(inspect.getsource(infogain)),
+        "hybrid_consensus": sha(inspect.getsource(consensus)),
+        "hybrid_wiring_check": sha(inspect.getsource(uncertainty)),
+        "hybrid_acceptance": sha(inspect.getsource(acceptance)),
+        "hybrid_repair": sha(inspect.getsource(repair)),
+        "hybrid_transcription_prompt": sha(spec(flags=True)),
+        "hybrid_explanation_prompt": sha(explain.PROMPT),
+        "hybrid_pipeline": sha(inspect.getsource(pipeline)),
     }
 
 
@@ -316,6 +329,8 @@ def main() -> None:
             raise SystemExit(f"Refusing to start: {e}")
         client = make_client()
 
+    if args.runner == "hybrid":
+        print(f"Frozen: {frozen_hashes()}", flush=True)
     started = time.perf_counter()
 
     def job(item):

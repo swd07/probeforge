@@ -23,6 +23,15 @@ AI agent that diagnoses faults in an industrial relay-contactor circuit by choos
   Batches and scripts stop at $110; live UI runs record as demo spend and may use the reserve, capped per day
   (`DEMO_DAILY_USD`, default $5, env `PROBEFORGE_DEMO_DAILY_USD`).
 
+## Architecture and decisions
+
+- ARCHITECTURE.md describes the components, data flow, model calls, safety policy and invariants; DECISIONS.md is the
+  dated decision log.
+- If an instruction conflicts with ARCHITECTURE.md or DECISIONS.md, say so and ask before doing it.
+- Append every new decision to DECISIONS.md (date, what, why, alternatives, evidence).
+- The hybrid is frozen (2026-10-28): its fingerprints are in `frozen_hashes()` (scripts/run_scenarios.py). Do not change
+  a fingerprinted component without telling the user first.
+
 ## Writing style rule
 
 Never use the em dash character in any text (README, UI, comments, commit messages). Use commas, colons, periods or parentheses.
