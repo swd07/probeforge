@@ -22,6 +22,7 @@ export function TopBar({ meta, state, onStart, onStop }: Props) {
   const [choice, setChoice] = useState("random");
   const [effort, setEffort] = useState("low");
   const [engineer, setEngineer] = useState("");
+  const [schematic, setSchematic] = useState("saved");
   const busy = state.status === "running" || state.status === "approval";
 
   // after a run the dropdown is cleared, so it cannot look like the result belongs to whatever it shows;
@@ -38,9 +39,17 @@ export function TopBar({ meta, state, onStart, onStop }: Props) {
       effort,
       includeLatent: false,
       engineer,
+      schematic,
     });
 
-  const statusText = state.status === "running" && state.mode === "manual" ? "Your turn" : STATUS_TEXT[state.status];
+  const statusText =
+    state.status === "running" && state.mode === "manual"
+      ? "Your turn"
+      : state.status === "running" && state.mode === "hybrid"
+        ? state.stage ? "Muse Spark working" : "Planner measuring"
+        : state.status === "approval" && state.flags
+          ? "Confirm the schematic read"
+          : STATUS_TEXT[state.status];
 
   return (
     <header className="topbar">
@@ -52,6 +61,14 @@ export function TopBar({ meta, state, onStart, onStop }: Props) {
         <div className="segmented" role="tablist" aria-label="Who diagnoses">
           <button className={mode === "agent" ? "on" : ""} onClick={() => setMode("agent")} disabled={busy}>
             Agent
+          </button>
+          <button
+            className={mode === "hybrid" ? "on" : ""}
+            onClick={() => setMode("hybrid")}
+            disabled={busy}
+            title="Muse Spark reads the schematic, a planner measures, Muse Spark repairs the netlist and explains"
+          >
+            Hybrid
           </button>
           <button className={mode === "manual" ? "on" : ""} onClick={() => setMode("manual")} disabled={busy}>
             Engineer
@@ -72,7 +89,12 @@ export function TopBar({ meta, state, onStart, onStop }: Props) {
             ))}
           </optgroup>
         </select>
-        {mode === "agent" ? (
+        {mode === "hybrid" ? (
+          <select value={schematic} onChange={(e) => setSchematic(e.target.value)} disabled={busy} aria-label="Schematic read">
+            <option value="saved">saved read (run 2, has errors)</option>
+            <option value="live">live read by Muse Spark</option>
+          </select>
+        ) : mode === "agent" ? (
           <select value={effort} onChange={(e) => setEffort(e.target.value)} disabled={busy} aria-label="Reasoning effort">
             <option value="low">effort low</option>
             <option value="medium">effort medium</option>

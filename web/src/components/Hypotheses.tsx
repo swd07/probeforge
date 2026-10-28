@@ -1,13 +1,23 @@
 import type { Hypothesis } from "../types";
 import { hypKey } from "../useSession";
 
-export function Hypotheses({ hypotheses, previous }: { hypotheses: Hypothesis[]; previous: Record<string, number> }) {
+export function Hypotheses({
+  hypotheses,
+  previous,
+  title = "Hypotheses",
+  subtitle = "updated after each measurement",
+}: {
+  hypotheses: Hypothesis[];
+  previous: Record<string, number>;
+  title?: string;
+  subtitle?: string;
+}) {
   const top = hypotheses.slice(0, 6);
   return (
     <section className="hyp-card">
       <div className="card-title">
-        <span>Hypotheses</span>
-        <span className="muted">updated after each measurement</span>
+        <span>{title}</span>
+        <span className="muted">{subtitle}</span>
       </div>
       {top.length === 0 && <div className="muted empty">No hypotheses yet.</div>}
       <ul className="hyp-list">

@@ -27,6 +27,8 @@ def main() -> None:
     ap.add_argument("--fault", default=None, help="test hook: inject this fault, e.g. 'QF1:5-6 open'")
     ap.add_argument("--width", type=int, default=1680)
     ap.add_argument("--height", type=int, default=1000)
+    ap.add_argument("--mode", choices=["agent", "hybrid"], default="agent")
+    ap.add_argument("--schematic", choices=["saved", "live"], default="saved", help="hybrid: which schematic read")
     args = ap.parse_args()
     out = ROOT / "docs" / "screenshots"
     out.mkdir(parents=True, exist_ok=True)
@@ -37,6 +39,9 @@ def main() -> None:
         page.goto(args.url + (f"/?fault={args.fault}" if args.fault else ""))
         page.wait_for_selector(".schematic svg")
         page.screenshot(path=out / f"{args.name}_0_ready.png")
+        if args.mode == "hybrid":
+            page.click(".segmented button:has-text(\"Hybrid\")")
+            page.select_option("select[aria-label=\"Schematic read\"]", args.schematic)
         page.select_option("select[aria-label=Fault]", args.choice)
         page.click("button.start")
 
@@ -51,6 +56,14 @@ def main() -> None:
                 if name not in taken and n_tools >= at and n_probe > 0:
                     page.screenshot(path=out / f"{args.name}_{len(taken) + 1}_{name}.png")
                     taken.add(name)
+            for name, sel in (("conflict", ".item.conflict"), ("correction", ".item.correction")):
+                if name not in taken and page.query_selector(sel):
+                    time.sleep(0.4)
+                    page.screenshot(path=out / f"{args.name}_{len(taken) + 1}_{name}.png")
+                    taken.add(name)
+            if page.query_selector(".flags-modal"):
+                page.screenshot(path=out / f"{args.name}_flags.png")
+                page.click(".flags-modal button.approve")
             if page.query_selector(".approval-modal"):
                 approvals += 1
                 page.screenshot(path=out / f"{args.name}_approval_{approvals}.png")

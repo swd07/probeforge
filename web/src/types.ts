@@ -96,6 +96,23 @@ export interface Done {
     after: number;
     delta: number;
   } | null;
+  // hybrid pipeline only
+  explanation?: string;
+  cited_steps?: number[];
+  transcription?: string;
+  transcription_wrong_nets?: number;
+  corrections?: { step: number; diff: string[]; explanation: string; error?: string | null }[];
+  gave_up?: boolean;
+}
+
+export interface Flag {
+  terminals: string[];
+  reason: string;
+}
+
+export interface FlagsRequest {
+  id: number;
+  flags: Flag[];
 }
 
 export type FeedItem =
@@ -103,7 +120,10 @@ export type FeedItem =
   | { kind: "tool"; id: string; ev: ToolEvent }
   | { kind: "hypotheses"; id: string; step: number; top: Hypothesis | null }
   | { kind: "approval"; id: string; req: ApprovalRequest; approved?: boolean }
-  | { kind: "info"; id: string; text: string };
+  | { kind: "info"; id: string; text: string }
+  | { kind: "transcription"; id: string; how: string; flags: Flag[]; components: number; nets: number; accepted?: boolean }
+  | { kind: "conflict"; id: string; step: number; action: string; actual: string; candidates: number }
+  | { kind: "correction"; id: string; step: number; diff: string[]; explanation: string };
 
 export type NetState = "live" | "dead" | "probed";
 
@@ -136,4 +156,4 @@ export interface CompareResult {
   note: string;
 }
 
-export type Mode = "agent" | "manual";
+export type Mode = "agent" | "manual" | "hybrid";

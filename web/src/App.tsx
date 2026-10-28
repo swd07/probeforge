@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ApprovalCard, ResultCard } from "./components/Cards";
+import { ApprovalCard, FlagsCard, ResultCard } from "./components/Cards";
 import { CompareView } from "./components/CompareView";
 import { DiagnosisForm } from "./components/DiagnosisForm";
 import { Feed } from "./components/Feed";
@@ -18,7 +18,7 @@ export function App() {
   const [diagnosing, setDiagnosing] = useState(false);
   const [comparing, setComparing] = useState(false);
   const [meter, setMeter] = useState<MeterState>({ kind: "V", a: null, b: null, hold: 0.2, wait: 6, reason: "manual check" });
-  const { state, start, answer, stop, tool, compare } = useSession(meta?.neutral ?? "N");
+  const { state, start, answer, stop, tool, compare, confirmFlags } = useSession(meta?.neutral ?? "N");
 
   useEffect(() => {
     fetch("/api/meta").then((r) => r.json()).then(setMeta);
@@ -41,6 +41,8 @@ export function App() {
   }, [state.flash]);
 
   const manual = state.mode === "manual";
+  const hybrid = state.mode === "hybrid";
+  const flagged = state.flags ? state.flags.flags.flatMap((f) => f.terminals) : [];
   const manualActive = manual && state.status === "running";
   const lastBlocked = [...state.feed].reverse().find((f) => f.kind === "tool" && f.ev.verdict === "block");
   const lastProbe = state.probes.length ? state.probes[state.probes.length - 1] : null;
@@ -68,11 +70,12 @@ export function App() {
               probes={state.probes}
               truthLive={state.done && showTruth ? state.done.truth_live_nets : null}
               onPick={manualActive ? pick : undefined}
-              selected={manualActive ? [meter.a, meter.b] : []}
+              selected={manualActive ? [meter.a, meter.b] : flagged}
               followDefault={!manual}
               fitKey={state.done ? "reveal" : state.feed.length === 0 ? "start" : "run"}
             />
             {state.error && <div className="error-banner">{state.error}</div>}
+            {state.stage && state.status === "running" && <div className="stage-banner">{state.stage}</div>}
           </div>
         </div>
         <aside className="right">
@@ -104,14 +107,20 @@ export function App() {
               onDiagnose={() => setDiagnosing(true)}
             />
           ) : (
-            <Hypotheses hypotheses={state.hypotheses} previous={state.previous} />
+            <Hypotheses
+              hypotheses={state.hypotheses}
+              previous={state.previous}
+              title={hybrid ? "Candidate faults" : "Hypotheses"}
+              subtitle={hybrid ? "share of simulated candidates still consistent" : "updated after each measurement"}
+            />
           )}
-          <Feed items={state.feed} manual={manual} />
+          <Feed items={state.feed} manual={manual} title={hybrid ? "Hybrid pipeline" : undefined} />
         </aside>
       </main>
       {flashing && lastBlocked && lastBlocked.kind === "tool" && (
         <div className="toast-blocked">Blocked by safety policy: {lastBlocked.ev.policy_reason}</div>
       )}
+      {state.flags && <FlagsCard req={state.flags} onAnswer={(ok) => confirmFlags(state.flags!.id, ok)} />}
       {state.approval && <ApprovalCard req={state.approval} onAnswer={(ok) => answer(state.approval!.id, ok)} />}
       {diagnosing && meta && (
         <DiagnosisForm

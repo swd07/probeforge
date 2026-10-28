@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useReducer, useRef } from "react";
-import type { ApprovalRequest, CompareResult, Done, FeedItem, Hypothesis, Mode, NetState, Panel, Probe, ToolEvent } from "./types";
+import type { ApprovalRequest, CompareResult, Done, FeedItem, FlagsRequest, Hypothesis, Mode, NetState, Panel, Probe, ToolEvent } from "./types";
 
 export type Status = "idle" | "running" | "approval" | "done" | "error";
 
@@ -21,6 +21,8 @@ export interface State {
   nets: Record<string, NetState>;
   pressed: { button: string; at: number } | null;
   approval: ApprovalRequest | null;
+  flags: FlagsRequest | null;
+  stage: string;
   done: Done | null;
   tokens: number;
   turns: number;
@@ -48,6 +50,8 @@ const initial: State = {
   nets: {},
   pressed: null,
   approval: null,
+  flags: null,
+  stage: "",
   done: null,
   tokens: 0,
   turns: 0,
@@ -64,6 +68,7 @@ export interface StartOptions {
   effort: string;
   includeLatent: boolean;
   engineer?: string;
+  schematic?: string; // hybrid: "saved" transcription or a "live" read
 }
 
 export const hypKey = (h: Hypothesis) => `${h.component}${h.part ? ":" + h.part : ""} ${h.failure_mode}`;
@@ -130,6 +135,36 @@ function reducer(s: State, a: Action): State {
         feed: [...s.feed, { kind: "hypotheses", id: `h${ev.step}`, step: ev.step, top: hyps[0] ?? null }],
       };
     }
+    case "stage":
+      return { ...s, stage: ev.text, feed: [...s.feed, { kind: "info", id: `stage${s.feed.length}`, text: ev.text }] };
+    case "transcription":
+      return {
+        ...s,
+        stage: "",
+        feed: [...s.feed, { kind: "transcription", id: "transcription", how: ev.how, flags: ev.flags, components: ev.components, nets: ev.nets }],
+      };
+    case "flags_request":
+      return { ...s, status: "approval", flags: ev };
+    case "flags_answer":
+      return {
+        ...s,
+        status: "running",
+        flags: null,
+        feed: s.feed.map((f) => (f.kind === "transcription" ? { ...f, accepted: ev.accepted } : f)),
+      };
+    case "conflict":
+      return {
+        ...s,
+        stage: "Muse Spark is checking the schematic against the readings...",
+        flash: Date.now(),
+        feed: [...s.feed, { kind: "conflict", id: `c${ev.step}_${s.feed.length}`, step: ev.step, action: ev.action, actual: ev.actual, candidates: ev.candidates }],
+      };
+    case "correction":
+      return {
+        ...s,
+        stage: "",
+        feed: [...s.feed, { kind: "correction", id: `k${ev.step}_${s.feed.length}`, step: ev.step, diff: ev.diff, explanation: ev.explanation }],
+      };
     case "approval_request":
       return {
         ...s,
@@ -145,7 +180,7 @@ function reducer(s: State, a: Action): State {
         feed: s.feed.map((f) => (f.kind === "approval" && f.req.id === ev.id ? { ...f, approved: ev.approved } : f)),
       };
     case "done":
-      return { ...s, status: "done", done: ev, panel: ev.panel, approval: null };
+      return { ...s, status: "done", done: ev, panel: ev.panel, approval: null, flags: null, stage: "" };
     case "saved":
       return { ...s, saved: ev.path };
     case "compare_progress":
@@ -161,7 +196,7 @@ function reducer(s: State, a: Action): State {
     case "error":
       if (s.status === "done") return { ...s, error: ev.message }; // e.g. compare refused after the run
 
-      return { ...s, status: "error", error: ev.message, approval: null };
+      return { ...s, status: "error", error: ev.message, approval: null, flags: null, stage: "" };
     default:
       return s;
   }
@@ -196,12 +231,13 @@ export function useSession(neutral: string) {
       const fault = new URLSearchParams(location.search).get("fault") ?? undefined;
       sock.send(
         JSON.stringify({
-          action: opts.mode === "manual" ? "start_manual" : "start",
+          action: opts.mode === "manual" ? "start_manual" : opts.mode === "hybrid" ? "start_hybrid" : "start",
           source: opts.source,
           scenario: opts.scenario,
           effort: opts.effort,
           include_latent: opts.includeLatent,
           engineer: opts.engineer,
+          schematic: opts.schematic,
           fault,
         }),
       );
@@ -222,7 +258,11 @@ export function useSession(neutral: string) {
     ws.current?.send(JSON.stringify({ action: "approval", id, approve }));
   }, []);
 
+  const confirmFlags = useCallback((id: number, accept: boolean) => {
+    ws.current?.send(JSON.stringify({ action: "flags", id, approve: accept }));
+  }, []);
+
   const stop = useCallback(() => ws.current?.send(JSON.stringify({ action: "stop" })), []);
 
-  return { state, start, answer, stop, tool, compare };
+  return { state, start, answer, stop, tool, compare, confirmFlags };
 }

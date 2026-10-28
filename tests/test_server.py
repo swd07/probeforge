@@ -117,3 +117,48 @@ def test_clean_pool_fault_comes_from_holdout_clean(monkeypatch):
     done = events[-1]
     assert done["source"] == f"clean test fault (holdout_clean.yaml, {len(pool)})"
     assert done["fault"] in pool
+
+
+def test_hybrid_session_saved_transcription(monkeypatch):
+    from tests.test_hybrid import FakeClient as HybridFake, true_data
+
+    monkeypatch.setattr(server, "client", lambda: HybridFake(true_data()))
+    monkeypatch.setattr(server, "render_png", lambda n: b"png")
+    http = TestClient(server.app)
+    events = []
+    with http.websocket_connect("/ws") as ws:
+        ws.send_json({"action": "start_hybrid", "source": "random", "schematic": "saved",
+                      "fault": "KM4:3-4 stuck_open"})
+        while True:
+            ev = ws.receive_json()
+            events.append(ev)
+            if ev["type"] in ("done", "error"):
+                break
+    kinds = [e["type"] for e in events]
+    assert kinds[0] == "session" and "transcription" in kinds and "conflict" in kinds and "correction" in kinds
+    assert "hypotheses" in kinds and kinds[-1] == "done"
+    done = events[-1]
+    assert done["mode"] == "hybrid" and done["verdict"] == "correct" and done["transcription_wrong_nets"] == 6
+    assert done["corrections"] and done["explanation"]
+    # nothing before "done" names the injected fault as such
+    assert all("fault" not in e for e in events[:-1])
+
+
+def test_hybrid_flags_need_confirmation(monkeypatch):
+    from tests.test_hybrid import FakeClient as HybridFake, true_data
+
+    flagged = {**true_data(), "uncertain": [{"terminals": ["KM2:1", "KM2:5"], "reason": "wires cross"}]}
+    monkeypatch.setattr(server, "client", lambda: HybridFake(true_data()))
+    monkeypatch.setattr(server, "render_png", lambda n: b"png")
+    monkeypatch.setattr(server.HybridSession, "read", lambda self, usage: (flagged, [flagged["uncertain"][0]], "test"))
+    http = TestClient(server.app)
+    with http.websocket_connect("/ws") as ws:
+        ws.send_json({"action": "start_hybrid", "source": "random", "fault": "FU1:1-2 open"})
+        while True:
+            ev = ws.receive_json()
+            if ev["type"] == "flags_request":
+                assert ev["flags"][0]["terminals"] == ["KM2:1", "KM2:5"]
+                ws.send_json({"action": "flags", "id": ev["id"], "approve": False})
+            if ev["type"] in ("done", "error"):
+                break
+    assert ev["type"] == "error" and "not confirmed" in ev["message"]

@@ -9,12 +9,15 @@ Protocol (JSON over /ws):
   client -> server  {"action": "start", "source": "scenario" | "random", "scenario": "s01",
                      "effort": "low", "include_latent": false, "fault": optional test hook}
                     {"action": "start_manual", ... same fault choice ..., "engineer": "name"}
+                    {"action": "start_hybrid", ... same fault choice ..., "schematic": "saved" | "live"}
+                    {"action": "flags", "id": 1, "approve": true}        (confirm flagged transcription regions)
                     {"action": "tool", "name": "measure_voltage", "args": {...}}      (manual mode)
                     {"action": "approval", "id": 1, "approve": true}
                     {"action": "compare"}                                           (after a manual run)
                     {"action": "stop"}
   server -> client  session, turn, tool, hypotheses, approval_request, approval_answer, done,
-                    saved, compare_progress, compare, error
+                    saved, compare_progress, compare, error;
+                    hybrid also: stage, transcription, flags_request, flags_answer, conflict, correction
 """
 
 import asyncio
@@ -40,8 +43,11 @@ from probeforge.eval.trace import decisive_measurement, make_trace, summary, ver
 from probeforge.faults import Fault
 from probeforge.faults.catalog import SCENARIOS_DIR, all_faults, load_scenarios
 from probeforge.faults.model import COMPONENT_MODES, PART_MODES
+from probeforge.hybrid import read_schematic, run_hybrid
+from probeforge.hybrid.llm import Usage
+from probeforge.hybrid.netlist_io import flags_of, wrong_nets
 from probeforge.sim import Circuit, Netlist
-from probeforge.sim.schematic import render_svg
+from probeforge.sim.schematic import render_png, render_svg
 from probeforge.tools import ApprovalRequest, ToolBox, deny_all
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -246,6 +252,103 @@ class AgentSession(Session):
         self.finish(trace)
 
 
+TRANSCRIPTIONS = {
+    # a real Muse Spark transcription with known crossover errors (6 of 35 nets), kept for repeatable demos
+    "saved": SCENARIOS_DIR / "transcriptions" / "star_delta_run2.yaml",
+}
+_live_read: dict = {}  # one live transcription per server process (about a minute and $0.07 each)
+_live_lock = threading.Lock()
+
+
+class HybridSession(Session):
+    """Read (transcribe), Model, Plan (info-gain on the transcription), Verify (repair), Explain."""
+
+    mode = "hybrid"
+
+    def __init__(self, fault: Fault, source: str, schematic: str, emit):
+        super().__init__(fault, source, emit)
+        self.schematic = schematic if schematic in ("live", *TRANSCRIPTIONS) else "saved"
+
+    def confirm_flags(self, flags: list[dict]) -> bool:
+        """Human confirmation of the regions the transcription flagged (same wait as an approval)."""
+        rid = next(self._ids)
+        event, answer = threading.Event(), [False]
+        self._pending[rid] = (event, answer)
+        self.emit({"type": "flags_request", "id": rid, "flags": flags})
+        event.wait(APPROVAL_TIMEOUT_S)
+        self._pending.pop(rid, None)
+        if self.cancelled:
+            raise Cancelled()
+        self.emit({"type": "flags_answer", "id": rid, "accepted": answer[0]})
+        return answer[0]
+
+    def read(self, usage: Usage) -> tuple[dict, list[dict], str]:
+        if self.schematic != "live":
+            path = TRANSCRIPTIONS[self.schematic]
+            data = yaml.safe_load(path.read_text(encoding="utf-8"))
+            return data, flags_of(data), f"saved Muse Spark transcription ({path.name})"
+        with _live_lock:
+            if "data" not in _live_read:
+                self.emit({"type": "stage", "stage": "read", "text": "Muse Spark is reading the schematic image..."})
+                data, flags = read_schematic(client(), usage, render_png(NETLIST))
+                _live_read.update(data=data, flags=flags, at=datetime.now().strftime("%H:%M"))
+                return data, flags, "live Muse Spark transcription"
+        return _live_read["data"], _live_read["flags"], f"live Muse Spark transcription (read at {_live_read['at']}, reused)"
+
+    def on_update(self, planner, entry: dict) -> None:
+        if self.cancelled:
+            raise Cancelled()
+        counts: dict = {}
+        for c in planner.cands:
+            counts[c.fault] = counts.get(c.fault, 0) + 1
+        total = sum(counts.values()) or 1
+        hyps = [{"component": f.component, "part": f.part or "", "failure_mode": f.mode, "probability": k / total,
+                 "reason": f"{len(counts)} candidate faults consistent with every reading"}
+                for f, k in sorted(counts.items(), key=lambda x: -x[1])[:12]]
+        self.emit({"type": "hypotheses", "step": entry["step"], "hypotheses": hyps})
+
+    def run(self) -> None:
+        try:
+            ledger().check(EST_PER_AGENT_RUN_USD, what="a hybrid run")
+        except SpendLimitError as e:
+            self.emit({"type": "error", "message": str(e)})
+            self.done = True
+            return
+        self.emit({"type": "session", "mode": "hybrid", "source": self.source, "model": MUSE_SPARK,
+                   "panel": panel_snapshot(self.circuit)})
+        usage = Usage(effort="medium")
+        try:
+            data, flags, how = self.read(usage)
+            self.emit({"type": "transcription", "how": how, "flags": flags,
+                       "components": len(data.get("components") or {}), "nets": len(data.get("nets") or {})})
+            if flags and not self.confirm_flags(flags):
+                self.emit({"type": "error", "message": "transcription not confirmed: correct the flagged regions first"})
+                self.done = True
+                return
+            result = run_hybrid(self.circuit, client(), data, render_png(NETLIST), usage=usage,
+                                on_event=self.on_event, on_update=self.on_update)
+        except Cancelled:
+            self.emit({"type": "error", "message": "session stopped"})
+            self.done = True
+            return
+        except Exception as e:  # missing key, API down, unusable transcription
+            ledger().record(usage.cost_usd, f"ui hybrid run ({self.source}, failed)")
+            self.emit({"type": "error", "message": f"{type(e).__name__}: {e}"})
+            self.done = True
+            return
+        ledger().record(usage.cost_usd, f"ui hybrid run ({self.source})")
+        trace = make_trace(case="ui", runner="hybrid", tb=result.planner.tb, diagnosis=result.diagnosis,
+                           outcome=result.outcome, seconds=result.seconds, run=usage, notes=result.planner.notes,
+                           extra=result.trace_extra())
+        self.finish(trace, extra={
+            "explanation": result.explanation, "cited_steps": result.cited_steps, "transcription": how,
+            "transcription_wrong_nets": len(wrong_nets(data, NETLIST)),  # revealed with the fault, after the run
+            "corrections": [{"step": c["step"], "diff": c.get("diff", []), "explanation": c.get("explanation", ""),
+                             "error": c.get("error")} for c in result.corrections],
+            "gave_up": result.planner.gave_up,
+        })
+
+
 class ManualSession(Session):
     """A human engineer drives the same ToolBox (same tools, same policy, same step log)."""
 
@@ -403,7 +506,7 @@ async def ws(websocket: WebSocket) -> None:
         while True:
             msg = await websocket.receive_json()
             action = msg.get("action")
-            if action in ("start", "start_manual"):
+            if action in ("start", "start_manual", "start_hybrid"):
                 if session and not session.done:
                     session.cancel()
                 try:
@@ -414,6 +517,9 @@ async def ws(websocket: WebSocket) -> None:
                 if action == "start":
                     session = AgentSession(fault, source, msg.get("effort") or "low", emit)
                     background(session.run)
+                elif action == "start_hybrid":
+                    session = HybridSession(fault, source, str(msg.get("schematic") or "saved"), emit)
+                    background(session.run)
                 else:
                     session = ManualSession(fault, source, str(msg.get("engineer") or ""), emit)
                     session.start()
@@ -422,7 +528,7 @@ async def ws(websocket: WebSocket) -> None:
                 background(session.call, str(msg.get("name")), args)
             elif action == "compare" and isinstance(session, ManualSession):
                 background(session.compare)
-            elif action == "approval" and session:
+            elif action in ("approval", "flags") and session:
                 session.answer(int(msg["id"]), bool(msg.get("approve")))
             elif action == "stop" and session:
                 session.cancel()

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { ApprovalRequest, Done } from "../types";
+import type { ApprovalRequest, Done, FlagsRequest } from "../types";
 
 export function ApprovalCard({ req, onAnswer }: { req: ApprovalRequest; onAnswer: (approve: boolean) => void }) {
   const what =
@@ -31,6 +31,38 @@ export function ApprovalCard({ req, onAnswer }: { req: ApprovalRequest; onAnswer
   );
 }
 
+/** Regions the schematic transcription is unsure about; the flagged terminals light up on the schematic. */
+export function FlagsCard({ req, onAnswer }: { req: FlagsRequest; onAnswer: (accept: boolean) => void }) {
+  return (
+    <div className="modal-backdrop flags-backdrop">
+      <div className="modal flags-modal" role="dialog" aria-label="Confirm the schematic read">
+        <div className="modal-kicker">Human check of the schematic read</div>
+        <h2>{req.flags.length} uncertain region{req.flags.length > 1 ? "s" : ""}</h2>
+        <p className="policy-reason">
+          Muse Spark transcribed the schematic and flagged these places. Check them on the drawing (highlighted) before the
+          planner relies on the netlist.
+        </p>
+        <ul className="flag-list">
+          {req.flags.map((f, i) => (
+            <li key={i}>
+              <span className="flag-terms">{f.terminals.join(", ")}</span>
+              <span>{f.reason}</span>
+            </li>
+          ))}
+        </ul>
+        <div className="modal-actions">
+          <button className="btn deny" onClick={() => onAnswer(false)}>
+            Reject (stop)
+          </button>
+          <button className="btn approve" onClick={() => onAnswer(true)}>
+            Confirm and diagnose
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const VERDICT_TEXT: Record<string, string> = {
   correct: "Correct",
   justified: "Justified",
@@ -50,6 +82,7 @@ interface ResultProps {
 export function ResultCard({ done, showTruth, onToggleTruth, saved, onCompare }: ResultProps) {
   const [collapsed, setCollapsed] = useState(false);
   const manual = done.mode === "manual";
+  const hybrid = done.mode === "hybrid";
   const d = done.diagnosis ?? {};
   const said =
     done.outcome === "diagnosed"
@@ -75,7 +108,7 @@ export function ResultCard({ done, showTruth, onToggleTruth, saved, onCompare }:
               {done.latent && <span className="tag">latent</span>}
             </div>
             <div>
-              <span className="lbl">{manual ? "Your diagnosis" : "Agent diagnosis"}</span>
+              <span className="lbl">{manual ? "Your diagnosis" : hybrid ? "Pipeline diagnosis" : "Agent diagnosis"}</span>
               <span className="val">{said}</span>
               {typeof d.confidence === "number" && <span className="tag">{(Number(d.confidence) * 100).toFixed(0)}%</span>}
             </div>
@@ -91,11 +124,31 @@ export function ResultCard({ done, showTruth, onToggleTruth, saved, onCompare }:
               </span>
             </div>
           )}
+          {hybrid && done.explanation && (
+            <div className="explanation">
+              <span className="lbl">For the technician (Muse Spark)</span>
+              <p>{done.explanation}</p>
+            </div>
+          )}
+          {hybrid && (
+            <div className="hybrid-facts">
+              <div>
+                Schematic read: {done.transcription}
+                {done.transcription_wrong_nets !== undefined && (
+                  <em> ({done.transcription_wrong_nets === 0 ? "all nets right" : `${done.transcription_wrong_nets} of the true nets read wrong`})</em>
+                )}
+              </div>
+              <div>
+                Netlist corrections during the run: {done.corrections?.length ?? 0}
+                {done.gave_up && <em>, no consistent netlist found: handed over to a human</em>}
+              </div>
+            </div>
+          )}
           {done.twins.length > 0 && <p className="twins">No tool can tell this fault apart from: {done.twins.join(", ")}.</p>}
           <div className="figures">
             <div><b>{done.measurements}</b><span>measurements</span></div>
             <div><b>{done.redundant}</b><span>redundant</span></div>
-            {!manual && <div><b>{done.turns}</b><span>turns</span></div>}
+            {!manual && <div><b>{done.turns}</b><span>{hybrid ? "model calls" : "turns"}</span></div>}
             {!manual && <div><b>{(done.tokens / 1000).toFixed(0)}k</b><span>tokens</span></div>}
             {!manual && <div><b>${done.cost_usd.toFixed(3)}</b><span>cost</span></div>}
             <div><b>{done.seconds.toFixed(0)} s</b><span>time</span></div>

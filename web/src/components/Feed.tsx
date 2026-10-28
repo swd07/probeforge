@@ -53,7 +53,7 @@ export function describeTool(ev: ToolEvent): { title: string; detail: string } {
 /** Model text is shown as written, except dashes used as punctuation (project style rule). */
 const plain = (text: string) => text.replace(/\s*[\u2014\u2013]\s*/g, ", ");
 
-export function Feed({ items, manual = false }: { items: FeedItem[]; manual?: boolean }) {
+export function Feed({ items, manual = false, title }: { items: FeedItem[]; manual?: boolean; title?: string }) {
   const end = useRef<HTMLDivElement>(null);
   useEffect(() => {
     // braces matter: newer browsers return a Promise from scrollIntoView, which React would call as cleanup
@@ -63,7 +63,7 @@ export function Feed({ items, manual = false }: { items: FeedItem[]; manual?: bo
   return (
     <section className="feed-card">
       <div className="card-title">
-        <span>{manual ? "Your steps" : "Agent reasoning"}</span>
+        <span>{title ?? (manual ? "Your steps" : "Agent reasoning")}</span>
         <span className="muted">every tool call passes the safety policy</span>
       </div>
       <div className="feed">
@@ -71,6 +71,49 @@ export function Feed({ items, manual = false }: { items: FeedItem[]; manual?: bo
         {items.map((it) => {
           if (it.kind === "thought") return <div key={it.id} className="item thought">{plain(it.text)}</div>;
           if (it.kind === "info") return <div key={it.id} className="item info">{it.text}</div>;
+          if (it.kind === "transcription")
+            return (
+              <div key={it.id} className="item transcription">
+                <div>
+                  <b>Read:</b> {it.how}: {it.components} components, {it.nets} nets
+                </div>
+                {it.flags.length === 0 ? (
+                  <div className="detail">no regions flagged as uncertain</div>
+                ) : (
+                  <div className="detail">
+                    {it.flags.length} uncertain region{it.flags.length > 1 ? "s" : ""}
+                    {it.accepted === undefined ? ", waiting for confirmation" : it.accepted ? ", confirmed by human" : ", rejected"}
+                  </div>
+                )}
+              </div>
+            );
+          if (it.kind === "conflict")
+            return (
+              <div key={it.id} className="item conflict">
+                <span className="step">#{it.step}</span> <b>Inconsistent reading:</b> {it.action}
+                <div className="detail">real: {it.actual}</div>
+                <div className="detail">no candidate fault of the transcribed netlist predicts this; asking Muse Spark to recheck the schematic</div>
+              </div>
+            );
+          if (it.kind === "correction")
+            return (
+              <div key={it.id} className="item correction">
+                <div>
+                  <span className="step">#{it.step}</span> <b>Netlist correction</b> (planner rebuilt, readings replayed)
+                </div>
+                {it.explanation && <div className="detail">{plain(it.explanation)}</div>}
+                <pre className="diff">
+                  {it.diff.length === 0
+                    ? "(no change)"
+                    : it.diff.map((line, i) => (
+                        <span key={i} className={line.startsWith("+") ? "add" : "del"}>
+                          {line}
+                          {"\n"}
+                        </span>
+                      ))}
+                </pre>
+              </div>
+            );
           if (it.kind === "hypotheses")
             return (
               <div key={it.id} className="item hyp">

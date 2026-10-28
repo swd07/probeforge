@@ -279,3 +279,22 @@ button, select { font: inherit; }
 
 .next-run { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; }
 .this-run { margin-top: 8px; font-size: 12px; color: #b9c4cf; background: var(--panel-2); border-radius: 6px; padding: 4px 8px; display: inline-block; }
+
+/* hybrid pipeline */
+.item.transcription { border: 1px solid var(--accent); }
+.item.conflict { background: #3a1a12; border: 1px solid var(--bad); }
+.item.correction { background: #132a1c; border: 1px solid var(--ok); }
+.item .diff { margin: 6px 0 0; padding: 6px 8px; background: #0b1118; border-radius: 6px; font-size: 11.5px; white-space: pre-wrap; overflow-x: auto; }
+.item .diff .add { color: #7fd79a; }
+.item .diff .del { color: #f08a7e; }
+.flags-backdrop { align-items: flex-start; justify-content: flex-end; background: transparent; pointer-events: none; }
+.flags-modal { pointer-events: auto; margin: 70px 24px 0 0; width: 420px; max-height: calc(100vh - 100px); display: flex; flex-direction: column; }
+.flags-modal h2 { text-transform: none; }
+.flag-list { list-style: none; padding: 0; margin: 10px 0; display: flex; flex-direction: column; gap: 6px; overflow-y: auto; min-height: 0; }
+.flag-list li { background: var(--panel-2); border-radius: 8px; padding: 8px 10px; display: flex; flex-direction: column; gap: 2px; }
+.flag-terms { font-family: ui-monospace, monospace; color: var(--warn); }
+.explanation { background: #10233a; border-left: 3px solid var(--ok); border-radius: 8px; padding: 8px 10px; margin: 6px 0 10px; }
+.explanation .lbl { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; }
+.explanation p { margin: 4px 0 0; line-height: 1.45; }
+.hybrid-facts { font-size: 12.5px; color: var(--muted); display: flex; flex-direction: column; gap: 2px; margin-bottom: 8px; }
+.stage-banner { position: absolute; left: 50%; top: 14px; transform: translateX(-50%); background: #10233a; border: 1px solid var(--accent); color: #cfe3f7; padding: 6px 14px; border-radius: 999px; font-size: 13px; }
