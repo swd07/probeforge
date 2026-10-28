@@ -48,7 +48,7 @@ sequence of meter readings.
 |---|---|
 | ![Blocked](docs/screenshots/manual_2_blocked.png) | ![Compare](docs/screenshots/manual_6_compare.png) |
 
-**Hybrid mode** (third button in the top bar): Muse Spark reads the schematic image into a netlist (a live read, or
+**Hybrid mode** (third button in the top bar): Muse Spark reads the schematic image into a netlist (a live read: three reads, where they disagree is flagged too; or
 a saved real read with known errors, from the PNG or from a phone photo), the regions it flagged as uncertain light up on the schematic for a human to
 confirm, then the information-gain planner measures. When a reading contradicts every candidate fault, the feed shows
 the inconsistent reading in red, Muse Spark rechecks the drawing and the correction appears as a diff before the
@@ -212,19 +212,29 @@ test will be a second circuit.
 - **Mechanical interlock symbol** in the drawing (it was missing, so no transcription could find the interlocks;
   with it, 3 of 3 transcriptions list both).
 
-| Dev, pole level, from the phone photo | Visible correct (pole) | incl. justified | Component level | Confidently wrong | Pole left open | Meas per case | Cost per case |
-|---|---|---|---|---|---|---|---|
-| Hybrid before the changes, best read | 27/38 | 30/38 | 32/38 | 4 | 2 | 3.0 | $0.024 |
-| Hybrid before the changes, worst read | 27/38 | 30/38 | 31/38 | 2 | 2 | 3.1 | $0.017 |
-| **Joint hypotheses + repair, best read** | **32/38** | **35/38** | 33/38 | **0** | 1 | 3.4 | $0.006 |
-| **Joint hypotheses + repair, worst read** | **28/38** | **31/38** | 33/38 | 4 | 1 | 3.3 | $0.006 |
-| Joint hypotheses, no Muse Spark repair (best / worst) | 32/38 / 28/38 | 35/38 / 31/38 | 33/38 / 33/38 | 0 / 4 | 1 / 1 | 3.4 / 3.3 | free |
+- **Self-consistency flags:** the schematic is read several times; wherever the reads disagree, the region is
+  flagged as uncertain too, and the model is the read that agrees most with the others
+  ([docs/results/2026-10-28_consensus.md](docs/results/2026-10-28_consensus.md)).
 
+Dev results, pole level, from the phone photo (38 visible faults; latent 5/5 everywhere). The first rows are the
+hybrid with no uncertain regions at all (no joint wiring variants, no Muse Spark repair): the "without Muse Spark
+after the read" comparison on the same transcriptions.
+
+| Read | Flags | Repair | Pole level | incl. justified | Component level | Pole left open | Confidently wrong | Cost per case |
+|---|---|---|---|---|---|---|---|---|
+| best read (3) | none | no | 26/38 | 29/38 | 30/38 | 2 | 2 | free |
+| worst read (1) | none | no | 26/38 | 29/38 | 30/38 | 2 | 2 | free |
+| best read (3) | Muse Spark's own | yes | 32/38 | 35/38 | 33/38 | 1 | 0 | $0.006 |
+| worst read (1) | Muse Spark's own | yes | 28/38 | 31/38 | 33/38 | 1 | 4 | $0.006 |
+| **consensus of 3 reads** | **own + disagreement** | yes | **32/38** | **35/38** | 33/38 | 1 | **0** | $0.006 |
+| worst read (1) | own + disagreement | no | 32/38 | 35/38 | 33/38 | 1 | 0 | free |
+
+Before these changes the hybrid scored 27/38 at pole level on both photo reads, with 4 and 2 confidently wrong.
 Every reading that contradicted the transcribed wiring (3 per run) was explained by an alternative wiring of a flagged
 region, so Muse Spark was never asked for a correction: with the photo reads, the repair step adds nothing, and
-Muse Spark's part is the read and the explanation. The 4 confidently wrong answers from the worst read are faults
-whose true wiring lies outside what that read flagged (its KM2 crossover flag names two of the three phases; it did
-not flag the KM3 star wiring). On the PNG run-2 read, which has no flags, nothing changes without repair (10/38).
+Muse Spark's part is the read (now three reads) and the explanation. The disagreement flags make the weak read as good
+as the strong one: they cover exactly the misread wiring that read 1's own flags missed. The remaining misses are the
+three observational twins, one pole left open (c06) and KM1 main-pole faults that end as insufficient_information.
 
 ```
 uv run python scripts/run_scenarios.py --suite clean --effort low --workers 8      # agent, clean holdout
@@ -235,6 +245,8 @@ uv run python scripts/run_scenarios.py --suite clean --no-netlist --effort low  
 uv run python scripts/run_scenarios.py --runner hybrid --suite clean               # hybrid pipeline (run-2 transcription), labelled dev
 uv run python scripts/run_scenarios.py --runner hybrid --suite clean --transcription scenarios/transcriptions/star_delta_photo_run3.yaml --image scenarios/photos/star_delta_phone.jpg   # from the phone photo
 uv run python scripts/run_scenarios.py --runner hybrid --suite clean --no-repair --no-explain   # without Verify
+uv run python scripts/run_scenarios.py --runner hybrid --suite clean --no-repair --no-explain --flags none --transcription <read>   # no flags, no joint wiring variants
+uv run python scripts/consensus_read.py --replies <read1> <read2> <read3> --name NAME   # self-consistency flags from saved reads
 uv run python scripts/transcribe_schematic.py --runs 3                             # Read step, scored against the truth
 uv run python scripts/summarize_results.py OUT.md "Label=runs/<dir>" ...           # pole-level table from saved runs
 uv run python scripts/calibration.py                                               # confidence calibration
@@ -248,7 +260,7 @@ Every agent run records its API cost in `runs/spend.json` (started at the $21 sp
 `run_scenarios.py` estimates a batch at $0.10 per agent run and refuses to start if the total would pass $110, unless
 `--force`. The total limit is $130: the last $20 is reserved for the public demo, where live UI runs (agent, hybrid,
 compare) may use it up to a daily cap ($5 by default, `PROBEFORGE_DEMO_DAILY_USD`). Hybrid runs record their transcription,
-repair and explanation calls. Spend so far: $44.17.
+repair and explanation calls. Spend so far: $44.45.
 
 ## Known Muse Spark behaviour: tool calls written as text
 
