@@ -48,7 +48,7 @@ class SpendLedger:
             try:
                 fd = os.open(lock, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
                 break
-            except FileExistsError:
+            except (FileExistsError, PermissionError):  # Windows: PermissionError while the holder deletes it
                 if time.monotonic() > deadline:  # a crashed writer left it behind
                     lock.unlink(missing_ok=True)
                     continue

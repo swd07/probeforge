@@ -8,10 +8,14 @@ Usage:
 
 Suites: scenarios (s01-s08), dev (scenarios/holdout_dev.yaml: 30 visible + 10 latent faults, used
 while tuning, so dev results), clean (scenarios/holdout_clean.yaml: every fault never used before,
-the reported numbers), all (scenarios + dev). For latent faults, insufficient_information counts
-as correct.
+the reported numbers), all (scenarios + dev). "Correct" is pole level (component, failure mode and
+part); the component-level score is kept as a secondary column. For latent faults,
+insufficient_information counts as correct.
 
 --approve: a simulated human approves every reset / re-power request (default: all denied).
+
+Hybrid runs on the clean suite are labelled dev (folder suffix _dev and the title): the hybrid's
+acceptance rule, wiring check and scoring were changed after its clean-holdout results were seen.
 
 Writes runs/<timestamp>_<runner>_<suite>_<effort>/: one trace per case (no fault inside),
 results.json and results.md (with the expected fault and the score).
@@ -32,7 +36,7 @@ from pathlib import Path
 from probeforge.agent.client import MUSE_SPARK, make_client
 from probeforge.agent.loop import IMAGE_ONLY_PROMPT_EDITS, run_agent
 from probeforge.baseline import HalfSplitBaseline, InfoGainBaseline
-from probeforge.eval.scoring import score
+from probeforge.eval.scoring import grade
 from probeforge.eval.spend import EST_PER_AGENT_RUN_USD, SpendLedger, SpendLimitError
 from probeforge.eval.trace import make_trace
 from probeforge.faults import Fault
@@ -108,7 +112,7 @@ def run_case(case: Case, args, client, out_dir: Path, rep: int, ledger: SpendLed
             ledger.record(run.cost_usd, f"{out_dir.name}/{name}")
     elif args.runner == "hybrid":
         true_netlist, true_data = circuit.netlist, yaml.safe_load(case.circuit.read_text(encoding="utf-8"))
-        image = (ROOT / args.image).read_bytes() if args.image else schematic_png(case.circuit)
+        image = (ROOT / args.image).read_bytes() if args.image else schematic_png(case.circuit)  # repair step
         h = run_hybrid(circuit, client, hybrid_model(args.transcription), image, approver=approver,
                        repair=not args.no_repair, do_explain=not args.no_explain,
                        true_netlist=true_netlist, true_data=true_data)
@@ -132,16 +136,16 @@ def run_case(case: Case, args, client, out_dir: Path, rep: int, ledger: SpendLed
     missing = trace["missing_hypothesis_updates"]
     seconds = trace["seconds"]
 
-    s = score(diagnosis, case.fault)
-    exact = s["component_ok"] and s["mode_ok"]
-    correct = exact or (case.latent and outcome == "insufficient_information")
+    g = grade(diagnosis if outcome == "diagnosed" else {"outcome": outcome}, case.fault, case.latent)
     d = diagnosis or {}
     func, inst = evidence_counts(diagnosis)
     return {
         "case": name, "latent": case.latent, "expected": str(case.fault),
         "diagnosed": f"{d.get('component', '')}:{d.get('part') or ''} {d.get('failure_mode', '')}".replace(": ", " ")
         if outcome == "diagnosed" else outcome,
-        "confidence": d.get("confidence"), **s, "correct": correct, "outcome": outcome,
+        "confidence": d.get("confidence"), **{k: g[k] for k in ("component_ok", "mode_ok", "part_ok", "part_given",
+                                                                 "correct", "correct_component", "pole_open")},
+        "outcome": outcome,
         "measurements": tb.measurements, "redundant": tb.redundant_measurements, "tool_calls": tb.step,
         "turns": turns, "policy_blocked": tb.policy.stats.blocked, "approvals_denied": tb.policy.stats.approvals_denied,
         "protocol_errors": protocol_errors, "recovered_text_calls": recovered, "missing_hypothesis_updates": missing,
@@ -172,22 +176,32 @@ def hybrid_summary(rows: list[dict]) -> str:
         "", "**Verify step**", "",
         f"- Cases with a reading that contradicted every candidate: {sum(r['conflicts'] > 0 for r in rows)}/{n} "
         f"({sum(r['conflicts'] for r in rows)} conflicts)",
-        f"- Netlist corrections proposed: {sum(r['corrections'] for r in rows)}; resolved the conflict on replay: "
+        f"- Corrections rejected by the acceptance rule: {sum(r['corrections_rejected'] for r in rows)} "
+        f"(of them healthy panel wrong, checked against the truth afterwards: {sum(r['rejected_panel_wrong'] for r in rows)})",
+        f"- Netlist corrections accepted: {sum(r['corrections'] for r in rows)}; resolved the conflict on replay: "
         f"{sum(r['corrections_resolved'] for r in rows)}; changed wiring: {sum(r['corrections_wiring_changed'] for r in rows)}; "
         f"every rewired net is a true net: {sum(r['corrections_wiring_ok'] for r in rows)}; "
         f"healthy panel sequence right after the correction: {sum(r['corrections_panel_right'] for r in rows)}",
         f"- Netlist exactly right at the end: {sum(r['netlist_right_at_end'] for r in rows)}/{n}; "
         f"handed over to a human (no consistent model): {sum(r['gave_up'] for r in rows)}",
-        f"- Explanations citing at least one step: {sum(bool(r['cited_steps']) for r in rows)}/{n}", "",
+        f"- Explanations citing at least one step: {sum(bool(r['cited_steps']) for r in rows)}/{n}",
+        f"- Wiring check of flagged regions ran: {sum(bool(r['wiring_verdict']) for r in rows)}; pole held: "
+        f"{sum(r['wiring_verdict'] == 'pole holds under every alternative wiring' for r in rows)}; pole made ambiguous: "
+        f"{sum(r['wiring_verdict'] == 'pole ambiguous' for r in rows)}; component depends on the wiring: "
+        f"{sum(r['wiring_verdict'] == 'component depends on the wiring' for r in rows)}", "",
     ])
 
 
 def hybrid_row(trace: dict) -> dict:
     """Verify-step metrics for one case (the truth comparison is logged after each model answer)."""
-    corr = trace["corrections"]
+    rejected = [c for c in trace["corrections"] if c.get("rejected")]
+    corr = [c for c in trace["corrections"] if not c.get("rejected")]
     truth = [c.get("truth") or {} for c in corr]
     return {
-        "conflicts": trace["conflicts"], "corrections": len(corr),
+        "conflicts": trace["conflicts"], "corrections": len(corr), "corrections_rejected": len(rejected),
+        "rejected_panel_wrong": sum((c.get("truth") or {}).get("panel_steps_same") != (c.get("truth") or {}).get("panel_steps")
+                                    for c in rejected),
+        "wiring_verdict": (trace.get("wiring_check") or {}).get("verdict"),
         "corrections_resolved": sum(c.get("candidates_after_replay", 0) > 0 for c in corr),
         "corrections_wiring_ok": sum(bool(t.get("wiring_ok")) for t in truth),
         "corrections_wiring_changed": sum(t.get("nets_added", 0) > 0 for t in truth),
@@ -202,7 +216,7 @@ def yes(b: bool) -> str:
 
 
 def render(rows: list[dict], title: str, wall: float) -> str:
-    header = ("| Case | Expected | Diagnosis | Correct | Component | Mode | Part | Meas | Redundant | Evidence F/I "
+    header = ("| Case | Expected | Diagnosis | Correct (pole) | Component | Mode | Part | Meas | Redundant | Evidence F/I "
               "| Blocks | Turns | Tokens | Cost $ | Seconds |\n|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|")
     lines = [
         f"| {r['case']}{' (latent)' if r['latent'] else ''} | {r['expected']} | {r['diagnosed']} | {yes(r['correct'])} "
@@ -219,8 +233,8 @@ def render(rows: list[dict], title: str, wall: float) -> str:
         "",
         f"- Correct: {sum(r['correct'] for r in rows)}/{n}"
         + (f" (visible {sum(r['correct'] for r in vis)}/{len(vis)}, latent {sum(r['correct'] for r in lat)}/{len(lat)})" if lat else ""),
-        f"- Component right: {sum(r['component_ok'] for r in vis)}/{len(vis)} visible; failure mode right: {sum(r['mode_ok'] for r in vis)}/{len(vis)}; "
-        f"exact incl. part: {sum(r['mode_ok'] and r['part_ok'] for r in vis)}/{len(vis)}",
+        f"- Correct is pole level. Component level (component and mode right): {sum(r['correct_component'] for r in vis)}/{len(vis)} visible; "
+        f"pole left open: {sum(r['pole_open'] for r in vis)}; component right: {sum(r['component_ok'] for r in vis)}/{len(vis)}",
         f"- Measurements: {sum(r['measurements'] for r in rows)} total, {sum(r['measurements'] for r in rows) / max(n, 1):.1f} per case; "
         f"redundant {sum(r['redundant'] for r in rows)}",
         f"- Evidence items: {sum(r['evidence_functional'] for r in rows)} functional_test, {sum(r['evidence_instrument'] for r in rows)} instrument_reading",
@@ -234,6 +248,10 @@ def render(rows: list[dict], title: str, wall: float) -> str:
         f"- Time: {sum(r['seconds'] for r in rows):.0f} s summed over cases, {wall:.0f} s wall clock",
     ]
     return "\n".join(summary) + "\n\n" + "\n".join([header, *lines]) + "\n"
+
+
+def dev_label(args) -> bool:
+    return args.runner == "hybrid" and args.suite == "clean"
 
 
 def main() -> None:
@@ -266,7 +284,7 @@ def main() -> None:
     stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     tag = (f"{stamp}_{args.runner}_{args.suite}" + (f"_{args.effort or 'default'}" if args.runner == "agent" else "")
            + ("_approve" if args.approve else "") + ("_noimage" if args.no_image else "") + ("_nonetlist" if args.no_netlist else "")
-           + ("_norepair" if args.runner == "hybrid" and args.no_repair else ""))
+           + ("_norepair" if args.runner == "hybrid" and args.no_repair else "") + ("_dev" if dev_label(args) else ""))
     out_dir = ROOT / "runs" / tag
     out_dir.mkdir(parents=True, exist_ok=True)
     client, ledger = None, None
@@ -295,7 +313,8 @@ def main() -> None:
            "infogain": "information-gain baseline (perfect fault model)",
            "hybrid": f"transcription {args.transcription}, " + ("no repair" if args.no_repair else f"repair by {MUSE_SPARK}")}[args.runner]
     who += ", approvals granted" if args.approve else ", approvals denied"
-    table = render(rows, f"{args.runner} on {args.suite} ({who}), {len(rows)} runs", wall)
+    table = render(rows, ("DEV (clean holdout seen before the hybrid changes): " if dev_label(args) else "")
+                   + f"{args.runner} on {args.suite} ({who}), {len(rows)} runs", wall)
     if args.runner == "hybrid":
         table += hybrid_summary(rows)
     print("\n" + table)

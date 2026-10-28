@@ -5,10 +5,15 @@ outcome and what a healthy circuit of the current netlist predicts, the conflict
 the candidates predicted for it, and the candidate set. It never gets the true netlist or the
 injected fault. When a true netlist is given (evaluation), each correction is compared with it
 after the model has answered, for the log only.
+
+A proposal is rejected (and logged) when it changes what a fault-free machine does where the real
+readings did not contradict the current model (hybrid/acceptance.py); the planner then asks again,
+and the next prompt says why the earlier proposal was rejected.
 """
 
 import copy
 
+from probeforge.hybrid.acceptance import healthy_changes
 from probeforge.hybrid.llm import Usage, action_text, chat, outcome_text
 from probeforge.hybrid.netlist_io import behaviour, dump, netlist_diff, param_values, parse_reply, to_netlist, wrong_nets
 from probeforge.sim import Netlist
@@ -39,7 +44,7 @@ What the candidate faults predicted instead:
 {predicted}
 
 Candidate faults before this step ({n_cands}): {cands}
-
+{rejected}
 Change only what the image or the readings justify, keep component ids and terminal names, and keep
 every terminal in exactly one net. If you change a value the drawing does not print, choose one that
 fits every reading. Reply with a short explanation (a few sentences), then the complete corrected
@@ -68,9 +73,15 @@ class Repairer:
             f"{outcome_text(e['tool'], g['outcome'])}" for g in groups)
         cands = ctx["candidates"]
         listed = ", ".join(cands[:MAX_LISTED_CANDIDATES]) + (" ..." if len(cands) > MAX_LISTED_CANDIDATES else "")
+        rejected = "".join(
+            "\nAn earlier correction for this step was rejected because it changes what a fault-free machine does "
+            f"where no real reading contradicts the current netlist:\n  diff: {'; '.join(r.get('diff', []))}\n"
+            + "".join(f"  - {why}\n" for why in r.get("reasons", []))
+            for r in ctx.get("rejected", []))
         return PROMPT.format(step=e["step"], netlist=dump(self.data), history=history or "  (none)",
                              action=action_text(e["tool"], e["args"]), actual=outcome_text(e["tool"], e["actual"]),
-                             predicted=predicted or "  (no candidates left)", n_cands=len(cands), cands=listed or "none")
+                             predicted=predicted or "  (no candidates left)", n_cands=len(cands), cands=listed or "none",
+                             rejected=rejected)
 
     def __call__(self, ctx: dict) -> tuple[Netlist | None, dict]:
         e = ctx["entry"]
@@ -101,6 +112,14 @@ class Repairer:
                                    if old_p.get(k) != new_p.get(k)}
         if self.true is not None:
             record["truth"] = self.judge(old, new)
+        reasons = healthy_changes(ctx, netlist)
+        if reasons:
+            record["rejected"] = f"changes fault-free behaviour no reading contradicted ({len(reasons)} reasons)"
+            record["reasons"] = reasons
+            if self.on_event:
+                self.on_event({"type": "correction_rejected", "step": e["step"], "diff": record["diff"],
+                               "explanation": record["explanation"], "reasons": reasons})
+            return None, record
         self.data = new
         if self.on_event:
             self.on_event({"type": "correction", "step": ctx["entry"]["step"], "diff": record["diff"],

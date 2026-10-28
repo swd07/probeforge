@@ -14,7 +14,10 @@ readings still come from the true circuit through the ToolBox. When a reading is
 every remaining candidate, the model itself must be wrong (or the fault is outside the single-fault
 catalog): the planner calls on_conflict, which may return a corrected netlist. The planner then
 rebuilds the candidates from the corrected netlist, replays every action taken so far against
-the recorded readings, and continues.
+the recorded readings, and continues. on_conflict may also reject its own proposal (returns no
+netlist and a record with "rejected"); that counts as an attempt and the planner asks again. A
+review callback sees the draft diagnosis before it is submitted and may change it (the hybrid
+pipeline uses it to check whether the answer depends on wiring the transcription was unsure of).
 
 It uses the same ToolBox and policy as the agent: voltage only live, resistance only dead, at most
 3 consecutive start presses, and it never re-applies power (that would need approval after a trip).
@@ -136,16 +139,41 @@ STATEFUL = {"press_button", "wait", "set_power"}
 UNSTABLE = "simulation did not settle"
 
 
+def run_actions(netlist: Netlist, params: tuple, fault: Fault | None, actions: list[tuple[str, dict]],
+                power0: bool, amps: bool) -> list:
+    """Predicted outcome of each action, in order, on one circuit (UNSTABLE from the step it fails on)."""
+    out = []
+    try:
+        c = Circuit(with_params(netlist, params))
+        if fault is not None:
+            c.apply_fault(fault)
+        c.set_power(power0)
+        for name, args in actions:
+            out.append(simulate(c, name, args, amps))
+    except (CircuitError, KeyError, ValueError):
+        pass
+    return out + [UNSTABLE] * (len(actions) - len(out))
+
+
+def consistent(netlist: Netlist, cands: list[Cand], history: list[dict], power0: bool, amps: bool) -> list[Cand]:
+    """The candidates that reproduce every recorded reading on this netlist."""
+    actions = [(e["tool"], e["args"]) for e in history]
+    return [cand for cand in cands
+            if run_actions(netlist, cand.params, cand.fault, actions, power0, amps) == [e["actual"] for e in history]]
+
+
 class InfoGainBaseline:
     def __init__(self, circuit: Circuit, approver: Approver = deny_all, candidates: list[Fault] | None = None,
                  model: Netlist | None = None, on_conflict: Callable[[dict], tuple] | None = None,
                  on_event: Callable[[dict], None] | None = None, max_corrections: int = MAX_CORRECTIONS,
                  on_update: Callable[["InfoGainBaseline", dict], None] | None = None,
-                 param_grid: dict[str, tuple] | None = None):
+                 param_grid: dict[str, tuple] | None = None,
+                 review: Callable[["InfoGainBaseline", dict], dict] | None = None):
         self.tb = ToolBox(circuit, approver=approver, on_event=on_event)
         self.power0 = circuit.power
         self.on_conflict = on_conflict
         self.on_update = on_update  # called after every recorded reading (the UI shows the candidates)
+        self.review = review
         self.max_corrections = max_corrections
         self.history: list[dict] = []  # executed tool calls with the observed outcome
         self.corrections: list[dict] = []
@@ -201,15 +229,7 @@ class InfoGainBaseline:
         """What a fault-free circuit of the current model reads for every recorded action (unknown
         parameters taken from a surviving candidate)."""
         params = next(iter(self.cands)).params if self.cands else self.assignments[0]
-        out = []
-        try:
-            c = Circuit(with_params(self.n, params))
-            c.set_power(self.power0)
-            for e in self.history:
-                out.append(simulate(c, e["tool"], e["args"], self.amps))
-        except CircuitError:
-            pass
-        return out + [UNSTABLE] * (len(self.history) - len(out))
+        return run_actions(self.n, params, None, [(e["tool"], e["args"]) for e in self.history], self.power0, self.amps)
 
     @property
     def faults_left(self) -> list[Fault]:
@@ -275,10 +295,15 @@ class InfoGainBaseline:
             ctx = {"entry": entry, "history": self.history, "netlist": self.n, "unknown_params": self.unknown,
                    "candidates": list(dict.fromkeys(str(c.fault) for c in before)),
                    "predicted": [{"outcome": o, "candidates": v} for o, v in groups.values()],
-                   "healthy": self.healthy_outcomes()}
+                   "healthy": self.healthy_outcomes(), "assignments": self.assignments,
+                   "power0": self.power0, "amps": self.amps,
+                   "rejected": [r for r in self.corrections if r.get("rejected") and r["step"] == entry["step"]]}
             new_netlist, record = self.on_conflict(ctx)
             record = {"step": entry["step"], **record}
             self.corrections.append(record)
+            if new_netlist is None and record.get("rejected"):
+                self.notes.append(f"step {entry['step']}: netlist correction rejected ({record['rejected']})")
+                continue
             if new_netlist is None:
                 self.gave_up = True
                 self.notes.append(f"step {entry['step']}: no usable netlist correction; handing over to a human")
@@ -396,6 +421,8 @@ class InfoGainBaseline:
                         "evidence": self.evidence[-6:]}
             else:
                 args = {"outcome": "insufficient_information", "confidence": 0.0, "evidence": self.evidence[-6:]}
+            if self.review and args["outcome"] == "diagnosed":
+                args = self.review(self, args)
         r = self.tb.call("submit_diagnosis", args)
         if "error" in r:
             raise RuntimeError(f"info-gain diagnosis rejected: {r['error']}")
