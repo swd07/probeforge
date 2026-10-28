@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { ApprovalRequest, Done, FlagsRequest } from "../types";
+import type { ApprovalRequest, Done, FlagsRequest, WiringRequest } from "../types";
 
 export function ApprovalCard({ req, onAnswer }: { req: ApprovalRequest; onAnswer: (approve: boolean) => void }) {
   const what =
@@ -63,9 +63,40 @@ export function FlagsCard({ req, onAnswer }: { req: FlagsRequest; onAnswer: (acc
   );
 }
 
+export function WiringCard({ req, onChoose }: { req: WiringRequest; onChoose: (choice: number | null) => void }) {
+  return (
+    <div className="modal-backdrop flags-backdrop">
+      <div className="modal flags-modal wiring-modal" role="dialog" aria-label="Confirm the wiring">
+        <div className="modal-kicker">Human check of a flagged region</div>
+        <h2>The answer depends on wiring the read was unsure of</h2>
+        <p className="policy-reason">
+          Several wirings of {req.region.join(", ")} fit every reading and point to different faults. Check this region on the
+          real panel (highlighted on the drawing) and pick the wiring you find.
+        </p>
+        <ul className="flag-list">
+          {req.options.map((o, i) => (
+            <li key={i}>
+              <button className="btn ghost wiring-option" onClick={() => onChoose(i)}>
+                <b>{o.fault}</b> if the wiring is:
+                <span className="flag-terms">{o.wiring.join("; ")}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+        <div className="modal-actions">
+          <button className="btn deny" onClick={() => onChoose(null)}>
+            Cannot check now (report the pole as ambiguous)
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const VERDICT_TEXT: Record<string, string> = {
   correct: "Correct",
   justified: "Justified",
+  "pole open": "Pole open",
   wrong: "Wrong",
   "no diagnosis": "No diagnosis",
 };
@@ -112,6 +143,12 @@ export function ResultCard({ done, showTruth, onToggleTruth, saved, onCompare }:
               <span className="val">{said}</span>
               {typeof d.confidence === "number" && <span className="tag">{(Number(d.confidence) * 100).toFixed(0)}%</span>}
             </div>
+            {typeof d.note === "string" && d.note && (
+              <div>
+                <span className="lbl">Note</span>
+                <span className="val">{d.note}</span>
+              </div>
+            )}
           </div>
           {dec && (
             <div className="decisive">
@@ -139,9 +176,17 @@ export function ResultCard({ done, showTruth, onToggleTruth, saved, onCompare }:
                 )}
               </div>
               <div>
-                Netlist corrections during the run: {done.corrections?.length ?? 0}
+                Netlist corrections during the run: {done.corrections?.filter((c) => !c.rejected).length ?? 0}
+                {(done.corrections?.filter((c) => c.rejected).length ?? 0) > 0 && (
+                  <em>, {done.corrections!.filter((c) => c.rejected).length} rejected (changed fault-free behaviour no reading contradicted)</em>
+                )}
                 {done.gave_up && <em>, no consistent netlist found: handed over to a human</em>}
               </div>
+              {done.wiring_check && (
+                <div>
+                  Wiring check ({done.wiring_check.region.join(", ")}): {done.wiring_check.verdict}
+                </div>
+              )}
             </div>
           )}
           {done.twins.length > 0 && <p className="twins">No tool can tell this fault apart from: {done.twins.join(", ")}.</p>}

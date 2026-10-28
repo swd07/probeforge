@@ -92,6 +92,7 @@ export function TopBar({ meta, state, onStart, onStop }: Props) {
         {mode === "hybrid" ? (
           <select value={schematic} onChange={(e) => setSchematic(e.target.value)} disabled={busy} aria-label="Schematic read">
             <option value="saved">saved read (run 2, has errors)</option>
+            <option value="photo">saved read of a phone photo (has errors)</option>
             <option value="live">live read by Muse Spark</option>
           </select>
         ) : mode === "agent" ? (

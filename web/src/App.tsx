@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ApprovalCard, FlagsCard, ResultCard } from "./components/Cards";
+import { ApprovalCard, FlagsCard, ResultCard, WiringCard } from "./components/Cards";
 import { CompareView } from "./components/CompareView";
 import { DiagnosisForm } from "./components/DiagnosisForm";
 import { Feed } from "./components/Feed";
@@ -18,7 +18,7 @@ export function App() {
   const [diagnosing, setDiagnosing] = useState(false);
   const [comparing, setComparing] = useState(false);
   const [meter, setMeter] = useState<MeterState>({ kind: "V", a: null, b: null, hold: 0.2, wait: 6, reason: "manual check" });
-  const { state, start, answer, stop, tool, compare, confirmFlags } = useSession(meta?.neutral ?? "N");
+  const { state, start, answer, stop, tool, compare, confirmFlags, chooseWiring } = useSession(meta?.neutral ?? "N");
 
   useEffect(() => {
     fetch("/api/meta").then((r) => r.json()).then(setMeta);
@@ -42,7 +42,7 @@ export function App() {
 
   const manual = state.mode === "manual";
   const hybrid = state.mode === "hybrid";
-  const flagged = state.flags ? state.flags.flags.flatMap((f) => f.terminals) : [];
+  const flagged = state.flags ? state.flags.flags.flatMap((f) => f.terminals) : state.wiring ? state.wiring.region : [];
   const manualActive = manual && state.status === "running";
   const lastBlocked = [...state.feed].reverse().find((f) => f.kind === "tool" && f.ev.verdict === "block");
   const lastProbe = state.probes.length ? state.probes[state.probes.length - 1] : null;
@@ -121,6 +121,7 @@ export function App() {
         <div className="toast-blocked">Blocked by safety policy: {lastBlocked.ev.policy_reason}</div>
       )}
       {state.flags && <FlagsCard req={state.flags} onAnswer={(ok) => confirmFlags(state.flags!.id, ok)} />}
+      {state.wiring && <WiringCard req={state.wiring} onChoose={(c) => chooseWiring(state.wiring!.id, c)} />}
       {state.approval && <ApprovalCard req={state.approval} onAnswer={(ok) => answer(state.approval!.id, ok)} />}
       {diagnosing && meta && (
         <DiagnosisForm

@@ -69,7 +69,7 @@ export interface Done {
   twins: string[];
   outcome: string;
   diagnosis: Record<string, unknown> | null;
-  verdict: "correct" | "justified" | "wrong" | "no diagnosis";
+  verdict: "correct" | "justified" | "pole open" | "wrong" | "no diagnosis";
   component_ok: boolean;
   mode_ok: boolean;
   measurements: number;
@@ -101,8 +101,18 @@ export interface Done {
   cited_steps?: number[];
   transcription?: string;
   transcription_wrong_nets?: number;
-  corrections?: { step: number; diff: string[]; explanation: string; error?: string | null }[];
+  corrections?: { step: number; diff: string[]; explanation: string; error?: string | null; rejected?: string | null; reasons?: string[] }[];
   gave_up?: boolean;
+  wiring_check?: { component: string; region: string[]; verdict: string; alternatives: number; consistent_alternatives: number } | null;
+}
+
+export interface WiringRequest {
+  id: number;
+  component: string;
+  failure_mode: string;
+  region: string[];
+  reasons: string[];
+  options: { fault: string; wiring: string[] }[];
 }
 
 export interface Flag {
@@ -123,7 +133,9 @@ export type FeedItem =
   | { kind: "info"; id: string; text: string }
   | { kind: "transcription"; id: string; how: string; flags: Flag[]; components: number; nets: number; accepted?: boolean }
   | { kind: "conflict"; id: string; step: number; action: string; actual: string; candidates: number }
-  | { kind: "correction"; id: string; step: number; diff: string[]; explanation: string };
+  | { kind: "correction"; id: string; step: number; diff: string[]; explanation: string }
+  | { kind: "correction_rejected"; id: string; step: number; diff: string[]; reasons: string[] }
+  | { kind: "wiring"; id: string; text: string };
 
 export type NetState = "live" | "dead" | "probed";
 

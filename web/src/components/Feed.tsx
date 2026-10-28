@@ -114,6 +114,33 @@ export function Feed({ items, manual = false, title }: { items: FeedItem[]; manu
                 </pre>
               </div>
             );
+          if (it.kind === "correction_rejected")
+            return (
+              <div key={it.id} className="item correction rejected">
+                <div>
+                  <span className="step">#{it.step}</span> <b>Netlist correction rejected</b> (it changes fault-free behaviour no reading contradicted)
+                </div>
+                <ul className="detail reasons">
+                  {it.reasons.map((r, i) => (
+                    <li key={i}>{plain(r)}</li>
+                  ))}
+                </ul>
+                <pre className="diff">
+                  {it.diff.map((line, i) => (
+                    <span key={i} className={line.startsWith("+") ? "add" : "del"}>
+                      {line}
+                      {"\n"}
+                    </span>
+                  ))}
+                </pre>
+              </div>
+            );
+          if (it.kind === "wiring")
+            return (
+              <div key={it.id} className="item info wiring">
+                {it.text}
+              </div>
+            );
           if (it.kind === "hypotheses")
             return (
               <div key={it.id} className="item hyp">

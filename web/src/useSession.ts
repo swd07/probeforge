@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useReducer, useRef } from "react";
-import type { ApprovalRequest, CompareResult, Done, FeedItem, FlagsRequest, Hypothesis, Mode, NetState, Panel, Probe, ToolEvent } from "./types";
+import type { ApprovalRequest, CompareResult, Done, FeedItem, FlagsRequest, Hypothesis, Mode, NetState, Panel, Probe, ToolEvent, WiringRequest } from "./types";
 
 export type Status = "idle" | "running" | "approval" | "done" | "error";
 
@@ -22,6 +22,7 @@ export interface State {
   pressed: { button: string; at: number } | null;
   approval: ApprovalRequest | null;
   flags: FlagsRequest | null;
+  wiring: WiringRequest | null;
   stage: string;
   done: Done | null;
   tokens: number;
@@ -51,6 +52,7 @@ const initial: State = {
   pressed: null,
   approval: null,
   flags: null,
+  wiring: null,
   stage: "",
   done: null,
   tokens: 0,
@@ -159,6 +161,29 @@ function reducer(s: State, a: Action): State {
         flash: Date.now(),
         feed: [...s.feed, { kind: "conflict", id: `c${ev.step}_${s.feed.length}`, step: ev.step, action: ev.action, actual: ev.actual, candidates: ev.candidates }],
       };
+    case "correction_rejected":
+      return {
+        ...s,
+        stage: "",
+        flash: Date.now(),
+        feed: [...s.feed, { kind: "correction_rejected", id: `r${ev.step}_${s.feed.length}`, step: ev.step, diff: ev.diff, reasons: ev.reasons }],
+      };
+    case "wiring_check":
+      return {
+        ...s,
+        feed: [
+          ...s.feed,
+          {
+            kind: "wiring",
+            id: `w${s.feed.length}`,
+            text: `Wiring check for ${ev.component}: ${ev.alternatives} alternative wirings of the flagged region ${ev.region.join(", ")}, ${ev.consistent_alternatives} fit every reading: ${ev.verdict}`,
+          },
+        ],
+      };
+    case "wiring_request":
+      return { ...s, status: "approval", wiring: ev };
+    case "wiring_answer":
+      return { ...s, status: "running", wiring: null };
     case "correction":
       return {
         ...s,
@@ -180,7 +205,7 @@ function reducer(s: State, a: Action): State {
         feed: s.feed.map((f) => (f.kind === "approval" && f.req.id === ev.id ? { ...f, approved: ev.approved } : f)),
       };
     case "done":
-      return { ...s, status: "done", done: ev, panel: ev.panel, approval: null, flags: null, stage: "" };
+      return { ...s, status: "done", done: ev, panel: ev.panel, approval: null, flags: null, wiring: null, stage: "" };
     case "saved":
       return { ...s, saved: ev.path };
     case "compare_progress":
@@ -196,7 +221,7 @@ function reducer(s: State, a: Action): State {
     case "error":
       if (s.status === "done") return { ...s, error: ev.message }; // e.g. compare refused after the run
 
-      return { ...s, status: "error", error: ev.message, approval: null, flags: null, stage: "" };
+      return { ...s, status: "error", error: ev.message, approval: null, flags: null, wiring: null, stage: "" };
     default:
       return s;
   }
@@ -262,7 +287,11 @@ export function useSession(neutral: string) {
     ws.current?.send(JSON.stringify({ action: "flags", id, approve: accept }));
   }, []);
 
+  const chooseWiring = useCallback((id: number, choice: number | null) => {
+    ws.current?.send(JSON.stringify({ action: "wiring", id, choice }));
+  }, []);
+
   const stop = useCallback(() => ws.current?.send(JSON.stringify({ action: "stop" })), []);
 
-  return { state, start, answer, stop, tool, compare, confirmFlags };
+  return { state, start, answer, stop, tool, compare, confirmFlags, chooseWiring };
 }

@@ -150,7 +150,7 @@ def test_hybrid_flags_need_confirmation(monkeypatch):
     flagged = {**true_data(), "uncertain": [{"terminals": ["KM2:1", "KM2:5"], "reason": "wires cross"}]}
     monkeypatch.setattr(server, "client", lambda: HybridFake(true_data()))
     monkeypatch.setattr(server, "render_png", lambda n: b"png")
-    monkeypatch.setattr(server.HybridSession, "read", lambda self, usage: (flagged, [flagged["uncertain"][0]], "test"))
+    monkeypatch.setattr(server.HybridSession, "read", lambda self, usage: (flagged, [flagged["uncertain"][0]], "test", b"png"))
     http = TestClient(server.app)
     with http.websocket_connect("/ws") as ws:
         ws.send_json({"action": "start_hybrid", "source": "random", "fault": "FU1:1-2 open"})
@@ -162,3 +162,30 @@ def test_hybrid_flags_need_confirmation(monkeypatch):
             if ev["type"] in ("done", "error"):
                 break
     assert ev["type"] == "error" and "not confirmed" in ev["message"]
+
+
+def test_hybrid_asks_a_human_to_confirm_wiring_the_pole_depends_on(monkeypatch):
+    from tests.test_hybrid import FakeClient as HybridFake, true_data
+    from tests.test_hybrid_checks import STAR_PINS, _swapped_star
+
+    model = {**_swapped_star(true_data()), "uncertain": [{"terminals": STAR_PINS, "reason": "star wiring crosses"}]}
+    monkeypatch.setattr(server, "client", lambda: HybridFake(None))
+    monkeypatch.setattr(server.HybridSession, "read", lambda self, usage: (model, model["uncertain"], "test", b"png"))
+    http = TestClient(server.app)
+    seen = []
+    with http.websocket_connect("/ws") as ws:
+        ws.send_json({"action": "start_hybrid", "source": "random", "fault": "KM3:1-2 stuck_open"})
+        while True:
+            ev = ws.receive_json()
+            seen.append(ev["type"])
+            if ev["type"] == "flags_request":
+                ws.send_json({"action": "flags", "id": ev["id"], "approve": True})
+            if ev["type"] == "wiring_request":
+                assert ev["region"] == STAR_PINS and len(ev["options"]) >= 2
+                pick = next(i for i, o in enumerate(ev["options"]) if o["fault"] == "KM3:1-2 stuck_open")
+                ws.send_json({"action": "wiring", "id": ev["id"], "choice": pick})
+            if ev["type"] in ("done", "error"):
+                break
+    assert "wiring_request" in seen and "wiring_answer" in seen and "wiring_check" in seen
+    assert ev["type"] == "done" and ev["diagnosis"]["part"] == "1-2" and ev["verdict"] == "correct"
+    assert ev["wiring_check"]["human_choice"] is not None

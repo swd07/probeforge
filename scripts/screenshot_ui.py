@@ -28,7 +28,9 @@ def main() -> None:
     ap.add_argument("--width", type=int, default=1680)
     ap.add_argument("--height", type=int, default=1000)
     ap.add_argument("--mode", choices=["agent", "hybrid"], default="agent")
-    ap.add_argument("--schematic", choices=["saved", "live"], default="saved", help="hybrid: which schematic read")
+    ap.add_argument("--schematic", choices=["saved", "photo", "live"], default="saved", help="hybrid: which schematic read")
+    ap.add_argument("--wiring", type=int, default=None,
+                    help="hybrid: answer a wiring question with this option (default: cannot check now)")
     args = ap.parse_args()
     out = ROOT / "docs" / "screenshots"
     out.mkdir(parents=True, exist_ok=True)
@@ -61,7 +63,14 @@ def main() -> None:
                     time.sleep(0.4)
                     page.screenshot(path=out / f"{args.name}_{len(taken) + 1}_{name}.png")
                     taken.add(name)
-            if page.query_selector(".flags-modal"):
+            if page.query_selector(".wiring-modal"):
+                page.screenshot(path=out / f"{args.name}_wiring.png")
+                if args.wiring is None:
+                    page.click(".wiring-modal button.deny")
+                else:
+                    page.locator(".wiring-modal button.wiring-option").nth(args.wiring).click()
+                time.sleep(0.5)
+            elif page.query_selector(".flags-modal"):
                 page.screenshot(path=out / f"{args.name}_flags.png")
                 page.click(".flags-modal button.approve")
             if page.query_selector(".approval-modal"):
