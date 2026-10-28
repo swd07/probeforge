@@ -28,7 +28,7 @@ One screen showing the agent working, streamed step by step over a WebSocket fro
 - **Schematic** (center): the same SVG generated from the netlist. Every probe point the agent measures lights up with the reading next to it; nets the agent measured turn red (live) or blue (dead). The true live wiring is only shown after the run, because colouring it during the run would give the fault away. Mouse wheel zooms, drag pans, Fit shows the whole drawing; in agent mode "follow probes" zooms to each new measurement and the view zooms out at the reveal.
 - **Right panel**: hypothesis bars that move after each measurement, and the reasoning feed: the model's short notes, every tool call with its result, policy blocks in red, approval requests in amber.
 - **Approval card**: when the agent asks to reset a protection device or re-apply power after a trip, the run pauses until a human clicks Approve or Deny.
-- **Top bar**: "Inject random fault" picks an unseen fault on the server and the browser does not learn which one until the end; or pick one of the 8 scenarios by its symptom.
+- **Top bar**: "Random fault (any of 91)" or "Clean test fault (from holdout_clean.yaml)" picks a fault on the server and the browser does not learn which one until the end; or pick one of the 8 scenarios by its symptom. After a run the choice resets, and the result card says which fault and pool were actually run.
 - **Result card** (docked over the right panel, collapsible): the injected fault, the verdict (correct / justified / wrong), measurements, tokens, cost and time, and the decisive measurement: the reading that raised the winning hypothesis the most, shown next to what a healthy panel reads at the same point (the logged actions replayed on a fault-free circuit).
 
 | Approval card | Result and reveal |
@@ -117,6 +117,18 @@ the run. Agent: `muse-spark-1.3`, reasoning effort low, approval requests denied
 |---|---|---|---|---|---|---|
 | Agent | **30/38** | **33/38** | 5/5 | **4** | **8.3** | $0.068 |
 | Half-split baseline | 25/38 | 25/38 | 5/5 | 9 | 11.0 | free |
+| Information-gain baseline (perfect fault model, see note) | 35/38 | 38/38 | 5/5 | 0 | 2.6 | free |
+
+The information-gain baseline simulates all 91 candidate faults in lock step with the panel and always takes the
+reading that splits the survivors best. It needs a complete, exact fault model of this very circuit, which the agent
+does not have, so it is a ceiling for measurement choice with perfect knowledge, not a peer. The agent sits between
+the rule-based half-split and that ceiling. Details: [docs/results/2026-10-28_review.md](docs/results/2026-10-28_review.md).
+
+- **Image ablation:** with the text netlist only (no schematic image) the agent scores the same 30/38 (2 cases flip
+  each way, run-to-run noise), with slightly more measurements. The netlist carries what the agent uses.
+- **Calibration** ([docs/results/2026-10-28_calibration.md](docs/results/2026-10-28_calibration.md)): 95% of
+  diagnoses are stated at 90%+ confidence and are right 93% of the time over all runs (89% on the clean holdout);
+  the few stated below 90% are overconfident (3 of 13 right).
 
 "Justified": the true fault gives exactly the same readings as another fault in every state the tools can reach (checked
 by simulation) and the answer was insufficient_information or that twin. Single run per case; reruns show individual cases
@@ -126,7 +138,10 @@ blown fuse), and "voltage present is not coil intact" (dev scenario s06 fails 2 
 
 ```
 uv run python scripts/run_scenarios.py --suite clean --effort low --workers 8      # agent, clean holdout
-uv run python scripts/run_scenarios.py --runner baseline --suite clean             # baseline
+uv run python scripts/run_scenarios.py --runner baseline --suite clean             # half-split baseline
+uv run python scripts/run_scenarios.py --runner infogain --suite clean             # information-gain baseline
+uv run python scripts/run_scenarios.py --suite clean --no-image --effort low       # image ablation
+uv run python scripts/calibration.py                                               # confidence calibration
 uv run python scripts/run_scenarios.py --suite scenarios --repeat 3 --effort low   # dev scenarios, variance
 uv run python scripts/run_scenarios.py --suite clean --only c02 --approve          # simulated human approves
 ```

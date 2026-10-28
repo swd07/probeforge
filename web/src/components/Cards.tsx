@@ -67,6 +67,7 @@ export function ResultCard({ done, showTruth, onToggleTruth, saved, onCompare }:
       </button>
       {!collapsed && (
         <div className="result-body">
+          <div className="this-run">This run: {done.source}</div>
           <div className="reveal">
             <div>
               <span className="lbl">Injected fault</span>

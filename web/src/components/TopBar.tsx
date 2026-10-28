@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Meta, Mode } from "../types";
 import type { StartOptions, State } from "../useSession";
 
@@ -21,17 +21,22 @@ export function TopBar({ meta, state, onStart, onStop }: Props) {
   const [mode, setMode] = useState<Mode>("agent");
   const [choice, setChoice] = useState("random");
   const [effort, setEffort] = useState("low");
-  const [includeLatent, setIncludeLatent] = useState(false);
   const [engineer, setEngineer] = useState("");
   const busy = state.status === "running" || state.status === "approval";
+
+  // after a run the dropdown is cleared, so it cannot look like the result belongs to whatever it shows;
+  // the result card names the fault and the pool that were actually run
+  useEffect(() => {
+    if (state.status === "done" || state.status === "error") setChoice("");
+  }, [state.status]);
 
   const start = () =>
     onStart({
       mode,
-      source: choice === "random" ? "random" : "scenario",
-      scenario: choice === "random" ? undefined : choice,
+      source: choice === "random" || choice === "clean" ? choice : "scenario",
+      scenario: choice === "random" || choice === "clean" ? undefined : choice,
       effort,
-      includeLatent,
+      includeLatent: false,
       engineer,
     });
 
@@ -52,20 +57,21 @@ export function TopBar({ meta, state, onStart, onStop }: Props) {
             Engineer
           </button>
         </div>
+        <span className="next-run">{busy ? "Running" : "Next run"}</span>
         <select value={choice} onChange={(e) => setChoice(e.target.value)} disabled={busy} aria-label="Fault">
-          <option value="random">Inject random fault (hidden until the end)</option>
-          {meta?.scenarios.map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.id}: {s.symptom}
-            </option>
-          ))}
+          <option value="" disabled>
+            Choose a fault...
+          </option>
+          <option value="random">Random fault (any of 91)</option>
+          <option value="clean">Clean test fault (from holdout_clean.yaml)</option>
+          <optgroup label="Scenarios (by symptom)">
+            {meta?.scenarios.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.id}: {s.symptom}
+              </option>
+            ))}
+          </optgroup>
         </select>
-        {choice === "random" && (
-          <label className="check">
-            <input type="checkbox" checked={includeLatent} onChange={(e) => setIncludeLatent(e.target.checked)} disabled={busy} />
-            latent
-          </label>
-        )}
         {mode === "agent" ? (
           <select value={effort} onChange={(e) => setEffort(e.target.value)} disabled={busy} aria-label="Reasoning effort">
             <option value="low">effort low</option>
@@ -86,7 +92,7 @@ export function TopBar({ meta, state, onStart, onStop }: Props) {
             Stop
           </button>
         ) : (
-          <button className="btn start" onClick={start} disabled={!meta}>
+          <button className="btn start" onClick={start} disabled={!meta || !choice}>
             Start
           </button>
         )}

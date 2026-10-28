@@ -31,7 +31,7 @@ from pathlib import Path
 
 from probeforge.agent.client import MUSE_SPARK, make_client
 from probeforge.agent.loop import run_agent
-from probeforge.baseline import HalfSplitBaseline
+from probeforge.baseline import HalfSplitBaseline, InfoGainBaseline
 from probeforge.eval.scoring import score
 from probeforge.eval.spend import EST_PER_AGENT_RUN_USD, SpendLedger, SpendLimitError
 from probeforge.eval.trace import make_trace
@@ -98,12 +98,12 @@ def run_case(case: Case, args, client, out_dir: Path, rep: int, ledger: SpendLed
     approver = approve_all if args.approve else deny_all
     if args.runner == "agent":
         run, tb = run_agent(circuit, client, model=args.model, effort=args.effort, max_turns=args.max_turns,
-                            approver=approver)
+                            approver=approver, include_image=not args.no_image)
         diagnosis, outcome, notes = run.diagnosis, run.outcome, []
         if ledger:
             ledger.record(run.cost_usd, f"{out_dir.name}/{name}")
     else:
-        baseline = HalfSplitBaseline(circuit, approver=approver)
+        baseline = (HalfSplitBaseline if args.runner == "baseline" else InfoGainBaseline)(circuit, approver=approver)
         diagnosis, run = baseline.run(), None
         tb, outcome, notes = baseline.tb, diagnosis.get("outcome"), baseline.notes
     seconds = time.perf_counter() - t0
@@ -176,7 +176,8 @@ def render(rows: list[dict], title: str, wall: float) -> str:
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--runner", choices=["agent", "baseline"], default="agent")
+    ap.add_argument("--runner", choices=["agent", "baseline", "infogain"], default="agent",
+                    help="baseline = half-split; infogain = perfect-model information-gain search")
     ap.add_argument("--suite", choices=["scenarios", "dev", "clean", "all"], default="scenarios")
     ap.add_argument("--approve", action="store_true", help="simulated human approves reset / re-power requests")
     ap.add_argument("--model", default=MUSE_SPARK)
@@ -186,13 +187,14 @@ def main() -> None:
     ap.add_argument("--repeat", type=int, default=1)
     ap.add_argument("--workers", type=int, default=8)
     ap.add_argument("--force", action="store_true", help="run even if the spend limit would be exceeded")
+    ap.add_argument("--no-image", action="store_true", help="ablation: netlist only, no schematic image")
     args = ap.parse_args()
 
     cases = [c for c in build_cases(args.suite) if not args.only or c.id in args.only]
     jobs = [(c, rep) for rep in range(1, args.repeat + 1) for c in cases]
     stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     tag = (f"{stamp}_{args.runner}_{args.suite}" + (f"_{args.effort or 'default'}" if args.runner == "agent" else "")
-           + ("_approve" if args.approve else ""))
+           + ("_approve" if args.approve else "") + ("_noimage" if args.no_image else ""))
     out_dir = ROOT / "runs" / tag
     out_dir.mkdir(parents=True, exist_ok=True)
     client, ledger = None, None
@@ -217,7 +219,8 @@ def main() -> None:
         rows = list(pool.map(job, jobs))
     wall = time.perf_counter() - started
 
-    who = f"{args.model}, effort {args.effort or 'default'}" if args.runner == "agent" else "half-split baseline"
+    who = {"agent": f"{args.model}, effort {args.effort or 'default'}", "baseline": "half-split baseline",
+           "infogain": "information-gain baseline (perfect fault model)"}[args.runner]
     who += ", approvals granted" if args.approve else ", approvals denied"
     table = render(rows, f"{args.runner} on {args.suite} ({who}), {len(rows)} runs", wall)
     print("\n" + table)

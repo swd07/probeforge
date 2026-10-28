@@ -234,3 +234,12 @@ def test_decisive_measurement():
     assert d2["reading"] == "3 -> N: 0.0 V" and d2["healthy"] == "230.0 V"  # abnormal beats first mention
     assert decisive_measurement(log, [], diagnosis) is None
     assert decisive_measurement(log, history, {"outcome": "insufficient_information"}) is None
+
+
+def test_netlist_only_ablation(netlist, monkeypatch):
+    monkeypatch.setattr(loop, "render_png", lambda n: (_ for _ in ()).throw(AssertionError("no image expected")))
+    client = FakeClient([FakeMessage(calls=[("submit_diagnosis", {"outcome": "insufficient_information",
+                                                                  "confidence": 0.1, "evidence": []})])])
+    loop.run_agent(fuse_circuit(netlist), client, include_image=False)
+    parts = client.requests[0]["messages"][1]["content"]
+    assert [p["type"] for p in parts] == ["text"] and "image" not in parts[0]["text"]

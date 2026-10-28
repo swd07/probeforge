@@ -63,6 +63,7 @@ export interface ApprovalRequest {
 
 export interface Done {
   mode: Mode;
+  source: string; // the pool or scenario the fault came from
   fault: string;
   latent: boolean;
   twins: string[];

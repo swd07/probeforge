@@ -88,17 +88,27 @@ def recover_text_tool_calls(text: str) -> list[dict]:
     return calls
 
 
-def build_initial_messages(toolbox: ToolBox, max_turns: int = 30) -> list[dict]:
-    """System and first user message: symptoms, schematic image, text netlist, policy summary."""
+IMAGE_NOTE = " (the image shows the same circuit)"
+
+
+def build_initial_messages(toolbox: ToolBox, max_turns: int = 30, include_image: bool = True) -> list[dict]:
+    """System and first user message: symptoms, schematic image, text netlist, policy summary.
+
+    include_image=False is the netlist-only ablation: no image part, and the note that an image
+    shows the same circuit is dropped from the text. Everything else is identical."""
     netlist = toolbox.circuit.netlist
     indicators = toolbox.initial_observation()
+    system = {"role": "system", "content": SYSTEM_PROMPT.format(policy=toolbox.policy.summary(), max_turns=max_turns)}
+    text = initial_user_text(indicators, netlist.to_text())
+    if not include_image:
+        return [system, {"role": "user", "content": [{"type": "text", "text": text.replace(IMAGE_NOTE, "")}]}]
     png = base64.b64encode(render_png(netlist)).decode()
     return [
-        {"role": "system", "content": SYSTEM_PROMPT.format(policy=toolbox.policy.summary(), max_turns=max_turns)},
+        system,
         {
             "role": "user",
             "content": [
-                {"type": "text", "text": initial_user_text(indicators, netlist.to_text())},
+                {"type": "text", "text": text},
                 {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{png}"}},
             ],
         },
@@ -114,6 +124,7 @@ def run_agent(
     approver: Approver = deny_all,
     on_event: Callable[[dict], None] | None = None,
     image_once: bool = True,
+    include_image: bool = True,
 ) -> tuple[AgentRun, ToolBox]:
     """Run one diagnosis session. The circuit should already be powered with its fault applied.
 
@@ -122,7 +133,7 @@ def run_agent(
     """
     toolbox = ToolBox(circuit, approver=approver, on_event=on_event)
     run = AgentRun(model=model, effort=effort)
-    messages = build_initial_messages(toolbox, max_turns)
+    messages = build_initial_messages(toolbox, max_turns, include_image)
     extra = {"reasoning_effort": effort} if effort else {}
     started = time.perf_counter()
     consecutive_nudges = 0
@@ -142,7 +153,7 @@ def run_agent(
             run.cached_tokens += cached
             run.completion_tokens += completion
 
-            if turn == 1 and image_once:
+            if turn == 1 and image_once and include_image:
                 text = messages[1]["content"][0]["text"]
                 messages[1] = {"role": "user", "content": text + "\n\n" + IMAGE_DROPPED_NOTE}
 

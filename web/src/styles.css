@@ -276,3 +276,6 @@ button, select { font: inherit; }
   .plate { gap: 16px; padding: 10px 14px; }
   .ammeters { min-width: 150px; }
 }
+
+.next-run { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; }
+.this-run { margin-top: 8px; font-size: 12px; color: #b9c4cf; background: var(--panel-2); border-radius: 6px; padding: 4px 8px; display: inline-block; }

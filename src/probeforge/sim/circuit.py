@@ -167,6 +167,22 @@ class Circuit:
         """Net a probe point (terminal id or net name) belongs to."""
         return self._net_of(point)
 
+    def clone(self) -> "Circuit":
+        """Independent copy of the dynamic state (the netlist and the applied faults are shared,
+        they never change after apply_fault). Used to predict outcomes without touching the original."""
+        c = object.__new__(Circuit)
+        c.__dict__.update(self.__dict__)
+        c.held = set(self.held)
+        c.closed = dict(self.closed)
+        c.timer_on = dict(self.timer_on)
+        c.timer_elapsed = dict(self.timer_elapsed)
+        c.thermal_heat = dict(self.thermal_heat)
+        c.tripped = dict(self.tripped)
+        c.blown = set(self.blown)
+        c.events = list(self.events)
+        c._faults = list(self._faults)
+        return c
+
     def net_voltages(self) -> dict[str, float]:
         """Voltage of every net to neutral (0 for floating nets), for visualisation."""
         pot = self._potentials()

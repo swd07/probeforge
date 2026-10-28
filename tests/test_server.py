@@ -8,6 +8,7 @@ import pytest
 
 from probeforge.agent import loop
 from probeforge.eval.spend import SpendLedger
+from probeforge.faults import Fault
 from probeforge.server import app as server
 from tests.test_agent_loop import FakeClient, FakeMessage
 
@@ -92,6 +93,27 @@ def test_random_fault_is_hidden_until_done(monkeypatch):
         events = []
         while not events or events[-1]["type"] not in ("done", "error"):
             events.append(ws.receive_json())
-    assert events[0]["source"] == "random unseen fault"
+    assert events[0]["source"] == "random fault (any of 91)" == events[-1]["source"]
     fault = events[-1]["fault"]
     assert fault and fault not in json.dumps(events[:-1])
+
+
+def test_clean_pool_fault_comes_from_holdout_clean(monkeypatch):
+    import yaml
+
+    from probeforge.faults.catalog import SCENARIOS_DIR
+
+    monkeypatch.setattr(server, "client", lambda: FakeClient([
+        FakeMessage(calls=[("submit_diagnosis", {"outcome": "insufficient_information", "confidence": 0.1, "evidence": []})]),
+    ]))
+    monkeypatch.setattr(loop, "render_png", lambda n: b"png")
+    clean = yaml.safe_load((SCENARIOS_DIR / "holdout_clean.yaml").read_text(encoding="utf-8"))["cases"]
+    pool = {str(Fault.from_dict(c)) for c in clean}
+    with TestClient(server.app).websocket_connect("/ws") as ws:
+        ws.send_json({"action": "start", "source": "clean", "effort": "low"})
+        events = []
+        while not events or events[-1]["type"] not in ("done", "error"):
+            events.append(ws.receive_json())
+    done = events[-1]
+    assert done["source"] == f"clean test fault (holdout_clean.yaml, {len(pool)})"
+    assert done["fault"] in pool

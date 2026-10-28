@@ -27,6 +27,7 @@ import time
 from datetime import datetime
 from pathlib import Path
 
+import yaml
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import Response
 from fastapi.staticfiles import StaticFiles
@@ -37,7 +38,7 @@ from probeforge.baseline import HalfSplitBaseline
 from probeforge.eval.spend import EST_PER_AGENT_RUN_USD, SpendLedger, SpendLimitError
 from probeforge.eval.trace import decisive_measurement, make_trace, summary, verdict
 from probeforge.faults import Fault
-from probeforge.faults.catalog import SCENARIOS_DIR, all_faults, has_visible_symptom, load_scenarios
+from probeforge.faults.catalog import SCENARIOS_DIR, all_faults, load_scenarios
 from probeforge.faults.model import COMPONENT_MODES, PART_MODES
 from probeforge.sim import Circuit, Netlist
 from probeforge.sim.schematic import render_svg
@@ -182,7 +183,7 @@ class Session:
         self.trace = trace
         self.judged = verdict(NETLIST, str(CIRCUIT_PATH), self.fault, trace["diagnosis"], trace["outcome"])
         self.emit({
-            "type": "done", "mode": self.mode,
+            "type": "done", "mode": self.mode, "source": self.source,
             "fault": str(self.fault), **self.judged,
             "outcome": trace["outcome"], "diagnosis": trace["diagnosis"],
             "measurements": trace["measurements"], "redundant": trace["redundant_measurements"],
@@ -354,16 +355,24 @@ def parse_fault(text: str) -> Fault:
     return fault
 
 
+def clean_pool() -> list[Fault]:
+    data = yaml.safe_load((SCENARIOS_DIR / "holdout_clean.yaml").read_text(encoding="utf-8"))
+    return [Fault.from_dict(c) for c in data["cases"]]
+
+
 def pick_fault(msg: dict) -> tuple[Fault, str]:
+    """The fault and the pool it came from (the pool is shown with the result)."""
     if msg.get("fault"):  # test / demo hook (?fault= in the URL), never offered in the UI
         return parse_fault(msg["fault"]), "fault chosen by URL"
-    if msg.get("source") == "scenario":
+    source = msg.get("source")
+    if source == "scenario":
         sc = SCENARIOS[msg["scenario"]]
         return sc.fault, f"scenario {sc.id}"
+    if source == "clean":
+        pool = clean_pool()
+        return random.SystemRandom().choice(pool), f"clean test fault (holdout_clean.yaml, {len(pool)})"
     faults = all_faults(NETLIST)
-    if not msg.get("include_latent"):
-        faults = [f for f in faults if has_visible_symptom(NETLIST, f)]
-    return random.SystemRandom().choice(faults), "random unseen fault"
+    return random.SystemRandom().choice(faults), f"random fault (any of {len(faults)})"
 
 
 @app.websocket("/ws")

@@ -59,7 +59,7 @@ const initial: State = {
 
 export interface StartOptions {
   mode: Mode;
-  source: "scenario" | "random";
+  source: "scenario" | "random" | "clean";
   scenario?: string;
   effort: string;
   includeLatent: boolean;
