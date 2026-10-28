@@ -4,14 +4,17 @@ Usage:  uv run python scripts/calibration.py [OUT.md]
 
 Reads runs/*/results.json, keeps agent runs (not the baselines), keeps submitted diagnoses
 (insufficient_information carries no claim to be right), and buckets them by stated confidence:
-below 70%, 70 to 90%, 90% and above. A diagnosis counts as correct when component and failure
-mode match the injected fault (the project's main metric). UI sessions are not saved as batch
-results and are not included.
+below 70%, 70 to 90%, 90% and above. A diagnosis counts as correct at pole level (component,
+failure mode and part match the injected fault; probeforge.eval.scoring), rescored from the saved
+diagnosis so old runs use the same definition. UI sessions are not saved as batch results and are
+not included.
 """
 
 import json
 import sys
 from pathlib import Path
+
+from probeforge.eval.scoring import parse_fault, score
 
 ROOT = Path(__file__).resolve().parents[1]
 BUCKETS = [("below 70%", 0.0, 0.7), ("70 to 90%", 0.7, 0.9), ("90% and above", 0.9, 1.01)]
@@ -21,14 +24,17 @@ NOT_DIAGNOSED = {"insufficient_information", "no_diagnosis", "error"}
 def agent_rows(run_dir: Path) -> list[dict]:
     data = json.loads((run_dir / "results.json").read_text(encoding="utf-8"))
     runner = (data.get("args") or {}).get("runner", "agent")  # the first runs predate the runner field
-    if runner != "agent":
+    if runner != "agent" or "rows" not in data:  # baselines, hybrid, transcription tests
         return []
     rows = []
     for r in data["rows"]:
         outcome = r.get("outcome") or ("diagnosed" if r.get("diagnosed") not in NOT_DIAGNOSED else r.get("diagnosed"))
         if outcome != "diagnosed" or not isinstance(r.get("confidence"), (int, float)):
             continue
-        correct = r.get("correct", r.get("component_ok") and r.get("mode_ok"))
+        case = r.get("case") or r["scenario"]  # the first runs called it scenario
+        trace = json.loads((run_dir / f"{case}.json").read_text(encoding="utf-8"))
+        s = score(trace["diagnosis"], parse_fault(r["expected"]))
+        correct = s["component_ok"] and s["mode_ok"] and s["part_ok"]
         rows.append({"run": run_dir.name, "confidence": float(r["confidence"]), "correct": bool(correct)})
     return rows
 
@@ -59,7 +65,8 @@ def main() -> None:
         "# Confidence calibration (2026-10-28)",
         "",
         "Every submitted agent diagnosis in the saved batch runs, bucketed by the confidence the agent stated in",
-        "submit_diagnosis. Correct = component and failure mode match the injected fault. insufficient_information",
+        "submit_diagnosis. Correct = pole level: component, failure mode and part match the injected fault (rescored",
+        "from the saved diagnoses, so every run uses the same definition). insufficient_information",
         "answers are left out (no claim). Each run of a repeated case counts separately.",
         "",
         "## All agent runs (dev and clean, muse-spark-1.3)",

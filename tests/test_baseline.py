@@ -60,5 +60,9 @@ def test_observational_twins():
     assert twins == [Fault("KM1", "stuck_closed", "13-14")]
     assert observational_twins(str(CIRCUIT_YAML), Fault("FU1", "open", "1-2")) == []
     assert justified({"outcome": "insufficient_information"}, welded_button, twins, correct=False)
-    assert justified({"outcome": "diagnosed", "component": "KM1", "failure_mode": "stuck_closed"}, welded_button, twins, False)
+    twin = {"outcome": "diagnosed", "component": "KM1", "part": "13-14", "failure_mode": "stuck_closed"}
+    assert justified(twin, welded_button, twins, False)
+    # pole level: the twin must be named with its part
+    assert not justified({**twin, "part": "43-44"}, welded_button, twins, False)
+    assert not justified({**twin, "part": ""}, welded_button, twins, False)
     assert not justified({"outcome": "diagnosed", "component": "KM2", "failure_mode": "stuck_closed"}, welded_button, twins, False)

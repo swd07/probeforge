@@ -3,8 +3,10 @@
 Usage:  uv run python scripts/summarize_results.py OUT.md LABEL=runs/<dir> [LABEL=runs/<dir> ...]
 
 Each run directory holds results.json and per-case traces from run_scenarios.py.
-Adds the observational-ambiguity check (eval/ambiguity.py) and per-scenario variance
-for repeated runs.
+Every case is rescored from its saved diagnosis (probeforge.eval.scoring.grade), so runs made
+before a scoring change use the current definition: "correct" is pole level (component, failure
+mode and part), the component-level score is a secondary column. Adds the observational-ambiguity
+check (eval/ambiguity.py) and per-scenario variance for repeated runs.
 """
 
 import json
@@ -13,18 +15,12 @@ import sys
 from collections import defaultdict
 from pathlib import Path
 
-from probeforge.eval.ambiguity import justified, observational_twins
+from probeforge.eval.ambiguity import observational_twins
 from probeforge.eval.engineer import engineer_reference, load_engineer_traces
-from probeforge.faults import Fault
+from probeforge.eval.scoring import grade, parse_fault
 
 ROOT = Path(__file__).resolve().parents[1]
 CIRCUIT = ROOT / "scenarios" / "circuits" / "star_delta_reversing.yaml"
-
-
-def parse_fault(text: str) -> Fault:
-    target, mode = text.split()
-    comp, _, part = target.partition(":")
-    return Fault(comp, mode, part or None)
 
 
 def load(run_dir: Path) -> list[dict]:
@@ -35,8 +31,8 @@ def load(run_dir: Path) -> list[dict]:
         fault = parse_fault(r["expected"])
         twins = observational_twins(str(CIRCUIT), fault)
         r["twins"] = [str(t) for t in twins]
-        r["justified"] = justified(trace["diagnosis"], fault, twins, r["correct"])
-        r["confident_wrong"] = r["outcome"] == "diagnosed" and not r["correct"] and not r["justified"]
+        diagnosis = trace["diagnosis"] if r["outcome"] == "diagnosed" else {"outcome": r["outcome"]}
+        r.update(grade(diagnosis, fault, r["latent"], twins))
         rows.append(r)
     return rows
 
@@ -50,8 +46,9 @@ def block(label: str, rows: list[dict]) -> list[str]:
         return f"{sum(r[key] for r in sel)}/{len(sel)}" if sel else "-"
 
     return [
-        f"| {label} | {frac(vis, 'correct')} | {frac(vis, 'justified')} | {frac(lat, 'correct')} "
-        f"| {sum(r['confident_wrong'] for r in rows)} | {sum(r['outcome'] != 'diagnosed' for r in vis)} "
+        f"| {label} | {frac(vis, 'correct')} | {frac(vis, 'justified')} | {frac(vis, 'correct_component')} "
+        f"| {frac(lat, 'correct')} | {sum(r['confident_wrong'] for r in rows)} | {sum(r['pole_open'] for r in vis)} "
+        f"| {sum(r['outcome'] != 'diagnosed' for r in vis)} "
         f"| {sum(r['measurements'] for r in rows) / n:.1f} | {sum(r['redundant'] for r in rows)} "
         f"| {sum(r['evidence_functional'] for r in rows)}/{sum(r['evidence_instrument'] for r in rows)} "
         f"| {sum(r['policy_blocked'] for r in rows)} "
@@ -98,10 +95,10 @@ def main() -> None:
     out = Path(sys.argv[1])
     runs = [(a.split("=", 1)[0], ROOT / a.split("=", 1)[1]) for a in sys.argv[2:]]
     lines = [
-        "| Run | Visible correct | Visible correct or justified | Latent correct | Confidently wrong "
-        "| Visible not diagnosed | Meas per case | Redundant | Evidence F/I | Policy blocks | Approvals asked/denied "
-        "| Missing hyp. updates | Text tool calls | Cost $ per case | Seconds per case |",
-        "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|",
+        "| Run | Visible correct (pole) | incl. justified | Component level | Latent correct | Confidently wrong "
+        "| Pole left open | Visible not diagnosed | Meas per case | Redundant | Evidence F/I | Policy blocks "
+        "| Approvals asked/denied | Missing hyp. updates | Text tool calls | Cost $ per case | Seconds per case |",
+        "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|",
     ]
     details = []
     for label, d in runs:

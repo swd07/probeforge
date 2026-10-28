@@ -1,7 +1,7 @@
 """One trace format for agent, baseline and human runs, plus verdicts and side-by-side summaries."""
 
-from probeforge.eval.ambiguity import justified, observational_twins
-from probeforge.eval.scoring import score
+from probeforge.eval.ambiguity import observational_twins
+from probeforge.eval.scoring import grade
 from probeforge.faults import Fault
 from probeforge.faults.catalog import has_visible_symptom
 from probeforge.sim import Netlist
@@ -50,13 +50,12 @@ def make_trace(*, case: str, runner: str, tb: ToolBox, diagnosis: dict | None, o
 
 
 def verdict(netlist: Netlist, circuit_path: str, fault: Fault, diagnosis: dict | None, outcome: str) -> dict:
-    s = score(diagnosis, fault)
     latent = not has_visible_symptom(netlist, fault)
-    correct = (s["component_ok"] and s["mode_ok"]) or (latent and outcome == "insufficient_information")
     twins = observational_twins(str(circuit_path), fault)
-    just = justified(diagnosis, fault, twins, correct)
-    label = "correct" if correct else "justified" if just else ("no diagnosis" if outcome != "diagnosed" else "wrong")
-    return {"verdict": label, "correct": correct, "latent": latent, "twins": [str(t) for t in twins], **s}
+    g = grade(diagnosis if outcome == "diagnosed" else {"outcome": outcome}, fault, latent, twins)
+    label = ("correct" if g["correct"] else "justified" if g["justified"] else "pole open" if g["pole_open"]
+             else "no diagnosis" if outcome != "diagnosed" else "wrong")
+    return {"verdict": label, "latent": latent, "twins": [str(t) for t in twins], **g}
 
 
 def describe_diagnosis(diagnosis: dict | None, outcome: str) -> str:

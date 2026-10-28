@@ -53,12 +53,14 @@ def observational_twins(circuit_path: str, fault: Fault) -> list[Fault]:
 
 
 def justified(diagnosis: dict | None, fault: Fault, twins: list[Fault], correct: bool) -> bool:
-    """Correct, or the truth has observational twins and the answer was honest or named a twin."""
+    """Correct, or the truth has observational twins and the answer was honest or named a twin
+    (component, failure mode and part of that twin)."""
     if correct:
         return True
     if not twins or not diagnosis:
         return False
     if diagnosis.get("outcome") == "insufficient_information":
         return True
-    named = (str(diagnosis.get("component", "")).upper(), str(diagnosis.get("failure_mode", "")))
-    return any((t.component.upper(), t.mode) == named for t in twins)
+    from probeforge.eval.scoring import score
+
+    return any(all(score(diagnosis, t)[k] for k in ("component_ok", "mode_ok", "part_ok")) for t in twins)
