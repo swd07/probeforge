@@ -1,6 +1,6 @@
 """Read step test: can Muse Spark transcribe the schematic image into our YAML netlist format?
 
-Usage:  uv run python scripts/transcribe_schematic.py [--runs 3] [--effort medium] [--no-flags]
+Usage:  uv run python scripts/transcribe_schematic.py [--runs 3] [--effort medium] [--no-flags] [--image photo.jpg]
 
 The model gets the same PNG the agent sees and a format spec (keys, part kinds, an example of a
 different, tiny circuit), never the true YAML. With flags (default) it also lists the regions it is
@@ -41,6 +41,7 @@ def main() -> None:
     ap.add_argument("--runs", type=int, default=3)
     ap.add_argument("--effort", default="medium")
     ap.add_argument("--no-flags", action="store_true", help="the original prompt, without uncertain regions")
+    ap.add_argument("--image", default=None, help="transcribe this image (e.g. a phone photo) instead of the rendered PNG")
     ap.add_argument("--force", action="store_true")
     args = ap.parse_args()
 
@@ -51,8 +52,9 @@ def main() -> None:
         raise SystemExit(f"Refusing to start: {e}")
     true_data = yaml.safe_load(CIRCUIT.read_text(encoding="utf-8"))
     true = Netlist.load(CIRCUIT)
-    png = render_png(true)
-    out_dir = ROOT / "runs" / f"{datetime.now():%Y%m%d_%H%M%S}_transcribe{'' if args.no_flags else '_flags'}"
+    png = (ROOT / args.image).read_bytes() if args.image else render_png(true)
+    tag = ("" if args.no_flags else "_flags") + (f"_{Path(args.image).stem}" if args.image else "")
+    out_dir = ROOT / "runs" / f"{datetime.now():%Y%m%d_%H%M%S}_transcribe{tag}"
     out_dir.mkdir(parents=True)
     client = make_client()
     results = []

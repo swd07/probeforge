@@ -32,7 +32,8 @@ def chat(client, usage: Usage, purpose: str, text: str, png: bytes | None = None
     """One model call with optional image; tokens and cost go into usage."""
     content = [{"type": "text", "text": text}]
     if png is not None:
-        content.append({"type": "image_url", "image_url": {"url": "data:image/png;base64," + base64.b64encode(png).decode()}})
+        mime = "image/jpeg" if png[:2] == bytes([0xFF, 0xD8]) else "image/png"  # photos are sent as taken
+        content.append({"type": "image_url", "image_url": {"url": f"data:{mime};base64," + base64.b64encode(png).decode()}})
     t0 = time.perf_counter()
     resp = client.chat.completions.create(model=usage.model, reasoning_effort=effort,
                                           messages=[{"role": "user", "content": content}])

@@ -108,11 +108,13 @@ def run_case(case: Case, args, client, out_dir: Path, rep: int, ledger: SpendLed
             ledger.record(run.cost_usd, f"{out_dir.name}/{name}")
     elif args.runner == "hybrid":
         true_netlist, true_data = circuit.netlist, yaml.safe_load(case.circuit.read_text(encoding="utf-8"))
-        h = run_hybrid(circuit, client, hybrid_model(args.transcription), schematic_png(case.circuit), approver=approver,
+        image = (ROOT / args.image).read_bytes() if args.image else schematic_png(case.circuit)
+        h = run_hybrid(circuit, client, hybrid_model(args.transcription), image, approver=approver,
                        repair=not args.no_repair, do_explain=not args.no_explain,
                        true_netlist=true_netlist, true_data=true_data)
         diagnosis, outcome, run, tb, notes = h.diagnosis, h.outcome, h.usage, h.planner.tb, h.planner.notes
-        hybrid_extra = {**h.trace_extra(), "transcription": args.transcription, "conflicts": h.planner.conflicts}
+        hybrid_extra = {**h.trace_extra(), "transcription": args.transcription, "image": args.image,
+                        "conflicts": h.planner.conflicts}
         if ledger:
             ledger.record(run.cost_usd, f"{out_dir.name}/{name}")
     else:
@@ -241,6 +243,9 @@ def main() -> None:
                          "hybrid = transcribed netlist + info-gain planner + Muse Spark repair and explanation")
     ap.add_argument("--transcription", default="scenarios/transcriptions/star_delta_run2.yaml",
                     help="hybrid: the transcribed netlist used as the model")
+    ap.add_argument("--image", default=None,
+                    help="hybrid: schematic image for the repair step (e.g. the photo the transcription came from); "
+                         "default the rendered PNG")
     ap.add_argument("--no-repair", action="store_true", help="hybrid: no netlist corrections (stop at a conflict)")
     ap.add_argument("--no-explain", action="store_true", help="hybrid: skip the technician explanation")
     ap.add_argument("--suite", choices=["scenarios", "dev", "clean", "all"], default="scenarios")
