@@ -84,6 +84,7 @@ class _Renderer:
         pitch = lay.get("pole_pitch", 44)
         h = lay.get("pole_height", 50)
         self.text(ox - 90, oy - 72, "Power circuit", "region", "start")
+        links: dict[str, tuple[float, float, float]] = {}  # contactor -> x_left, x_right, y of its linkage line
         for block in lay["blocks"]:
             bx, by = block["at"]
             x0, y0 = ox + bx, oy + by
@@ -94,6 +95,7 @@ class _Renderer:
             x_last = x0 + (len(parts) - 1) * pitch
             if comp.type in ("contactor", "breaker"):
                 self.line(self.parts_svg, x0 - 9, y0 + h / 2, x_last - 9, y0 + h / 2, "link")
+                links[comp.id] = (x0 - 9, x_last - 9, y0 + h / 2)
             if comp.type == "motor":
                 self.parts_svg.append(
                     f'<rect class="link" x="{_f(x0 - 16)}" y="{_f(y0 + 4)}" '
@@ -101,6 +103,27 @@ class _Renderer:
                 )
             self.text(x0 - 22, y0 + h / 2, comp.id, "id", "end")
             self.text(x0 - 22, y0 + h / 2 + 14, comp.label, "lbl", "end")
+        for a, b in self.n.interlocks:
+            if a in links and b in links:
+                self.interlock(links[a], links[b])
+
+    def interlock(self, la: tuple, lb: tuple) -> None:
+        """Mechanical interlock (IEC 60617 style): a dashed linkage joining the two contactors' linkage
+        lines, marked with an inverted triangle. Side by side, it runs above the right block's label;
+        when the left block is lower, it runs along its own linkage line and up into the right block."""
+        if la[0] > lb[0]:
+            la, lb = lb, la
+        xa, ya, xb, yb = la[1], la[2], lb[0], lb[2]
+        if ya > yb:
+            pts = [(xa, ya), (xb, ya), (xb, yb)]
+            mx, my = (xa + 9 + xb) / 2, ya
+        else:
+            xv, yt = xa + 23, yb - 20
+            pts = [(xa, ya), (xv, ya), (xv, yt), (xb, yt), (xb, yb)]
+            mx, my = (xv + xb) / 2, yt
+        self.parts_svg.append('<polyline class="link" points="' + " ".join(f"{_f(x)},{_f(y)}" for x, y in pts) + '"/>')
+        self.parts_svg.append(f'<polygon class="sym interlock" fill="#ffffff" points="{_f(mx - 6)},{_f(my - 5)} '
+                              f'{_f(mx + 6)},{_f(my - 5)} {_f(mx)},{_f(my + 5)}"/>')
 
     def vpart(self, p: Part, x, y1, y2) -> None:
         g = self._start_part(p)
