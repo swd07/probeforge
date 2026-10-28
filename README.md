@@ -184,7 +184,7 @@ Evaluated on the clean holdout starting from a real transcription with 6 of 35 n
 | Pure agent (true netlist + image) | 30/38 | 33/38 | 30/38 | 5/5 | 4 | 8.3 | $0.068 |
 | Info-gain on the true netlist | 35/38 | 38/38 | 35/38 | 5/5 | 0 | 2.6 | free |
 | **Hybrid (flawed transcription + repair)** | **25/38** | **28/38** | 29/38 | 5/5 | **2** | **3.2** | $0.066 |
-| Hybrid without repair | 10/38 | 13/38 | 10/38 | 5/5 | 0 | 1.4 | free |
+| Hybrid without repair (no Muse Spark after the read) | 10/38 | 13/38 | 10/38 | 5/5 | 0 | 1.4 | free |
 
 The wrong wiring contradicted the readings in 31 of 43 cases. Muse Spark proposed 35 corrections: 32 made the model
 consistent with every reading again and 29 made the healthy machine behave right, but none restored the exact true
@@ -195,30 +195,36 @@ reads as well as the PNG ([docs/results/2026-10-28_photo.md](docs/results/2026-1
 
 ### Changes after seeing the clean holdout (dev)
 
-Report: [docs/results/2026-10-28_dev_changes.md](docs/results/2026-10-28_dev_changes.md). Because these were made
-after the clean results were seen, the hybrid numbers below are dev results; the final unseen test will be a second
-circuit.
+Reports: [docs/results/2026-10-28_dev_changes.md](docs/results/2026-10-28_dev_changes.md) (round 1) and
+[docs/results/2026-10-28_joint.md](docs/results/2026-10-28_joint.md) (round 2, the hybrid is frozen after it).
+Because these were made after the clean results were seen, the hybrid numbers below are dev results; the final unseen
+test will be a second circuit.
 
-- **Wiring check of flagged regions:** if a terminal of the diagnosed part is in a region the transcription flagged,
-  the alternative wirings of that region are replayed against every reading. If one that fits implies another pole,
-  the pole is not reported ("pole ambiguous: confirm wiring at ..."), confidence drops, and the UI asks a human which
-  wiring the panel has.
-- **Correction acceptance rule:** a repair proposal that changes fault-free behaviour no reading contradicted is
-  rejected and logged, and Muse Spark is asked again with the reasons.
+- **Joint hypotheses (fault x wiring):** the regions the transcription flagged as uncertain become part of each
+  candidate. When a reading contradicts every candidate, the planner first tries alternative wirings of the flagged
+  regions; when the answer narrows to one component, it adds the alternative wirings around its parts and keeps
+  measuring, including readings across the contactor's own pole (with a stop and restart if the contactor only closes
+  during start-up). A specific pole is reported only when one remains; otherwise "pole ambiguous: confirm wiring at
+  ...", and the UI asks a human which wiring the panel has.
+- **Corrections only inside flagged regions:** Muse Spark may rewire only terminals in flagged regions, or must name
+  a new region with a reason; proposals that change fault-free behaviour no reading contradicted are rejected; after
+  two rejections in a case no more are requested.
 - **Mechanical interlock symbol** in the drawing (it was missing, so no transcription could find the interlocks;
   with it, 3 of 3 transcriptions list both).
 
-| Dev, pole level | Visible correct (pole) | incl. justified | Component level | Confidently wrong | Pole left open | Meas per case | Cost per case |
+| Dev, pole level, from the phone photo | Visible correct (pole) | incl. justified | Component level | Confidently wrong | Pole left open | Meas per case | Cost per case |
 |---|---|---|---|---|---|---|---|
-| Hybrid, PNG run 2 transcription | 26/38 | 29/38 | 30/38 | 3 | 2 | 2.9 | $0.065 |
-| Hybrid, phone photo transcription (best) | 20/38 | 23/38 | 31/38 | 2 | 11 | 3.0 | $0.026 |
-| Hybrid, phone photo transcription (worst) | 20/38 | 23/38 | 31/38 | 4 | 9 | 3.0 | $0.024 |
+| Hybrid before the changes, best read | 27/38 | 30/38 | 32/38 | 4 | 2 | 3.0 | $0.024 |
+| Hybrid before the changes, worst read | 27/38 | 30/38 | 31/38 | 2 | 2 | 3.1 | $0.017 |
+| **Joint hypotheses + repair, best read** | **32/38** | **35/38** | 33/38 | **0** | 1 | 3.4 | $0.006 |
+| **Joint hypotheses + repair, worst read** | **28/38** | **31/38** | 33/38 | 4 | 1 | 3.3 | $0.006 |
+| Joint hypotheses, no Muse Spark repair (best / worst) | 32/38 / 28/38 | 35/38 / 31/38 | 33/38 / 33/38 | 0 / 4 | 1 / 1 | 3.4 / 3.3 | free |
 
-All 10 rejected proposals would have broken the fault-free machine (checked against the truth afterwards). The
-wiring check turns wrong poles into "pole ambiguous" where the flags cover the wiring, and also drops poles that had
-been right only by luck. It cannot help where the transcription did not flag the wiring (worst photo read: KM3 star
-poles still wrong). A side effect: when a bad proposal for a welded main pole is rejected, the next one can pass the
-rule and explain the readings with an open pole (c15, c18), so confidently wrong did not go down overall.
+Every reading that contradicted the transcribed wiring (3 per run) was explained by an alternative wiring of a flagged
+region, so Muse Spark was never asked for a correction: with the photo reads, the repair step adds nothing, and
+Muse Spark's part is the read and the explanation. The 4 confidently wrong answers from the worst read are faults
+whose true wiring lies outside what that read flagged (its KM2 crossover flag names two of the three phases; it did
+not flag the KM3 star wiring). On the PNG run-2 read, which has no flags, nothing changes without repair (10/38).
 
 ```
 uv run python scripts/run_scenarios.py --suite clean --effort low --workers 8      # agent, clean holdout
@@ -242,7 +248,7 @@ Every agent run records its API cost in `runs/spend.json` (started at the $21 sp
 `run_scenarios.py` estimates a batch at $0.10 per agent run and refuses to start if the total would pass $110, unless
 `--force`. The total limit is $130: the last $20 is reserved for the public demo, where live UI runs (agent, hybrid,
 compare) may use it up to a daily cap ($5 by default, `PROBEFORGE_DEMO_DAILY_USD`). Hybrid runs record their transcription,
-repair and explanation calls. Spend so far: $43.62.
+repair and explanation calls. Spend so far: $44.17.
 
 ## Known Muse Spark behaviour: tool calls written as text
 
