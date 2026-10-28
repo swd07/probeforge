@@ -29,7 +29,7 @@ One screen showing the agent working, streamed step by step over a WebSocket fro
 - **Right panel**: hypothesis bars that move after each measurement, and the reasoning feed: the model's short notes, every tool call with its result, policy blocks in red, approval requests in amber.
 - **Approval card**: when the agent asks to reset a protection device or re-apply power after a trip, the run pauses until a human clicks Approve or Deny.
 - **Top bar**: "Random fault (any of 91)" or "Clean test fault (from holdout_clean.yaml)" picks a fault on the server and the browser does not learn which one until the end; or pick one of the 8 scenarios by its symptom. After a run the choice resets, and the result card says which fault and pool were actually run.
-- **Result card** (docked over the right panel, collapsible): the injected fault, the verdict (correct / justified / wrong), measurements, tokens, cost and time, and the decisive measurement: the reading that raised the winning hypothesis the most, shown next to what a healthy panel reads at the same point (the logged actions replayed on a fault-free circuit).
+- **Result card** (docked over the right panel, collapsible): the injected fault, the verdict (correct / justified / pole open / wrong, pole level), measurements, tokens, cost and time, and the decisive measurement: the reading that raised the winning hypothesis the most, shown next to what a healthy panel reads at the same point (the logged actions replayed on a fault-free circuit).
 
 | Approval card | Result and reveal |
 |---|---|
@@ -49,15 +49,20 @@ sequence of meter readings.
 | ![Blocked](docs/screenshots/manual_2_blocked.png) | ![Compare](docs/screenshots/manual_6_compare.png) |
 
 **Hybrid mode** (third button in the top bar): Muse Spark reads the schematic image into a netlist (a live read, or
-a saved real read with known errors), the regions it flagged as uncertain light up on the schematic for a human to
+a saved real read with known errors, from the PNG or from a phone photo), the regions it flagged as uncertain light up on the schematic for a human to
 confirm, then the information-gain planner measures. When a reading contradicts every candidate fault, the feed shows
 the inconsistent reading in red, Muse Spark rechecks the drawing and the correction appears as a diff before the
-planner continues. The result card carries Muse Spark's explanation for the technician. See
+planner continues; a proposal that would change fault-free behaviour no reading contradicted is shown as rejected.
+If the answer depends on a flagged region (for example which KM3 pole feeds which winding), the UI asks the human
+which wiring the panel has; without an answer the pole is reported as ambiguous. The result card carries Muse
+Spark's explanation for the technician. See
 [Hybrid pipeline](#hybrid-pipeline-phase-1).
 
 | Flagged regions for human confirmation | Netlist correction during the run |
 |---|---|
 | ![Flags](docs/screenshots/hybrid_live_flags.png) | ![Correction](docs/screenshots/hybrid_km4_2_correction.png) |
+| **Wiring question: the answer depends on a flagged region** | **After the technician picked the real wiring** |
+| ![Wiring](docs/screenshots/hybrid_photo_wiring_wiring.png) | ![Result](docs/screenshots/hybrid_photo_wiring_8_result.png) |
 
 The UI replaces em dashes in the model's text with commas for display; the content is not otherwise changed.
 
@@ -80,7 +85,7 @@ The circuit is a star-delta motor starter with forward / reverse, defined once i
 
 The simulator (`src/probeforge/sim/`) is pure Python and deterministic:
 
-- Closed contacts merge nets; coils pick up when their terminals see different phases; contactor states iterate until stable. Mechanical interlocks KM1/KM2 and KM3/KM4.
+- Closed contacts merge nets; coils pick up when their terminals see different phases; contactor states iterate until stable. Mechanical interlocks KM1/KM2 and KM3/KM4 (drawn with the IEC symbol: a dashed linkage with an inverted triangle).
 - Short circuits blow the first protection device that clears them (FU1, FU2, then QF1).
 - On-delay timer KT and thermal overload KK1 advance in 0.1 s ticks.
 - Motor state from the winding currents (nodal analysis, positive and negative sequence components): stopped, star / delta, forward / reverse, unbalanced, or humming (stalled, locked-rotor current). Line currents in amps (clamp meter, 10 A rated in delta) plus zero / nominal / overcurrent.
@@ -124,11 +129,15 @@ scenarios minus the 40 dev holdout faults = 43 faults (38 visible, 5 latent), li
 [scenarios/holdout_clean.yaml](scenarios/holdout_clean.yaml). The agent prompt and the baseline rules were frozen before
 the run. Agent: `muse-spark-1.3`, reasoning effort low, approval requests denied.
 
-| | Visible correct | incl. justified | Latent | Confidently wrong | Meas per case | Cost per case |
-|---|---|---|---|---|---|---|
-| Agent | **30/38** | **33/38** | 5/5 | **4** | **8.3** | $0.068 |
-| Half-split baseline | 25/38 | 25/38 | 5/5 | 9 | 11.0 | free |
-| Information-gain baseline (perfect fault model, see note) | 35/38 | 38/38 | 5/5 | 0 | 2.6 | free |
+"Correct" is pole level: component, failure mode and part (pole or contact) must all match. The component-level
+score (part ignored) is kept as a column. Every run was rescored from its saved diagnosis:
+[docs/results/2026-10-28_pole_level.md](docs/results/2026-10-28_pole_level.md).
+
+| | Visible correct (pole) | incl. justified | Component level | Latent | Confidently wrong | Meas per case | Cost per case |
+|---|---|---|---|---|---|---|---|
+| Agent | **30/38** | **33/38** | 30/38 | 5/5 | **4** | **8.3** | $0.068 |
+| Half-split baseline | 25/38 | 25/38 | 25/38 | 5/5 | 9 | 11.0 | free |
+| Information-gain baseline (perfect fault model, see note) | 35/38 | 38/38 | 35/38 | 5/5 | 0 | 2.6 | free |
 
 The information-gain baseline simulates all 91 candidate faults in lock step with the panel and always takes the
 reading that splits the survivors best. It needs a complete, exact fault model of this very circuit, which the agent
@@ -136,14 +145,14 @@ does not have, so it is a ceiling for measurement choice with perfect knowledge,
 the rule-based half-split and that ceiling. Details: [docs/results/2026-10-28_review.md](docs/results/2026-10-28_review.md).
 
 - **Input ablation** ([docs/results/2026-10-28_input_ablation.md](docs/results/2026-10-28_input_ablation.md)): netlist
-  only 30/38, schematic image only (no netlist) 31/38, both 30/38. All within run-to-run noise: the agent reads the
-  drawing as well as the netlist. (The image-only run predates a prompt fix: it still said nominal values are in the
-  netlist; image-only mode now says unlabeled values must be inferred or measured.)
+  only 30/38, schematic image only (no netlist) 28/38 at pole level (31/38 component level: three answers left the
+  pole open), both 30/38. Within run-to-run noise. (The image-only run predates a prompt fix: it still said nominal
+  values are in the netlist; image-only mode now says unlabeled values must be inferred or measured.)
 - **Schematic transcription:** Muse Spark turns the PNG into our YAML netlist with all 17 components and 51 parts right
   and the whole control circuit exact; the errors are at the power-circuit wire crossovers (28 to 29 of 35 nets exact).
-- **Calibration** ([docs/results/2026-10-28_calibration.md](docs/results/2026-10-28_calibration.md)): 95% of
-  diagnoses are stated at 90%+ confidence and are right 93% of the time over all runs (89% on the clean holdout);
-  the few stated below 90% are overconfident (3 of 13 right).
+- **Calibration** ([docs/results/2026-10-28_calibration.md](docs/results/2026-10-28_calibration.md), pole level): 94%
+  of diagnoses are stated at 90%+ confidence and are right 92% of the time over all runs (89% on the clean holdout);
+  the few stated below 90% are overconfident (3 of 17 right).
 
 "Justified": the true fault gives exactly the same readings as another fault in every state the tools can reach (checked
 by simulation) and the answer was insufficient_information or that twin. Single run per case; reruns show individual cases
@@ -170,17 +179,46 @@ Report: [docs/results/2026-10-28_hybrid.md](docs/results/2026-10-28_hybrid.md). 
 Evaluated on the clean holdout starting from a real transcription with 6 of 35 nets wrong
 ([scenarios/transcriptions/star_delta_run2.yaml](scenarios/transcriptions/star_delta_run2.yaml)):
 
-| | Visible correct | incl. justified | Latent | Confidently wrong | Meas per case | Cost per case |
-|---|---|---|---|---|---|---|
-| Pure agent (true netlist + image) | 30/38 | 33/38 | 5/5 | 4 | 8.3 | $0.068 |
-| Info-gain on the true netlist | 35/38 | 38/38 | 5/5 | 0 | 2.6 | free |
-| **Hybrid (flawed transcription + repair)** | **29/38** | **32/38** | 5/5 | **0** | **3.2** | $0.066 |
-| Hybrid without repair | 10/38 | 13/38 | 5/5 | 0 | 1.4 | free |
+| | Visible correct (pole) | incl. justified | Component level | Latent | Confidently wrong | Meas per case | Cost per case |
+|---|---|---|---|---|---|---|---|
+| Pure agent (true netlist + image) | 30/38 | 33/38 | 30/38 | 5/5 | 4 | 8.3 | $0.068 |
+| Info-gain on the true netlist | 35/38 | 38/38 | 35/38 | 5/5 | 0 | 2.6 | free |
+| **Hybrid (flawed transcription + repair)** | **25/38** | **28/38** | 29/38 | 5/5 | **2** | **3.2** | $0.066 |
+| Hybrid without repair | 10/38 | 13/38 | 10/38 | 5/5 | 0 | 1.4 | free |
 
 The wrong wiring contradicted the readings in 31 of 43 cases. Muse Spark proposed 35 corrections: 32 made the model
 consistent with every reading again and 29 made the healthy machine behave right, but none restored the exact true
-netlist (pin permutations a healthy panel cannot show remain), which is why some main-pole faults end as
-insufficient_information. No correction, right or wrong, led to a wrong diagnosis.
+netlist (pin permutations a healthy panel cannot show remain). At component level no correction led to a wrong
+diagnosis, but at pole level two KM3 star-pole faults were named with the wrong pole at full confidence: the leftover
+permutation maps the poles to the wrong windings and no reading contradicts it. A real phone photo of the schematic
+reads as well as the PNG ([docs/results/2026-10-28_photo.md](docs/results/2026-10-28_photo.md)).
+
+### Changes after seeing the clean holdout (dev)
+
+Report: [docs/results/2026-10-28_dev_changes.md](docs/results/2026-10-28_dev_changes.md). Because these were made
+after the clean results were seen, the hybrid numbers below are dev results; the final unseen test will be a second
+circuit.
+
+- **Wiring check of flagged regions:** if a terminal of the diagnosed part is in a region the transcription flagged,
+  the alternative wirings of that region are replayed against every reading. If one that fits implies another pole,
+  the pole is not reported ("pole ambiguous: confirm wiring at ..."), confidence drops, and the UI asks a human which
+  wiring the panel has.
+- **Correction acceptance rule:** a repair proposal that changes fault-free behaviour no reading contradicted is
+  rejected and logged, and Muse Spark is asked again with the reasons.
+- **Mechanical interlock symbol** in the drawing (it was missing, so no transcription could find the interlocks;
+  with it, 3 of 3 transcriptions list both).
+
+| Dev, pole level | Visible correct (pole) | incl. justified | Component level | Confidently wrong | Pole left open | Meas per case | Cost per case |
+|---|---|---|---|---|---|---|---|
+| Hybrid, PNG run 2 transcription | 26/38 | 29/38 | 30/38 | 3 | 2 | 2.9 | $0.065 |
+| Hybrid, phone photo transcription (best) | 20/38 | 23/38 | 31/38 | 2 | 11 | 3.0 | $0.026 |
+| Hybrid, phone photo transcription (worst) | 20/38 | 23/38 | 31/38 | 4 | 9 | 3.0 | $0.024 |
+
+All 10 rejected proposals would have broken the fault-free machine (checked against the truth afterwards). The
+wiring check turns wrong poles into "pole ambiguous" where the flags cover the wiring, and also drops poles that had
+been right only by luck. It cannot help where the transcription did not flag the wiring (worst photo read: KM3 star
+poles still wrong). A side effect: when a bad proposal for a welded main pole is rejected, the next one can pass the
+rule and explain the readings with an open pole (c15, c18), so confidently wrong did not go down overall.
 
 ```
 uv run python scripts/run_scenarios.py --suite clean --effort low --workers 8      # agent, clean holdout
@@ -188,9 +226,11 @@ uv run python scripts/run_scenarios.py --runner baseline --suite clean          
 uv run python scripts/run_scenarios.py --runner infogain --suite clean             # information-gain baseline
 uv run python scripts/run_scenarios.py --suite clean --no-image --effort low       # netlist only
 uv run python scripts/run_scenarios.py --suite clean --no-netlist --effort low     # schematic image only
-uv run python scripts/run_scenarios.py --runner hybrid --suite clean               # hybrid pipeline (run-2 transcription)
+uv run python scripts/run_scenarios.py --runner hybrid --suite clean               # hybrid pipeline (run-2 transcription), labelled dev
+uv run python scripts/run_scenarios.py --runner hybrid --suite clean --transcription scenarios/transcriptions/star_delta_photo_run3.yaml --image scenarios/photos/star_delta_phone.jpg   # from the phone photo
 uv run python scripts/run_scenarios.py --runner hybrid --suite clean --no-repair --no-explain   # without Verify
 uv run python scripts/transcribe_schematic.py --runs 3                             # Read step, scored against the truth
+uv run python scripts/summarize_results.py OUT.md "Label=runs/<dir>" ...           # pole-level table from saved runs
 uv run python scripts/calibration.py                                               # confidence calibration
 uv run python scripts/run_scenarios.py --suite scenarios --repeat 3 --effort low   # dev scenarios, variance
 uv run python scripts/run_scenarios.py --suite clean --only c02 --approve          # simulated human approves
@@ -201,7 +241,7 @@ uv run python scripts/run_scenarios.py --suite clean --only c02 --approve       
 Every agent run records its API cost in `runs/spend.json` (started at the $21 spent before the ledger existed).
 `run_scenarios.py` estimates a batch at $0.10 per agent run and refuses to start if the total would pass $110, unless
 `--force`. The UI refuses agent, hybrid and compare runs over the limit. Hybrid runs record their transcription,
-repair and explanation calls. Spend so far: $33.82.
+repair and explanation calls. Spend so far: $43.62.
 
 ## Known Muse Spark behaviour: tool calls written as text
 

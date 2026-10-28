@@ -1,5 +1,7 @@
 # Input ablation and schematic transcription (2026-10-28)
 
+> Scored at component level (component and failure mode), the definition at the time. Every run rescored at pole level: [2026-10-28_pole_level.md](2026-10-28_pole_level.md).
+
 Two cheap tests before choosing the next architecture. Frozen prompt a194ad85aaa1, muse-spark-1.3.
 
 ## A. What circuit description does the agent need?
