@@ -180,6 +180,18 @@ function reducer(s: State, a: Action): State {
           },
         ],
       };
+    case "wiring_variants":
+      return {
+        ...s,
+        feed: [
+          ...s.feed,
+          {
+            kind: "wiring",
+            id: `v${ev.step}_${s.feed.length}`,
+            text: `#${ev.step}: no candidate fit the reading on the transcribed wiring; an alternative wiring of a flagged region explains it (${ev.candidates} fault and wiring hypotheses, e.g. ${ev.faults.join(", ")}). No correction needed.`,
+          },
+        ],
+      };
     case "wiring_request":
       return { ...s, status: "approval", wiring: ev };
     case "wiring_answer":

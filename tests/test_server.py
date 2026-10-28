@@ -164,7 +164,7 @@ def test_hybrid_flags_need_confirmation(monkeypatch):
     assert ev["type"] == "error" and "not confirmed" in ev["message"]
 
 
-def test_hybrid_asks_a_human_to_confirm_wiring_the_pole_depends_on(monkeypatch):
+def test_hybrid_settles_a_pole_that_depends_on_flagged_wiring(monkeypatch):
     from tests.test_hybrid import FakeClient as HybridFake, true_data
     from tests.test_hybrid_checks import STAR_PINS, _swapped_star
 
@@ -181,11 +181,11 @@ def test_hybrid_asks_a_human_to_confirm_wiring_the_pole_depends_on(monkeypatch):
             if ev["type"] == "flags_request":
                 ws.send_json({"action": "flags", "id": ev["id"], "approve": True})
             if ev["type"] == "wiring_request":
-                assert ev["region"] == STAR_PINS and len(ev["options"]) >= 2
                 pick = next(i for i, o in enumerate(ev["options"]) if o["fault"] == "KM3:1-2 stuck_open")
                 ws.send_json({"action": "wiring", "id": ev["id"], "choice": pick})
             if ev["type"] in ("done", "error"):
                 break
-    assert "wiring_request" in seen and "wiring_answer" in seen and "wiring_check" in seen
+    # the joint hypotheses settle the pole with a reading across it, so no human question is needed here
+    assert "wiring_check" in seen and "wiring_request" not in seen
     assert ev["type"] == "done" and ev["diagnosis"]["part"] == "1-2" and ev["verdict"] == "correct"
-    assert ev["wiring_check"]["human_choice"] is not None
+    assert ev["wiring_check"]["verdict"].startswith("pole holds")

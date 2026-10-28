@@ -176,7 +176,9 @@ def hybrid_summary(rows: list[dict]) -> str:
         "", "**Verify step**", "",
         f"- Cases with a reading that contradicted every candidate: {sum(r['conflicts'] > 0 for r in rows)}/{n} "
         f"({sum(r['conflicts'] for r in rows)} conflicts)",
-        f"- Corrections rejected by the acceptance rule: {sum(r['corrections_rejected'] for r in rows)} "
+        f"- Conflicts explained by an alternative wiring of a flagged region (no correction requested): "
+        f"{sum(r['variant_resolved'] for r in rows)}",
+        f"- Corrections rejected (outside the flagged regions, or by the acceptance rule): {sum(r['corrections_rejected'] for r in rows)} "
         f"(of them healthy panel wrong, checked against the truth afterwards: {sum(r['rejected_panel_wrong'] for r in rows)})",
         f"- Netlist corrections accepted: {sum(r['corrections'] for r in rows)}; resolved the conflict on replay: "
         f"{sum(r['corrections_resolved'] for r in rows)}; changed wiring: {sum(r['corrections_wiring_changed'] for r in rows)}; "
@@ -186,7 +188,7 @@ def hybrid_summary(rows: list[dict]) -> str:
         f"handed over to a human (no consistent model): {sum(r['gave_up'] for r in rows)}",
         f"- Explanations citing at least one step: {sum(bool(r['cited_steps']) for r in rows)}/{n}",
         f"- Wiring check of flagged regions ran: {sum(bool(r['wiring_verdict']) for r in rows)}; pole held: "
-        f"{sum(r['wiring_verdict'] == 'pole holds under every alternative wiring' for r in rows)}; pole made ambiguous: "
+        f"{sum(r['wiring_verdict'] == 'pole holds under every wiring that fits the readings' for r in rows)}; pole made ambiguous: "
         f"{sum(r['wiring_verdict'] == 'pole ambiguous' for r in rows)}; component depends on the wiring: "
         f"{sum(r['wiring_verdict'] == 'component depends on the wiring' for r in rows)}", "",
     ])
@@ -202,6 +204,7 @@ def hybrid_row(trace: dict) -> dict:
         "rejected_panel_wrong": sum((c.get("truth") or {}).get("panel_steps_same") != (c.get("truth") or {}).get("panel_steps")
                                     for c in rejected),
         "wiring_verdict": (trace.get("wiring_check") or {}).get("verdict"),
+        "variant_resolved": trace.get("variant_resolved", 0),
         "corrections_resolved": sum(c.get("candidates_after_replay", 0) > 0 for c in corr),
         "corrections_wiring_ok": sum(bool(t.get("wiring_ok")) for t in truth),
         "corrections_wiring_changed": sum(t.get("nets_added", 0) > 0 for t in truth),

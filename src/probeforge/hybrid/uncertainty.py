@@ -1,26 +1,24 @@
-"""Model-uncertainty propagation: does the diagnosis depend on wiring the transcription was unsure of?
+"""Model uncertainty: alternative wirings of the regions the transcription flagged, and what they mean for
+the diagnosis.
 
-The transcription lists uncertain regions (terminal lists). If a terminal of the diagnosed part
-(for example KM3:1 or KM3:2 for pole 1-2) lies in such a region, the check builds the alternative wirings of that region: for every
-multi-pole part group of a component in the region (main poles, heaters, windings), the terminals
-of one side that lie in the region may be connected to each other's nets in any order (this is
-what a misread wire crossover does). Each alternative is replayed against every recorded reading
-with the diagnosed component's faults of the same mode plus the planner's surviving faults.
+The transcription lists uncertain regions (terminal lists). An alternative wiring of a region lets the
+terminals on one side of same-kind parts of a component (main poles, heaters, windings, aux contacts)
+lie in each other's nets, in any order: that is what a misread wire crossover does. These variants feed
+the planner's joint hypotheses (fault x wiring, see baseline/infogain.py): the planner adds the ones
+that reproduce every reading and keeps measuring until the answer no longer depends on them.
 
-If the alternatives that explain all readings give a different pole, the pole is not reported:
-the diagnosis keeps the component and failure mode, drops the part, lowers the confidence and says
-which region to confirm. If they give a different component, the answer becomes
-insufficient_information with the same note. A human (the UI) can confirm which wiring is real;
-then the pole that wiring implies is reported. Only the model netlist, the flags and the real
-readings are used, never the true netlist.
+check() then turns the planner's final joint candidates into the reported answer: one fault left, it
+stands; several poles of one component, the pole is dropped ("pole ambiguous: confirm wiring at ...")
+with lower confidence; different components, insufficient_information with the same note. A human (the
+UI) can say which wiring the panel really has, and the fault that wiring implies is reported. Only the
+model netlist, the flags and the real readings are used, never the true netlist.
 """
 
 import copy
 import itertools
 from collections.abc import Callable
 
-from probeforge.baseline.infogain import Cand, InfoGainBaseline, consistent
-from probeforge.faults.catalog import all_faults
+from probeforge.baseline.infogain import InfoGainBaseline, Variant
 from probeforge.hybrid.netlist_io import netlist_dict, to_netlist
 
 MAX_ALTERNATIVES = 216
@@ -81,6 +79,47 @@ def alternatives(data: dict, groups: list[list[str]], limit: int = MAX_ALTERNATI
     return out
 
 
+def _variants(data: dict, groups: list[list[str]], comps: tuple, region: tuple, label: str) -> list[Variant]:
+    out = []
+    for alt in alternatives(data, groups):
+        try:
+            out.append(Variant(label, comps, to_netlist(alt), region, alt))
+        except Exception:  # noqa: BLE001 - an alternative the netlist builder refuses is not a wiring
+            continue
+    return out
+
+
+def variant_source(get_data: Callable[[], dict], flags: list[dict]) -> Callable[[set | None], list[Variant]]:
+    """For the planner. terminals given: the regions containing them, all their components' pins at once
+    (only the components that own one of the terminals if that is too many). None: every flagged region,
+    one component's pins at a time."""
+
+    def source(terminals: set | None) -> list[Variant]:
+        data = get_data()
+        model = to_netlist(data)
+        out: list[Variant] = []
+        if terminals is None:
+            for i, f in enumerate(flags):
+                region = set(f["terminals"])
+                for comp in sorted({t.split(":")[0] for t in region if t.split(":")[0] in model.components}):
+                    groups = pin_groups(model, region, [comp])
+                    if groups:
+                        out += _variants(data, groups, (comp,), tuple(sorted(region)), f"region {i + 1}, {comp} pins")
+            return out
+        regions = regions_for(flags, terminals)
+        region = {t for f in regions for t in f["terminals"]}
+        if not region:
+            return []
+        comps = sorted({t.split(":")[0] for t in region if t.split(":")[0] in model.components})
+        groups = pin_groups(model, region, comps)
+        if len(alternatives(data, groups, MAX_ALTERNATIVES + 1)) > MAX_ALTERNATIVES:
+            comps = sorted({t.split(":")[0] for t in terminals})
+            groups = pin_groups(model, region, comps)
+        return _variants(data, groups, tuple(comps), tuple(sorted(region)), "around " + ", ".join(sorted(terminals)))
+
+    return source
+
+
 def wiring_text(data: dict, terminals: list[str]) -> list[str]:
     """How each region terminal is wired, e.g. 'KM3:1 with KM4:2, M1:W2'."""
     nets = data.get("nets") or {}
@@ -91,64 +130,46 @@ def wiring_text(data: dict, terminals: list[str]) -> list[str]:
 
 def check(planner: InfoGainBaseline, data: dict, flags: list[dict], draft: dict,
           confirm: Callable[[dict], int | None] | None = None) -> tuple[dict, dict | None]:
-    """Returns the (possibly changed) diagnosis args and a log record (None if no flagged region applies)."""
-    comp, mode, part = draft.get("component"), draft.get("failure_mode"), draft.get("part")
-    if not part:
+    """Returns the (possibly changed) diagnosis args and a log record (None if no wiring variant was involved)."""
+    if not planner.joint or not planner.wiring_region:
         return draft, None
-    regions = regions_for(flags, {f"{comp}:{t}" for t in str(part).split("-")})
-    if not regions:
-        return draft, None
-    region = sorted({t for f in regions for t in f["terminals"]})
-    model = planner.n
-    comps = sorted({t.split(":")[0] for t in region if t.split(":")[0] in model.components})
-    groups = pin_groups(model, set(region), comps)
-    if len(list(itertools.islice(alternatives(data, groups, MAX_ALTERNATIVES + 1), MAX_ALTERNATIVES + 1))) > MAX_ALTERNATIVES:
-        groups = pin_groups(model, set(region), [comp])  # too many: only the diagnosed component's pins
-    alts = alternatives(data, groups)
-    params = sorted({c.params for c in planner.cands}) or [()]
-    record = {"component": comp, "region": region, "reasons": [f["reason"] for f in regions],
-              "alternatives": len(alts), "consistent_alternatives": 0, "outcomes": {}}
-    outcomes: dict[str, list[dict]] = {}  # "KM3:1-2 stuck_open" -> wirings that give it
-    for f in planner.faults_left:
-        outcomes.setdefault(str(f), []).append(data)
-    for alt in alts:
-        try:
-            n = to_netlist(alt)
-        except Exception:  # noqa: BLE001 - an alternative the netlist builder refuses is not a wiring
-            continue
-        faults = list(dict.fromkeys([*planner.faults_left,
-                                     *(f for f in all_faults(n) if f.component == comp and f.mode == mode)]))
-        survivors = consistent(n, [Cand(f, p) for f in faults for p in params], planner.history, planner.power0, planner.amps)
-        if survivors:
-            record["consistent_alternatives"] += 1
-        for f in dict.fromkeys(c.fault for c in survivors):
-            outcomes.setdefault(str(f), []).append(alt)
-    record["outcomes"] = {k: len(v) for k, v in outcomes.items()}
-    faults = {k: v for k, v in outcomes.items()}
-    same = {k for k in faults if k.split(":")[0].split(" ")[0] == comp and k.endswith(f" {mode}")}
-    if set(faults) <= {f"{comp}:{draft['part']} {mode}"}:
-        record["verdict"] = "pole holds under every alternative wiring"
+    region = sorted(planner.wiring_region)
+    by_fault: dict[str, list[int]] = {}
+    for c in planner.cands:
+        by_fault.setdefault(str(c.fault), []).append(c.variant)
+    record = {"component": draft.get("component"), "region": region, "alternatives": len(planner.models) - 1,
+              "consistent_alternatives": len({c.variant for c in planner.cands if c.variant}),
+              "outcomes": {k: len(set(v)) for k, v in by_fault.items()}}
+    if len(by_fault) <= 1:
+        record["verdict"] = "pole holds under every wiring that fits the readings"
         return draft, record
-    note = f"confirm wiring at {', '.join(region)}"
-    texts = {k: wiring_text(v[0], region) for k, v in sorted(faults.items())}
+
+    def wiring_of(vid: int) -> dict:
+        return data if vid == 0 else planner.variants[vid].data
+
+    texts = {k: wiring_text(wiring_of(v[0]), region) for k, v in sorted(by_fault.items())}
     differs = [i for i in range(len(region)) if len({tuple(x)[i:i + 1] for x in texts.values()}) > 1]
     options = [{"fault": k, "wiring": [x[i] for i in differs if i < len(x)] or x} for k, x in texts.items()]
     record["options"] = options
+    note = f"confirm wiring at {', '.join(region)}"
+    evidence = draft.get("evidence") or planner.evidence[-6:]
     if confirm is not None:
-        choice = confirm({"component": comp, "failure_mode": mode, "region": region,
-                          "reasons": record["reasons"], "options": options})
+        choice = confirm({"component": draft.get("component"), "failure_mode": draft.get("failure_mode"),
+                          "region": region, "reasons": [f["reason"] for f in regions_for(flags, set(region))],
+                          "options": options})
         record["human_choice"] = choice
         if choice is not None and 0 <= choice < len(options):
             chosen = options[choice]["fault"]
             target, fmode = chosen.split(" ")
             ccomp, _, part = target.partition(":")
             record["verdict"] = f"human confirmed the wiring that gives {chosen}"
-            return {**draft, "component": ccomp, "part": part, "failure_mode": fmode, "confidence": 1.0,
-                    "note": f"wiring at {', '.join(region)} confirmed by a human"}, record
-    if same == set(faults):
+            return {"outcome": "diagnosed", "component": ccomp, "part": part, "failure_mode": fmode, "confidence": 1.0,
+                    "evidence": evidence, "note": f"wiring at {', '.join(region)} confirmed by a human"}, record
+    kinds = {k.split(":")[0].split(" ")[0] + " " + k.split(" ")[-1] for k in by_fault}
+    if draft.get("outcome") == "diagnosed" and len(kinds) == 1:
         record["verdict"] = "pole ambiguous"
-        return {**draft, "part": "", "confidence": round(1 / len(same), 2),
-                "note": f"pole ambiguous ({', '.join(sorted(same))}): {note}"}, record
+        return {**draft, "part": "", "confidence": round(1 / len(by_fault), 2),
+                "note": f"pole ambiguous ({', '.join(sorted(by_fault))}): {note}"}, record
     record["verdict"] = "component depends on the wiring"
-    return {"outcome": "insufficient_information", "confidence": 0.0, "evidence": draft["evidence"],
-            "note": f"answer depends on the wiring ({', '.join(sorted(faults))}): {note}"}, record
+    return {"outcome": "insufficient_information", "confidence": 0.0, "evidence": evidence,
+            "note": f"answer depends on the wiring ({', '.join(sorted(by_fault))}): {note}"}, record

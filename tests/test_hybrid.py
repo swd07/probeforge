@@ -6,6 +6,7 @@ from probeforge.baseline.infogain import Cand, with_params
 from probeforge.faults import Fault
 from probeforge.hybrid import run_hybrid
 from probeforge.hybrid.netlist_io import dump, flags_of, netlist_diff, parse_reply, score_flags, spec, wrong_nets
+from probeforge.hybrid.repair import rewired
 from probeforge.sim import Circuit, Netlist
 from tests.conftest import CIRCUIT_YAML
 
@@ -19,18 +20,24 @@ def true_data() -> dict:
 
 
 class FakeClient:
-    """Answers repairs with a fixed netlist and records every prompt."""
+    """Answers repairs with a fixed netlist and records every prompt. With name_region (default) the reply
+    names the terminals it rewires as a new uncertain region, as the repair prompt asks."""
 
-    def __init__(self, repair_with: dict | None):
+    def __init__(self, repair_with: dict | None, name_region: bool = True):
         self.prompts: list[str] = []
         self.repair_with = repair_with
+        self.name_region = name_region
         self.chat = NS(completions=NS(create=self.create))
 
     def create(self, **kw):
         text = kw["messages"][0]["content"][0]["text"]
         self.prompts.append(text)
         if "Current netlist:" in text and self.repair_with is not None:
-            reply = "The delta links were misread.\n```yaml\n" + dump(self.repair_with) + "```"
+            body = dump(self.repair_with)
+            if self.name_region:
+                old = yaml.safe_load(RUN2.read_text(encoding="utf-8"))
+                body += f"uncertain:\n  - {{terminals: [{', '.join(sorted(rewired(old, self.repair_with)))}], reason: crossovers}}\n"
+            reply = "The delta links were misread.\n```yaml\n" + body + "```"
         else:
             reply = "KM1 contact 1-2 is welded; see step 2."
         return NS(usage=NS(prompt_tokens=10, completion_tokens=5, prompt_tokens_details=None),

@@ -6,16 +6,19 @@ the candidates predicted for it, and the candidate set. It never gets the true n
 injected fault. When a true netlist is given (evaluation), each correction is compared with it
 after the model has answered, for the log only.
 
-A proposal is rejected (and logged) when it changes what a fault-free machine does where the real
-readings did not contradict the current model (hybrid/acceptance.py); the planner then asks again,
-and the next prompt says why the earlier proposal was rejected.
+Connections may change only inside the regions the transcription flagged as uncertain. A proposal
+that rewires a terminal outside them must name a new region (an `uncertain` entry with the terminals
+and a reason); otherwise it is rejected. A proposal is also rejected when it changes what a fault-free
+machine does where the real readings did not contradict the current model (hybrid/acceptance.py).
+Rejections are logged; the planner asks again (the next prompt says why) until two were rejected.
 """
 
 import copy
 
 from probeforge.hybrid.acceptance import healthy_changes
 from probeforge.hybrid.llm import Usage, action_text, chat, outcome_text
-from probeforge.hybrid.netlist_io import behaviour, dump, netlist_diff, param_values, parse_reply, to_netlist, wrong_nets
+from probeforge.hybrid.netlist_io import (behaviour, dump, flags_of, netlist_diff, param_values, parse_reply, to_netlist,
+                                          wrong_nets)
 from probeforge.sim import Netlist
 
 MAX_PREDICTED_GROUPS = 8
@@ -44,6 +47,12 @@ What the candidate faults predicted instead:
 {predicted}
 
 Candidate faults before this step ({n_cands}): {cands}
+
+Regions your transcription flagged as uncertain:
+{regions}
+You may change connections only between terminals inside these regions. If the readings force a change
+of any other terminal's connections, add an `uncertain` entry to your YAML naming the terminals of that
+new region and the reason; a change outside every region without such an entry is rejected.
 {rejected}
 Change only what the image or the readings justify, keep component ids and terminal names, and keep
 every terminal in exactly one net. If you change a value the drawing does not print, choose one that
@@ -51,13 +60,24 @@ fits every reading. Reply with a short explanation (a few sentences), then the c
 netlist in one ```yaml block."""
 
 
+def rewired(old: dict, new: dict) -> set[str]:
+    """Terminals whose connections differ between two netlist dicts (added or removed terminals too)."""
+    def mates(d: dict) -> dict[str, frozenset]:
+        return {str(t): frozenset(map(str, terms)) - {str(t)} for terms in (d.get("nets") or {}).values() for t in terms}
+
+    mo, mn = mates(old), mates(new)
+    return {t for t in set(mo) | set(mn) if mo.get(t) != mn.get(t)}
+
+
 class Repairer:
     """on_conflict callback for the planner. Holds the current netlist dict for one run."""
 
     def __init__(self, client, usage: Usage, png: bytes, data: dict, effort: str = "medium",
-                 true_netlist: Netlist | None = None, true_data: dict | None = None, on_event=None):
+                 true_netlist: Netlist | None = None, true_data: dict | None = None, on_event=None,
+                 flags: list[dict] | None = None):
         self.client, self.usage, self.png, self.effort = client, usage, png, effort
         self.data = copy.deepcopy(data)
+        self.flags = flags if flags is not None else flags_of(data)  # shared with the planner's wiring variants
         self.true, self.true_data = true_netlist, true_data
         self.on_event = on_event
 
@@ -81,7 +101,8 @@ class Repairer:
         return PROMPT.format(step=e["step"], netlist=dump(self.data), history=history or "  (none)",
                              action=action_text(e["tool"], e["args"]), actual=outcome_text(e["tool"], e["actual"]),
                              predicted=predicted or "  (no candidates left)", n_cands=len(cands), cands=listed or "none",
-                             rejected=rejected)
+                             rejected=rejected, regions="\n".join(f"  - {', '.join(f['terminals'])}: {f['reason']}"
+                                                                for f in self.flags if f["terminals"]) or "  (none)")
 
     def __call__(self, ctx: dict) -> tuple[Netlist | None, dict]:
         e = ctx["entry"]
@@ -112,7 +133,12 @@ class Repairer:
                                    if old_p.get(k) != new_p.get(k)}
         if self.true is not None:
             record["truth"] = self.judge(old, new)
-        reasons = healthy_changes(ctx, netlist)
+        new_regions = [f for f in flags_of(new) if f["terminals"] and f not in self.flags]
+        allowed = {t for f in [*self.flags, *new_regions] for t in f["terminals"]}
+        outside = sorted(rewired(old, new) - allowed)
+        reasons = ([f"rewires {', '.join(outside)}, outside every flagged region, without naming a new region"]
+                   if outside else healthy_changes(ctx, netlist))
+        record["new_regions"] = new_regions
         if reasons:
             record["rejected"] = f"changes fault-free behaviour no reading contradicted ({len(reasons)} reasons)"
             record["reasons"] = reasons
@@ -121,6 +147,7 @@ class Repairer:
                                "explanation": record["explanation"], "reasons": reasons})
             return None, record
         self.data = new
+        self.flags.extend(new_regions)
         if self.on_event:
             self.on_event({"type": "correction", "step": ctx["entry"]["step"], "diff": record["diff"],
                            "explanation": record["explanation"], "param_changes": record["param_changes"]})

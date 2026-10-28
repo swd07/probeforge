@@ -9,9 +9,12 @@
    netlist, the readings and the candidates and proposes a correction (logged as a diff); the
    planner rebuilds, replays the readings and continues. A correction that changes fault-free
    behaviour no reading contradicted is rejected and logged (hybrid/acceptance.py).
-   Before the diagnosis is submitted, if it involves a component in a flagged region, the
-   alternative wirings of that region are replayed against the readings; if they imply another
-   pole or component, the pole is not reported and the region must be confirmed (hybrid/uncertainty.py).
+   Corrections may rewire only terminals inside flagged regions (or name a new region); after two
+   rejected proposals no more are requested.
+   Joint hypotheses: the planner treats alternative wirings of the flagged regions as part of each
+   candidate (fault x wiring), tries them first when a reading contradicts every candidate, and before
+   a diagnosis whose part lies in a flagged region keeps measuring until one fault remains; if several
+   remain, the pole (or component) is not reported and the region must be confirmed (hybrid/uncertainty.py).
 5. Explain: Muse Spark writes a short technician-facing explanation citing the decisive readings.
 
 The model calls never see the true netlist or the injected fault.
@@ -26,6 +29,7 @@ from probeforge.hybrid.llm import Usage, chat
 from probeforge.hybrid.netlist_io import flags_of, parse_reply, spec, to_netlist
 from probeforge.hybrid.repair import Repairer
 from probeforge.hybrid.uncertainty import check as wiring_check
+from probeforge.hybrid.uncertainty import variant_source
 from probeforge.sim import Circuit, Netlist
 from probeforge.tools.toolbox import Approver, deny_all
 
@@ -48,7 +52,8 @@ class HybridResult:
     def trace_extra(self) -> dict:
         return {"corrections": self.corrections, "explanation": self.explanation, "cited_steps": self.cited_steps,
                 "gave_up": self.planner.gave_up, "candidates_left": [str(f) for f in self.planner.faults_left],
-                "unknown_params": self.planner.unknown, "wiring_check": self.wiring_check}
+                "unknown_params": self.planner.unknown, "wiring_check": self.wiring_check,
+                "variant_resolved": self.planner.variant_resolved, "wiring_variants": len(self.planner.models) - 1}
 
 
 def read_schematic(client, usage: Usage, png: bytes, effort: str = "medium") -> tuple[dict, list[dict]]:
@@ -70,7 +75,8 @@ def run_hybrid(circuit: Circuit, client, data: dict, png: bytes, *, usage: Usage
     usage = usage or Usage(effort=repair_effort)
     t0 = time.perf_counter()
     flags = flags_of(data) if flags is None else flags
-    repairer = Repairer(client, usage, png, data, repair_effort, true_netlist, true_data, on_event)
+    flags = list(flags)  # the repair step may add regions it names
+    repairer = Repairer(client, usage, png, data, repair_effort, true_netlist, true_data, on_event, flags)
     checked: dict = {}
 
     def review(planner: InfoGainBaseline, draft: dict) -> dict:
@@ -82,7 +88,8 @@ def run_hybrid(circuit: Circuit, client, data: dict, png: bytes, *, usage: Usage
         return args
 
     planner = InfoGainBaseline(circuit, approver=approver, model=to_netlist(data), on_conflict=repairer if repair else None,
-                               on_event=on_event, on_update=on_update, param_grid=DEFAULT_PARAM_GRID, review=review)
+                               on_event=on_event, on_update=on_update, param_grid=DEFAULT_PARAM_GRID, review=review,
+                               variant_source=variant_source(lambda: repairer.data, flags) if flags else None)
     diagnosis = planner.run()
     result = HybridResult(diagnosis, diagnosis.get("outcome", "error"), planner, usage, wiring_check=checked.get("record"))
     if do_explain:

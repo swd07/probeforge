@@ -4,6 +4,8 @@ mechanical interlock symbol in the drawing."""
 import copy
 import xml.etree.ElementTree as ET
 
+import yaml
+
 from probeforge.baseline.infogain import InfoGainBaseline
 from probeforge.eval.scoring import grade, parse_fault
 from probeforge.faults import Fault
@@ -58,26 +60,51 @@ def _swapped_star(data: dict) -> dict:
     return d
 
 
-def test_wiring_check_drops_a_pole_that_depends_on_a_flagged_region(netlist):
+def test_joint_hypotheses_find_the_pole_despite_a_misread_crossover(netlist):
     model = _swapped_star(true_data())
     plain = run_hybrid(faulty(netlist, KM3_POLE), FakeClient(None), model, b"png", do_explain=False, flags=[])
     assert plain.diagnosis["component"] == "KM3" and plain.diagnosis["part"] == "3-4"  # confidently wrong pole
     flags = [{"terminals": STAR_PINS, "reason": "star wiring crosses"}]
     r = run_hybrid(faulty(netlist, KM3_POLE), FakeClient(None), model, b"png", do_explain=False, flags=flags)
-    d = r.diagnosis
-    assert d["component"] == "KM3" and d["part"] == "" and d["confidence"] < 1 and "pole ambiguous" in d["note"]
-    assert r.wiring_check["verdict"] == "pole ambiguous" and r.wiring_check["consistent_alternatives"] >= 1
+    assert (r.diagnosis["component"], r.diagnosis["part"], r.diagnosis["confidence"]) == ("KM3", "1-2", 1.0)
+    assert r.wiring_check["verdict"].startswith("pole holds") and r.planner.joint
+    # the deciding reading is taken across the contactor's own pole, while the star contactor is closed
+    last = r.planner.history[-1]
+    assert last["tool"] == "press_button" and last["args"]["measure_while_held"] == [{"point_a": "KM3:1", "point_b": "KM3:2"}]
 
-    asked = []
 
-    def human(request):
-        asked.append(request)
-        return next(i for i, o in enumerate(request["options"]) if o["fault"] == str(KM3_POLE))
+def test_check_drops_the_pole_or_asks_a_human_when_wirings_still_disagree(netlist):
+    from types import SimpleNamespace as NS
 
-    r = run_hybrid(faulty(netlist, KM3_POLE), FakeClient(None), model, b"png", do_explain=False, flags=flags,
-                   confirm_wiring=human)
-    assert asked and asked[0]["region"] == STAR_PINS
-    assert (r.diagnosis["part"], r.diagnosis["confidence"]) == ("1-2", 1.0)
+    from probeforge.baseline.infogain import Cand, Variant
+    from probeforge.hybrid.uncertainty import check
+
+    data, alt = true_data(), _swapped_star(true_data())
+    f1, f2 = KM3_POLE, Fault("KM3", "stuck_open", "3-4")
+    planner = NS(joint=True, wiring_region=set(STAR_PINS), cands={Cand(f1, (), 0): None, Cand(f2, (), 1): None},
+                 models=[netlist, to_netlist(alt)], variants=[None, Variant("x", ("KM3",), to_netlist(alt), tuple(STAR_PINS), alt)],
+                 evidence=[{"step": 1, "type": "functional_test", "observation": "x"}])
+    draft = {"outcome": "diagnosed", "component": "KM3", "part": "", "failure_mode": "stuck_open", "confidence": 0.5,
+             "evidence": planner.evidence}
+    flags = [{"terminals": STAR_PINS, "reason": "star wiring crosses"}]
+    d, rec = check(planner, data, flags, draft)
+    assert d["part"] == "" and "pole ambiguous" in d["note"] and rec["verdict"] == "pole ambiguous"
+    assert all(o["wiring"] for o in rec["options"]) and len(rec["options"]) == 2
+    d, rec = check(planner, data, flags, draft, confirm=lambda req: [o["fault"] for o in req["options"]].index(str(f1)))
+    assert (d["part"], d["confidence"], rec["human_choice"]) == ("1-2", 1.0, 0)
+
+
+def test_corrections_outside_flagged_regions_are_rejected_and_stop_after_two(netlist):
+    from tests.test_hybrid import RUN2
+
+    run2 = yaml.safe_load(RUN2.read_text(encoding="utf-8"))
+    client = FakeClient(true_data(), name_region=False)  # rewires the delta links without naming a region
+    r = run_hybrid(faulty(netlist, Fault("KM4", "stuck_open", "3-4")), client, run2, b"png", do_explain=False, flags=[])
+    rejected = [c for c in r.corrections if c.get("rejected")]
+    assert len(rejected) == 2 == len(r.corrections) and "outside every flagged region" in rejected[0]["reasons"][0]
+    assert r.planner.gave_up and r.outcome == "insufficient_information"
+    assert sum("Current netlist:" in p for p in client.prompts) == 2
+    assert "was rejected" in [p for p in client.prompts if "Current netlist:" in p][1]
 
 
 def test_drawing_shows_mechanical_interlocks(netlist):

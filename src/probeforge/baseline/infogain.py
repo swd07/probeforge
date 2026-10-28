@@ -16,8 +16,22 @@ catalog): the planner calls on_conflict, which may return a corrected netlist. T
 rebuilds the candidates from the corrected netlist, replays every action taken so far against
 the recorded readings, and continues. on_conflict may also reject its own proposal (returns no
 netlist and a record with "rejected"); that counts as an attempt and the planner asks again. A
-review callback sees the draft diagnosis before it is submitted and may change it (the hybrid
-pipeline uses it to check whether the answer depends on wiring the transcription was unsure of).
+review callback sees the draft diagnosis before it is submitted and may change it.
+
+Joint hypotheses (hybrid only, with a variant_source): a candidate is (fault, unknown parameters,
+wiring variant), where variant 0 is the model netlist and the others are alternative wirings of the
+regions the transcription flagged as uncertain. Variants are added when they matter and only if they
+reproduce every reading so far:
+- as soon as the surviving faults are one component in one failure mode and their parts lie in a
+  flagged region (before any decision to switch the power off, which cannot be undone): that region's
+  alternative wirings, with the surviving faults and the same component's faults of the same mode. The planner then keeps
+  measuring (counting distinct faults, not candidates, so it does not spend readings on wiring that
+  does not change the answer) and may also measure across a part's own two terminals, at rest or while
+  a button is held: such a reading does not depend on how the rest of the circuit is wired. A specific
+  part is reported only when one remains.
+- on a conflict, before any correction is requested: every flagged region, one component's pins at a
+  time, with the faults alive before the conflict and the faults of that component.
+After MAX_REJECTED rejected correction proposals in a run, no more proposals are requested.
 
 It uses the same ToolBox and policy as the agent: voltage only live, resistance only dead, at most
 3 consecutive start presses, and it never re-applies power (that would need approval after a trip).
@@ -38,6 +52,7 @@ HOLD_S = 0.2
 WAIT_S = 7.0
 MAX_STEPS = 60
 MAX_CORRECTIONS = 3
+MAX_REJECTED = 2
 # values a drawing usually does not print, by component type; with a param_grid the planner treats
 # each missing one as unknown and keeps a candidate per grid value (log-spaced, not tuned to this circuit)
 PARAM_KEYS = {"timer": "delay", "thermal_relay": "trip_time"}
@@ -45,13 +60,30 @@ DEFAULT_PARAM_GRID = {"delay": (1.0, 3.0, 10.0, 30.0), "trip_time": (3.0, 10.0, 
 
 
 class Cand(NamedTuple):
-    """A candidate: one fault, plus a value for every parameter the model netlist does not know."""
+    """A candidate: one fault, a value for every parameter the model netlist does not know, and the
+    wiring variant it is simulated on (0: the model netlist)."""
 
     fault: Fault
     params: tuple = ()  # (("KT.delay", 3.0), ...)
+    variant: int = 0
 
     def __str__(self) -> str:
-        return str(self.fault) + (" [" + ", ".join(f"{k}={v:g}" for k, v in self.params) + "]" if self.params else "")
+        return (str(self.fault) + (" [" + ", ".join(f"{k}={v:g}" for k, v in self.params) + "]" if self.params else "")
+                + (f" [wiring {self.variant}]" if self.variant else ""))
+
+
+class Variant(NamedTuple):
+    """An alternative wiring of a flagged region, as offered by a variant_source."""
+
+    label: str
+    components: tuple  # the components whose pins were re-assigned
+    netlist: Netlist
+    region: tuple  # terminals of the flagged region(s) it comes from
+    data: dict | None = None  # the netlist as a dict (for showing the wiring to a human)
+
+
+def _net_key(netlist: Netlist) -> frozenset:
+    return frozenset(frozenset(terms) for terms in netlist.nets.values())
 
 
 def _q(x):
@@ -168,12 +200,16 @@ class InfoGainBaseline:
                  on_event: Callable[[dict], None] | None = None, max_corrections: int = MAX_CORRECTIONS,
                  on_update: Callable[["InfoGainBaseline", dict], None] | None = None,
                  param_grid: dict[str, tuple] | None = None,
-                 review: Callable[["InfoGainBaseline", dict], dict] | None = None):
+                 review: Callable[["InfoGainBaseline", dict], dict] | None = None,
+                 variant_source: Callable[[set | None], list[Variant]] | None = None):
         self.tb = ToolBox(circuit, approver=approver, on_event=on_event)
+        self.on_event = on_event
         self.power0 = circuit.power
         self.on_conflict = on_conflict
         self.on_update = on_update  # called after every recorded reading (the UI shows the candidates)
         self.review = review
+        self.variant_source = variant_source
+        self.variant_resolved = 0  # conflicts explained by a wiring variant without a correction
         self.max_corrections = max_corrections
         self.history: list[dict] = []  # executed tool calls with the observed outcome
         self.corrections: list[dict] = []
@@ -192,6 +228,11 @@ class InfoGainBaseline:
         """Use this netlist as the model: fresh candidates, replayed against every recorded reading.
         Returns the history entry at which the candidates ran out (None if some survive)."""
         self.n = netlist
+        self.models: list[Netlist] = [netlist]  # wiring variants; index = Cand.variant
+        self.variants: list[Variant | None] = [None]
+        self._model_keys = {_net_key(netlist)}
+        self._expanded: set = set()
+        self.wiring_region: set[str] = set()  # flagged terminals the diagnosis was checked against
         self.neutral = netlist.nets[netlist.neutral][0]
         buttons = netlist.components_of("button")
         self.stop = next((b.id for b in buttons if b.label.lower().startswith("stop")), None)
@@ -235,6 +276,72 @@ class InfoGainBaseline:
     def faults_left(self) -> list[Fault]:
         return list(dict.fromkeys(c.fault for c in self.cands))
 
+    @property
+    def joint(self) -> bool:
+        return len(self.models) > 1
+
+    # ---------------------------------------------------------------- joint hypotheses
+
+    def _replayed(self, cand: Cand) -> Circuit | None:
+        """The candidate's circuit after every recorded action, or None if it misses a reading."""
+        try:
+            c = Circuit(with_params(self.models[cand.variant], cand.params))
+            c.apply_fault(cand.fault)
+            c.set_power(self.power0)
+            for e in self.history:
+                if simulate(c, e["tool"], e["args"], self.amps) != e["actual"]:
+                    return None
+        except (CircuitError, KeyError, ValueError):
+            return None
+        return c
+
+    def _expand(self, terminals: set | None, faults_for: Callable[[Variant], list[Fault]], params: list[tuple]) -> int:
+        """Add the wiring variants offered for these terminals (None: every flagged region, one component at a
+        time) with the given faults and parameter values; keep the candidates that fit every reading."""
+        # around given terminals: once per model; every flagged region (a conflict): once per reading
+        key = frozenset(terminals) if terminals is not None else ("conflict", len(self.history))
+        if not self.variant_source or key in self._expanded:
+            return 0
+        self._expanded.add(key)
+        added = 0
+        for v in self.variant_source(terminals):
+            nk = _net_key(v.netlist)
+            if nk in self._model_keys:
+                continue
+            self._model_keys.add(nk)
+            vid = len(self.models)
+            self.models.append(v.netlist)
+            self.variants.append(v)
+            for f in faults_for(v):
+                for a in params:
+                    cand = Cand(f, a, vid)
+                    c = self._replayed(cand)
+                    if c is not None:
+                        self.cands[cand] = c
+                        added += 1
+                        self.wiring_region.update(v.region)
+        return added
+
+    def _expand_for_diagnosis(self) -> bool:
+        """The leading answer is one component and mode: add the alternative wirings of the flagged regions
+        around its parts, so a part is reported only if every wiring that fits the readings agrees."""
+        left = self.faults_left
+        kinds = {(f.component, f.mode) for f in left}
+        if not self.variant_source or len(kinds) != 1:
+            return False
+        comp, mode = kinds.pop()
+        terminals = {f"{comp}:{t}" for f in left if f.part for t in f.part.split("-")}
+        if not terminals:
+            return False
+        params = sorted({c.params for c in self.cands}) or [()]
+        before = len(self.cands)
+        added = self._expand(terminals, lambda v: list(dict.fromkeys(
+            [*left, *(f for f in all_faults(v.netlist) if f.component == comp and f.mode == mode)])), params)
+        if added:
+            self.notes.append(f"joint hypotheses: {added} (fault, wiring) candidates added for {comp} "
+                              f"({before} before, {len(self.models) - 1} wiring variants so far)")
+        return added > 0
+
     # ---------------------------------------------------------------- public
 
     def run(self) -> dict:
@@ -242,9 +349,11 @@ class InfoGainBaseline:
         self.evidence.append({"step": 0, "type": "functional_test", "observation": "panel at the start"})
         self._record(0, "read_indicators", {}, start)
         for _ in range(MAX_STEPS):
-            if self.gave_up or len(self.cands) <= 1:
+            if self.gave_up:
                 break
-            if not self._step():
+            expanded = self._expand_for_diagnosis()
+            settled = len(self.cands) <= 1 or (self.joint and len(self.faults_left) <= 1)
+            if not expanded and (settled or not self._step()):
                 break
         return self._submit()
 
@@ -285,6 +394,25 @@ class InfoGainBaseline:
         """No candidate explains the readings: the model netlist (or the single-fault catalog) is wrong."""
         self.conflicts += 1
         while not self.cands:
+            if self.variant_source:
+                old = before
+                params = sorted({c.params for c in old}) or self.assignments
+                alive = list(dict.fromkeys(c.fault for c in old))
+                if self._expand(None, lambda v: list(dict.fromkeys(
+                        [*alive, *(f for f in all_faults(v.netlist) if f.component in v.components)])), params):
+                    self.variant_resolved += 1
+                    self.notes.append(f"step {entry['step']}: explained by an alternative wiring of a flagged region "
+                                      f"({len(self.cands)} candidates); no correction requested")
+                    if self.on_event:
+                        self.on_event({"type": "wiring_variants", "step": entry["step"], "candidates": len(self.cands),
+                                       "faults": [str(f) for f in self.faults_left[:6]]})
+                    return
+            rejected = sum(bool(r.get("rejected")) for r in self.corrections)
+            if rejected >= MAX_REJECTED:
+                self.gave_up = True
+                self.notes.append(f"step {entry['step']}: {rejected} correction proposals rejected; no more proposals, "
+                                  "handing over to a human")
+                return
             if not self.on_conflict or len(self.corrections) >= self.max_corrections:
                 self.gave_up = True
                 self.notes.append(f"step {entry['step']}: no candidate explains the readings; handing over to a human")
@@ -321,6 +449,13 @@ class InfoGainBaseline:
             for p in self.points:
                 pred = {f: _q(c.voltage(p, self.neutral)) for f, c in self.cands.items()}
                 opts.append(("measure_voltage", {"point_a": p, "point_b": self.neutral}, pred, None, 0))
+            # with wiring variants: readings across a part's own terminals, which do not depend on how the
+            # rest of the circuit is wired (the probe pair is the part itself)
+            across = [(p.a, p.b) for p in self.parts] if self.joint else []
+            for a, b2 in across:
+                pred = {f: _q(c.voltage(a, b2)) for f, c in self.cands.items()}
+                opts.append(("measure_voltage", {"point_a": a, "point_b": b2}, pred, None, 0))
+            probes = [(p, self.neutral) for p in self.points] + across
             for b in self.buttons:
                 if b in self.starts and self.consecutive_starts >= self.tb.policy.max_consecutive_starts:
                     continue
@@ -332,21 +467,22 @@ class InfoGainBaseline:
                         k.hold(b)
                         k.step(HOLD_S)
                         held[f] = _view(k, self.amps)
-                        volts[f] = {p: _q(k.voltage(p, self.neutral)) for p in self.points}
+                        volts[f] = {pp: _q(k.voltage(*pp)) for pp in probes}
                         k.release(b)
                         after[f] = _view(k, self.amps)
-                    except CircuitError:
+                    except (CircuitError, KeyError):
                         held[f] = after[f] = UNSTABLE
-                        volts[f] = dict.fromkeys(self.points, UNSTABLE)
+                        volts[f] = dict.fromkeys(probes, UNSTABLE)
                 pred = {f: (held[f], (), after[f]) for f in self.cands}
                 opts.append(("press_button", {"button": b, "hold_seconds": HOLD_S}, pred, states, 2))
-                for p in self.points:
-                    pred = {f: (held[f], (volts[f][p],), after[f]) for f in self.cands}
+                for pp in probes:
+                    pred = {f: (held[f], (volts[f][pp],), after[f]) for f in self.cands}
                     args = {"button": b, "hold_seconds": HOLD_S,
-                            "measure_while_held": [{"point_a": p, "point_b": self.neutral}]}
+                            "measure_while_held": [{"point_a": pp[0], "point_b": pp[1]}]}
                     opts.append(("press_button", args, pred, states, 1))
             pred, states = self._predict("wait", {"seconds": WAIT_S})
             opts.append(("wait", {"seconds": WAIT_S}, pred, states, 3))
+            opts += self._restart_options(across)
         else:
             for p in self.parts:
                 pred = {f: _ohms(c.resistance(p.a, p.b)) for f, c in self.cands.items()}
@@ -362,10 +498,50 @@ class InfoGainBaseline:
         n = len(pred)
         return sum(g * g for g in groups.values()) / n
 
+    def _restart_options(self, across: list[tuple]) -> list[tuple]:
+        """Joint mode, two steps: press stop, then a start button while reading across a part. A contact that
+        only closes during start-up (a star contactor) can be checked this way once the machine has moved on;
+        neither step alone splits the candidates, so a one-step search would never take them."""
+        if not across or not self.stop:
+            return []
+        opts = []
+        stop = ("press_button", {"button": self.stop, "hold_seconds": HOLD_S})
+        for s in self.starts:
+            vals = {}
+            for f, c in self.cands.items():
+                k = c.clone()
+                try:
+                    first = simulate(k, *stop, self.amps)
+                    k.hold(s)
+                    k.step(HOLD_S)
+                    held = _view(k, self.amps)
+                    volts = {pp: _q(k.voltage(*pp)) for pp in across}
+                    k.release(s)
+                    vals[f] = (first, held, volts, _view(k, self.amps))
+                except (CircuitError, KeyError):
+                    vals[f] = None
+            for pp in across:
+                pred = {f: (UNSTABLE if v is None else (v[0], (v[1], (v[2][pp],), v[3]))) for f, v in vals.items()}
+                second = ("press_button", {"button": s, "hold_seconds": HOLD_S,
+                                           "measure_while_held": [{"point_a": pp[0], "point_b": pp[1]}]})
+                opts.append(("sequence", [stop, second], pred, None, 4))
+        return opts
+
+    @staticmethod
+    def _expected_faults(pred: dict) -> float:
+        """Expected number of distinct faults left (joint mode: telling wirings apart that lead to the same
+        fault is not worth a reading)."""
+        groups: dict = {}
+        for cand, outcome in pred.items():
+            groups.setdefault(repr(outcome), []).append(cand.fault)
+        n = len(pred)
+        return sum(len(g) / n * len(set(g)) for g in groups.values())
+
     def _step(self) -> bool:
-        n = len(self.cands)
+        n = len(self.faults_left) if self.joint else len(self.cands)
         opts = self._options()
-        scored = [(self._expected_survivors(opt[2]), opt[4], i, opt) for i, opt in enumerate(opts)]
+        score = self._expected_faults if self.joint else self._expected_survivors
+        scored = [(score(opt[2]), opt[4], i, opt) for i, opt in enumerate(opts)]
         useful = [s for s in scored if s[0] < n - 1e-9]
         if not useful:
             if self.tb.circuit.power:
@@ -380,6 +556,12 @@ class InfoGainBaseline:
 
     def _execute(self, opt: tuple) -> None:
         name, args, pred, states, _ = opt
+        if name == "sequence":  # each step is executed and recorded on its own
+            for sub_name, sub_args in args:
+                if self.gave_up or not self.cands:
+                    return
+                self._execute((sub_name, sub_args, None, None, 0))
+            return
         r = self.tb.call(name, args)
         if "error" in r:
             raise RuntimeError(f"info-gain planner action refused: {name} {args}: {r['error']}")
@@ -421,7 +603,7 @@ class InfoGainBaseline:
                         "evidence": self.evidence[-6:]}
             else:
                 args = {"outcome": "insufficient_information", "confidence": 0.0, "evidence": self.evidence[-6:]}
-            if self.review and args["outcome"] == "diagnosed":
+            if self.review and (args["outcome"] == "diagnosed" or self.joint):
                 args = self.review(self, args)
         r = self.tb.call("submit_diagnosis", args)
         if "error" in r:
