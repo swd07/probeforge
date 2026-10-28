@@ -98,7 +98,8 @@ def run_case(case: Case, args, client, out_dir: Path, rep: int, ledger: SpendLed
     approver = approve_all if args.approve else deny_all
     if args.runner == "agent":
         run, tb = run_agent(circuit, client, model=args.model, effort=args.effort, max_turns=args.max_turns,
-                            approver=approver, include_image=not args.no_image)
+                            approver=approver, include_image=not args.no_image,
+                            include_netlist=not args.no_netlist)
         diagnosis, outcome, notes = run.diagnosis, run.outcome, []
         if ledger:
             ledger.record(run.cost_usd, f"{out_dir.name}/{name}")
@@ -188,13 +189,14 @@ def main() -> None:
     ap.add_argument("--workers", type=int, default=8)
     ap.add_argument("--force", action="store_true", help="run even if the spend limit would be exceeded")
     ap.add_argument("--no-image", action="store_true", help="ablation: netlist only, no schematic image")
+    ap.add_argument("--no-netlist", action="store_true", help="ablation: schematic image only, no text netlist")
     args = ap.parse_args()
 
     cases = [c for c in build_cases(args.suite) if not args.only or c.id in args.only]
     jobs = [(c, rep) for rep in range(1, args.repeat + 1) for c in cases]
     stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     tag = (f"{stamp}_{args.runner}_{args.suite}" + (f"_{args.effort or 'default'}" if args.runner == "agent" else "")
-           + ("_approve" if args.approve else "") + ("_noimage" if args.no_image else ""))
+           + ("_approve" if args.approve else "") + ("_noimage" if args.no_image else "") + ("_nonetlist" if args.no_netlist else ""))
     out_dir = ROOT / "runs" / tag
     out_dir.mkdir(parents=True, exist_ok=True)
     client, ledger = None, None

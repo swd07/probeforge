@@ -198,8 +198,10 @@ class ToolBox:
         policy: Policy | None = None,
         approver: Approver = deny_all,
         on_event: Callable[[dict], None] | None = None,
+        text_netlist: bool = True,  # False for the image-only ablation: get_schematic refuses
     ):
         self.circuit = circuit
+        self.text_netlist = text_netlist
         self.policy = policy or Policy()
         self.approver = approver
         self.on_event = on_event
@@ -388,6 +390,8 @@ class ToolBox:
         return {"point_a": args["point_a"], "point_b": args["point_b"], "ohms": "open" if ohms == float("inf") else ohms}
 
     def _tool_get_schematic(self, args: dict) -> dict:
+        if not self.text_netlist:
+            raise ToolError("no text netlist in this run; the schematic image is the circuit description")
         return {"netlist": self.circuit.netlist.to_text()}
 
     def _tool_update_hypotheses(self, args: dict) -> dict:

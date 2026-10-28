@@ -243,3 +243,19 @@ def test_netlist_only_ablation(netlist, monkeypatch):
     loop.run_agent(fuse_circuit(netlist), client, include_image=False)
     parts = client.requests[0]["messages"][1]["content"]
     assert [p["type"] for p in parts] == ["text"] and "image" not in parts[0]["text"]
+
+
+def test_image_only_ablation(netlist, monkeypatch):
+    monkeypatch.setattr(loop, "render_png", lambda n: b"png")
+    client = FakeClient([FakeMessage(calls=[("get_schematic", {})]),
+                         FakeMessage(calls=[("submit_diagnosis", {"outcome": "insufficient_information",
+                                                                  "confidence": 0.1, "evidence": []})])])
+    run, _ = loop.run_agent(fuse_circuit(netlist), client, include_netlist=False)
+    netlist_text = netlist.to_text()
+    for req in client.requests:  # the image goes with every request, the netlist with none
+        parts = req["messages"][1]["content"]
+        assert [p["type"] for p in parts] == ["text", "image_url"]
+        sent = json.dumps(req["messages"])
+        assert "Nets (net name" not in sent and "550 ohm" not in sent
+        assert netlist_text.splitlines()[5] not in sent
+    assert "no text netlist" in run.turn_log[0]["tool_calls"][0]["result"]["error"]

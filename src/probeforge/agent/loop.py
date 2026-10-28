@@ -89,17 +89,27 @@ def recover_text_tool_calls(text: str) -> list[dict]:
 
 
 IMAGE_NOTE = " (the image shows the same circuit)"
+NETLIST_HEADER = "Schematic text netlist (the image shows the same circuit):\n"
+IMAGE_ONLY_HEADER = "Schematic: see the attached image.\n"
 
 
-def build_initial_messages(toolbox: ToolBox, max_turns: int = 30, include_image: bool = True) -> list[dict]:
+def build_initial_messages(
+    toolbox: ToolBox, max_turns: int = 30, include_image: bool = True, include_netlist: bool = True
+) -> list[dict]:
     """System and first user message: symptoms, schematic image, text netlist, policy summary.
 
     include_image=False is the netlist-only ablation: no image part, and the note that an image
-    shows the same circuit is dropped from the text. Everything else is identical."""
+    shows the same circuit is dropped from the text. include_netlist=False is the image-only
+    ablation: the netlist text is replaced by a pointer to the image. Everything else is identical."""
+    if not (include_image or include_netlist):
+        raise ValueError("the agent needs the image, the netlist or both")
     netlist = toolbox.circuit.netlist
     indicators = toolbox.initial_observation()
     system = {"role": "system", "content": SYSTEM_PROMPT.format(policy=toolbox.policy.summary(), max_turns=max_turns)}
-    text = initial_user_text(indicators, netlist.to_text())
+    if include_netlist:
+        text = initial_user_text(indicators, netlist.to_text())
+    else:
+        text = initial_user_text(indicators, "").replace(NETLIST_HEADER, IMAGE_ONLY_HEADER).rstrip()
     if not include_image:
         return [system, {"role": "user", "content": [{"type": "text", "text": text.replace(IMAGE_NOTE, "")}]}]
     png = base64.b64encode(render_png(netlist)).decode()
@@ -125,15 +135,19 @@ def run_agent(
     on_event: Callable[[dict], None] | None = None,
     image_once: bool = True,
     include_image: bool = True,
+    include_netlist: bool = True,
 ) -> tuple[AgentRun, ToolBox]:
     """Run one diagnosis session. The circuit should already be powered with its fault applied.
 
     image_once: send the schematic image only with the first request; later requests carry
     the text netlist alone (the API is stateless, so otherwise the image is re-sent every turn).
+    Without the netlist the image is the only circuit description, so it is sent every turn and
+    get_schematic (which returns the netlist text) answers with an error.
     """
-    toolbox = ToolBox(circuit, approver=approver, on_event=on_event)
+    toolbox = ToolBox(circuit, approver=approver, on_event=on_event, text_netlist=include_netlist)
     run = AgentRun(model=model, effort=effort)
-    messages = build_initial_messages(toolbox, max_turns, include_image)
+    messages = build_initial_messages(toolbox, max_turns, include_image, include_netlist)
+    image_once = image_once and include_netlist
     extra = {"reasoning_effort": effort} if effort else {}
     started = time.perf_counter()
     consecutive_nudges = 0
