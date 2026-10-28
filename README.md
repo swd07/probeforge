@@ -2,7 +2,7 @@
 
 AI agent that diagnoses faults in an industrial relay-contactor circuit (star-delta reversing motor starter) by choosing its own virtual measurements, under hard safety limits enforced in code. Built for the Meta Global AI Developer Hackathon 2026.
 
-Status: Day 4. Simulator, faults, tools, safety policy, Muse Spark agent, half-split baseline, evaluation harness (clean holdout results) and the live web UI are done and tested.
+Status: Day 4. Simulator, faults, tools, safety policy, Muse Spark agent, baselines, evaluation harness (clean holdout results), the live web UI and phase 1 of the hybrid pipeline (Muse Spark reads the schematic, a planner measures, Muse Spark repairs the netlist and explains) are done and tested.
 
 ## Setup
 
@@ -47,6 +47,17 @@ sequence of meter readings.
 | Engineer mode: blocked reading | Engineer vs agent vs baseline |
 |---|---|
 | ![Blocked](docs/screenshots/manual_2_blocked.png) | ![Compare](docs/screenshots/manual_6_compare.png) |
+
+**Hybrid mode** (third button in the top bar): Muse Spark reads the schematic image into a netlist (a live read, or
+a saved real read with known errors), the regions it flagged as uncertain light up on the schematic for a human to
+confirm, then the information-gain planner measures. When a reading contradicts every candidate fault, the feed shows
+the inconsistent reading in red, Muse Spark rechecks the drawing and the correction appears as a diff before the
+planner continues. The result card carries Muse Spark's explanation for the technician. See
+[Hybrid pipeline](#hybrid-pipeline-phase-1).
+
+| Flagged regions for human confirmation | Netlist correction during the run |
+|---|---|
+| ![Flags](docs/screenshots/hybrid_live_flags.png) | ![Correction](docs/screenshots/hybrid_km4_2_correction.png) |
 
 The UI replaces em dashes in the model's text with commas for display; the content is not otherwise changed.
 
@@ -124,8 +135,12 @@ reading that splits the survivors best. It needs a complete, exact fault model o
 does not have, so it is a ceiling for measurement choice with perfect knowledge, not a peer. The agent sits between
 the rule-based half-split and that ceiling. Details: [docs/results/2026-10-28_review.md](docs/results/2026-10-28_review.md).
 
-- **Image ablation:** with the text netlist only (no schematic image) the agent scores the same 30/38 (2 cases flip
-  each way, run-to-run noise), with slightly more measurements. The netlist carries what the agent uses.
+- **Input ablation** ([docs/results/2026-10-28_input_ablation.md](docs/results/2026-10-28_input_ablation.md)): netlist
+  only 30/38, schematic image only (no netlist) 31/38, both 30/38. All within run-to-run noise: the agent reads the
+  drawing as well as the netlist. (The image-only run predates a prompt fix: it still said nominal values are in the
+  netlist; image-only mode now says unlabeled values must be inferred or measured.)
+- **Schematic transcription:** Muse Spark turns the PNG into our YAML netlist with all 17 components and 51 parts right
+  and the whole control circuit exact; the errors are at the power-circuit wire crossovers (28 to 29 of 35 nets exact).
 - **Calibration** ([docs/results/2026-10-28_calibration.md](docs/results/2026-10-28_calibration.md)): 95% of
   diagnoses are stated at 90%+ confidence and are right 93% of the time over all runs (89% on the clean holdout);
   the few stated below 90% are overconfident (3 of 13 right).
@@ -136,11 +151,46 @@ flip between runs. Known weak spots: welded L1/L3 main poles that cause a fuse-b
 blown fuse), and "voltage present is not coil intact" (dev scenario s06 fails 2 of 3). Everything before the clean run is in
 [docs/results/dev/](docs/results/dev/), labelled dev because the prompt and baseline were tuned with those faults visible.
 
+## Hybrid pipeline (phase 1)
+
+Report: [docs/results/2026-10-28_hybrid.md](docs/results/2026-10-28_hybrid.md). Code: `src/probeforge/hybrid/`.
+
+1. **Read:** Muse Spark transcribes the schematic image into the YAML netlist format (given the format spec, never the
+   answer) and lists uncertain regions. The UI asks a human to confirm them; batch runs accept the transcription.
+2. **Model:** the fault catalog is generated from the transcribed netlist (every part in every failure mode). Values
+   the drawing does not print are unknowns: timer delay and trip time become candidate dimensions on a log grid,
+   and without a motor rating line currents are compared as zero / nominal / overcurrent only.
+3. **Plan:** the information-gain planner simulates the transcribed netlist and picks readings; the readings come from
+   the real circuit through the same tools and safety policy as the agent.
+4. **Verify:** a reading that no candidate explains stops the planner. Muse Spark gets the image, the netlist, the
+   readings and the candidates and proposes a correction (logged as a diff); the planner rebuilds, replays every
+   reading and continues, or hands over to a human after 3 failed corrections.
+5. **Explain:** Muse Spark writes a short explanation for the technician citing the decisive readings.
+
+Evaluated on the clean holdout starting from a real transcription with 6 of 35 nets wrong
+([scenarios/transcriptions/star_delta_run2.yaml](scenarios/transcriptions/star_delta_run2.yaml)):
+
+| | Visible correct | incl. justified | Latent | Confidently wrong | Meas per case | Cost per case |
+|---|---|---|---|---|---|---|
+| Pure agent (true netlist + image) | 30/38 | 33/38 | 5/5 | 4 | 8.3 | $0.068 |
+| Info-gain on the true netlist | 35/38 | 38/38 | 5/5 | 0 | 2.6 | free |
+| **Hybrid (flawed transcription + repair)** | **29/38** | **32/38** | 5/5 | **0** | **3.2** | $0.066 |
+| Hybrid without repair | 10/38 | 13/38 | 5/5 | 0 | 1.4 | free |
+
+The wrong wiring contradicted the readings in 31 of 43 cases. Muse Spark proposed 35 corrections: 32 made the model
+consistent with every reading again and 29 made the healthy machine behave right, but none restored the exact true
+netlist (pin permutations a healthy panel cannot show remain), which is why some main-pole faults end as
+insufficient_information. No correction, right or wrong, led to a wrong diagnosis.
+
 ```
 uv run python scripts/run_scenarios.py --suite clean --effort low --workers 8      # agent, clean holdout
 uv run python scripts/run_scenarios.py --runner baseline --suite clean             # half-split baseline
 uv run python scripts/run_scenarios.py --runner infogain --suite clean             # information-gain baseline
-uv run python scripts/run_scenarios.py --suite clean --no-image --effort low       # image ablation
+uv run python scripts/run_scenarios.py --suite clean --no-image --effort low       # netlist only
+uv run python scripts/run_scenarios.py --suite clean --no-netlist --effort low     # schematic image only
+uv run python scripts/run_scenarios.py --runner hybrid --suite clean               # hybrid pipeline (run-2 transcription)
+uv run python scripts/run_scenarios.py --runner hybrid --suite clean --no-repair --no-explain   # without Verify
+uv run python scripts/transcribe_schematic.py --runs 3                             # Read step, scored against the truth
 uv run python scripts/calibration.py                                               # confidence calibration
 uv run python scripts/run_scenarios.py --suite scenarios --repeat 3 --effort low   # dev scenarios, variance
 uv run python scripts/run_scenarios.py --suite clean --only c02 --approve          # simulated human approves
@@ -150,7 +200,8 @@ uv run python scripts/run_scenarios.py --suite clean --only c02 --approve       
 
 Every agent run records its API cost in `runs/spend.json` (started at the $21 spent before the ledger existed).
 `run_scenarios.py` estimates a batch at $0.10 per agent run and refuses to start if the total would pass $110, unless
-`--force`. The UI refuses agent and compare runs over the limit.
+`--force`. The UI refuses agent, hybrid and compare runs over the limit. Hybrid runs record their transcription,
+repair and explanation calls. Spend so far: $33.82.
 
 ## Known Muse Spark behaviour: tool calls written as text
 
