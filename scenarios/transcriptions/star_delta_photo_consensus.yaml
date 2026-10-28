@@ -1,0 +1,85 @@
+# Consensus of 3 Muse Spark reads of the same schematic (runs/20261028_170744_transcribe_flags_star_delta_phone/run1_reply.txt, runs/20261028_170744_transcribe_flags_star_delta_phone/run2_reply.txt, runs/20261028_170744_transcribe_flags_star_delta_phone/run3_reply.txt).
+# Model netlist: read 3 (agrees most with the others), copied unedited.
+# uncertain: that read's own flags plus 3 regions where the reads disagree.
+name: star_delta_reversing_starter
+title: Star-delta reversing motor starter
+supply:
+  voltage: 230
+  phases: {L1: 0, L2: -120, L3: 120}
+  neutral: N
+power_switch: QF1
+protection: [FU1, FU2, QF1]
+interlocks: []
+components:
+  QF1: {type: breaker, label: Main breaker, poles: [1-2, 3-4, 5-6]}
+  FU2: {type: fuse, label: Power fuses, poles: [1-2, 3-4, 5-6]}
+  FU1: {type: fuse, label: FU1, poles: [1-2]}
+  KM1: {type: contactor, label: Forward, coil: A1-A2, main: [1-2, 3-4, 5-6], no_contacts: [13-14, 43-44, 53-54], nc_contacts: [21-22]}
+  KM2: {type: contactor, label: Reverse, coil: A1-A2, main: [1-2, 3-4, 5-6], no_contacts: [13-14, 43-44, 53-54], nc_contacts: [21-22]}
+  KK1: {type: thermal_relay, label: Motor overload, heaters: [1-2, 3-4, 5-6], no_contacts: [97-98], nc_contacts: [95-96]}
+  M1: {type: motor, label: Motor, windings: [U1-U2, V1-V2, W1-W2]}
+  KM4: {type: contactor, label: Delta, coil: A1-A2, main: [1-2, 3-4, 5-6], nc_contacts: [21-22]}
+  KM3: {type: contactor, label: Star, coil: A1-A2, main: [1-2, 3-4, 5-6], nc_contacts: [21-22]}
+  SB1: {type: button, label: Stop, nc_contacts: [11-12]}
+  SB2: {type: button, label: Start Fwd, no_contacts: [13-14]}
+  SB3: {type: button, label: Start Rev, no_contacts: [13-14]}
+  KT: {type: timer, label: Star-delta timer, coil: A1-A2, no_delayed: [67-68], nc_delayed: [55-56]}
+  HL2: {type: lamp, label: Fault, terminals: X1-X2}
+  HL1: {type: lamp, label: Power, terminals: X1-X2}
+  HL3: {type: lamp, label: Forward, terminals: X1-X2}
+  HL4: {type: lamp, label: Reverse, terminals: X1-X2}
+nets:
+  L1: [QF1:1]
+  L2: [QF1:3]
+  L3: [QF1:5]
+  L1Q: [QF1:2, FU2:1, FU1:1]
+  L2Q: [QF1:4, FU2:3]
+  L3Q: [QF1:6, FU2:5]
+  U_F: [FU2:2, KM1:1, KM2:3]
+  V_F: [FU2:4, KM1:3, KM2:1]
+  W_F: [FU2:6, KM1:5, KM2:5]
+  M1_: [KM1:2, KM2:2, KK1:1]
+  M2_: [KM1:4, KM2:4, KK1:3]
+  M3_: [KM1:6, KM2:6, KK1:5]
+  U1: [KK1:2, M1:U1, KM4:1]
+  V1: [KK1:4, M1:V1, KM4:3]
+  W1: [KK1:6, M1:W1, KM4:5]
+  U2: [M1:U2, KM3:1, KM4:4]
+  V2: [M1:V2, KM3:3, KM4:6]
+  W2: [M1:W2, KM3:5, KM4:2]
+  STAR: [KM3:2, KM3:4, KM3:6]
+  N: [KM1:A2, KM2:A2, KT:A2, KM3:A2, KM4:A2, HL1:X2, HL2:X2, HL3:X2, HL4:X2]
+  '1': [FU1:2, KK1:95, KK1:97, HL1:X1, KM1:53, KM2:53]
+  '2': [KK1:96, SB1:11]
+  '3': [SB1:12, SB2:13, KM1:13, SB3:13, KM2:13, KM1:43, KM2:43]
+  '4': [SB2:14, KM1:14, KM2:21]
+  '5': [KM2:22, KM1:A1]
+  '6': [SB3:14, KM2:14, KM1:21]
+  '7': [KM1:22, KM2:A1]
+  '8': [KM1:44, KM2:44, KT:A1, KT:55, KT:67]
+  '9': [KT:56, KM4:21]
+  '10': [KM4:22, KM3:A1]
+  '11': [KT:68, KM3:21]
+  '12': [KM3:22, KM4:A1]
+  '13': [KK1:98, HL2:X1]
+  '14': [KM1:54, HL3:X1]
+  '15': [KM2:54, HL4:X1]
+uncertain:
+  - {terminals: [], reason: "supply voltage not printed; assumed 230 V phase-neutral"}
+  - {terminals: [FU2:2, FU2:4, FU2:6, KM1:1, KM1:3, KM1:5, KM2:1, KM2:3, KM2:5], reason: "input wiring to KM1/KM2 crowded; reverse is assumed by swapping L1-L2, exact swap\
+  \ uncertain"}
+  - {terminals: [KM1:2, KM1:4, KM1:6, KM2:2, KM2:4, KM2:6, KK1:1, KK1:3, KK1:5], reason: "output commoning of KM1 and KM2 dots/crosses hard to read"}
+  - {terminals: [KM1:13, KM1:14, KM2:13, KM2:14, KM1:43, KM1:44, KM2:43, KM2:44], reason: "three parallel branches between net 3 and net 8 partly overlap; assumed 2x 43-44\
+  \ for KT feed plus 13-14 seals, extra contact if present merged"}
+  - {terminals: [KT:55, KT:56, KT:67, KT:68], reason: "timer contact type (instant vs delayed, NO vs NC) inferred from symbols; delay seconds\
+  \ not printed"}
+  - {terminals: [KK1:2, KK1:4, KK1:6, M1:U1, M1:V1, M1:W1, M1:U2, M1:V2, M1:W2, KM4:1, KM4:2, KM4:3, KM4:4, KM4:5, KM4:6, KM3:1, KM3:3, KM3:5], reason: "star-delta to motor wiring crosses; delta assumed U1-W2, V1-U2, W1-V2, could be rotated"}
+  - {terminals: [KM1:53, KM1:54, KM2:53, KM2:54], reason: "lamp contacts labels 53-54 for both, assignment HL3 to KM1 and HL4 to KM2 assumed"}
+  - {terminals: [KM3:21, KM3:22, KM4:21, KM4:22], reason: "which NC belongs to KM3 vs KM4 inferred from usual star-delta interlock; labels overlap"}
+  - {terminals: [], reason: "no explicit mechanical interlock symbol visible; electrical NC interlocks only, listed\
+  \ interlocks as empty"}
+  - {terminals: [], reason: "protection order between FU1 and FU2 both before QF1 uncertain; assumed control fuse\
+  \ first"}
+  - {terminals: [FU2:2, FU2:4, FU2:6, KM1:1, KM1:3, KM1:5, KM2:1, KM2:3, KM2:5], reason: "the 3 reads of the drawing disagree about how these terminals are connected"}
+  - {terminals: [KK1:1, KK1:5, KM1:2, KM1:6, KM2:2, KM2:6], reason: "the 3 reads of the drawing disagree about how these terminals are connected"}
+  - {terminals: [KM3:1, KM3:3, KM3:5, KM4:2, KM4:4, KM4:6, M1:U2, M1:V2, M1:W2], reason: "the 3 reads of the drawing disagree about how these terminals are connected"}

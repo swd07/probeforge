@@ -114,10 +114,11 @@ def run_case(case: Case, args, client, out_dir: Path, rep: int, ledger: SpendLed
         true_netlist, true_data = circuit.netlist, yaml.safe_load(case.circuit.read_text(encoding="utf-8"))
         image = (ROOT / args.image).read_bytes() if args.image else schematic_png(case.circuit)  # repair step
         h = run_hybrid(circuit, client, hybrid_model(args.transcription), image, approver=approver,
-                       repair=not args.no_repair, do_explain=not args.no_explain,
+                       repair=not args.no_repair, do_explain=not args.no_explain, flags=hybrid_flags(args),
                        true_netlist=true_netlist, true_data=true_data)
         diagnosis, outcome, run, tb, notes = h.diagnosis, h.outcome, h.usage, h.planner.tb, h.planner.notes
         hybrid_extra = {**h.trace_extra(), "transcription": args.transcription, "image": args.image,
+                        "flags_mode": args.flags, "extra_flags": args.extra_flags,
                         "conflicts": h.planner.conflicts}
         if ledger:
             ledger.record(run.cost_usd, f"{out_dir.name}/{name}")
@@ -168,6 +169,16 @@ def schematic_png(circuit_path: Path) -> bytes:
 
 def hybrid_model(path: str) -> dict:
     return yaml.safe_load((ROOT / path).read_text(encoding="utf-8"))
+
+
+def hybrid_flags(args) -> list[dict]:
+    """The uncertain regions the hybrid uses: the transcription's own (or none), plus any from --extra-flags."""
+    from probeforge.hybrid.netlist_io import flags_of
+
+    flags = [] if args.flags == "none" else flags_of(hybrid_model(args.transcription))
+    if args.extra_flags:
+        flags += flags_of(hybrid_model(args.extra_flags))
+    return flags
 
 
 def hybrid_summary(rows: list[dict]) -> str:
@@ -267,6 +278,10 @@ def main() -> None:
     ap.add_argument("--image", default=None,
                     help="hybrid: schematic image for the repair step (e.g. the photo the transcription came from); "
                          "default the rendered PNG")
+    ap.add_argument("--flags", choices=["read", "none"], default="read",
+                    help="hybrid: use the transcription's uncertain regions (read) or none (no joint wiring variants)")
+    ap.add_argument("--extra-flags", default=None,
+                    help="hybrid: add the uncertain regions from this file (e.g. *_disagreement_flags.yaml)")
     ap.add_argument("--no-repair", action="store_true", help="hybrid: no netlist corrections (stop at a conflict)")
     ap.add_argument("--no-explain", action="store_true", help="hybrid: skip the technician explanation")
     ap.add_argument("--suite", choices=["scenarios", "dev", "clean", "all"], default="scenarios")
@@ -287,7 +302,9 @@ def main() -> None:
     stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     tag = (f"{stamp}_{args.runner}_{args.suite}" + (f"_{args.effort or 'default'}" if args.runner == "agent" else "")
            + ("_approve" if args.approve else "") + ("_noimage" if args.no_image else "") + ("_nonetlist" if args.no_netlist else "")
-           + ("_norepair" if args.runner == "hybrid" and args.no_repair else "") + ("_dev" if dev_label(args) else ""))
+           + ("_norepair" if args.runner == "hybrid" and args.no_repair else "")
+           + ("_noflags" if args.runner == "hybrid" and args.flags == "none" else "")
+           + ("_extraflags" if args.runner == "hybrid" and args.extra_flags else "") + ("_dev" if dev_label(args) else ""))
     out_dir = ROOT / "runs" / tag
     out_dir.mkdir(parents=True, exist_ok=True)
     client, ledger = None, None
@@ -314,7 +331,9 @@ def main() -> None:
 
     who = {"agent": f"{args.model}, effort {args.effort or 'default'}", "baseline": "half-split baseline",
            "infogain": "information-gain baseline (perfect fault model)",
-           "hybrid": f"transcription {args.transcription}, " + ("no repair" if args.no_repair else f"repair by {MUSE_SPARK}")}[args.runner]
+           "hybrid": f"transcription {args.transcription}, flags {args.flags}"
+                     + (f" + {args.extra_flags}" if args.extra_flags else "") + ", "
+                     + ("no repair" if args.no_repair else f"repair by {MUSE_SPARK}")}[args.runner]
     who += ", approvals granted" if args.approve else ", approvals denied"
     table = render(rows, ("DEV (clean holdout seen before the hybrid changes): " if dev_label(args) else "")
                    + f"{args.runner} on {args.suite} ({who}), {len(rows)} runs", wall)

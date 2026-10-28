@@ -45,7 +45,7 @@ from probeforge.eval.trace import decisive_measurement, make_trace, summary, ver
 from probeforge.faults import Fault
 from probeforge.faults.catalog import SCENARIOS_DIR, all_faults, load_scenarios
 from probeforge.faults.model import COMPONENT_MODES, PART_MODES
-from probeforge.hybrid import read_schematic, run_hybrid
+from probeforge.hybrid import read_consensus, run_hybrid
 from probeforge.hybrid.llm import Usage
 from probeforge.hybrid.netlist_io import flags_of, wrong_nets
 from probeforge.sim import Circuit, Netlist
@@ -314,12 +314,14 @@ class HybridSession(Session):
         png = render_png(NETLIST)
         with _live_lock:
             if "data" not in _live_read:
-                self.emit({"type": "stage", "stage": "read", "text": "Muse Spark is reading the schematic image..."})
-                data, flags = read_schematic(client(), usage, png)
-                _live_read.update(data=data, flags=flags, at=datetime.now().strftime("%H:%M"))
-                return data, flags, "live Muse Spark transcription", png
-        return (_live_read["data"], _live_read["flags"],
-                f"live Muse Spark transcription (read at {_live_read['at']}, reused)", png)
+                self.emit({"type": "stage", "stage": "read",
+                           "text": "Muse Spark is reading the schematic image 3 times (disagreements become uncertain regions)..."})
+                data, flags, info = read_consensus(client(), usage, png)
+                how = (f"live Muse Spark transcription, {info['reads']} reads, model from read {info['model_read']}, "
+                       f"{info['disagreement_regions']} regions where the reads disagree")
+                _live_read.update(data=data, flags=flags, how=how, at=datetime.now().strftime("%H:%M"))
+                return data, flags, how, png
+        return (_live_read["data"], _live_read["flags"], f"{_live_read['how']} (read at {_live_read['at']}, reused)", png)
 
     def on_update(self, planner, entry: dict) -> None:
         if self.cancelled:

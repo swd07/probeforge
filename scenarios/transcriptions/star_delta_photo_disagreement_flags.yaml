@@ -1,0 +1,32 @@
+# Regions where 3 reads of the same schematic disagree (runs/20261028_170744_transcribe_flags_star_delta_phone/run1_reply.txt, runs/20261028_170744_transcribe_flags_star_delta_phone/run2_reply.txt, runs/20261028_170744_transcribe_flags_star_delta_phone/run3_reply.txt).
+uncertain:
+- terminals:
+  - FU2:2
+  - FU2:4
+  - FU2:6
+  - KM1:1
+  - KM1:3
+  - KM1:5
+  - KM2:1
+  - KM2:3
+  - KM2:5
+  reason: the 3 reads of the drawing disagree about how these terminals are connected
+- terminals:
+  - KK1:1
+  - KK1:5
+  - KM1:2
+  - KM1:6
+  - KM2:2
+  - KM2:6
+  reason: the 3 reads of the drawing disagree about how these terminals are connected
+- terminals:
+  - KM3:1
+  - KM3:3
+  - KM3:5
+  - KM4:2
+  - KM4:4
+  - KM4:6
+  - M1:U2
+  - M1:V2
+  - M1:W2
+  reason: the 3 reads of the drawing disagree about how these terminals are connected

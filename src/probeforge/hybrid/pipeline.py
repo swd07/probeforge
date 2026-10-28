@@ -1,7 +1,9 @@
 """Hybrid pipeline, phase 1: Read, Model, Plan, Verify, Explain.
 
 1. Read: Muse Spark transcribes the schematic image into a netlist and flags uncertain regions
-   (the UI asks a human to confirm them; batch runs accept the transcription as it is).
+   (the UI asks a human to confirm them; batch runs accept the transcription as it is). With
+   read_consensus it reads several times: regions where the reads disagree are flagged too, and the
+   model is the read that agrees most with the others (hybrid/consensus.py).
 2. Model: the fault catalog is generated from the transcribed netlist (every part x failure mode).
 3. Plan: the information-gain planner picks measurements by simulating the TRANSCRIBED netlist;
    the readings come from the TRUE circuit through the same ToolBox and policy as the agent.
@@ -24,6 +26,7 @@ import time
 from dataclasses import dataclass, field
 
 from probeforge.baseline.infogain import DEFAULT_PARAM_GRID, InfoGainBaseline
+from probeforge.hybrid.consensus import consensus
 from probeforge.hybrid.explain import explain
 from probeforge.hybrid.llm import Usage, chat
 from probeforge.hybrid.netlist_io import flags_of, parse_reply, spec, to_netlist
@@ -62,6 +65,25 @@ def read_schematic(client, usage: Usage, png: bytes, effort: str = "medium") -> 
     data = parse_reply(reply)
     to_netlist(data)
     return data, flags_of(data)
+
+
+def read_consensus(client, usage: Usage, png: bytes, reads: int = 3, effort: str = "medium") -> tuple[dict, list[dict], dict]:
+    """Several live reads; returns the model read (its own flags plus disagreement regions), all flags, and
+    a summary (which read, how many disagreement regions, how many reads were usable)."""
+    usable = []
+    for i in range(reads):
+        try:
+            data = parse_reply(chat(client, usage, f"transcription {i + 1}/{reads}", spec(flags=True), png, effort))
+            to_netlist(data)
+            usable.append(data)
+        except Exception:  # noqa: BLE001 - an unusable read is left out of the vote
+            continue
+    if not usable:
+        raise ValueError("no usable schematic read")
+    if len(usable) == 1:
+        return usable[0], flags_of(usable[0]), {"reads": 1, "model_read": 1, "disagreement_regions": 0}
+    model, extra, i = consensus(usable)
+    return model, flags_of(model), {"reads": len(usable), "model_read": i + 1, "disagreement_regions": len(extra)}
 
 
 def run_hybrid(circuit: Circuit, client, data: dict, png: bytes, *, usage: Usage | None = None,
