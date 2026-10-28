@@ -259,3 +259,7 @@ def test_image_only_ablation(netlist, monkeypatch):
         assert "Nets (net name" not in sent and "550 ohm" not in sent
         assert netlist_text.splitlines()[5] not in sent
     assert "no text netlist" in run.turn_log[0]["tool_calls"][0]["result"]["error"]
+    system = client.requests[0]["messages"][0]["content"]
+    assert "netlist" not in system and "not labeled in the schematic image" in system
+    # the netlist-mode prompt is untouched
+    assert loop.system_prompt("p", 30) == loop.SYSTEM_PROMPT.format(policy="p", max_turns=30)

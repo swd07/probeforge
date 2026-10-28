@@ -30,7 +30,7 @@ from datetime import datetime
 from pathlib import Path
 
 from probeforge.agent.client import MUSE_SPARK, make_client
-from probeforge.agent.loop import run_agent
+from probeforge.agent.loop import IMAGE_ONLY_PROMPT_EDITS, run_agent
 from probeforge.baseline import HalfSplitBaseline, InfoGainBaseline
 from probeforge.eval.scoring import score
 from probeforge.eval.spend import EST_PER_AGENT_RUN_USD, SpendLedger, SpendLimitError
@@ -70,6 +70,7 @@ def frozen_hashes() -> dict:
     return {
         "prompt": sha(inspect.getsource(prompts) + json.dumps(TOOL_SPECS, sort_keys=True)),
         "baseline": sha(inspect.getsource(halfsplit)),
+        "image_only_prompt_edits": sha(json.dumps(IMAGE_ONLY_PROMPT_EDITS)),  # applied only with --no-netlist
     }
 
 

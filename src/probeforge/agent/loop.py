@@ -91,6 +91,24 @@ def recover_text_tool_calls(text: str) -> list[dict]:
 IMAGE_NOTE = " (the image shows the same circuit)"
 NETLIST_HEADER = "Schematic text netlist (the image shows the same circuit):\n"
 IMAGE_ONLY_HEADER = "Schematic: see the attached image.\n"
+# image-only mode: the system prompt must not point to a netlist the agent does not have
+IMAGE_ONLY_PROMPT_EDITS = [
+    ("net names from the netlist (5, N, L1Q)", "wire numbers and net names printed in the schematic image (5, N, L1Q)"),
+    ("(nominal resistances are in the netlist)",
+     "(nominal resistances are not labeled in the schematic image: infer them from the component type or measure them)"),
+    ("(timer delay and thermal trip time are in the netlist)",
+     "(timer delay and thermal trip time are not labeled in the schematic image: infer them or find them by testing)"),
+]
+
+
+def system_prompt(policy: str, max_turns: int, include_netlist: bool = True) -> str:
+    text = SYSTEM_PROMPT.format(policy=policy, max_turns=max_turns)
+    if not include_netlist:
+        for old, new in IMAGE_ONLY_PROMPT_EDITS:
+            if old not in text:
+                raise ValueError(f"image-only prompt edit no longer applies: {old!r}")
+            text = text.replace(old, new)
+    return text
 
 
 def build_initial_messages(
@@ -105,7 +123,7 @@ def build_initial_messages(
         raise ValueError("the agent needs the image, the netlist or both")
     netlist = toolbox.circuit.netlist
     indicators = toolbox.initial_observation()
-    system = {"role": "system", "content": SYSTEM_PROMPT.format(policy=toolbox.policy.summary(), max_turns=max_turns)}
+    system = {"role": "system", "content": system_prompt(toolbox.policy.summary(), max_turns, include_netlist)}
     if include_netlist:
         text = initial_user_text(indicators, netlist.to_text())
     else:
