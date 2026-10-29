@@ -5,6 +5,7 @@ AI agent that diagnoses faults in an industrial relay-contactor circuit (star-de
 Status (Oct 28): simulator, faults, tools, safety policy, Muse Spark agent, baselines, evaluation harness, live web UI and the hybrid pipeline (Muse Spark reads the schematic three times, a planner measures over joint fault x wiring hypotheses, Muse Spark repairs and explains) are done, tested and frozen. Next: a second circuit as the final unseen test.
 
 Design and data flow: [ARCHITECTURE.md](ARCHITECTURE.md). Why it is built this way: [DECISIONS.md](DECISIONS.md).
+Step-by-step guide to the UI and a 15-minute meeting script: [docs/HOW_TO_USE.md](docs/HOW_TO_USE.md).
 
 ## Setup
 
