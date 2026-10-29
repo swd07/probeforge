@@ -16,6 +16,7 @@ const STATUS_TEXT: Record<string, string> = {
   running: "Agent working",
   approval: "Waiting for approval",
   done: "Finished",
+  stopped: "Session ended",
   error: "Error",
 };
 
@@ -112,8 +113,19 @@ export function TopBar({ meta, state, mode, setMode, onStart, onStop }: Props) {
           />
         )}
         {busy ? (
-          <button className="btn stop" onClick={onStop}>
-            Stop
+          <button
+            className="btn stop"
+            title="End this session (this is not the Stop push button on the panel)"
+            onClick={() => {
+              if (
+                state.mode === "manual" &&
+                !window.confirm("End this engineer session? Your steps so far are not saved as a diagnosis.\n\n(To stop the motor, use the red Stop button on the front panel instead.)")
+              )
+                return;
+              onStop();
+            }}
+          >
+            End session
           </button>
         ) : (
           <button className="btn start" onClick={start} disabled={!meta || !choice}>

@@ -33,7 +33,7 @@ section 6).
 ## 2. The screen
 
 - **Top bar**: the three mode buttons (Agent, Hybrid, Engineer), the fault list, an extra setting for the mode, and
-  **Start** (it becomes **Stop** while a run is going). On the right: status, which fault pool or scenario was run,
+  **Start** (it becomes **End session** while a run is going; that ends the whole session and is not the panel's red Stop push button, so Engineer mode asks for confirmation). On the right: status, which fault pool or scenario was run,
   the number of measurements, and blocked actions in red.
 - **Front panel** (top left): the lamps **Power** (white), **Fault** (red: the motor overload has tripped),
   **Forward** and **Reverse** (green), the buttons **Stop**, **Start Fwd**, **Start Rev**, the main breaker **QF1**
@@ -141,6 +141,7 @@ When a cap is reached, the browser shows an error instead of starting the run.
 | "address already in use" when starting | An old server still runs. Close its terminal, or on Windows: `Get-NetTCPConnection -LocalPort 8000` and stop that process. |
 | The page looks old after a code change | Run `npm run build` in `web/` and reload the page (Ctrl+F5). |
 | Start is grey | Choose a fault first. After every run the fault list is cleared on purpose. |
+| "Session ended" and the instruments are grey | End session was pressed. Pick a fault and press Start for a new session. |
 | Measure is grey | Click two points on the schematic first (A and B must both be set), and the run must be going. |
 | "resistance measurement on a live circuit is not allowed" | Switch QF1 off first, then measure ohms. |
 | A voltage reading needs power but QF1 is off after a trip | Switching on after a protection trip needs approval: type a reason and click Power on, then approve. |

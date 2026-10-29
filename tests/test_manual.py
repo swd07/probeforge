@@ -143,3 +143,60 @@ def test_spend_ledger_demo_reserve_and_daily_cap(tmp_path, monkeypatch):
     assert ledger.demo_today() == 4.5
     with pytest.raises(SpendLimitError, match="daily cap"):
         ledger.check(1.0, demo=True)
+
+
+def test_cancel_tells_the_browser_once_for_every_session_type(env, monkeypatch):
+    from tests.test_hybrid import FakeClient as HybridFake
+
+    fault = Fault("FU1", "open", "1-2")
+    sessions = [server.AgentSession(fault, "test", "low", None), server.HybridSession(fault, "test", "saved", None),
+                server.ManualSession(fault, "test", "eng", None)]
+    for s in sessions:
+        events = []
+        s.emit = events.append
+        s.cancel()
+        s.cancel()  # a second click does not repeat it
+        assert [e["type"] for e in events] == ["stopped"] and events[0]["mode"] == s.mode
+    quiet = []
+    s = server.ManualSession(fault, "test", "eng", quiet.append)
+    s.cancel(notify=False)  # replaced by a new session: the browser already reset
+    done = server.ManualSession(fault, "test", "eng", quiet.append)
+    done.done = True
+    done.cancel()  # already finished: nothing to end
+    assert quiet == []
+
+    # a worker thread that sees the cancel afterwards does not send an error (it could land in the next session)
+    monkeypatch.setattr(server, "client", lambda: HybridFake(None))
+    for s in (server.AgentSession(fault, "test", "low", None), server.HybridSession(fault, "test", "saved", None)):
+        events = []
+        s.emit = events.append
+        s.cancel()
+        s.run()
+        assert s.done and not [e for e in events if e["type"] == "error"], events
+
+
+def test_end_session_then_tool_call_gives_an_error_not_silence(env):
+    with TestClient(server.app).websocket_connect("/ws") as ws:
+        ws.send_json({"action": "tool", "name": "read_indicators", "args": {}})  # no session yet
+        assert "No engineer session" in until(ws, "error")[-1]["message"]
+        ws.send_json({"action": "start_manual", "source": "scenario", "scenario": "s01", "engineer": "T"})
+        until(ws, "session")
+        ws.send_json({"action": "stop"})
+        stopped = until(ws, "stopped", "error")[-1]
+        assert stopped["type"] == "stopped" and stopped["mode"] == "manual"
+        ws.send_json({"action": "tool", "name": "measure_voltage", "args": {"point_a": "FU1:1", "point_b": "N"}})
+        events = until(ws, "error", "tool")
+        assert events[-1]["type"] == "error" and "ended" in events[-1]["message"]
+
+
+def test_tool_call_on_a_finished_session_gives_an_error(env):
+    with TestClient(server.app).websocket_connect("/ws") as ws:
+        ws.send_json({"action": "start_manual", "source": "scenario", "scenario": "s01", "engineer": "T"})
+        until(ws, "session")
+        ws.send_json({"action": "tool", "name": "submit_diagnosis", "args": {
+            "outcome": "insufficient_information", "confidence": 0.1,
+            "evidence": [{"step": 0, "type": "functional_test", "observation": "panel at the start"}]}})
+        until(ws, "done")
+        ws.send_json({"action": "tool", "name": "read_indicators", "args": {}})
+        events = until(ws, "error", "tool")
+        assert events[-1]["type"] == "error" and "finished" in events[-1]["message"]

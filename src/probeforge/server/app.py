@@ -17,7 +17,7 @@ Protocol (JSON over /ws):
                     {"action": "compare"}                                           (after a manual run)
                     {"action": "stop"}
   server -> client  session, turn, tool, hypotheses, approval_request, approval_answer, done,
-                    saved, compare_progress, compare, error;
+                    stopped (the user ended the session), saved, compare_progress, compare, error;
                     hybrid also: stage, transcription, flags_request, flags_answer, conflict, correction,
                     correction_rejected, wiring_check, wiring_request, wiring_answer
 """
@@ -215,10 +215,19 @@ class Session:
             pending[1][0] = bool(approve)
             pending[0].set()
 
-    def cancel(self) -> None:
+    def cancel(self, notify: bool = True) -> None:
+        """End the session. notify: tell the browser ("stopped"); off when a new session replaces this one,
+        because the browser has already reset for the new session."""
+        first = not self.cancelled and not self.done
         self.cancelled = True
         for event, _ in list(self._pending.values()):
             event.set()
+        if first and notify:
+            self.emit({"type": "stopped", "mode": self.mode, "message": "Session ended"})
+
+    def ended_message(self) -> str:
+        return ("This session has ended (End session was pressed). Start a new one." if self.cancelled
+                else "This session is finished. Start a new one.")
 
 
 class AgentSession(Session):
@@ -241,13 +250,13 @@ class AgentSession(Session):
             run, tb = run_agent(self.circuit, client(), effort=self.effort, approver=self.approver,
                                 on_event=self.on_event)
         except Exception as e:  # missing key, API down
-            self.emit({"type": "error", "message": f"{type(e).__name__}: {e}"})
+            if not self.cancelled:
+                self.emit({"type": "error", "message": f"{type(e).__name__}: {e}"})
             self.done = True
             return
         ledger().record(run.cost_usd, f"ui agent run ({self.source})", demo=True)
         if self.cancelled or (run.error and "Cancelled" in run.error):
-            self.emit({"type": "error", "message": "session stopped"})
-            self.done = True
+            self.done = True  # the browser already got "stopped" (or a new session replaced this one)
             return
         trace = make_trace(case="ui", runner="agent", tb=tb, diagnosis=run.diagnosis, outcome=run.outcome,
                            seconds=run.seconds, run=run)
@@ -356,12 +365,13 @@ class HybridSession(Session):
             result = run_hybrid(self.circuit, client(), data, png, usage=usage, flags=flags,
                                 on_event=self.on_event, on_update=self.on_update, confirm_wiring=self.confirm_wiring)
         except Cancelled:
-            self.emit({"type": "error", "message": "session stopped"})
-            self.done = True
+            ledger().record(usage.cost_usd, f"ui hybrid run ({self.source}, ended)", demo=True)
+            self.done = True  # the browser already got "stopped" (or a new session replaced this one)
             return
         except Exception as e:  # missing key, API down, unusable transcription
             ledger().record(usage.cost_usd, f"ui hybrid run ({self.source}, failed)", demo=True)
-            self.emit({"type": "error", "message": f"{type(e).__name__}: {e}"})
+            if not self.cancelled:
+                self.emit({"type": "error", "message": f"{type(e).__name__}: {e}"})
             self.done = True
             return
         ledger().record(usage.cost_usd, f"ui hybrid run ({self.source})", demo=True)
@@ -398,15 +408,17 @@ class ManualSession(Session):
                    "panel": panel_snapshot(self.circuit)})
 
     def call(self, name: str, args: dict) -> None:
-        if self.done:
-            return
         with self._lock:
+            if self.done or self.cancelled:  # never drop a call silently
+                self.emit({"type": "error", "message": self.ended_message()})
+                return
             if name not in MANUAL_TOOLS:
                 self.emit({"type": "error", "message": f"tool {name!r} is not available in manual mode"})
                 return
             try:
                 self.tb.call(name, args)
             except Cancelled:
+                self.emit({"type": "error", "message": self.ended_message()})
                 return
             if self.tb.diagnosis is not None and not self.done:
                 self._finish_manual()
@@ -538,7 +550,7 @@ async def ws(websocket: WebSocket) -> None:
             action = msg.get("action")
             if action in ("start", "start_manual", "start_hybrid"):
                 if session and not session.done:
-                    session.cancel()
+                    session.cancel(notify=False)
                 try:
                     fault, source = pick_fault(msg)
                 except (ValueError, KeyError) as e:
@@ -556,6 +568,8 @@ async def ws(websocket: WebSocket) -> None:
             elif action == "tool" and isinstance(session, ManualSession):
                 args = msg.get("args") if isinstance(msg.get("args"), dict) else {}
                 background(session.call, str(msg.get("name")), args)
+            elif action == "tool":
+                emit({"type": "error", "message": "No engineer session is running: choose Engineer, pick a fault and press Start."})
             elif action == "compare" and isinstance(session, ManualSession):
                 background(session.compare)
             elif action in ("approval", "flags") and session:
@@ -564,9 +578,11 @@ async def ws(websocket: WebSocket) -> None:
                 session.choose(int(msg["id"]), msg.get("choice"))
             elif action == "stop" and session:
                 session.cancel()
+            elif action == "stop":
+                emit({"type": "error", "message": "No session is running."})
     except WebSocketDisconnect:
         if session:
-            session.cancel()
+            session.cancel(notify=False)
     finally:
         sender_task.cancel()
 

@@ -111,6 +111,7 @@ export function App() {
               active={manualActive}
               started={state.mode === "manual" && state.status !== "idle"}
               done={state.mode === "manual" && state.status === "done"}
+              stopped={state.mode === "manual" && state.status === "stopped"}
               steps={toolSteps}
               onTool={tool}
               onDiagnose={() => setDiagnosing(true)}

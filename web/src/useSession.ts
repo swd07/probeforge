@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useReducer, useRef } from "react";
 import type { ApprovalRequest, CompareResult, Done, FeedItem, FlagsRequest, Hypothesis, Mode, NetState, Panel, Probe, ToolEvent, WiringRequest } from "./types";
 
-export type Status = "idle" | "running" | "approval" | "done" | "error";
+export type Status = "idle" | "running" | "approval" | "done" | "stopped" | "error";
 
 export interface State {
   status: Status;
@@ -230,8 +230,19 @@ function reducer(s: State, a: Action): State {
       };
     case "compare":
       return { ...s, compare: ev, compareProgress: null };
+    case "stopped":
+      return {
+        ...s,
+        status: "stopped",
+        approval: null,
+        flags: null,
+        wiring: null,
+        stage: "",
+        feed: [...s.feed, { kind: "info", id: `stopped${s.feed.length}`, text: "Session ended. Pick a fault and press Start for a new one." }],
+      };
     case "error":
-      if (s.status === "done") return { ...s, error: ev.message }; // e.g. compare refused after the run
+      // after the run (compare refused, a click on an ended session): keep the state, show the message
+      if (s.status === "done" || s.status === "stopped") return { ...s, error: ev.message };
 
       return { ...s, status: "error", error: ev.message, approval: null, flags: null, wiring: null, stage: "" };
     default:

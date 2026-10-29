@@ -18,13 +18,15 @@ interface Props {
   active: boolean;
   started: boolean;
   done: boolean;
+  stopped: boolean;
   steps: number;
   onTool: (name: string, args: Record<string, unknown>) => void;
   onDiagnose: () => void;
 }
 
 /** One short hint about the next sensible step, from what the engineer can see on the panel. */
-function nextStep(panel: Panel | null, started: boolean, done: boolean, steps: number): string {
+function nextStep(panel: Panel | null, started: boolean, done: boolean, stopped: boolean, steps: number): string {
+  if (stopped) return "Session ended. Pick a fault and press Start to begin a new one.";
   if (done) return "Diagnosis submitted. Compare runs the baseline and the agent on the same fault (the agent costs about $0.07).";
   if (!started || !panel)
     return "Pick a fault and press Start. Until then no panel is loaded, so the front panel shows QF1 OFF and every lamp dark.";
@@ -41,7 +43,7 @@ function nextStep(panel: Panel | null, started: boolean, done: boolean, steps: n
 
 /** The engineer's instruments: a meter (click two points on the schematic), hold time for the panel
  * buttons, wait, a reason for requests that need approval, and the diagnosis form. */
-export function ManualPanel({ meta, panel, meter, setMeter, lastProbe, active, started, done, steps, onTool, onDiagnose }: Props) {
+export function ManualPanel({ meta, panel, meter, setMeter, lastProbe, active, started, done, stopped, steps, onTool, onDiagnose }: Props) {
   const measure = () => {
     if (!meter.a || !meter.b) return;
     onTool(meter.kind === "V" ? "measure_voltage" : "measure_resistance", { point_a: meter.a, point_b: meter.b });
@@ -62,7 +64,7 @@ export function ManualPanel({ meta, panel, meter, setMeter, lastProbe, active, s
         <span className="muted">same tools and policy as the agent</span>
       </div>
       <div className="next-step">
-        <b>Next:</b> {nextStep(panel, started, done, steps)}
+        <b>Next:</b> {nextStep(panel, started, done, stopped, steps)}
       </div>
       <div className="meter">
         <div className="meter-display">
