@@ -53,7 +53,7 @@ export function describeTool(ev: ToolEvent): { title: string; detail: string } {
 /** Model text is shown as written, except dashes used as punctuation (project style rule). */
 const plain = (text: string) => text.replace(/\s*[\u2014\u2013]\s*/g, ", ");
 
-export function Feed({ items, manual = false, title }: { items: FeedItem[]; manual?: boolean; title?: string }) {
+export function Feed({ items, manual = false, title, running = false }: { items: FeedItem[]; manual?: boolean; title?: string; running?: boolean }) {
   const end = useRef<HTMLDivElement>(null);
   useEffect(() => {
     // braces matter: newer browsers return a Promise from scrollIntoView, which React would call as cleanup
@@ -67,7 +67,15 @@ export function Feed({ items, manual = false, title }: { items: FeedItem[]; manu
         <span className="muted">every tool call passes the safety policy</span>
       </div>
       <div className="feed">
-        {items.length === 0 && <div className="muted empty">Pick a fault and press Start.</div>}
+        {items.length === 0 && (
+          <div className="muted empty">
+            {manual && running
+              ? "Your steps appear here, each checked by the safety policy (allowed, blocked, or waiting for approval)."
+              : manual
+                ? "Pick a fault and press Start. Your steps will appear here."
+                : "Pick a fault and press Start."}
+          </div>
+        )}
         {items.map((it) => {
           if (it.kind === "thought") return <div key={it.id} className="item thought">{plain(it.text)}</div>;
           if (it.kind === "info") return <div key={it.id} className="item info">{it.text}</div>;
@@ -157,7 +165,7 @@ export function Feed({ items, manual = false, title }: { items: FeedItem[]; manu
             return (
               <div key={it.id} className={`item approval ${it.approved === undefined ? "pending" : it.approved ? "granted" : "denied"}`}>
                 <span className="step">#{it.req.step}</span> human approval requested: {it.req.policy_reason}
-                <div className="detail">agent: {it.req.agent_reason}</div>
+                <div className="detail">{manual ? "your reason" : "agent's reason"}: {it.req.agent_reason}</div>
                 <div className="detail">{it.approved === undefined ? "waiting..." : it.approved ? "approved by human" : "denied by human"}</div>
               </div>
             );

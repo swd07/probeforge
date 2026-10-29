@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { ApprovalRequest, Done, FlagsRequest, WiringRequest } from "../types";
 
-export function ApprovalCard({ req, onAnswer }: { req: ApprovalRequest; onAnswer: (approve: boolean) => void }) {
+export function ApprovalCard({ req, onAnswer, human = false }: { req: ApprovalRequest; onAnswer: (approve: boolean) => void; human?: boolean }) {
   const what =
     req.tool === "set_power"
       ? "Re-apply power"
@@ -14,8 +14,14 @@ export function ApprovalCard({ req, onAnswer }: { req: ApprovalRequest; onAnswer
         <div className="modal-kicker">Human approval required</div>
         <h2>{what}</h2>
         <p className="policy-reason">{req.policy_reason}</p>
+        {human && (
+          <p className="muted">
+            In engineer mode you play both roles: the technician who asks and the supervisor who approves. A real
+            supervisor would check why the protection tripped before allowing it.
+          </p>
+        )}
         <div className="agent-reason">
-          <span>Agent's reason</span>
+          <span>{human ? "Your reason" : "Agent's reason"}</span>
           <p>{req.agent_reason}</p>
         </div>
         <div className="modal-actions">

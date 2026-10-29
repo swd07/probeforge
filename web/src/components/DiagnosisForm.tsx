@@ -26,10 +26,15 @@ function citable(feed: FeedItem[]): Evidence[] {
   return out;
 }
 
+type Component = Meta["components"][number];
+
+/** "whole device" only when the component has whole-device failure modes; otherwise its first part with modes. */
+const defaultPart = (c: Component | undefined) => (!c || c.modes.length ? "" : c.parts.find((p) => p.modes.length)?.name ?? "");
+
 export function DiagnosisForm({ meta, feed, onSubmit, onCancel }: { meta: Meta; feed: FeedItem[]; onSubmit: (args: Record<string, unknown>) => void; onCancel: () => void }) {
   const [outcome, setOutcome] = useState<"diagnosed" | "insufficient_information">("diagnosed");
   const [component, setComponent] = useState(meta.components[0]?.id ?? "");
-  const [part, setPart] = useState("");
+  const [part, setPart] = useState(defaultPart(meta.components[0]));
   const [mode, setMode] = useState("");
   const [confidence, setConfidence] = useState(80);
   const options = useMemo(() => citable(feed), [feed]);
@@ -67,7 +72,7 @@ export function DiagnosisForm({ meta, feed, onSubmit, onCancel }: { meta: Meta; 
                 value={component}
                 onChange={(e) => {
                   setComponent(e.target.value);
-                  setPart("");
+                  setPart(defaultPart(meta.components.find((c) => c.id === e.target.value)));
                   setMode("");
                 }}
               >
@@ -87,8 +92,8 @@ export function DiagnosisForm({ meta, feed, onSubmit, onCancel }: { meta: Meta; 
                   setMode("");
                 }}
               >
-                <option value="">whole device</option>
-                {comp?.parts.map((p) => (
+                {(comp?.modes.length ?? 0) > 0 && <option value="">whole device</option>}
+                {comp?.parts.filter((p) => p.modes.length).map((p) => (
                   <option key={p.name} value={p.name}>
                     {p.name} ({p.kind.replace("_", " ")})
                   </option>

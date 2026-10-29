@@ -8,7 +8,7 @@ import { Hypotheses } from "./components/Hypotheses";
 import { ManualPanel, type MeterState } from "./components/ManualPanel";
 import { Schematic } from "./components/Schematic";
 import { TopBar } from "./components/TopBar";
-import type { Meta } from "./types";
+import type { Meta, Mode } from "./types";
 import { useSession } from "./useSession";
 
 export function App() {
@@ -18,6 +18,7 @@ export function App() {
   const [diagnosing, setDiagnosing] = useState(false);
   const [comparing, setComparing] = useState(false);
   const [meter, setMeter] = useState<MeterState>({ kind: "V", a: null, b: null, hold: 0.2, wait: 6, reason: "manual check" });
+  const [chosenMode, setChosenMode] = useState<Mode>("agent");
   const { state, start, answer, stop, tool, compare, confirmFlags, chooseWiring } = useSession(meta?.neutral ?? "N");
 
   useEffect(() => {
@@ -40,8 +41,13 @@ export function App() {
     return () => clearTimeout(t);
   }, [state.flash]);
 
-  const manual = state.mode === "manual";
-  const hybrid = state.mode === "hybrid";
+  // the run's mode while it runs or after it finished; before Start (or after switching tabs) the chosen mode
+  const busy = state.status === "running" || state.status === "approval";
+  const view: Mode = busy || (state.status === "done" && state.mode === chosenMode) ? state.mode : chosenMode;
+  const manual = view === "manual";
+  const hybrid = view === "hybrid";
+  const manualRun = state.mode === "manual"; // the finished run (result card, compare) was an engineer run
+  const toolSteps = state.feed.filter((f) => f.kind === "tool").length;
   const flagged = state.flags ? state.flags.flags.flatMap((f) => f.terminals) : state.wiring ? state.wiring.region : [];
   const manualActive = manual && state.status === "running";
   const lastBlocked = [...state.feed].reverse().find((f) => f.kind === "tool" && f.ev.verdict === "block");
@@ -53,7 +59,7 @@ export function App() {
 
   return (
     <div className={`app ${flashing ? "flash" : ""}`}>
-      <TopBar meta={meta} state={state} onStart={(o) => start(o)} onStop={stop} />
+      <TopBar meta={meta} state={state} mode={chosenMode} setMode={setChosenMode} onStart={(o) => start(o)} onStop={stop} />
       <main className="layout">
         <div className="left">
           <FrontPanel
@@ -71,7 +77,7 @@ export function App() {
               truthLive={state.done && showTruth ? state.done.truth_live_nets : null}
               onPick={manualActive ? pick : undefined}
               selected={manualActive ? [meter.a, meter.b] : flagged}
-              followDefault={!manual}
+              followDefault={state.mode !== "manual"}
               fitKey={state.done ? "reveal" : state.feed.length === 0 ? "start" : "run"}
             />
             {state.error && <div className="error-banner">{state.error}</div>}
@@ -84,9 +90,9 @@ export function App() {
               done={state.done}
               showTruth={showTruth}
               onToggleTruth={() => setShowTruth((v) => !v)}
-              saved={manual ? state.saved : undefined}
+              saved={manualRun ? state.saved : undefined}
               onCompare={
-                manual
+                manualRun
                   ? () => {
                       if (!state.compare) compare();
                       setComparing(true);
@@ -103,6 +109,9 @@ export function App() {
               setMeter={setMeter}
               lastProbe={lastProbe}
               active={manualActive}
+              started={state.mode === "manual" && state.status !== "idle"}
+              done={state.mode === "manual" && state.status === "done"}
+              steps={toolSteps}
               onTool={tool}
               onDiagnose={() => setDiagnosing(true)}
             />
@@ -114,7 +123,8 @@ export function App() {
               subtitle={hybrid ? "share of simulated candidates still consistent" : "updated after each measurement"}
             />
           )}
-          <Feed items={state.feed} manual={manual} title={hybrid ? "Hybrid pipeline" : undefined} />
+          <Feed items={view === state.mode ? state.feed : []} manual={manual} title={hybrid ? "Hybrid pipeline" : undefined}
+                running={manualActive} />
         </aside>
       </main>
       {flashing && lastBlocked && lastBlocked.kind === "tool" && (
@@ -122,7 +132,7 @@ export function App() {
       )}
       {state.flags && <FlagsCard req={state.flags} onAnswer={(ok) => confirmFlags(state.flags!.id, ok)} />}
       {state.wiring && <WiringCard req={state.wiring} onChoose={(c) => chooseWiring(state.wiring!.id, c)} />}
-      {state.approval && <ApprovalCard req={state.approval} onAnswer={(ok) => answer(state.approval!.id, ok)} />}
+      {state.approval && <ApprovalCard req={state.approval} human={manualRun} onAnswer={(ok) => answer(state.approval!.id, ok)} />}
       {diagnosing && meta && (
         <DiagnosisForm
           meta={meta}

@@ -5,6 +5,8 @@ import type { StartOptions, State } from "../useSession";
 interface Props {
   meta: Meta | null;
   state: State;
+  mode: Mode; // the mode chosen for the next run (App shows its panels before Start)
+  setMode: (m: Mode) => void;
   onStart: (opts: StartOptions) => void;
   onStop: () => void;
 }
@@ -17,13 +19,13 @@ const STATUS_TEXT: Record<string, string> = {
   error: "Error",
 };
 
-export function TopBar({ meta, state, onStart, onStop }: Props) {
-  const [mode, setMode] = useState<Mode>("agent");
+export function TopBar({ meta, state, mode, setMode, onStart, onStop }: Props) {
   const [choice, setChoice] = useState("random");
   const [effort, setEffort] = useState("low");
   const [engineer, setEngineer] = useState("");
   const [schematic, setSchematic] = useState("saved");
   const busy = state.status === "running" || state.status === "approval";
+  const shown = busy || state.status === "done" ? state.mode : mode; // run statistics belong to the run's mode
 
   // after a run the dropdown is cleared, so it cannot look like the result belongs to whatever it shows;
   // the result card names the fault and the pool that were actually run
@@ -122,11 +124,11 @@ export function TopBar({ meta, state, onStart, onStop }: Props) {
       <div className="stats">
         <span className={`status status-${state.status}`}>{statusText}</span>
         {state.source && <span className="source">{state.source}</span>}
-        {state.mode === "agent" && <span>turn {state.turns}</span>}
+        {shown === "agent" && <span>turn {state.turns}</span>}
         <span>{state.measurements} measurements</span>
-        {state.mode === "agent" && <span>{(state.tokens / 1000).toFixed(1)}k tokens</span>}
+        {shown === "agent" && <span>{(state.tokens / 1000).toFixed(1)}k tokens</span>}
         {state.blocked > 0 && <span className="blocked-count">{state.blocked} blocked</span>}
-        {state.mode === "agent" && <span className="model">{meta?.model}</span>}
+        {shown !== "manual" && <span className="model">{meta?.model}</span>}
       </div>
     </header>
   );
