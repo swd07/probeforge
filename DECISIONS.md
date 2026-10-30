@@ -370,3 +370,16 @@ decisions at the end (see CLAUDE.md). Architecture: [ARCHITECTURE.md](ARCHITECTU
 - **Disclosure (results):** the hybrid pipeline (crops, reading conventions, sequence checks, repair messages) was
   developed on this one drawing, after seeing the errors of these reads; generalization to other drawings is not shown.
 
+### D34. Hybrid v2 frozen (2026-10-31)
+- **What:** after the smoke rerun on the saved reads (runs/20261031_003748_ats_hybrid: the model passes the documented
+  sequence after 2 accepted repairs, 5/5 dev cases correct, 0 confidently wrong, $0.19), Hybrid v2 is frozen:
+  `src/probeforge/ats/freeze.py` fingerprints the read step with its prompt (08b4676a5c4b), the pipeline
+  (7f2625bda2ac), the information-gain planner, also the ceiling baseline (2eff9c8764c1), and the drawing crops
+  (5687e25c8ce3); a test pins them and every hybrid run writes them to frozen.json. Line endings are normalized so a
+  CRLF checkout gives the same values. The agent profile and the ATS policy and tools are frozen with S5.
+- **Why:** freeze before any fresh-read run and before the holdout exists, so the hybrid cannot be tuned on them.
+- **Read quality on the saved reads (dev):** transcription relay contacts 4/8, after repair 1 5/8, after repair 2 8/8;
+  connections without the 52U region P 0.967 / R 0.957 before, P 1.0 / R 0.967 after; nets exact 72/83 then 74/83
+  (the rest: 52U, not on the sheets, and the dashed optional neutral poles). The second repair, asked about the forward
+  transfer circuit, also moved the contact J5-J15 that only the retransfer needs: the traced region contains it.
+

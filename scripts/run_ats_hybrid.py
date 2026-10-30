@@ -206,6 +206,9 @@ def main() -> None:
           f"{sum(r['confident_wrong'] for r in rows)}; cost ${sum(r['cost_usd'] for r in rows):.3f}.\n")
     (out / "results.md").write_text(md, encoding="utf-8")
     (out / "results.json").write_text(json.dumps(rows, indent=2), encoding="utf-8")
+    from probeforge.ats.freeze import ats_frozen_hashes
+
+    (out / "frozen.json").write_text(json.dumps(ats_frozen_hashes(), indent=2), encoding="utf-8")
     print(md)
     print(f"written to {out}")
 
