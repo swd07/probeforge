@@ -15,7 +15,7 @@ Decisions behind this design and the evidence for them are in [DECISIONS.md](DEC
 
 | Path | What it holds |
 |---|---|
-| `src/probeforge/sim/` | Netlist loader, circuit simulator (relay logic, timer, thermal relay, interlocks, protection, nodal analysis for volts, ohms and motor currents), schematic renderer (SVG/PNG from the netlist) |
+| `src/probeforge/sim/` | Netlist loader, circuit simulator (relay logic, timer, thermal relay, interlocks, protection, nodal analysis for volts, ohms and motor currents), schematic renderer (SVG/PNG from the netlist). The loader also reads the ATS bench netlist (transfer switch, solenoid, controller relays and inputs, harness wires, connector pins, a second source) |
 | `src/probeforge/faults/` | Fault model, `all_faults()` (every part in every failure mode: 91 faults), random and latent-fault helpers |
 | `src/probeforge/tools/toolbox.py` | The tool API (`read_indicators`, `press_button`, `wait`, `set_power`, `measure_voltage`, `measure_resistance`, `perform_action`, `submit_diagnosis`, ...); every call is logged with a step number |
 | `src/probeforge/policy/engine.py` | Safety policy, checked before every tool call |
@@ -137,7 +137,10 @@ never asks for approval (it does not re-apply power).
   - `scenarios/holdout_clean.yaml` (43 faults never used before, 38 visible + 5 latent): the clean holdout of the
     pure agent and the baselines (frozen prompt, Oct 27). For the hybrid it became **dev on Oct 28**: the hybrid
     was changed after its clean results were seen; those runs are labelled DEV and their folders end in `_dev`.
-  - **Final unseen test: a second circuit**, not yet built. Nothing in the frozen components may be tuned on it.
+  - **Final unseen test: the ASCO Series 300 Group G transfer switch bench** (Level 2, D22), being built stage by
+    stage (S0: netlist and redrawn diagram from drawing 978741, docs/ATS_MODEL.md). Its holdout fault list is
+    created only after the ATS agent profile (and Hybrid v2, if built) are frozen. Nothing in the frozen components
+    may be tuned on it.
 
 ## Invariants (must never break)
 
@@ -146,7 +149,7 @@ never asks for approval (it does not re-apply power).
    `tests/test_no_leak.py`, `tests/test_hybrid.py`, `tests/test_server.py`.
 2. **Policy in code.** Every action passes `Policy.check`; the prompt only describes the policy.
 3. **Pole-level scoring is the definition of "correct"** in every table, the README and the UI.
-4. **Dev versus final.** Results on dev sets are labelled dev; the second circuit is the final test.
+4. **Dev versus final.** Results on dev sets are labelled dev; the ATS bench holdout is the final test.
 5. **Frozen fingerprints.** `scripts/run_scenarios.py frozen_hashes()` records them in every results.json and
    prints them with every hybrid run. Changing a fingerprinted component needs the user's agreement first.
 
@@ -164,6 +167,7 @@ never asks for approval (it does not re-apply power).
    | hybrid_explanation_prompt | explanation prompt | 9c88602b5b56 |
    | hybrid_pipeline | pipeline orchestration | 9cafaaeb45d1 |
 
-6. **No prerecorded outputs** in the demo path: every diagnosis in the UI is computed live (saved transcriptions
-   are real earlier Muse Spark reads, labelled as saved).
+6. **No prerecorded outputs presented as live**: every diagnosis in the UI is computed live (saved transcriptions
+   are real earlier Muse Spark reads, labelled as saved). A public demo may replay a run recorded earlier only when it
+   is clearly labelled "recorded real run" (D25).
 7. **No em dash** in any text.

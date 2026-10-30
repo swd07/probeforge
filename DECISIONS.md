@@ -168,3 +168,59 @@ decisions at the end (see CLAUDE.md). Architecture: [ARCHITECTURE.md](ARCHITECTU
   explanation prompt and pipeline are fingerprinted in `frozen_hashes()` and printed with every hybrid run; no changes
   without telling the user first.
 - **Why:** the second circuit will be the final unseen test, so the method must be fixed before it exists.
+
+## 2026-10-30
+
+### D22. ASCO Series 300 Group G transfer switch as the Level 2 bench and final unseen test
+- **What:** a second bench models a real automatic transfer switch (ASCO Series 300 Group G, 200 A, 208 V, service
+  entrance) from the manufacturer's wiring diagram 978741 and the Group G Controller User's Guide 381333-400 N. Its
+  held-out faults are the final unseen test (ARCHITECTURE.md). The star-delta circuit stays Level 1 with all its results.
+- **Why:** real equipment of critical infrastructure (data centers, hospitals) instead of a textbook circuit; the
+  documents fix the components, terminals, wire list and controller sequence, so the model cannot drift into an
+  invented circuit.
+- **Alternatives:** a second invented relay circuit (rejected: not real equipment); only the star-delta circuit
+  (rejected: no unseen test left).
+- **Evidence:** the plan of Oct 30 lists what each drawing sheet and guide page documents (docs/ATS_MODEL.md).
+
+### D23. Plan decisions for the ATS bench (approved Oct 30)
+- **Agent:** P0 is the pure agent on the ATS (own prompt and tool specs, frozen before the holdout). Hybrid v2 (the
+  frozen hybrid plus ATS extensions) is P1 for Nov 2, only if P0 is done by Nov 1 evening, and is frozen before the
+  holdout is built; Hybrid v1 stays the method behind the star-delta numbers.
+- **Scenarios:** main pair with the same first symptom (generator running, load not transferred, UPS draining):
+  A, operator circuit failure (ER commanded, TS does not operate); B, generator running but not accepted (emergency
+  sensing circuit open, so no transfer command). Position feedback failure stays an extra dev case: it does not drain
+  the UPS and Position Error behaviour is undocumented.
+- **No fuse scenario:** 978741 shows no fuse in the TS operator circuit. Replaced by the cut-off contact to coil
+  burnout chain, labelled as an assumption for the engineer.
+- **Undocumented controller behaviour** (when Transfer Failure and Position Error are declared, what follows):
+  labelled assumptions until the engineer reviews them.
+- **Simulation parameters:** UPS autonomy 10 min, 30 s of virtual time per reading or action, both labelled.
+- **Action tiers (policy in code):** approval for replacing the coil, repairing a wire or connector, replacing or
+  adjusting a cut-off contact, replacing the controller; strong approval for a repeat transfer attempt after a failure
+  or a second replacement after a repeat failure; never for manual handle operation under load, bypassing interlocks,
+  paralleling sources.
+- **52U** is the Normal disconnect; the outage is on the utility side and 52U stays closed.
+- **Budget:** up to about $4 for the ATS smoke test, holdout run and Hybrid v2 reads. Voice stays P2.
+
+### D24. Our own redrawing of 978741, vendor documents out of git
+- **What:** the repository, the UI and the video use our own redrawing (`docs/asco_300g_978741.svg`, generated from
+  the netlist) with the source on the drawing: "Redrawn from ASCO Series 300 Group G wiring diagram 978741,
+  Schneider Electric. Not the official drawing."; the README links the public Schneider / ASCO library. The vendor
+  PDFs stay in `docs/vendor/`, excluded from git. Hybrid v2 reads the original public drawing locally (not committed).
+- **Why:** the drawings are copyrighted; the redrawing must never be presented as the official drawing.
+
+### D25. Public demo replay only as a labelled "recorded real run"
+- **What:** invariant 6 is relaxed: a public demo may replay a run recorded earlier, only when it is clearly labelled
+  "recorded real run"; live runs stay available with the daily cap.
+- **Why:** the demo must work for judges even when the API or the budget is limited, without presenting a replay
+  as live.
+
+### D26. How the ATS netlist is modelled (stage S0)
+- **What:** harness wires and plug/jack pins are parts (each documented wire can fail open, as on sheet 6); the
+  controller's SE, ER and NR relays are contacts between jack pins, their coils driven by the controller logic; the
+  controller's sensing and position inputs and the TB/TS points are single-terminal parts; a second source
+  (`alternate_supply`) is the generator. Loader and renderer changes are additive (new part kinds, optional rails,
+  mirrored row items, shared terminals, labelled stubs, a source note on the drawing).
+- **Why:** faults on connections are the realistic failures of this circuit; the wire list makes them documentable.
+- **Evidence:** `tests/test_ats_netlist.py` (independent transcription of the sheet 6 wire list, documented paths of
+  sheets 2, 3, 4, provenance of every part and net, drawing hooks); the star-delta SVG and every Level 1 test unchanged.

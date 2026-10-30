@@ -1,0 +1,339 @@
+# ASCO Series 300 Group G automatic transfer switch, 200 A, 208 V, 3 phase 4 wire, service entrance (catalog D03AUSB30200CGXM).
+# Redrawn from ASCO Series 300 Group G wiring diagram 978741 (Schneider Electric) and outline 1522770-003.
+# Only documented components and connections; every part and net has a source under `provenance`,
+# every value or behaviour that is not documented is listed under `assumptions`. See docs/ATS_MODEL.md.
+name: asco_300g_978741
+title: ASCO Series 300 Group G transfer switch, 200 A, 208 V (our redrawing)
+drawing_note: "Redrawn from ASCO Series 300 Group G wiring diagram 978741, Schneider Electric. Not the official drawing."
+supply: {voltage: 120, phases: {UA: 0, UB: -120, UC: 120}, neutral: NN}
+alternate_supply: {label: Emergency source (engine generator), voltage: 120, phases: {EA: 0, EB: -120, EC: 120}, neutral: EN, start_contact: [TB14, TB15]}
+power_switch: 52U
+protection: [52U]
+components:
+  "52U": {type: breaker, label: "52U Normal breaker", poles: [1-2, 3-4, 5-6]}
+  "TS": {type: transfer_switch, label: "Transfer switch", main_normal: [1-20, 2-21, 3-22, NN-LN], main_emergency: [4-20, 19-21, 5-22, EN-LN], cutoff_normal: [8-9, 71-72], cutoff_emergency: [6-7, 69-70], aux_normal: [17-18], aux_emergency: [17-16, 14-15], solenoid: [A-B]}
+  "SE": {type: relay, label: "SE relay (in controller)", no_contacts: [J3-J2, J5-J15], nc_contacts: [X1-J2, J5-X2]}
+  "ER": {type: relay, label: "ER relay (in controller)", no_contacts: [J1-X1, X2-J16]}
+  "NR": {type: relay, label: "NR relay (in controller)", no_contacts: [J8-J17], nc_contacts: [J8-J9]}
+  "CP": {type: controller, label: "Group G controller", inputs: [J4, J6, J7, J10, J11, J12, J13, J14, J18, J19, J20, J21, J22, J23, J24]}
+  "XP": {type: connector, label: "Plug P / jack J", pins: [P1-J1, P2-J2, P3-J3, P4-J4, P5-J5, P6-J6, P7-J7, P8-J8, P9-J9, P10-J10, P11-J11, P12-J12, P13-J13, P14-J14, P15-J15, P16-J16, P17-J17, P18-J18, P19-J19, P20-J20, P21-J21, P22-J22, P23-J23, P24-J24]}
+  "TBTS": {type: terminal_block, label: TB/TS, points: [14, 15, 16]}
+  "H1": {type: harness, label: "Harness 337782-003", wires: [W1_TS8-W1_P1, W2_TSA-W2_P2, W3_TS6-W3_P3, W4_TS3-W4_P4, W5_TSB-W5_P5, W6_TS5-W6_P6, W7_TS4-W7_P7, W8A_TB14-W8A_P8, W9A_TB15-W9A_P9, W10_TS17-W10_P10, W11_TS2-W11_P11, W12_TS1-W12_P12, W13_TS16-W13_P13, W14_TS18-W14_P14, W15_TS70-W15_P15, W16_TS72-W16_P16, W17_TS4-W17_TS9, W18_TS7-W18_TS1, W20_TS3-W20_TS69, W21_TS5-W21_TS71, W8B_TS14-W8B_TB14, W9B_TS15-W9B_TB15, W24_TB16-W24_P17, W25_TS19-W25_P18, W26_TS20-W26_P19, W27_TS21-W27_P20, W28_TS22-W28_P21, W29_TSNN-W29_P22, W30_TSEN-W30_P23, W31_TSLN-W31_P24]}
+nets:
+  UA: [52U:1]
+  UB: [52U:3]
+  UC: [52U:5]
+  NA: [52U:2, TS:1, H1:W12_TS1, H1:W18_TS1]
+  NB: [52U:4, TS:2, H1:W11_TS2]
+  NC: [52U:6, TS:3, H1:W4_TS3, H1:W20_TS3]
+  NN: [TS:NN, H1:W29_TSNN]
+  EA: [TS:4, H1:W7_TS4, H1:W17_TS4]
+  EB: [TS:19, H1:W25_TS19]
+  EC: [TS:5, H1:W6_TS5, H1:W21_TS5]
+  EN: [TS:EN, H1:W30_TSEN]
+  LA: [TS:20, H1:W26_TS20]
+  LB: [TS:21, H1:W27_TS21]
+  LC: [TS:22, H1:W28_TS22]
+  LN: [TS:LN, H1:W31_TSLN]
+  TS6: [TS:6, H1:W3_TS6]
+  TS7: [TS:7, H1:W18_TS7]
+  TS8: [TS:8, H1:W1_TS8]
+  TS9: [TS:9, H1:W17_TS9]
+  TS69: [TS:69, H1:W20_TS69]
+  TS70: [TS:70, H1:W15_TS70]
+  TS71: [TS:71, H1:W21_TS71]
+  TS72: [TS:72, H1:W16_TS72]
+  TSA: [TS:A, H1:W2_TSA]
+  TSB: [TS:B, H1:W5_TSB]
+  TS14: [TS:14, H1:W8B_TS14]
+  TS15: [TS:15, H1:W9B_TS15]
+  TS16: [TS:16, H1:W13_TS16]
+  TS17: [TS:17, H1:W10_TS17]
+  TS18: [TS:18, H1:W14_TS18]
+  TB14: [TBTS:14, H1:W8A_TB14, H1:W8B_TB14]
+  TB15: [TBTS:15, H1:W9A_TB15, H1:W9B_TB15]
+  TB16: [TBTS:16, H1:W24_TB16]
+  P1: [XP:P1, H1:W1_P1]
+  P2: [XP:P2, H1:W2_P2]
+  P3: [XP:P3, H1:W3_P3]
+  P4: [XP:P4, H1:W4_P4]
+  P5: [XP:P5, H1:W5_P5]
+  P6: [XP:P6, H1:W6_P6]
+  P7: [XP:P7, H1:W7_P7]
+  P8: [XP:P8, H1:W8A_P8]
+  P9: [XP:P9, H1:W9A_P9]
+  P10: [XP:P10, H1:W10_P10]
+  P11: [XP:P11, H1:W11_P11]
+  P12: [XP:P12, H1:W12_P12]
+  P13: [XP:P13, H1:W13_P13]
+  P14: [XP:P14, H1:W14_P14]
+  P15: [XP:P15, H1:W15_P15]
+  P16: [XP:P16, H1:W16_P16]
+  P17: [XP:P17, H1:W24_P17]
+  P18: [XP:P18, H1:W25_P18]
+  P19: [XP:P19, H1:W26_P19]
+  P20: [XP:P20, H1:W27_P20]
+  P21: [XP:P21, H1:W28_P21]
+  P22: [XP:P22, H1:W29_P22]
+  P23: [XP:P23, H1:W30_P23]
+  P24: [XP:P24, H1:W31_P24]
+  J1: [XP:J1, ER:J1]
+  J2: [XP:J2, SE:J2]
+  J3: [XP:J3, SE:J3]
+  J4: [XP:J4, CP:J4]
+  J5: [XP:J5, SE:J5]
+  J6: [XP:J6, CP:J6]
+  J7: [XP:J7, CP:J7]
+  J8: [XP:J8, NR:J8]
+  J9: [XP:J9, NR:J9]
+  J10: [XP:J10, CP:J10]
+  J11: [XP:J11, CP:J11]
+  J12: [XP:J12, CP:J12]
+  J13: [XP:J13, CP:J13]
+  J14: [XP:J14, CP:J14]
+  J15: [XP:J15, SE:J15]
+  J16: [XP:J16, ER:J16]
+  J17: [XP:J17, NR:J17]
+  J18: [XP:J18, CP:J18]
+  J19: [XP:J19, CP:J19]
+  J20: [XP:J20, CP:J20]
+  J21: [XP:J21, CP:J21]
+  J22: [XP:J22, CP:J22]
+  J23: [XP:J23, CP:J23]
+  J24: [XP:J24, CP:J24]
+  CPX1: [ER:X1, SE:X1]
+  CPX2: [SE:X2, ER:X2]
+layout:
+  power:
+    title: Main power poles (sheet 3) and 52U
+    origin: [150, 170]
+    pole_pitch: 44
+    pole_height: 50
+    short_labels: true
+    blocks:
+    - parts: ['52U:1-2', '52U:3-4', '52U:5-6']
+      at: [0, 0]
+    - parts: ['TS:1-20', 'TS:2-21', 'TS:3-22', 'TS:NN-LN']
+      at: [0, 150]
+    - parts: ['TS:4-20', 'TS:19-21', 'TS:5-22', 'TS:EN-LN']
+      at: [250, 150]
+  control:
+    title: TS operator circuit (sheet 3), sensing and position (sheet 4), engine start (sheet 2)
+    origin: [640, 170]
+    col_width: 96
+    row_height: 74
+    columns: 17
+    stub_power_nets: true
+    stub_nets: [TB14, TB15]
+    rows:
+    - ['H1:W18_TS7-W18_TS1@0~', 'TS:6-7@1~', 'H1:W3_TS6-W3_P3@2', 'XP:P3-J3@3', 'SE:J3-J2@5', 'XP:P2-J2@6~', 'H1:W2_TSA-W2_P2@7~', 'TS:A-B@8', 'H1:W5_TSB-W5_P5@9', 'XP:P5-J5@10', 'SE:J5-J15@11',
+      'XP:P15-J15@12~', 'H1:W15_TS70-W15_P15@13~', 'TS:69-70@14~', 'H1:W20_TS3-W20_TS69@15~']
+    - ['H1:W17_TS4-W17_TS9@0', 'TS:8-9@1~', 'H1:W1_TS8-W1_P1@2', 'XP:P1-J1@3', 'ER:J1-X1@4', 'SE:X1-J2@5', 'SE:J5-X2@11', 'ER:X2-J16@12', 'XP:P16-J16@13~', 'H1:W16_TS72-W16_P16@14~', 'TS:71-72@15~',
+      'H1:W21_TS5-W21_TS71@16~']
+    - []
+    - ['H1:W12_TS1-W12_P12@0', 'XP:P12-J12@1', 'CP:J12@2', 'H1:W11_TS2-W11_P11@4', 'XP:P11-J11@5', 'CP:J11@6', 'H1:W4_TS3-W4_P4@8', 'XP:P4-J4@9', 'CP:J4@10', 'H1:W29_TSNN-W29_P22@12',
+      'XP:P22-J22@13', 'CP:J22@14']
+    - ['H1:W7_TS4-W7_P7@0', 'XP:P7-J7@1', 'CP:J7@2', 'H1:W25_TS19-W25_P18@4', 'XP:P18-J18@5', 'CP:J18@6', 'H1:W6_TS5-W6_P6@8', 'XP:P6-J6@9', 'CP:J6@10', 'H1:W30_TSEN-W30_P23@12', 'XP:P23-J23@13',
+      'CP:J23@14']
+    - ['H1:W26_TS20-W26_P19@0', 'XP:P19-J19@1', 'CP:J19@2', 'H1:W27_TS21-W27_P20@4', 'XP:P20-J20@5', 'CP:J20@6', 'H1:W28_TS22-W28_P21@8', 'XP:P21-J21@9', 'CP:J21@10', 'H1:W31_TSLN-W31_P24@12',
+      'XP:P24-J24@13', 'CP:J24@14']
+    - []
+    - ['TS:17-16@0', 'H1:W13_TS16-W13_P13@1', 'XP:P13-J13@2', 'CP:J13@3']
+    - ['TS:17-18@0', 'H1:W14_TS18-W14_P14@1', 'XP:P14-J14@2', 'CP:J14@3']
+    - ['H1:W10_TS17-W10_P10@0', 'XP:P10-J10@1', 'CP:J10@2']
+    - []
+    - ['TBTS:14@0', 'H1:W8A_TB14-W8A_P8@1', 'XP:P8-J8@2', 'NR:J8-J9@3', 'XP:P9-J9@4~', 'H1:W9A_TB15-W9A_P9@5~', 'TBTS:15@7']
+    - ['NR:J8-J17@3', 'XP:P17-J17@4~', 'H1:W24_TB16-W24_P17@5~', 'TBTS:16@6']
+    - ['H1:W8B_TS14-W8B_TB14@1~', 'TS:14-15@2', 'H1:W9B_TS15-W9B_TB15@3']
+assumptions:
+  - "TS:A-B resistance 30 ohm (coil behind the bridge rectifier): not documented, placeholder for the engineer to confirm"
+  - "Utility and generator modelled as ideal 120/208 V three-phase sources; generator start-up curve is set in the bench (S1), the guide only says 'usually about 10 seconds'"
+  - "Generator starts while TB/TS 14-15 is closed (Feature 7 closes to start); Feature 8 (TB/TS-16) is not used by the modelled generator"
+  - "Controller inputs are ideal voltage and continuity sensing points; internal controller circuits are not modelled"
+  - "SE, ER and NR are modelled as contacts only; their coils are inside the controller and driven by the controller logic (S1)"
+  - "Optional extension harness 309320-005 (Px/Jx) not modelled: plug P mates directly with jack J"
+  - "Customer auxiliary contacts 14A (12-13, 31-32) and 14B (10-11, 29-30), option relay OP1, Features 17 and 6B inputs: documented but not wired on this unit, not modelled"
+  - "Strip heater (accessory 44G) and RS-485 (accessory 11BE communications) not modelled"
+provenance:
+  "part 52U:1-2": "52U service entrance breaker on Source 1 (Normal): Square D HL/JL, 175 to 225 A frame, thermal-magnetic (outline 1522770-003)"
+  "part 52U:3-4": "52U service entrance breaker on Source 1 (Normal): Square D HL/JL, 175 to 225 A frame, thermal-magnetic (outline 1522770-003)"
+  "part 52U:5-6": "52U service entrance breaker on Source 1 (Normal): Square D HL/JL, 175 to 225 A frame, thermal-magnetic (outline 1522770-003)"
+  "part CP:J10": "Group G controller input J-10: TS position sensing, common (sheet 4)"
+  "part CP:J11": "Group G controller input J-11: NB sensing, phase B (sheet 4)"
+  "part CP:J12": "Group G controller input J-12: NA sensing, phase A (sheet 4)"
+  "part CP:J13": "Group G controller input J-13: TS position sensing, 14B (sheet 4)"
+  "part CP:J14": "Group G controller input J-14: TS position sensing, 14A (sheet 4)"
+  "part CP:J18": "Group G controller input J-18: EB sensing, phase B (sheet 4)"
+  "part CP:J19": "Group G controller input J-19: load LA (sheet 4)"
+  "part CP:J20": "Group G controller input J-20: load LB (sheet 4)"
+  "part CP:J21": "Group G controller input J-21: load LC (sheet 4)"
+  "part CP:J22": "Group G controller input J-22: NN (sheet 4)"
+  "part CP:J23": "Group G controller input J-23: EN (sheet 4)"
+  "part CP:J24": "Group G controller input J-24: load LN (sheet 4)"
+  "part CP:J4": "Group G controller input J-4: NC sensing, phase C (sheet 4)"
+  "part CP:J6": "Group G controller input J-6: EC sensing, phase C (sheet 4)"
+  "part CP:J7": "Group G controller input J-7: EA sensing, phase A (sheet 4)"
+  "part ER:J1-X1": "controller ER (NO) from J1, transfer to Emergency (sheet 3)"
+  "part ER:X2-J16": "controller ER (NO) to J16 (sheet 3)"
+  "part H1:W10_TS17-W10_P10": "978741 sheet 6, harness 337782-003, wire 10: TS-17 to P-10"
+  "part H1:W11_TS2-W11_P11": "978741 sheet 6, harness 337782-003, wire 11: TS-2 to P-11"
+  "part H1:W12_TS1-W12_P12": "978741 sheet 6, harness 337782-003, wire 12: TS-1 to P-12"
+  "part H1:W13_TS16-W13_P13": "978741 sheet 6, harness 337782-003, wire 13: TS-16 to P-13"
+  "part H1:W14_TS18-W14_P14": "978741 sheet 6, harness 337782-003, wire 14: TS-18 to P-14"
+  "part H1:W15_TS70-W15_P15": "978741 sheet 6, harness 337782-003, wire 15: TS-70 to P-15"
+  "part H1:W16_TS72-W16_P16": "978741 sheet 6, harness 337782-003, wire 16: TS-72 to P-16"
+  "part H1:W17_TS4-W17_TS9": "978741 sheet 6, harness 337782-003, wire 17: TS-4 to TS-9"
+  "part H1:W18_TS7-W18_TS1": "978741 sheet 6, harness 337782-003, wire 18: TS-7 to TS-1"
+  "part H1:W1_TS8-W1_P1": "978741 sheet 6, harness 337782-003, wire 1: TS-8 to P-1"
+  "part H1:W20_TS3-W20_TS69": "978741 sheet 6, harness 337782-003, wire 20: TS-3 to TS-69"
+  "part H1:W21_TS5-W21_TS71": "978741 sheet 6, harness 337782-003, wire 21: TS-5 to TS-71"
+  "part H1:W24_TB16-W24_P17": "978741 sheet 6, harness 337782-003, wire 24: TB/TS-16 to P-17"
+  "part H1:W25_TS19-W25_P18": "978741 sheet 6, harness 337782-003, wire 25: TS-19 to P-18"
+  "part H1:W26_TS20-W26_P19": "978741 sheet 6, harness 337782-003, wire 26: TS-20 to P-19"
+  "part H1:W27_TS21-W27_P20": "978741 sheet 6, harness 337782-003, wire 27: TS-21 to P-20"
+  "part H1:W28_TS22-W28_P21": "978741 sheet 6, harness 337782-003, wire 28: TS-22 to P-21"
+  "part H1:W29_TSNN-W29_P22": "978741 sheet 6, harness 337782-003, wire 29: TS-NN to P-22"
+  "part H1:W2_TSA-W2_P2": "978741 sheet 6, harness 337782-003, wire 2: TS-A to P-2"
+  "part H1:W30_TSEN-W30_P23": "978741 sheet 6, harness 337782-003, wire 30: TS-EN to P-23"
+  "part H1:W31_TSLN-W31_P24": "978741 sheet 6, harness 337782-003, wire 31: TS-LN to P-24"
+  "part H1:W3_TS6-W3_P3": "978741 sheet 6, harness 337782-003, wire 3: TS-6 to P-3"
+  "part H1:W4_TS3-W4_P4": "978741 sheet 6, harness 337782-003, wire 4: TS-3 to P-4"
+  "part H1:W5_TSB-W5_P5": "978741 sheet 6, harness 337782-003, wire 5: TS-B to P-5"
+  "part H1:W6_TS5-W6_P6": "978741 sheet 6, harness 337782-003, wire 6: TS-5 to P-6"
+  "part H1:W7_TS4-W7_P7": "978741 sheet 6, harness 337782-003, wire 7: TS-4 to P-7"
+  "part H1:W8A_TB14-W8A_P8": "978741 sheet 6, harness 337782-003, wire 8: TB/TS-14 to P-8"
+  "part H1:W8B_TS14-W8B_TB14": "978741 sheet 6, harness 337782-003, wire 8: TS-14 to TB/TS-14"
+  "part H1:W9A_TB15-W9A_P9": "978741 sheet 6, harness 337782-003, wire 9: TB/TS-15 to P-9"
+  "part H1:W9B_TS15-W9B_TB15": "978741 sheet 6, harness 337782-003, wire 9: TS-15 to TB/TS-15"
+  "part NR:J8-J17": "controller NR (NO), J8 to J17: Feature 8 opens to start via TB/TS-16 (sheet 2)"
+  "part NR:J8-J9": "controller NR (NC), J8 to J9: Feature 7 closes to start via TB/TS-15 (sheet 2)"
+  "part SE:J3-J2": "controller SE (NO), CP J3 to J2, transfer to Normal (sheet 3)"
+  "part SE:J5-J15": "controller SE (NO), CP J5 to J15 (sheet 3)"
+  "part SE:J5-X2": "controller SE (NC) from J5, in series with ER (NO) to J16 (sheet 3)"
+  "part SE:X1-J2": "controller SE (NC) in series after ER (NO), to J2 (sheet 3)"
+  "part TBTS:14": "TB/TS-14: engine starting signals, 14 common, 15 Feature 7 closes to start, 16 Feature 8 opens to start (sheet 2)"
+  "part TBTS:15": "TB/TS-15: engine starting signals, 14 common, 15 Feature 7 closes to start, 16 Feature 8 opens to start (sheet 2)"
+  "part TBTS:16": "TB/TS-16: engine starting signals, 14 common, 15 Feature 7 closes to start, 16 Feature 8 opens to start (sheet 2)"
+  "part TS:1-20": "TS(NA) main pole, closed on Normal (sheet 3)"
+  "part TS:14-15": "TS aux contact 14B across TB/TS 14-15, engine starting signals (sheet 2 field connections)"
+  "part TS:17-16": "TS aux contact 14B (NO, closed on Emergency), common 17 (sheet 4)"
+  "part TS:17-18": "TS aux contact 14A (NC, closed on Normal), common 17 (sheet 4 control signals and indication)"
+  "part TS:19-21": "TS(EB) (sheet 3)"
+  "part TS:2-21": "TS(NB) (sheet 3)"
+  "part TS:3-22": "TS(NC) (sheet 3)"
+  "part TS:4-20": "TS(EA) main pole, closed on Emergency (sheet 3)"
+  "part TS:5-22": "TS(EC) (sheet 3)"
+  "part TS:6-7": "TS control contact 6-7, closed on Emergency and before TDC toward Normal (sheet 3 table)"
+  "part TS:69-70": "TS control contact 69-70, closed on Emergency and before TDC toward Normal (sheet 3 table)"
+  "part TS:71-72": "TS control contact 71-72, closed on Normal and before TDC toward Emergency (sheet 3 table)"
+  "part TS:8-9": "TS control contact 8-9, closed on Normal and before TDC toward Emergency (sheet 3, TS control contacts table)"
+  "part TS:A-B": "TS solenoid assembly: bridge rectifier CR and coil, terminals A and B (sheet 3); resistance assumed"
+  "part TS:EN-LN": "TS(EN) switched neutral pole (sheet 3)"
+  "part TS:NN-LN": "TS(NN) switched neutral pole (sheet 3; cover sheet: switched neutral)"
+  "part XP:P1-J1": "plug P-1 / jack J-1 (sheets 3, 4, 2, 6; the optional 8 inch extension harness 309320-005 is not modelled)"
+  "part XP:P10-J10": "plug P-10 / jack J-10 (sheets 3, 4, 2, 6; the optional 8 inch extension harness 309320-005 is not modelled)"
+  "part XP:P11-J11": "plug P-11 / jack J-11 (sheets 3, 4, 2, 6; the optional 8 inch extension harness 309320-005 is not modelled)"
+  "part XP:P12-J12": "plug P-12 / jack J-12 (sheets 3, 4, 2, 6; the optional 8 inch extension harness 309320-005 is not modelled)"
+  "part XP:P13-J13": "plug P-13 / jack J-13 (sheets 3, 4, 2, 6; the optional 8 inch extension harness 309320-005 is not modelled)"
+  "part XP:P14-J14": "plug P-14 / jack J-14 (sheets 3, 4, 2, 6; the optional 8 inch extension harness 309320-005 is not modelled)"
+  "part XP:P15-J15": "plug P-15 / jack J-15 (sheets 3, 4, 2, 6; the optional 8 inch extension harness 309320-005 is not modelled)"
+  "part XP:P16-J16": "plug P-16 / jack J-16 (sheets 3, 4, 2, 6; the optional 8 inch extension harness 309320-005 is not modelled)"
+  "part XP:P17-J17": "plug P-17 / jack J-17 (sheets 3, 4, 2, 6; the optional 8 inch extension harness 309320-005 is not modelled)"
+  "part XP:P18-J18": "plug P-18 / jack J-18 (sheets 3, 4, 2, 6; the optional 8 inch extension harness 309320-005 is not modelled)"
+  "part XP:P19-J19": "plug P-19 / jack J-19 (sheets 3, 4, 2, 6; the optional 8 inch extension harness 309320-005 is not modelled)"
+  "part XP:P2-J2": "plug P-2 / jack J-2 (sheets 3, 4, 2, 6; the optional 8 inch extension harness 309320-005 is not modelled)"
+  "part XP:P20-J20": "plug P-20 / jack J-20 (sheets 3, 4, 2, 6; the optional 8 inch extension harness 309320-005 is not modelled)"
+  "part XP:P21-J21": "plug P-21 / jack J-21 (sheets 3, 4, 2, 6; the optional 8 inch extension harness 309320-005 is not modelled)"
+  "part XP:P22-J22": "plug P-22 / jack J-22 (sheets 3, 4, 2, 6; the optional 8 inch extension harness 309320-005 is not modelled)"
+  "part XP:P23-J23": "plug P-23 / jack J-23 (sheets 3, 4, 2, 6; the optional 8 inch extension harness 309320-005 is not modelled)"
+  "part XP:P24-J24": "plug P-24 / jack J-24 (sheets 3, 4, 2, 6; the optional 8 inch extension harness 309320-005 is not modelled)"
+  "part XP:P3-J3": "plug P-3 / jack J-3 (sheets 3, 4, 2, 6; the optional 8 inch extension harness 309320-005 is not modelled)"
+  "part XP:P4-J4": "plug P-4 / jack J-4 (sheets 3, 4, 2, 6; the optional 8 inch extension harness 309320-005 is not modelled)"
+  "part XP:P5-J5": "plug P-5 / jack J-5 (sheets 3, 4, 2, 6; the optional 8 inch extension harness 309320-005 is not modelled)"
+  "part XP:P6-J6": "plug P-6 / jack J-6 (sheets 3, 4, 2, 6; the optional 8 inch extension harness 309320-005 is not modelled)"
+  "part XP:P7-J7": "plug P-7 / jack J-7 (sheets 3, 4, 2, 6; the optional 8 inch extension harness 309320-005 is not modelled)"
+  "part XP:P8-J8": "plug P-8 / jack J-8 (sheets 3, 4, 2, 6; the optional 8 inch extension harness 309320-005 is not modelled)"
+  "part XP:P9-J9": "plug P-9 / jack J-9 (sheets 3, 4, 2, 6; the optional 8 inch extension harness 309320-005 is not modelled)"
+  "net CPX1": "inside the controller: ER (NO) in series with SE (NC), J1 to J2 (sheet 3)"
+  "net CPX2": "inside the controller: SE (NC) in series with ER (NO), J5 to J16 (sheet 3)"
+  "net EA": "Source 2 (Emergency) phase A to TS-4 (sheet 3)"
+  "net EB": "EB to TS-19 (sheet 3)"
+  "net EC": "EC to TS-5 (sheet 3)"
+  "net EN": "emergency neutral to TS-EN (sheet 3)"
+  "net J1": "controller jack J-1"
+  "net J10": "controller jack J-10 (TS position sensing, common)"
+  "net J11": "controller jack J-11 (NB sensing, phase B)"
+  "net J12": "controller jack J-12 (NA sensing, phase A)"
+  "net J13": "controller jack J-13 (TS position sensing, 14B)"
+  "net J14": "controller jack J-14 (TS position sensing, 14A)"
+  "net J15": "controller jack J-15"
+  "net J16": "controller jack J-16"
+  "net J17": "controller jack J-17"
+  "net J18": "controller jack J-18 (EB sensing, phase B)"
+  "net J19": "controller jack J-19 (load LA)"
+  "net J2": "controller jack J-2"
+  "net J20": "controller jack J-20 (load LB)"
+  "net J21": "controller jack J-21 (load LC)"
+  "net J22": "controller jack J-22 (NN)"
+  "net J23": "controller jack J-23 (EN)"
+  "net J24": "controller jack J-24 (load LN)"
+  "net J3": "controller jack J-3"
+  "net J4": "controller jack J-4 (NC sensing, phase C)"
+  "net J5": "controller jack J-5"
+  "net J6": "controller jack J-6 (EC sensing, phase C)"
+  "net J7": "controller jack J-7 (EA sensing, phase A)"
+  "net J8": "controller jack J-8"
+  "net J9": "controller jack J-9"
+  "net LA": "load LA, TS-20 (sheet 3)"
+  "net LB": "load LB, TS-21 (sheet 3)"
+  "net LC": "load LC, TS-22 (sheet 3)"
+  "net LN": "load neutral, TS-LN (sheet 3)"
+  "net NA": "Source 1 (Normal) after 52U to TS-1 (sheet 3, outline one-line)"
+  "net NB": "NB to TS-2 (sheet 3)"
+  "net NC": "NC to TS-3 (sheet 3)"
+  "net NN": "normal neutral to TS-NN, switched neutral pole (sheet 3, cover: 4 switched poles)"
+  "net P1": "harness plug pin P-1 (sheet 6)"
+  "net P10": "harness plug pin P-10 (sheet 6)"
+  "net P11": "harness plug pin P-11 (sheet 6)"
+  "net P12": "harness plug pin P-12 (sheet 6)"
+  "net P13": "harness plug pin P-13 (sheet 6)"
+  "net P14": "harness plug pin P-14 (sheet 6)"
+  "net P15": "harness plug pin P-15 (sheet 6)"
+  "net P16": "harness plug pin P-16 (sheet 6)"
+  "net P17": "harness plug pin P-17 (sheet 6)"
+  "net P18": "harness plug pin P-18 (sheet 6)"
+  "net P19": "harness plug pin P-19 (sheet 6)"
+  "net P2": "harness plug pin P-2 (sheet 6)"
+  "net P20": "harness plug pin P-20 (sheet 6)"
+  "net P21": "harness plug pin P-21 (sheet 6)"
+  "net P22": "harness plug pin P-22 (sheet 6)"
+  "net P23": "harness plug pin P-23 (sheet 6)"
+  "net P24": "harness plug pin P-24 (sheet 6)"
+  "net P3": "harness plug pin P-3 (sheet 6)"
+  "net P4": "harness plug pin P-4 (sheet 6)"
+  "net P5": "harness plug pin P-5 (sheet 6)"
+  "net P6": "harness plug pin P-6 (sheet 6)"
+  "net P7": "harness plug pin P-7 (sheet 6)"
+  "net P8": "harness plug pin P-8 (sheet 6)"
+  "net P9": "harness plug pin P-9 (sheet 6)"
+  "net TB14": "terminal block TB/TS-14 (sheets 2 and 5)"
+  "net TB15": "terminal block TB/TS-15 (sheets 2 and 5)"
+  "net TB16": "terminal block TB/TS-16 (sheets 2 and 5)"
+  "net TS14": "TS terminal 14 (sheets 3, 4, 2 and 5)"
+  "net TS15": "TS terminal 15 (sheets 3, 4, 2 and 5)"
+  "net TS16": "TS terminal 16 (sheets 3, 4, 2 and 5)"
+  "net TS17": "TS terminal 17 (sheets 3, 4, 2 and 5)"
+  "net TS18": "TS terminal 18 (sheets 3, 4, 2 and 5)"
+  "net TS6": "TS terminal 6 (sheets 3, 4, 2 and 5)"
+  "net TS69": "TS terminal 69 (sheets 3, 4, 2 and 5)"
+  "net TS7": "TS terminal 7 (sheets 3, 4, 2 and 5)"
+  "net TS70": "TS terminal 70 (sheets 3, 4, 2 and 5)"
+  "net TS71": "TS terminal 71 (sheets 3, 4, 2 and 5)"
+  "net TS72": "TS terminal 72 (sheets 3, 4, 2 and 5)"
+  "net TS8": "TS terminal 8 (sheets 3, 4, 2 and 5)"
+  "net TS9": "TS terminal 9 (sheets 3, 4, 2 and 5)"
+  "net TSA": "TS terminal A (sheets 3, 4, 2 and 5)"
+  "net TSB": "TS terminal B (sheets 3, 4, 2 and 5)"
+  "net UA": "utility phase A to 52U line side (outline 1522770-003, one-line diagram)"
+  "net UB": "utility phase B to 52U line side (outline 1522770-003)"
+  "net UC": "utility phase C to 52U line side (outline 1522770-003)"

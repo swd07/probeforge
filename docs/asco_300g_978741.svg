@@ -1,0 +1,1043 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2341" height="1187" viewBox="0 0 2341 1187" data-circuit="asco_300g_978741">
+<style>
+.wire, .sym { stroke: #1d2430; stroke-width: 2; fill: none; stroke-linecap: round; }
+.link { stroke: #1d2430; stroke-width: 1.2; stroke-dasharray: 5 4; fill: none; }
+.dot { fill: #1d2430; }
+.terminal { fill: #ffffff; stroke: #1d2430; stroke-width: 1.2; }
+text { font-family: Arial, Helvetica, sans-serif; fill: #1d2430; }
+.id { font-size: 15px; font-weight: bold; }
+.lbl { font-size: 12px; fill: #4a5568; }
+.tn { font-size: 11px; fill: #4a5568; }
+.net { font-size: 12px; fill: #2b6cb0; font-weight: bold; }
+.title { font-size: 20px; font-weight: bold; }
+.region { font-size: 14px; fill: #4a5568; font-weight: bold; }
+</style>
+<rect width="2341" height="1187" fill="#ffffff"/>
+<g class="wires">
+<path class="wire" data-net="NA" d="M 150 220 V 300 M 150 320 V 300"/>
+<path class="wire" data-net="NA" d="M 686 392 H 668"/>
+<path class="wire" data-net="NA" d="M 686 170 H 668"/>
+<path class="wire" data-net="NB" d="M 194 220 V 291 M 194 320 V 291"/>
+<path class="wire" data-net="NB" d="M 1070 392 H 1052"/>
+<path class="wire" data-net="NC" d="M 238 220 V 282 M 238 320 V 282"/>
+<path class="wire" data-net="NC" d="M 1454 392 H 1436"/>
+<path class="wire" data-net="NC" d="M 2170 170 H 2188"/>
+<path class="wire" data-net="NN" d="M 1838 392 H 1820"/>
+<path class="wire" data-net="EA" d="M 686 466 H 668"/>
+<path class="wire" data-net="EA" d="M 686 244 H 668"/>
+<path class="wire" data-net="EB" d="M 1070 466 H 1052"/>
+<path class="wire" data-net="EC" d="M 1454 466 H 1436"/>
+<path class="wire" data-net="EC" d="M 2266 244 H 2284"/>
+<path class="wire" data-net="EN" d="M 1838 466 H 1820"/>
+<path class="wire" data-net="LA" d="M 150 390 H 400 M 150 370 V 390 M 400 370 V 390"/>
+<path class="wire" data-net="LA" d="M 686 540 H 668"/>
+<path class="wire" data-net="LB" d="M 194 399 H 444 M 194 370 V 399 M 444 370 V 399"/>
+<path class="wire" data-net="LB" d="M 1070 540 H 1052"/>
+<path class="wire" data-net="LC" d="M 238 408 H 488 M 238 370 V 408 M 488 370 V 408"/>
+<path class="wire" data-net="LC" d="M 1454 540 H 1436"/>
+<path class="wire" data-net="LN" d="M 282 417 H 532 M 282 370 V 417 M 532 370 V 417"/>
+<path class="wire" data-net="LN" d="M 1838 540 H 1820"/>
+<path class="wire" data-net="TS6" d="M 826 170 H 878"/>
+<path class="wire" data-net="TS7" d="M 730 170 H 782"/>
+<path class="wire" data-net="TS8" d="M 826 244 H 878"/>
+<path class="wire" data-net="TS9" d="M 730 244 H 782"/>
+<path class="wire" data-net="TS69" d="M 2074 170 H 2126"/>
+<path class="wire" data-net="TS70" d="M 1978 170 H 2030"/>
+<path class="wire" data-net="TS71" d="M 2170 244 H 2222"/>
+<path class="wire" data-net="TS72" d="M 2074 244 H 2126"/>
+<path class="wire" data-net="TSA" d="M 1402 170 H 1454"/>
+<path class="wire" data-net="TSB" d="M 1498 170 H 1550"/>
+<path class="wire" data-net="TS14" d="M 826 1132 H 878"/>
+<path class="wire" data-net="TS15" d="M 922 1132 H 974"/>
+<path class="wire" data-net="TS16" d="M 730 688 H 782"/>
+<circle class="dot" cx="686" cy="762" r="3.6"/>
+<path class="wire" data-net="TS17" d="M 686 688 V 836"/>
+<path class="wire" data-net="TS18" d="M 730 762 H 782"/>
+<path class="wire" data-net="TB14" d="M 686 984 H 668"/>
+<path class="wire" data-net="TB14" d="M 782 984 H 764"/>
+<path class="wire" data-net="TB14" d="M 782 1132 H 764"/>
+<path class="wire" data-net="TB15" d="M 1358 984 H 1340"/>
+<path class="wire" data-net="TB15" d="M 1210 984 H 1228"/>
+<path class="wire" data-net="TB15" d="M 1018 1132 H 1036"/>
+<path class="wire" data-net="TB16" d="M 1210 1058 H 1262"/>
+<path class="wire" data-net="P1" d="M 922 244 H 974"/>
+<path class="wire" data-net="P2" d="M 1306 170 H 1358"/>
+<path class="wire" data-net="P3" d="M 922 170 H 974"/>
+<path class="wire" data-net="P4" d="M 1498 392 H 1550"/>
+<path class="wire" data-net="P5" d="M 1594 170 H 1646"/>
+<path class="wire" data-net="P6" d="M 1498 466 H 1550"/>
+<path class="wire" data-net="P7" d="M 730 466 H 782"/>
+<path class="wire" data-net="P8" d="M 826 984 H 878"/>
+<path class="wire" data-net="P9" d="M 1114 984 H 1166"/>
+<path class="wire" data-net="P10" d="M 730 836 H 782"/>
+<path class="wire" data-net="P11" d="M 1114 392 H 1166"/>
+<path class="wire" data-net="P12" d="M 730 392 H 782"/>
+<path class="wire" data-net="P13" d="M 826 688 H 878"/>
+<path class="wire" data-net="P14" d="M 826 762 H 878"/>
+<path class="wire" data-net="P15" d="M 1882 170 H 1934"/>
+<path class="wire" data-net="P16" d="M 1978 244 H 2030"/>
+<path class="wire" data-net="P17" d="M 1114 1058 H 1166"/>
+<path class="wire" data-net="P18" d="M 1114 466 H 1166"/>
+<path class="wire" data-net="P19" d="M 730 540 H 782"/>
+<path class="wire" data-net="P20" d="M 1114 540 H 1166"/>
+<path class="wire" data-net="P21" d="M 1498 540 H 1550"/>
+<path class="wire" data-net="P22" d="M 1882 392 H 1934"/>
+<path class="wire" data-net="P23" d="M 1882 466 H 1934"/>
+<path class="wire" data-net="P24" d="M 1882 540 H 1934"/>
+<path class="wire" data-net="J1" d="M 1018 244 H 1070"/>
+<circle class="dot" cx="1210" cy="170" r="3.6"/>
+<path class="wire" data-net="J2" d="M 1210 170 V 244 M 1210 170 H 1262"/>
+<path class="wire" data-net="J3" d="M 1018 170 H 1166"/>
+<path class="wire" data-net="J4" d="M 1594 392 H 1646"/>
+<circle class="dot" cx="1690" cy="170" r="3.6"/>
+<path class="wire" data-net="J5" d="M 1690 170 V 244 M 1690 170 H 1742 M 1690 244 H 1742"/>
+<path class="wire" data-net="J6" d="M 1594 466 H 1646"/>
+<path class="wire" data-net="J7" d="M 826 466 H 878"/>
+<circle class="dot" cx="922" cy="984" r="3.6"/>
+<path class="wire" data-net="J8" d="M 922 984 V 1058 M 922 984 H 974 M 922 1058 H 974"/>
+<path class="wire" data-net="J9" d="M 1018 984 H 1070"/>
+<path class="wire" data-net="J10" d="M 826 836 H 878"/>
+<path class="wire" data-net="J11" d="M 1210 392 H 1262"/>
+<path class="wire" data-net="J12" d="M 826 392 H 878"/>
+<path class="wire" data-net="J13" d="M 922 688 H 974"/>
+<path class="wire" data-net="J14" d="M 922 762 H 974"/>
+<path class="wire" data-net="J15" d="M 1786 170 H 1838"/>
+<path class="wire" data-net="J16" d="M 1882 244 H 1934"/>
+<path class="wire" data-net="J17" d="M 1018 1058 H 1070"/>
+<path class="wire" data-net="J18" d="M 1210 466 H 1262"/>
+<path class="wire" data-net="J19" d="M 826 540 H 878"/>
+<path class="wire" data-net="J20" d="M 1210 540 H 1262"/>
+<path class="wire" data-net="J21" d="M 1594 540 H 1646"/>
+<path class="wire" data-net="J22" d="M 1978 392 H 2030"/>
+<path class="wire" data-net="J23" d="M 1978 466 H 2030"/>
+<path class="wire" data-net="J24" d="M 1978 540 H 2030"/>
+<path class="wire" data-net="CPX1" d="M 1114 244 H 1166"/>
+<path class="wire" data-net="CPX2" d="M 1786 244 H 1838"/>
+</g>
+<g class="parts">
+<g class="part kind-breaker_pole" data-part="52U:1-2">
+<line class="sym" x1="150" y1="170" x2="150" y2="184"/>
+<line class="sym" x1="150" y1="220" x2="150" y2="206"/>
+<line class="sym" x1="150" y1="206" x2="139" y2="186"/>
+<line class="sym" x1="146" y1="180" x2="154" y2="188"/>
+<line class="sym" x1="146" y1="188" x2="154" y2="180"/>
+<circle class="terminal" data-terminal="52U:1" cx="150" cy="170" r="2.6"/>
+<circle class="terminal" data-terminal="52U:2" cx="150" cy="220" r="2.6"/>
+</g>
+<g class="part kind-breaker_pole" data-part="52U:3-4">
+<line class="sym" x1="194" y1="170" x2="194" y2="184"/>
+<line class="sym" x1="194" y1="220" x2="194" y2="206"/>
+<line class="sym" x1="194" y1="206" x2="183" y2="186"/>
+<line class="sym" x1="190" y1="180" x2="198" y2="188"/>
+<line class="sym" x1="190" y1="188" x2="198" y2="180"/>
+<circle class="terminal" data-terminal="52U:3" cx="194" cy="170" r="2.6"/>
+<circle class="terminal" data-terminal="52U:4" cx="194" cy="220" r="2.6"/>
+</g>
+<g class="part kind-breaker_pole" data-part="52U:5-6">
+<line class="sym" x1="238" y1="170" x2="238" y2="184"/>
+<line class="sym" x1="238" y1="220" x2="238" y2="206"/>
+<line class="sym" x1="238" y1="206" x2="227" y2="186"/>
+<line class="sym" x1="234" y1="180" x2="242" y2="188"/>
+<line class="sym" x1="234" y1="188" x2="242" y2="180"/>
+<circle class="terminal" data-terminal="52U:5" cx="238" cy="170" r="2.6"/>
+<circle class="terminal" data-terminal="52U:6" cx="238" cy="220" r="2.6"/>
+</g>
+<line class="link" x1="141" y1="195" x2="229" y2="195"/>
+<g class="part kind-main_n" data-part="TS:1-20">
+<line class="sym" x1="150" y1="320" x2="150" y2="336"/>
+<line class="sym" x1="150" y1="354" x2="150" y2="370"/>
+<line class="sym" x1="150" y1="354" x2="140" y2="335"/>
+<line class="sym" x1="150" y1="336" x2="138" y2="336"/>
+<circle class="terminal" data-terminal="TS:1" cx="150" cy="320" r="2.6"/>
+<circle class="terminal" data-terminal="TS:20" cx="150" cy="370" r="2.6"/>
+</g>
+<g class="part kind-main_n" data-part="TS:2-21">
+<line class="sym" x1="194" y1="320" x2="194" y2="336"/>
+<line class="sym" x1="194" y1="354" x2="194" y2="370"/>
+<line class="sym" x1="194" y1="354" x2="184" y2="335"/>
+<line class="sym" x1="194" y1="336" x2="182" y2="336"/>
+<circle class="terminal" data-terminal="TS:2" cx="194" cy="320" r="2.6"/>
+<circle class="terminal" data-terminal="TS:21" cx="194" cy="370" r="2.6"/>
+</g>
+<g class="part kind-main_n" data-part="TS:3-22">
+<line class="sym" x1="238" y1="320" x2="238" y2="336"/>
+<line class="sym" x1="238" y1="354" x2="238" y2="370"/>
+<line class="sym" x1="238" y1="354" x2="228" y2="335"/>
+<line class="sym" x1="238" y1="336" x2="226" y2="336"/>
+<circle class="terminal" data-terminal="TS:3" cx="238" cy="320" r="2.6"/>
+<circle class="terminal" data-terminal="TS:22" cx="238" cy="370" r="2.6"/>
+</g>
+<g class="part kind-main_n" data-part="TS:NN-LN">
+<line class="sym" x1="282" y1="320" x2="282" y2="336"/>
+<line class="sym" x1="282" y1="354" x2="282" y2="370"/>
+<line class="sym" x1="282" y1="354" x2="272" y2="335"/>
+<line class="sym" x1="282" y1="336" x2="270" y2="336"/>
+<circle class="terminal" data-terminal="TS:NN" cx="282" cy="320" r="2.6"/>
+<circle class="terminal" data-terminal="TS:LN" cx="282" cy="370" r="2.6"/>
+</g>
+<line class="link" x1="141" y1="345" x2="273" y2="345"/>
+<g class="part kind-main_e" data-part="TS:4-20">
+<line class="sym" x1="400" y1="320" x2="400" y2="336"/>
+<line class="sym" x1="400" y1="354" x2="400" y2="370"/>
+<line class="sym" x1="400" y1="354" x2="390" y2="335"/>
+<circle class="terminal" data-terminal="TS:4" cx="400" cy="320" r="2.6"/>
+<circle class="terminal" data-terminal="TS:20" cx="400" cy="370" r="2.6"/>
+</g>
+<g class="part kind-main_e" data-part="TS:19-21">
+<line class="sym" x1="444" y1="320" x2="444" y2="336"/>
+<line class="sym" x1="444" y1="354" x2="444" y2="370"/>
+<line class="sym" x1="444" y1="354" x2="434" y2="335"/>
+<circle class="terminal" data-terminal="TS:19" cx="444" cy="320" r="2.6"/>
+<circle class="terminal" data-terminal="TS:21" cx="444" cy="370" r="2.6"/>
+</g>
+<g class="part kind-main_e" data-part="TS:5-22">
+<line class="sym" x1="488" y1="320" x2="488" y2="336"/>
+<line class="sym" x1="488" y1="354" x2="488" y2="370"/>
+<line class="sym" x1="488" y1="354" x2="478" y2="335"/>
+<circle class="terminal" data-terminal="TS:5" cx="488" cy="320" r="2.6"/>
+<circle class="terminal" data-terminal="TS:22" cx="488" cy="370" r="2.6"/>
+</g>
+<g class="part kind-main_e" data-part="TS:EN-LN">
+<line class="sym" x1="532" y1="320" x2="532" y2="336"/>
+<line class="sym" x1="532" y1="354" x2="532" y2="370"/>
+<line class="sym" x1="532" y1="354" x2="522" y2="335"/>
+<circle class="terminal" data-terminal="TS:EN" cx="532" cy="320" r="2.6"/>
+<circle class="terminal" data-terminal="TS:LN" cx="532" cy="370" r="2.6"/>
+</g>
+<line class="link" x1="391" y1="345" x2="523" y2="345"/>
+<g class="part kind-wire" data-part="H1:W18_TS7-W18_TS1">
+<line class="sym" x1="686" y1="170" x2="730" y2="170"/>
+<circle class="terminal" data-terminal="H1:W18_TS7" cx="730" cy="170" r="2.6"/>
+<circle class="terminal" data-terminal="H1:W18_TS1" cx="686" cy="170" r="2.6"/>
+</g>
+<g class="part kind-cutoff_e" data-part="TS:6-7">
+<line class="sym" x1="782" y1="170" x2="796" y2="170"/>
+<line class="sym" x1="812" y1="170" x2="826" y2="170"/>
+<line class="sym" x1="796" y1="157" x2="796" y2="183"/>
+<line class="sym" x1="812" y1="157" x2="812" y2="183"/>
+<circle class="terminal" data-terminal="TS:6" cx="826" cy="170" r="2.6"/>
+<circle class="terminal" data-terminal="TS:7" cx="782" cy="170" r="2.6"/>
+</g>
+<g class="part kind-wire" data-part="H1:W3_TS6-W3_P3">
+<line class="sym" x1="878" y1="170" x2="922" y2="170"/>
+<circle class="terminal" data-terminal="H1:W3_TS6" cx="878" cy="170" r="2.6"/>
+<circle class="terminal" data-terminal="H1:W3_P3" cx="922" cy="170" r="2.6"/>
+</g>
+<g class="part kind-pin" data-part="XP:P3-J3">
+<line class="sym" x1="974" y1="170" x2="990" y2="170"/>
+<line class="sym" x1="1002" y1="170" x2="1018" y2="170"/>
+<polyline class="sym" points="990,164 995,170 990,176"/>
+<polyline class="sym" points="998,164 1003,170 998,176"/>
+<circle class="terminal" data-terminal="XP:P3" cx="974" cy="170" r="2.6"/>
+<circle class="terminal" data-terminal="XP:J3" cx="1018" cy="170" r="2.6"/>
+</g>
+<g class="part kind-contact_no" data-part="SE:J3-J2">
+<line class="sym" x1="1166" y1="170" x2="1180" y2="170"/>
+<line class="sym" x1="1196" y1="170" x2="1210" y2="170"/>
+<line class="sym" x1="1180" y1="157" x2="1180" y2="183"/>
+<line class="sym" x1="1196" y1="157" x2="1196" y2="183"/>
+<circle class="terminal" data-terminal="SE:J3" cx="1166" cy="170" r="2.6"/>
+<circle class="terminal" data-terminal="SE:J2" cx="1210" cy="170" r="2.6"/>
+</g>
+<g class="part kind-pin" data-part="XP:P2-J2">
+<line class="sym" x1="1262" y1="170" x2="1278" y2="170"/>
+<line class="sym" x1="1290" y1="170" x2="1306" y2="170"/>
+<polyline class="sym" points="1278,164 1283,170 1278,176"/>
+<polyline class="sym" points="1286,164 1291,170 1286,176"/>
+<circle class="terminal" data-terminal="XP:P2" cx="1306" cy="170" r="2.6"/>
+<circle class="terminal" data-terminal="XP:J2" cx="1262" cy="170" r="2.6"/>
+</g>
+<g class="part kind-wire" data-part="H1:W2_TSA-W2_P2">
+<line class="sym" x1="1358" y1="170" x2="1402" y2="170"/>
+<circle class="terminal" data-terminal="H1:W2_TSA" cx="1402" cy="170" r="2.6"/>
+<circle class="terminal" data-terminal="H1:W2_P2" cx="1358" cy="170" r="2.6"/>
+</g>
+<g class="part kind-solenoid" data-part="TS:A-B">
+<rect class="link" x="1460" y="148" width="32" height="44"/>
+<line class="sym" x1="1454" y1="170" x2="1454" y2="170"/>
+<line class="sym" x1="1498" y1="170" x2="1498" y2="170"/>
+<polygon class="sym" points="1454,170 1465,159 1476,170 1465,181"/>
+<circle class="sym" cx="1488" cy="170" r="9"/>
+<line class="sym" x1="1476" y1="170" x2="1479" y2="170"/>
+<line class="sym" x1="1497" y1="170" x2="1498" y2="170"/>
+<circle class="terminal" data-terminal="TS:A" cx="1454" cy="170" r="2.6"/>
+<circle class="terminal" data-terminal="TS:B" cx="1498" cy="170" r="2.6"/>
+</g>
+<g class="part kind-wire" data-part="H1:W5_TSB-W5_P5">
+<line class="sym" x1="1550" y1="170" x2="1594" y2="170"/>
+<circle class="terminal" data-terminal="H1:W5_TSB" cx="1550" cy="170" r="2.6"/>
+<circle class="terminal" data-terminal="H1:W5_P5" cx="1594" cy="170" r="2.6"/>
+</g>
+<g class="part kind-pin" data-part="XP:P5-J5">
+<line class="sym" x1="1646" y1="170" x2="1662" y2="170"/>
+<line class="sym" x1="1674" y1="170" x2="1690" y2="170"/>
+<polyline class="sym" points="1662,164 1667,170 1662,176"/>
+<polyline class="sym" points="1670,164 1675,170 1670,176"/>
+<circle class="terminal" data-terminal="XP:P5" cx="1646" cy="170" r="2.6"/>
+<circle class="terminal" data-terminal="XP:J5" cx="1690" cy="170" r="2.6"/>
+</g>
+<g class="part kind-contact_no" data-part="SE:J5-J15">
+<line class="sym" x1="1742" y1="170" x2="1756" y2="170"/>
+<line class="sym" x1="1772" y1="170" x2="1786" y2="170"/>
+<line class="sym" x1="1756" y1="157" x2="1756" y2="183"/>
+<line class="sym" x1="1772" y1="157" x2="1772" y2="183"/>
+<circle class="terminal" data-terminal="SE:J5" cx="1742" cy="170" r="2.6"/>
+<circle class="terminal" data-terminal="SE:J15" cx="1786" cy="170" r="2.6"/>
+</g>
+<g class="part kind-pin" data-part="XP:P15-J15">
+<line class="sym" x1="1838" y1="170" x2="1854" y2="170"/>
+<line class="sym" x1="1866" y1="170" x2="1882" y2="170"/>
+<polyline class="sym" points="1854,164 1859,170 1854,176"/>
+<polyline class="sym" points="1862,164 1867,170 1862,176"/>
+<circle class="terminal" data-terminal="XP:P15" cx="1882" cy="170" r="2.6"/>
+<circle class="terminal" data-terminal="XP:J15" cx="1838" cy="170" r="2.6"/>
+</g>
+<g class="part kind-wire" data-part="H1:W15_TS70-W15_P15">
+<line class="sym" x1="1934" y1="170" x2="1978" y2="170"/>
+<circle class="terminal" data-terminal="H1:W15_TS70" cx="1978" cy="170" r="2.6"/>
+<circle class="terminal" data-terminal="H1:W15_P15" cx="1934" cy="170" r="2.6"/>
+</g>
+<g class="part kind-cutoff_e" data-part="TS:69-70">
+<line class="sym" x1="2030" y1="170" x2="2044" y2="170"/>
+<line class="sym" x1="2060" y1="170" x2="2074" y2="170"/>
+<line class="sym" x1="2044" y1="157" x2="2044" y2="183"/>
+<line class="sym" x1="2060" y1="157" x2="2060" y2="183"/>
+<circle class="terminal" data-terminal="TS:69" cx="2074" cy="170" r="2.6"/>
+<circle class="terminal" data-terminal="TS:70" cx="2030" cy="170" r="2.6"/>
+</g>
+<g class="part kind-wire" data-part="H1:W20_TS3-W20_TS69">
+<line class="sym" x1="2126" y1="170" x2="2170" y2="170"/>
+<circle class="terminal" data-terminal="H1:W20_TS3" cx="2170" cy="170" r="2.6"/>
+<circle class="terminal" data-terminal="H1:W20_TS69" cx="2126" cy="170" r="2.6"/>
+</g>
+<g class="part kind-wire" data-part="H1:W17_TS4-W17_TS9">
+<line class="sym" x1="686" y1="244" x2="730" y2="244"/>
+<circle class="terminal" data-terminal="H1:W17_TS4" cx="686" cy="244" r="2.6"/>
+<circle class="terminal" data-terminal="H1:W17_TS9" cx="730" cy="244" r="2.6"/>
+</g>
+<g class="part kind-cutoff_n" data-part="TS:8-9">
+<line class="sym" x1="782" y1="244" x2="796" y2="244"/>
+<line class="sym" x1="812" y1="244" x2="826" y2="244"/>
+<line class="sym" x1="796" y1="231" x2="796" y2="257"/>
+<line class="sym" x1="812" y1="231" x2="812" y2="257"/>
+<line class="sym" x1="789" y1="259" x2="819" y2="229"/>
+<circle class="terminal" data-terminal="TS:8" cx="826" cy="244" r="2.6"/>
+<circle class="terminal" data-terminal="TS:9" cx="782" cy="244" r="2.6"/>
+</g>
+<g class="part kind-wire" data-part="H1:W1_TS8-W1_P1">
+<line class="sym" x1="878" y1="244" x2="922" y2="244"/>
+<circle class="terminal" data-terminal="H1:W1_TS8" cx="878" cy="244" r="2.6"/>
+<circle class="terminal" data-terminal="H1:W1_P1" cx="922" cy="244" r="2.6"/>
+</g>
+<g class="part kind-pin" data-part="XP:P1-J1">
+<line class="sym" x1="974" y1="244" x2="990" y2="244"/>
+<line class="sym" x1="1002" y1="244" x2="1018" y2="244"/>
+<polyline class="sym" points="990,238 995,244 990,250"/>
+<polyline class="sym" points="998,238 1003,244 998,250"/>
+<circle class="terminal" data-terminal="XP:P1" cx="974" cy="244" r="2.6"/>
+<circle class="terminal" data-terminal="XP:J1" cx="1018" cy="244" r="2.6"/>
+</g>
+<g class="part kind-contact_no" data-part="ER:J1-X1">
+<line class="sym" x1="1070" y1="244" x2="1084" y2="244"/>
+<line class="sym" x1="1100" y1="244" x2="1114" y2="244"/>
+<line class="sym" x1="1084" y1="231" x2="1084" y2="257"/>
+<line class="sym" x1="1100" y1="231" x2="1100" y2="257"/>
+<circle class="terminal" data-terminal="ER:J1" cx="1070" cy="244" r="2.6"/>
+<circle class="terminal" data-terminal="ER:X1" cx="1114" cy="244" r="2.6"/>
+</g>
+<g class="part kind-contact_nc" data-part="SE:X1-J2">
+<line class="sym" x1="1166" y1="244" x2="1180" y2="244"/>
+<line class="sym" x1="1196" y1="244" x2="1210" y2="244"/>
+<line class="sym" x1="1180" y1="231" x2="1180" y2="257"/>
+<line class="sym" x1="1196" y1="231" x2="1196" y2="257"/>
+<line class="sym" x1="1173" y1="259" x2="1203" y2="229"/>
+<circle class="terminal" data-terminal="SE:X1" cx="1166" cy="244" r="2.6"/>
+<circle class="terminal" data-terminal="SE:J2" cx="1210" cy="244" r="2.6"/>
+</g>
+<g class="part kind-contact_nc" data-part="SE:J5-X2">
+<line class="sym" x1="1742" y1="244" x2="1756" y2="244"/>
+<line class="sym" x1="1772" y1="244" x2="1786" y2="244"/>
+<line class="sym" x1="1756" y1="231" x2="1756" y2="257"/>
+<line class="sym" x1="1772" y1="231" x2="1772" y2="257"/>
+<line class="sym" x1="1749" y1="259" x2="1779" y2="229"/>
+<circle class="terminal" data-terminal="SE:J5" cx="1742" cy="244" r="2.6"/>
+<circle class="terminal" data-terminal="SE:X2" cx="1786" cy="244" r="2.6"/>
+</g>
+<g class="part kind-contact_no" data-part="ER:X2-J16">
+<line class="sym" x1="1838" y1="244" x2="1852" y2="244"/>
+<line class="sym" x1="1868" y1="244" x2="1882" y2="244"/>
+<line class="sym" x1="1852" y1="231" x2="1852" y2="257"/>
+<line class="sym" x1="1868" y1="231" x2="1868" y2="257"/>
+<circle class="terminal" data-terminal="ER:X2" cx="1838" cy="244" r="2.6"/>
+<circle class="terminal" data-terminal="ER:J16" cx="1882" cy="244" r="2.6"/>
+</g>
+<g class="part kind-pin" data-part="XP:P16-J16">
+<line class="sym" x1="1934" y1="244" x2="1950" y2="244"/>
+<line class="sym" x1="1962" y1="244" x2="1978" y2="244"/>
+<polyline class="sym" points="1950,238 1955,244 1950,250"/>
+<polyline class="sym" points="1958,238 1963,244 1958,250"/>
+<circle class="terminal" data-terminal="XP:P16" cx="1978" cy="244" r="2.6"/>
+<circle class="terminal" data-terminal="XP:J16" cx="1934" cy="244" r="2.6"/>
+</g>
+<g class="part kind-wire" data-part="H1:W16_TS72-W16_P16">
+<line class="sym" x1="2030" y1="244" x2="2074" y2="244"/>
+<circle class="terminal" data-terminal="H1:W16_TS72" cx="2074" cy="244" r="2.6"/>
+<circle class="terminal" data-terminal="H1:W16_P16" cx="2030" cy="244" r="2.6"/>
+</g>
+<g class="part kind-cutoff_n" data-part="TS:71-72">
+<line class="sym" x1="2126" y1="244" x2="2140" y2="244"/>
+<line class="sym" x1="2156" y1="244" x2="2170" y2="244"/>
+<line class="sym" x1="2140" y1="231" x2="2140" y2="257"/>
+<line class="sym" x1="2156" y1="231" x2="2156" y2="257"/>
+<line class="sym" x1="2133" y1="259" x2="2163" y2="229"/>
+<circle class="terminal" data-terminal="TS:71" cx="2170" cy="244" r="2.6"/>
+<circle class="terminal" data-terminal="TS:72" cx="2126" cy="244" r="2.6"/>
+</g>
+<g class="part kind-wire" data-part="H1:W21_TS5-W21_TS71">
+<line class="sym" x1="2222" y1="244" x2="2266" y2="244"/>
+<circle class="terminal" data-terminal="H1:W21_TS5" cx="2266" cy="244" r="2.6"/>
+<circle class="terminal" data-terminal="H1:W21_TS71" cx="2222" cy="244" r="2.6"/>
+</g>
+<g class="part kind-wire" data-part="H1:W12_TS1-W12_P12">
+<line class="sym" x1="686" y1="392" x2="730" y2="392"/>
+<circle class="terminal" data-terminal="H1:W12_TS1" cx="686" cy="392" r="2.6"/>
+<circle class="terminal" data-terminal="H1:W12_P12" cx="730" cy="392" r="2.6"/>
+</g>
+<g class="part kind-pin" data-part="XP:P12-J12">
+<line class="sym" x1="782" y1="392" x2="798" y2="392"/>
+<line class="sym" x1="810" y1="392" x2="826" y2="392"/>
+<polyline class="sym" points="798,386 803,392 798,398"/>
+<polyline class="sym" points="806,386 811,392 806,398"/>
+<circle class="terminal" data-terminal="XP:P12" cx="782" cy="392" r="2.6"/>
+<circle class="terminal" data-terminal="XP:J12" cx="826" cy="392" r="2.6"/>
+</g>
+<g class="part kind-input" data-part="CP:J12">
+<line class="sym" x1="878" y1="392" x2="892" y2="392"/>
+<rect class="sym" x="892" y="381" width="30" height="22"/>
+<circle class="terminal" data-terminal="CP:J12" cx="878" cy="392" r="2.6"/>
+</g>
+<g class="part kind-wire" data-part="H1:W11_TS2-W11_P11">
+<line class="sym" x1="1070" y1="392" x2="1114" y2="392"/>
+<circle class="terminal" data-terminal="H1:W11_TS2" cx="1070" cy="392" r="2.6"/>
+<circle class="terminal" data-terminal="H1:W11_P11" cx="1114" cy="392" r="2.6"/>
+</g>
+<g class="part kind-pin" data-part="XP:P11-J11">
+<line class="sym" x1="1166" y1="392" x2="1182" y2="392"/>
+<line class="sym" x1="1194" y1="392" x2="1210" y2="392"/>
+<polyline class="sym" points="1182,386 1187,392 1182,398"/>
+<polyline class="sym" points="1190,386 1195,392 1190,398"/>
+<circle class="terminal" data-terminal="XP:P11" cx="1166" cy="392" r="2.6"/>
+<circle class="terminal" data-terminal="XP:J11" cx="1210" cy="392" r="2.6"/>
+</g>
+<g class="part kind-input" data-part="CP:J11">
+<line class="sym" x1="1262" y1="392" x2="1276" y2="392"/>
+<rect class="sym" x="1276" y="381" width="30" height="22"/>
+<circle class="terminal" data-terminal="CP:J11" cx="1262" cy="392" r="2.6"/>
+</g>
+<g class="part kind-wire" data-part="H1:W4_TS3-W4_P4">
+<line class="sym" x1="1454" y1="392" x2="1498" y2="392"/>
+<circle class="terminal" data-terminal="H1:W4_TS3" cx="1454" cy="392" r="2.6"/>
+<circle class="terminal" data-terminal="H1:W4_P4" cx="1498" cy="392" r="2.6"/>
+</g>
+<g class="part kind-pin" data-part="XP:P4-J4">
+<line class="sym" x1="1550" y1="392" x2="1566" y2="392"/>
+<line class="sym" x1="1578" y1="392" x2="1594" y2="392"/>
+<polyline class="sym" points="1566,386 1571,392 1566,398"/>
+<polyline class="sym" points="1574,386 1579,392 1574,398"/>
+<circle class="terminal" data-terminal="XP:P4" cx="1550" cy="392" r="2.6"/>
+<circle class="terminal" data-terminal="XP:J4" cx="1594" cy="392" r="2.6"/>
+</g>
+<g class="part kind-input" data-part="CP:J4">
+<line class="sym" x1="1646" y1="392" x2="1660" y2="392"/>
+<rect class="sym" x="1660" y="381" width="30" height="22"/>
+<circle class="terminal" data-terminal="CP:J4" cx="1646" cy="392" r="2.6"/>
+</g>
+<g class="part kind-wire" data-part="H1:W29_TSNN-W29_P22">
+<line class="sym" x1="1838" y1="392" x2="1882" y2="392"/>
+<circle class="terminal" data-terminal="H1:W29_TSNN" cx="1838" cy="392" r="2.6"/>
+<circle class="terminal" data-terminal="H1:W29_P22" cx="1882" cy="392" r="2.6"/>
+</g>
+<g class="part kind-pin" data-part="XP:P22-J22">
+<line class="sym" x1="1934" y1="392" x2="1950" y2="392"/>
+<line class="sym" x1="1962" y1="392" x2="1978" y2="392"/>
+<polyline class="sym" points="1950,386 1955,392 1950,398"/>
+<polyline class="sym" points="1958,386 1963,392 1958,398"/>
+<circle class="terminal" data-terminal="XP:P22" cx="1934" cy="392" r="2.6"/>
+<circle class="terminal" data-terminal="XP:J22" cx="1978" cy="392" r="2.6"/>
+</g>
+<g class="part kind-input" data-part="CP:J22">
+<line class="sym" x1="2030" y1="392" x2="2044" y2="392"/>
+<rect class="sym" x="2044" y="381" width="30" height="22"/>
+<circle class="terminal" data-terminal="CP:J22" cx="2030" cy="392" r="2.6"/>
+</g>
+<g class="part kind-wire" data-part="H1:W7_TS4-W7_P7">
+<line class="sym" x1="686" y1="466" x2="730" y2="466"/>
+<circle class="terminal" data-terminal="H1:W7_TS4" cx="686" cy="466" r="2.6"/>
+<circle class="terminal" data-terminal="H1:W7_P7" cx="730" cy="466" r="2.6"/>
+</g>
+<g class="part kind-pin" data-part="XP:P7-J7">
+<line class="sym" x1="782" y1="466" x2="798" y2="466"/>
+<line class="sym" x1="810" y1="466" x2="826" y2="466"/>
+<polyline class="sym" points="798,460 803,466 798,472"/>
+<polyline class="sym" points="806,460 811,466 806,472"/>
+<circle class="terminal" data-terminal="XP:P7" cx="782" cy="466" r="2.6"/>
+<circle class="terminal" data-terminal="XP:J7" cx="826" cy="466" r="2.6"/>
+</g>
+<g class="part kind-input" data-part="CP:J7">
+<line class="sym" x1="878" y1="466" x2="892" y2="466"/>
+<rect class="sym" x="892" y="455" width="30" height="22"/>
+<circle class="terminal" data-terminal="CP:J7" cx="878" cy="466" r="2.6"/>
+</g>
+<g class="part kind-wire" data-part="H1:W25_TS19-W25_P18">
+<line class="sym" x1="1070" y1="466" x2="1114" y2="466"/>
+<circle class="terminal" data-terminal="H1:W25_TS19" cx="1070" cy="466" r="2.6"/>
+<circle class="terminal" data-terminal="H1:W25_P18" cx="1114" cy="466" r="2.6"/>
+</g>
+<g class="part kind-pin" data-part="XP:P18-J18">
+<line class="sym" x1="1166" y1="466" x2="1182" y2="466"/>
+<line class="sym" x1="1194" y1="466" x2="1210" y2="466"/>
+<polyline class="sym" points="1182,460 1187,466 1182,472"/>
+<polyline class="sym" points="1190,460 1195,466 1190,472"/>
+<circle class="terminal" data-terminal="XP:P18" cx="1166" cy="466" r="2.6"/>
+<circle class="terminal" data-terminal="XP:J18" cx="1210" cy="466" r="2.6"/>
+</g>
+<g class="part kind-input" data-part="CP:J18">
+<line class="sym" x1="1262" y1="466" x2="1276" y2="466"/>
+<rect class="sym" x="1276" y="455" width="30" height="22"/>
+<circle class="terminal" data-terminal="CP:J18" cx="1262" cy="466" r="2.6"/>
+</g>
+<g class="part kind-wire" data-part="H1:W6_TS5-W6_P6">
+<line class="sym" x1="1454" y1="466" x2="1498" y2="466"/>
+<circle class="terminal" data-terminal="H1:W6_TS5" cx="1454" cy="466" r="2.6"/>
+<circle class="terminal" data-terminal="H1:W6_P6" cx="1498" cy="466" r="2.6"/>
+</g>
+<g class="part kind-pin" data-part="XP:P6-J6">
+<line class="sym" x1="1550" y1="466" x2="1566" y2="466"/>
+<line class="sym" x1="1578" y1="466" x2="1594" y2="466"/>
+<polyline class="sym" points="1566,460 1571,466 1566,472"/>
+<polyline class="sym" points="1574,460 1579,466 1574,472"/>
+<circle class="terminal" data-terminal="XP:P6" cx="1550" cy="466" r="2.6"/>
+<circle class="terminal" data-terminal="XP:J6" cx="1594" cy="466" r="2.6"/>
+</g>
+<g class="part kind-input" data-part="CP:J6">
+<line class="sym" x1="1646" y1="466" x2="1660" y2="466"/>
+<rect class="sym" x="1660" y="455" width="30" height="22"/>
+<circle class="terminal" data-terminal="CP:J6" cx="1646" cy="466" r="2.6"/>
+</g>
+<g class="part kind-wire" data-part="H1:W30_TSEN-W30_P23">
+<line class="sym" x1="1838" y1="466" x2="1882" y2="466"/>
+<circle class="terminal" data-terminal="H1:W30_TSEN" cx="1838" cy="466" r="2.6"/>
+<circle class="terminal" data-terminal="H1:W30_P23" cx="1882" cy="466" r="2.6"/>
+</g>
+<g class="part kind-pin" data-part="XP:P23-J23">
+<line class="sym" x1="1934" y1="466" x2="1950" y2="466"/>
+<line class="sym" x1="1962" y1="466" x2="1978" y2="466"/>
+<polyline class="sym" points="1950,460 1955,466 1950,472"/>
+<polyline class="sym" points="1958,460 1963,466 1958,472"/>
+<circle class="terminal" data-terminal="XP:P23" cx="1934" cy="466" r="2.6"/>
+<circle class="terminal" data-terminal="XP:J23" cx="1978" cy="466" r="2.6"/>
+</g>
+<g class="part kind-input" data-part="CP:J23">
+<line class="sym" x1="2030" y1="466" x2="2044" y2="466"/>
+<rect class="sym" x="2044" y="455" width="30" height="22"/>
+<circle class="terminal" data-terminal="CP:J23" cx="2030" cy="466" r="2.6"/>
+</g>
+<g class="part kind-wire" data-part="H1:W26_TS20-W26_P19">
+<line class="sym" x1="686" y1="540" x2="730" y2="540"/>
+<circle class="terminal" data-terminal="H1:W26_TS20" cx="686" cy="540" r="2.6"/>
+<circle class="terminal" data-terminal="H1:W26_P19" cx="730" cy="540" r="2.6"/>
+</g>
+<g class="part kind-pin" data-part="XP:P19-J19">
+<line class="sym" x1="782" y1="540" x2="798" y2="540"/>
+<line class="sym" x1="810" y1="540" x2="826" y2="540"/>
+<polyline class="sym" points="798,534 803,540 798,546"/>
+<polyline class="sym" points="806,534 811,540 806,546"/>
+<circle class="terminal" data-terminal="XP:P19" cx="782" cy="540" r="2.6"/>
+<circle class="terminal" data-terminal="XP:J19" cx="826" cy="540" r="2.6"/>
+</g>
+<g class="part kind-input" data-part="CP:J19">
+<line class="sym" x1="878" y1="540" x2="892" y2="540"/>
+<rect class="sym" x="892" y="529" width="30" height="22"/>
+<circle class="terminal" data-terminal="CP:J19" cx="878" cy="540" r="2.6"/>
+</g>
+<g class="part kind-wire" data-part="H1:W27_TS21-W27_P20">
+<line class="sym" x1="1070" y1="540" x2="1114" y2="540"/>
+<circle class="terminal" data-terminal="H1:W27_TS21" cx="1070" cy="540" r="2.6"/>
+<circle class="terminal" data-terminal="H1:W27_P20" cx="1114" cy="540" r="2.6"/>
+</g>
+<g class="part kind-pin" data-part="XP:P20-J20">
+<line class="sym" x1="1166" y1="540" x2="1182" y2="540"/>
+<line class="sym" x1="1194" y1="540" x2="1210" y2="540"/>
+<polyline class="sym" points="1182,534 1187,540 1182,546"/>
+<polyline class="sym" points="1190,534 1195,540 1190,546"/>
+<circle class="terminal" data-terminal="XP:P20" cx="1166" cy="540" r="2.6"/>
+<circle class="terminal" data-terminal="XP:J20" cx="1210" cy="540" r="2.6"/>
+</g>
+<g class="part kind-input" data-part="CP:J20">
+<line class="sym" x1="1262" y1="540" x2="1276" y2="540"/>
+<rect class="sym" x="1276" y="529" width="30" height="22"/>
+<circle class="terminal" data-terminal="CP:J20" cx="1262" cy="540" r="2.6"/>
+</g>
+<g class="part kind-wire" data-part="H1:W28_TS22-W28_P21">
+<line class="sym" x1="1454" y1="540" x2="1498" y2="540"/>
+<circle class="terminal" data-terminal="H1:W28_TS22" cx="1454" cy="540" r="2.6"/>
+<circle class="terminal" data-terminal="H1:W28_P21" cx="1498" cy="540" r="2.6"/>
+</g>
+<g class="part kind-pin" data-part="XP:P21-J21">
+<line class="sym" x1="1550" y1="540" x2="1566" y2="540"/>
+<line class="sym" x1="1578" y1="540" x2="1594" y2="540"/>
+<polyline class="sym" points="1566,534 1571,540 1566,546"/>
+<polyline class="sym" points="1574,534 1579,540 1574,546"/>
+<circle class="terminal" data-terminal="XP:P21" cx="1550" cy="540" r="2.6"/>
+<circle class="terminal" data-terminal="XP:J21" cx="1594" cy="540" r="2.6"/>
+</g>
+<g class="part kind-input" data-part="CP:J21">
+<line class="sym" x1="1646" y1="540" x2="1660" y2="540"/>
+<rect class="sym" x="1660" y="529" width="30" height="22"/>
+<circle class="terminal" data-terminal="CP:J21" cx="1646" cy="540" r="2.6"/>
+</g>
+<g class="part kind-wire" data-part="H1:W31_TSLN-W31_P24">
+<line class="sym" x1="1838" y1="540" x2="1882" y2="540"/>
+<circle class="terminal" data-terminal="H1:W31_TSLN" cx="1838" cy="540" r="2.6"/>
+<circle class="terminal" data-terminal="H1:W31_P24" cx="1882" cy="540" r="2.6"/>
+</g>
+<g class="part kind-pin" data-part="XP:P24-J24">
+<line class="sym" x1="1934" y1="540" x2="1950" y2="540"/>
+<line class="sym" x1="1962" y1="540" x2="1978" y2="540"/>
+<polyline class="sym" points="1950,534 1955,540 1950,546"/>
+<polyline class="sym" points="1958,534 1963,540 1958,546"/>
+<circle class="terminal" data-terminal="XP:P24" cx="1934" cy="540" r="2.6"/>
+<circle class="terminal" data-terminal="XP:J24" cx="1978" cy="540" r="2.6"/>
+</g>
+<g class="part kind-input" data-part="CP:J24">
+<line class="sym" x1="2030" y1="540" x2="2044" y2="540"/>
+<rect class="sym" x="2044" y="529" width="30" height="22"/>
+<circle class="terminal" data-terminal="CP:J24" cx="2030" cy="540" r="2.6"/>
+</g>
+<g class="part kind-aux_e" data-part="TS:17-16">
+<line class="sym" x1="686" y1="688" x2="700" y2="688"/>
+<line class="sym" x1="716" y1="688" x2="730" y2="688"/>
+<line class="sym" x1="700" y1="675" x2="700" y2="701"/>
+<line class="sym" x1="716" y1="675" x2="716" y2="701"/>
+<circle class="terminal" data-terminal="TS:17" cx="686" cy="688" r="2.6"/>
+<circle class="terminal" data-terminal="TS:16" cx="730" cy="688" r="2.6"/>
+</g>
+<g class="part kind-wire" data-part="H1:W13_TS16-W13_P13">
+<line class="sym" x1="782" y1="688" x2="826" y2="688"/>
+<circle class="terminal" data-terminal="H1:W13_TS16" cx="782" cy="688" r="2.6"/>
+<circle class="terminal" data-terminal="H1:W13_P13" cx="826" cy="688" r="2.6"/>
+</g>
+<g class="part kind-pin" data-part="XP:P13-J13">
+<line class="sym" x1="878" y1="688" x2="894" y2="688"/>
+<line class="sym" x1="906" y1="688" x2="922" y2="688"/>
+<polyline class="sym" points="894,682 899,688 894,694"/>
+<polyline class="sym" points="902,682 907,688 902,694"/>
+<circle class="terminal" data-terminal="XP:P13" cx="878" cy="688" r="2.6"/>
+<circle class="terminal" data-terminal="XP:J13" cx="922" cy="688" r="2.6"/>
+</g>
+<g class="part kind-input" data-part="CP:J13">
+<line class="sym" x1="974" y1="688" x2="988" y2="688"/>
+<rect class="sym" x="988" y="677" width="30" height="22"/>
+<circle class="terminal" data-terminal="CP:J13" cx="974" cy="688" r="2.6"/>
+</g>
+<g class="part kind-aux_n" data-part="TS:17-18">
+<line class="sym" x1="686" y1="762" x2="700" y2="762"/>
+<line class="sym" x1="716" y1="762" x2="730" y2="762"/>
+<line class="sym" x1="700" y1="749" x2="700" y2="775"/>
+<line class="sym" x1="716" y1="749" x2="716" y2="775"/>
+<line class="sym" x1="693" y1="777" x2="723" y2="747"/>
+<circle class="terminal" data-terminal="TS:17" cx="686" cy="762" r="2.6"/>
+<circle class="terminal" data-terminal="TS:18" cx="730" cy="762" r="2.6"/>
+</g>
+<g class="part kind-wire" data-part="H1:W14_TS18-W14_P14">
+<line class="sym" x1="782" y1="762" x2="826" y2="762"/>
+<circle class="terminal" data-terminal="H1:W14_TS18" cx="782" cy="762" r="2.6"/>
+<circle class="terminal" data-terminal="H1:W14_P14" cx="826" cy="762" r="2.6"/>
+</g>
+<g class="part kind-pin" data-part="XP:P14-J14">
+<line class="sym" x1="878" y1="762" x2="894" y2="762"/>
+<line class="sym" x1="906" y1="762" x2="922" y2="762"/>
+<polyline class="sym" points="894,756 899,762 894,768"/>
+<polyline class="sym" points="902,756 907,762 902,768"/>
+<circle class="terminal" data-terminal="XP:P14" cx="878" cy="762" r="2.6"/>
+<circle class="terminal" data-terminal="XP:J14" cx="922" cy="762" r="2.6"/>
+</g>
+<g class="part kind-input" data-part="CP:J14">
+<line class="sym" x1="974" y1="762" x2="988" y2="762"/>
+<rect class="sym" x="988" y="751" width="30" height="22"/>
+<circle class="terminal" data-terminal="CP:J14" cx="974" cy="762" r="2.6"/>
+</g>
+<g class="part kind-wire" data-part="H1:W10_TS17-W10_P10">
+<line class="sym" x1="686" y1="836" x2="730" y2="836"/>
+<circle class="terminal" data-terminal="H1:W10_TS17" cx="686" cy="836" r="2.6"/>
+<circle class="terminal" data-terminal="H1:W10_P10" cx="730" cy="836" r="2.6"/>
+</g>
+<g class="part kind-pin" data-part="XP:P10-J10">
+<line class="sym" x1="782" y1="836" x2="798" y2="836"/>
+<line class="sym" x1="810" y1="836" x2="826" y2="836"/>
+<polyline class="sym" points="798,830 803,836 798,842"/>
+<polyline class="sym" points="806,830 811,836 806,842"/>
+<circle class="terminal" data-terminal="XP:P10" cx="782" cy="836" r="2.6"/>
+<circle class="terminal" data-terminal="XP:J10" cx="826" cy="836" r="2.6"/>
+</g>
+<g class="part kind-input" data-part="CP:J10">
+<line class="sym" x1="878" y1="836" x2="892" y2="836"/>
+<rect class="sym" x="892" y="825" width="30" height="22"/>
+<circle class="terminal" data-terminal="CP:J10" cx="878" cy="836" r="2.6"/>
+</g>
+<g class="part kind-point" data-part="TBTS:14">
+<rect class="sym" x="699" y="975" width="18" height="18"/>
+<line class="sym" x1="686" y1="984" x2="699" y2="984"/>
+<circle class="terminal" data-terminal="TBTS:14" cx="686" cy="984" r="2.6"/>
+</g>
+<g class="part kind-wire" data-part="H1:W8A_TB14-W8A_P8">
+<line class="sym" x1="782" y1="984" x2="826" y2="984"/>
+<circle class="terminal" data-terminal="H1:W8A_TB14" cx="782" cy="984" r="2.6"/>
+<circle class="terminal" data-terminal="H1:W8A_P8" cx="826" cy="984" r="2.6"/>
+</g>
+<g class="part kind-pin" data-part="XP:P8-J8">
+<line class="sym" x1="878" y1="984" x2="894" y2="984"/>
+<line class="sym" x1="906" y1="984" x2="922" y2="984"/>
+<polyline class="sym" points="894,978 899,984 894,990"/>
+<polyline class="sym" points="902,978 907,984 902,990"/>
+<circle class="terminal" data-terminal="XP:P8" cx="878" cy="984" r="2.6"/>
+<circle class="terminal" data-terminal="XP:J8" cx="922" cy="984" r="2.6"/>
+</g>
+<g class="part kind-contact_nc" data-part="NR:J8-J9">
+<line class="sym" x1="974" y1="984" x2="988" y2="984"/>
+<line class="sym" x1="1004" y1="984" x2="1018" y2="984"/>
+<line class="sym" x1="988" y1="971" x2="988" y2="997"/>
+<line class="sym" x1="1004" y1="971" x2="1004" y2="997"/>
+<line class="sym" x1="981" y1="999" x2="1011" y2="969"/>
+<circle class="terminal" data-terminal="NR:J8" cx="974" cy="984" r="2.6"/>
+<circle class="terminal" data-terminal="NR:J9" cx="1018" cy="984" r="2.6"/>
+</g>
+<g class="part kind-pin" data-part="XP:P9-J9">
+<line class="sym" x1="1070" y1="984" x2="1086" y2="984"/>
+<line class="sym" x1="1098" y1="984" x2="1114" y2="984"/>
+<polyline class="sym" points="1086,978 1091,984 1086,990"/>
+<polyline class="sym" points="1094,978 1099,984 1094,990"/>
+<circle class="terminal" data-terminal="XP:P9" cx="1114" cy="984" r="2.6"/>
+<circle class="terminal" data-terminal="XP:J9" cx="1070" cy="984" r="2.6"/>
+</g>
+<g class="part kind-wire" data-part="H1:W9A_TB15-W9A_P9">
+<line class="sym" x1="1166" y1="984" x2="1210" y2="984"/>
+<circle class="terminal" data-terminal="H1:W9A_TB15" cx="1210" cy="984" r="2.6"/>
+<circle class="terminal" data-terminal="H1:W9A_P9" cx="1166" cy="984" r="2.6"/>
+</g>
+<g class="part kind-point" data-part="TBTS:15">
+<rect class="sym" x="1371" y="975" width="18" height="18"/>
+<line class="sym" x1="1358" y1="984" x2="1371" y2="984"/>
+<circle class="terminal" data-terminal="TBTS:15" cx="1358" cy="984" r="2.6"/>
+</g>
+<g class="part kind-contact_no" data-part="NR:J8-J17">
+<line class="sym" x1="974" y1="1058" x2="988" y2="1058"/>
+<line class="sym" x1="1004" y1="1058" x2="1018" y2="1058"/>
+<line class="sym" x1="988" y1="1045" x2="988" y2="1071"/>
+<line class="sym" x1="1004" y1="1045" x2="1004" y2="1071"/>
+<circle class="terminal" data-terminal="NR:J8" cx="974" cy="1058" r="2.6"/>
+<circle class="terminal" data-terminal="NR:J17" cx="1018" cy="1058" r="2.6"/>
+</g>
+<g class="part kind-pin" data-part="XP:P17-J17">
+<line class="sym" x1="1070" y1="1058" x2="1086" y2="1058"/>
+<line class="sym" x1="1098" y1="1058" x2="1114" y2="1058"/>
+<polyline class="sym" points="1086,1052 1091,1058 1086,1064"/>
+<polyline class="sym" points="1094,1052 1099,1058 1094,1064"/>
+<circle class="terminal" data-terminal="XP:P17" cx="1114" cy="1058" r="2.6"/>
+<circle class="terminal" data-terminal="XP:J17" cx="1070" cy="1058" r="2.6"/>
+</g>
+<g class="part kind-wire" data-part="H1:W24_TB16-W24_P17">
+<line class="sym" x1="1166" y1="1058" x2="1210" y2="1058"/>
+<circle class="terminal" data-terminal="H1:W24_TB16" cx="1210" cy="1058" r="2.6"/>
+<circle class="terminal" data-terminal="H1:W24_P17" cx="1166" cy="1058" r="2.6"/>
+</g>
+<g class="part kind-point" data-part="TBTS:16">
+<rect class="sym" x="1275" y="1049" width="18" height="18"/>
+<line class="sym" x1="1262" y1="1058" x2="1275" y2="1058"/>
+<circle class="terminal" data-terminal="TBTS:16" cx="1262" cy="1058" r="2.6"/>
+</g>
+<g class="part kind-wire" data-part="H1:W8B_TS14-W8B_TB14">
+<line class="sym" x1="782" y1="1132" x2="826" y2="1132"/>
+<circle class="terminal" data-terminal="H1:W8B_TS14" cx="826" cy="1132" r="2.6"/>
+<circle class="terminal" data-terminal="H1:W8B_TB14" cx="782" cy="1132" r="2.6"/>
+</g>
+<g class="part kind-aux_e" data-part="TS:14-15">
+<line class="sym" x1="878" y1="1132" x2="892" y2="1132"/>
+<line class="sym" x1="908" y1="1132" x2="922" y2="1132"/>
+<line class="sym" x1="892" y1="1119" x2="892" y2="1145"/>
+<line class="sym" x1="908" y1="1119" x2="908" y2="1145"/>
+<circle class="terminal" data-terminal="TS:14" cx="878" cy="1132" r="2.6"/>
+<circle class="terminal" data-terminal="TS:15" cx="922" cy="1132" r="2.6"/>
+</g>
+<g class="part kind-wire" data-part="H1:W9B_TS15-W9B_TB15">
+<line class="sym" x1="974" y1="1132" x2="1018" y2="1132"/>
+<circle class="terminal" data-terminal="H1:W9B_TS15" cx="974" cy="1132" r="2.6"/>
+<circle class="terminal" data-terminal="H1:W9B_TB15" cx="1018" cy="1132" r="2.6"/>
+</g>
+</g>
+<g class="labels">
+<text class="region" x="60" y="98" text-anchor="start">Main power poles (sheet 3) and 52U</text>
+<text class="tn" x="155" y="166" text-anchor="start">1</text>
+<text class="tn" x="155" y="232" text-anchor="start">2</text>
+<text class="tn" x="199" y="166" text-anchor="start">3</text>
+<text class="tn" x="199" y="232" text-anchor="start">4</text>
+<text class="tn" x="243" y="166" text-anchor="start">5</text>
+<text class="tn" x="243" y="232" text-anchor="start">6</text>
+<text class="id" x="128" y="195" text-anchor="end">52U</text>
+<text class="lbl" x="128" y="209" text-anchor="end">52U Normal breaker</text>
+<text class="tn" x="155" y="316" text-anchor="start">1</text>
+<text class="tn" x="155" y="382" text-anchor="start">20</text>
+<text class="tn" x="199" y="316" text-anchor="start">2</text>
+<text class="tn" x="199" y="382" text-anchor="start">21</text>
+<text class="tn" x="243" y="316" text-anchor="start">3</text>
+<text class="tn" x="243" y="382" text-anchor="start">22</text>
+<text class="tn" x="287" y="316" text-anchor="start">NN</text>
+<text class="tn" x="287" y="382" text-anchor="start">LN</text>
+<text class="id" x="128" y="345" text-anchor="end">TS</text>
+<text class="lbl" x="128" y="359" text-anchor="end">Transfer switch</text>
+<text class="tn" x="405" y="316" text-anchor="start">4</text>
+<text class="tn" x="405" y="382" text-anchor="start">20</text>
+<text class="tn" x="449" y="316" text-anchor="start">19</text>
+<text class="tn" x="449" y="382" text-anchor="start">21</text>
+<text class="tn" x="493" y="316" text-anchor="start">5</text>
+<text class="tn" x="493" y="382" text-anchor="start">22</text>
+<text class="tn" x="537" y="316" text-anchor="start">EN</text>
+<text class="tn" x="537" y="382" text-anchor="start">LN</text>
+<text class="id" x="378" y="345" text-anchor="end">TS</text>
+<text class="lbl" x="378" y="359" text-anchor="end">Transfer switch</text>
+<text class="region" x="640" y="98" text-anchor="start">TS operator circuit (sheet 3), sensing and position (sheet 4), engine start (sheet 2)</text>
+<text class="tn" x="708" y="164" text-anchor="middle">wire 18</text>
+<text class="id" x="804" y="139" text-anchor="middle">TS</text>
+<text class="tn" x="785" y="195" text-anchor="start">7</text>
+<text class="tn" x="823" y="195" text-anchor="end">6</text>
+<text class="tn" x="900" y="164" text-anchor="middle">wire 3</text>
+<text class="tn" x="996" y="160" text-anchor="middle">P3/J3</text>
+<text class="id" x="1188" y="139" text-anchor="middle">SE</text>
+<text class="tn" x="1169" y="195" text-anchor="start">J3</text>
+<text class="tn" x="1207" y="195" text-anchor="end">J2</text>
+<text class="tn" x="1284" y="160" text-anchor="middle">P2/J2</text>
+<text class="tn" x="1380" y="164" text-anchor="middle">wire 2</text>
+<text class="tn" x="1465" y="174" text-anchor="middle">CR</text>
+<text class="id" x="1476" y="139" text-anchor="middle">TS solenoid assembly</text>
+<text class="tn" x="1457" y="195" text-anchor="start">A</text>
+<text class="tn" x="1495" y="195" text-anchor="end">B</text>
+<text class="tn" x="1572" y="164" text-anchor="middle">wire 5</text>
+<text class="tn" x="1668" y="160" text-anchor="middle">P5/J5</text>
+<text class="id" x="1764" y="139" text-anchor="middle">SE</text>
+<text class="tn" x="1745" y="195" text-anchor="start">J5</text>
+<text class="tn" x="1783" y="195" text-anchor="end">J15</text>
+<text class="tn" x="1860" y="160" text-anchor="middle">P15/J15</text>
+<text class="tn" x="1956" y="164" text-anchor="middle">wire 15</text>
+<text class="id" x="2052" y="139" text-anchor="middle">TS</text>
+<text class="tn" x="2033" y="195" text-anchor="start">70</text>
+<text class="tn" x="2071" y="195" text-anchor="end">69</text>
+<text class="tn" x="2148" y="164" text-anchor="middle">wire 20</text>
+<text class="tn" x="708" y="238" text-anchor="middle">wire 17</text>
+<text class="id" x="804" y="213" text-anchor="middle">TS</text>
+<text class="tn" x="785" y="269" text-anchor="start">9</text>
+<text class="tn" x="823" y="269" text-anchor="end">8</text>
+<text class="tn" x="900" y="238" text-anchor="middle">wire 1</text>
+<text class="tn" x="996" y="234" text-anchor="middle">P1/J1</text>
+<text class="id" x="1092" y="213" text-anchor="middle">ER</text>
+<text class="tn" x="1073" y="269" text-anchor="start">J1</text>
+<text class="tn" x="1111" y="269" text-anchor="end">X1</text>
+<text class="id" x="1188" y="213" text-anchor="middle">SE</text>
+<text class="tn" x="1169" y="269" text-anchor="start">X1</text>
+<text class="tn" x="1207" y="269" text-anchor="end">J2</text>
+<text class="id" x="1764" y="213" text-anchor="middle">SE</text>
+<text class="tn" x="1745" y="269" text-anchor="start">J5</text>
+<text class="tn" x="1783" y="269" text-anchor="end">X2</text>
+<text class="id" x="1860" y="213" text-anchor="middle">ER</text>
+<text class="tn" x="1841" y="269" text-anchor="start">X2</text>
+<text class="tn" x="1879" y="269" text-anchor="end">J16</text>
+<text class="tn" x="1956" y="234" text-anchor="middle">P16/J16</text>
+<text class="tn" x="2052" y="238" text-anchor="middle">wire 16</text>
+<text class="id" x="2148" y="213" text-anchor="middle">TS</text>
+<text class="tn" x="2129" y="269" text-anchor="start">72</text>
+<text class="tn" x="2167" y="269" text-anchor="end">71</text>
+<text class="tn" x="2244" y="238" text-anchor="middle">wire 21</text>
+<text class="tn" x="708" y="386" text-anchor="middle">wire 12</text>
+<text class="tn" x="804" y="382" text-anchor="middle">P12/J12</text>
+<text class="tn" x="896" y="396" text-anchor="start">CP</text>
+<text class="tn" x="1092" y="386" text-anchor="middle">wire 11</text>
+<text class="tn" x="1188" y="382" text-anchor="middle">P11/J11</text>
+<text class="tn" x="1280" y="396" text-anchor="start">CP</text>
+<text class="tn" x="1476" y="386" text-anchor="middle">wire 4</text>
+<text class="tn" x="1572" y="382" text-anchor="middle">P4/J4</text>
+<text class="tn" x="1664" y="396" text-anchor="start">CP</text>
+<text class="tn" x="1860" y="386" text-anchor="middle">wire 29</text>
+<text class="tn" x="1956" y="382" text-anchor="middle">P22/J22</text>
+<text class="tn" x="2048" y="396" text-anchor="start">CP</text>
+<text class="tn" x="708" y="460" text-anchor="middle">wire 7</text>
+<text class="tn" x="804" y="456" text-anchor="middle">P7/J7</text>
+<text class="tn" x="896" y="470" text-anchor="start">CP</text>
+<text class="tn" x="1092" y="460" text-anchor="middle">wire 25</text>
+<text class="tn" x="1188" y="456" text-anchor="middle">P18/J18</text>
+<text class="tn" x="1280" y="470" text-anchor="start">CP</text>
+<text class="tn" x="1476" y="460" text-anchor="middle">wire 6</text>
+<text class="tn" x="1572" y="456" text-anchor="middle">P6/J6</text>
+<text class="tn" x="1664" y="470" text-anchor="start">CP</text>
+<text class="tn" x="1860" y="460" text-anchor="middle">wire 30</text>
+<text class="tn" x="1956" y="456" text-anchor="middle">P23/J23</text>
+<text class="tn" x="2048" y="470" text-anchor="start">CP</text>
+<text class="tn" x="708" y="534" text-anchor="middle">wire 26</text>
+<text class="tn" x="804" y="530" text-anchor="middle">P19/J19</text>
+<text class="tn" x="896" y="544" text-anchor="start">CP</text>
+<text class="tn" x="1092" y="534" text-anchor="middle">wire 27</text>
+<text class="tn" x="1188" y="530" text-anchor="middle">P20/J20</text>
+<text class="tn" x="1280" y="544" text-anchor="start">CP</text>
+<text class="tn" x="1476" y="534" text-anchor="middle">wire 28</text>
+<text class="tn" x="1572" y="530" text-anchor="middle">P21/J21</text>
+<text class="tn" x="1664" y="544" text-anchor="start">CP</text>
+<text class="tn" x="1860" y="534" text-anchor="middle">wire 31</text>
+<text class="tn" x="1956" y="530" text-anchor="middle">P24/J24</text>
+<text class="tn" x="2048" y="544" text-anchor="start">CP</text>
+<text class="id" x="708" y="657" text-anchor="middle">TS 14B</text>
+<text class="tn" x="689" y="713" text-anchor="start">17</text>
+<text class="tn" x="727" y="713" text-anchor="end">16</text>
+<text class="tn" x="804" y="682" text-anchor="middle">wire 13</text>
+<text class="tn" x="900" y="678" text-anchor="middle">P13/J13</text>
+<text class="tn" x="992" y="692" text-anchor="start">CP</text>
+<text class="id" x="708" y="731" text-anchor="middle">TS 14A</text>
+<text class="tn" x="689" y="787" text-anchor="start">17</text>
+<text class="tn" x="727" y="787" text-anchor="end">18</text>
+<text class="tn" x="804" y="756" text-anchor="middle">wire 14</text>
+<text class="tn" x="900" y="752" text-anchor="middle">P14/J14</text>
+<text class="tn" x="992" y="766" text-anchor="start">CP</text>
+<text class="tn" x="708" y="830" text-anchor="middle">wire 10</text>
+<text class="tn" x="804" y="826" text-anchor="middle">P10/J10</text>
+<text class="tn" x="896" y="840" text-anchor="start">CP</text>
+<text class="tn" x="708" y="970" text-anchor="middle">TB/TS 14</text>
+<text class="tn" x="804" y="978" text-anchor="middle">wire 8A</text>
+<text class="tn" x="900" y="974" text-anchor="middle">P8/J8</text>
+<text class="id" x="996" y="953" text-anchor="middle">NR</text>
+<text class="tn" x="977" y="1009" text-anchor="start">J8</text>
+<text class="tn" x="1015" y="1009" text-anchor="end">J9</text>
+<text class="tn" x="1092" y="974" text-anchor="middle">P9/J9</text>
+<text class="tn" x="1188" y="978" text-anchor="middle">wire 9A</text>
+<text class="tn" x="1380" y="970" text-anchor="middle">TB/TS 15</text>
+<text class="id" x="996" y="1027" text-anchor="middle">NR</text>
+<text class="tn" x="977" y="1083" text-anchor="start">J8</text>
+<text class="tn" x="1015" y="1083" text-anchor="end">J17</text>
+<text class="tn" x="1092" y="1048" text-anchor="middle">P17/J17</text>
+<text class="tn" x="1188" y="1052" text-anchor="middle">wire 24</text>
+<text class="tn" x="1284" y="1044" text-anchor="middle">TB/TS 16</text>
+<text class="tn" x="804" y="1126" text-anchor="middle">wire 8B</text>
+<text class="id" x="900" y="1101" text-anchor="middle">TS 14B</text>
+<text class="tn" x="881" y="1157" text-anchor="start">14</text>
+<text class="tn" x="919" y="1157" text-anchor="end">15</text>
+<text class="tn" x="996" y="1126" text-anchor="middle">wire 9B</text>
+<text class="net" x="146" y="164" text-anchor="end">UA</text>
+<text class="net" x="190" y="164" text-anchor="end">UB</text>
+<text class="net" x="234" y="164" text-anchor="end">UC</text>
+<text class="net" x="146" y="234" text-anchor="end">NA</text>
+<text class="net" x="146" y="314" text-anchor="end">NA</text>
+<text class="net" x="665" y="396" text-anchor="end">NA</text>
+<text class="net" x="665" y="174" text-anchor="end">NA</text>
+<text class="net" x="190" y="234" text-anchor="end">NB</text>
+<text class="net" x="190" y="314" text-anchor="end">NB</text>
+<text class="net" x="1049" y="396" text-anchor="end">NB</text>
+<text class="net" x="234" y="234" text-anchor="end">NC</text>
+<text class="net" x="234" y="314" text-anchor="end">NC</text>
+<text class="net" x="1433" y="396" text-anchor="end">NC</text>
+<text class="net" x="2191" y="174" text-anchor="start">NC</text>
+<text class="net" x="278" y="314" text-anchor="end">NN</text>
+<text class="net" x="1817" y="396" text-anchor="end">NN</text>
+<text class="net" x="396" y="314" text-anchor="end">EA</text>
+<text class="net" x="665" y="470" text-anchor="end">EA</text>
+<text class="net" x="665" y="248" text-anchor="end">EA</text>
+<text class="net" x="440" y="314" text-anchor="end">EB</text>
+<text class="net" x="1049" y="470" text-anchor="end">EB</text>
+<text class="net" x="484" y="314" text-anchor="end">EC</text>
+<text class="net" x="1433" y="470" text-anchor="end">EC</text>
+<text class="net" x="2287" y="248" text-anchor="start">EC</text>
+<text class="net" x="528" y="314" text-anchor="end">EN</text>
+<text class="net" x="1817" y="470" text-anchor="end">EN</text>
+<text class="net" x="146" y="384" text-anchor="end">LA</text>
+<text class="net" x="396" y="384" text-anchor="end">LA</text>
+<text class="net" x="665" y="544" text-anchor="end">LA</text>
+<text class="net" x="190" y="384" text-anchor="end">LB</text>
+<text class="net" x="440" y="384" text-anchor="end">LB</text>
+<text class="net" x="1049" y="544" text-anchor="end">LB</text>
+<text class="net" x="234" y="384" text-anchor="end">LC</text>
+<text class="net" x="484" y="384" text-anchor="end">LC</text>
+<text class="net" x="1433" y="544" text-anchor="end">LC</text>
+<text class="net" x="278" y="384" text-anchor="end">LN</text>
+<text class="net" x="528" y="384" text-anchor="end">LN</text>
+<text class="net" x="1817" y="544" text-anchor="end">LN</text>
+<text class="net" x="832" y="164" text-anchor="start">TS6</text>
+<text class="net" x="736" y="164" text-anchor="start">TS7</text>
+<text class="net" x="832" y="238" text-anchor="start">TS8</text>
+<text class="net" x="736" y="238" text-anchor="start">TS9</text>
+<text class="net" x="2080" y="164" text-anchor="start">TS69</text>
+<text class="net" x="1984" y="164" text-anchor="start">TS70</text>
+<text class="net" x="2176" y="238" text-anchor="start">TS71</text>
+<text class="net" x="2080" y="238" text-anchor="start">TS72</text>
+<text class="net" x="1408" y="164" text-anchor="start">TSA</text>
+<text class="net" x="1504" y="164" text-anchor="start">TSB</text>
+<text class="net" x="832" y="1126" text-anchor="start">TS14</text>
+<text class="net" x="928" y="1126" text-anchor="start">TS15</text>
+<text class="net" x="736" y="682" text-anchor="start">TS16</text>
+<text class="net" x="692" y="682" text-anchor="start">TS17</text>
+<text class="net" x="736" y="756" text-anchor="start">TS18</text>
+<text class="net" x="665" y="988" text-anchor="end">TB14</text>
+<text class="net" x="761" y="988" text-anchor="end">TB14</text>
+<text class="net" x="761" y="1136" text-anchor="end">TB14</text>
+<text class="net" x="1337" y="988" text-anchor="end">TB15</text>
+<text class="net" x="1231" y="988" text-anchor="start">TB15</text>
+<text class="net" x="1039" y="1136" text-anchor="start">TB15</text>
+<text class="net" x="1216" y="1052" text-anchor="start">TB16</text>
+<text class="net" x="928" y="238" text-anchor="start">P1</text>
+<text class="net" x="1312" y="164" text-anchor="start">P2</text>
+<text class="net" x="928" y="164" text-anchor="start">P3</text>
+<text class="net" x="1504" y="386" text-anchor="start">P4</text>
+<text class="net" x="1600" y="164" text-anchor="start">P5</text>
+<text class="net" x="1504" y="460" text-anchor="start">P6</text>
+<text class="net" x="736" y="460" text-anchor="start">P7</text>
+<text class="net" x="832" y="978" text-anchor="start">P8</text>
+<text class="net" x="1120" y="978" text-anchor="start">P9</text>
+<text class="net" x="736" y="830" text-anchor="start">P10</text>
+<text class="net" x="1120" y="386" text-anchor="start">P11</text>
+<text class="net" x="736" y="386" text-anchor="start">P12</text>
+<text class="net" x="832" y="682" text-anchor="start">P13</text>
+<text class="net" x="832" y="756" text-anchor="start">P14</text>
+<text class="net" x="1888" y="164" text-anchor="start">P15</text>
+<text class="net" x="1984" y="238" text-anchor="start">P16</text>
+<text class="net" x="1120" y="1052" text-anchor="start">P17</text>
+<text class="net" x="1120" y="460" text-anchor="start">P18</text>
+<text class="net" x="736" y="534" text-anchor="start">P19</text>
+<text class="net" x="1120" y="534" text-anchor="start">P20</text>
+<text class="net" x="1504" y="534" text-anchor="start">P21</text>
+<text class="net" x="1888" y="386" text-anchor="start">P22</text>
+<text class="net" x="1888" y="460" text-anchor="start">P23</text>
+<text class="net" x="1888" y="534" text-anchor="start">P24</text>
+<text class="net" x="1024" y="238" text-anchor="start">J1</text>
+<text class="net" x="1216" y="164" text-anchor="start">J2</text>
+<text class="net" x="1024" y="164" text-anchor="start">J3</text>
+<text class="net" x="1600" y="386" text-anchor="start">J4</text>
+<text class="net" x="1696" y="164" text-anchor="start">J5</text>
+<text class="net" x="1600" y="460" text-anchor="start">J6</text>
+<text class="net" x="832" y="460" text-anchor="start">J7</text>
+<text class="net" x="928" y="978" text-anchor="start">J8</text>
+<text class="net" x="1024" y="978" text-anchor="start">J9</text>
+<text class="net" x="832" y="830" text-anchor="start">J10</text>
+<text class="net" x="1216" y="386" text-anchor="start">J11</text>
+<text class="net" x="832" y="386" text-anchor="start">J12</text>
+<text class="net" x="928" y="682" text-anchor="start">J13</text>
+<text class="net" x="928" y="756" text-anchor="start">J14</text>
+<text class="net" x="1792" y="164" text-anchor="start">J15</text>
+<text class="net" x="1888" y="238" text-anchor="start">J16</text>
+<text class="net" x="1024" y="1052" text-anchor="start">J17</text>
+<text class="net" x="1216" y="460" text-anchor="start">J18</text>
+<text class="net" x="832" y="534" text-anchor="start">J19</text>
+<text class="net" x="1216" y="534" text-anchor="start">J20</text>
+<text class="net" x="1600" y="534" text-anchor="start">J21</text>
+<text class="net" x="1984" y="386" text-anchor="start">J22</text>
+<text class="net" x="1984" y="460" text-anchor="start">J23</text>
+<text class="net" x="1984" y="534" text-anchor="start">J24</text>
+<text class="net" x="1120" y="238" text-anchor="start">CPX1</text>
+<text class="net" x="1792" y="238" text-anchor="start">CPX2</text>
+<text class="title" x="20" y="32" text-anchor="start">ASCO Series 300 Group G transfer switch, 200 A, 208 V (our redrawing)</text>
+<text class="lbl" x="20" y="52" text-anchor="start">Redrawn from ASCO Series 300 Group G wiring diagram 978741, Schneider Electric. Not the official drawing.</text>
+</g>
+</svg>

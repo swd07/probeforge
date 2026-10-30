@@ -21,7 +21,25 @@ TYPE_PARTS: dict[str, dict[str, str]] = {
     "thermal_relay": {"heaters": "heater", "no_contacts": "contact_no", "nc_contacts": "contact_nc"},
     "lamp": {"terminals": "lamp"},
     "motor": {"windings": "winding"},
+    # automatic transfer switch bench (ASCO Series 300 Group G, drawing 978741); the relay-panel types above are unchanged
+    "transfer_switch": {
+        "main_normal": "main_n",  # main pole, closed with the switch on Normal
+        "main_emergency": "main_e",  # main pole, closed with the switch on Emergency
+        "cutoff_normal": "cutoff_n",  # TS control (cut-off) contact, closed on Normal until top dead center
+        "cutoff_emergency": "cutoff_e",  # closed on Emergency until top dead center
+        "aux_normal": "aux_n",  # auxiliary contact 14A, closed on Normal
+        "aux_emergency": "aux_e",  # auxiliary contact 14B, closed on Emergency
+        "solenoid": "solenoid",  # TS solenoid assembly (bridge rectifier CR and coil)
+    },
+    "relay": {"no_contacts": "contact_no", "nc_contacts": "contact_nc"},  # relay inside the controller, coil not accessible
+    "harness": {"wires": "wire"},
+    "connector": {"pins": "pin"},
+    "terminal_block": {"points": "point"},
+    "controller": {"inputs": "input"},
 }
+
+# Parts with a single terminal (a terminal-block point, a controller input): written without "A-B".
+SINGLE_TERMINAL_KINDS = frozenset({"point", "input"})
 
 # Parts that carry current through a resistance instead of acting as a switch.
 LOAD_KINDS = frozenset({"coil", "lamp", "winding"})
@@ -40,7 +58,11 @@ DEFAULT_RESISTANCE = {  # ohms
     ("timer", "coil"): 4000.0,
     ("lamp", "lamp"): 2600.0,
     ("motor", "winding"): 3.5,
+    ("transfer_switch", "solenoid"): 30.0,  # assumption (not documented): see docs/ATS_MODEL.md
 }
+
+# Kinds that get a resistance from DEFAULT_RESISTANCE / the "resistance" key (the relay-panel simulator only uses LOAD_KINDS).
+RESISTIVE_KINDS = LOAD_KINDS | {"solenoid"}
 
 PARAM_KEYS = {"delay", "trip_time", "resistance", "rated_current"}
 
@@ -84,6 +106,8 @@ class Netlist:
     protection: list[str]
     interlocks: list[tuple[str, str]]
     layout: dict
+    alternate: dict | None = None  # second source (ATS bench only)
+    drawing_note: str | None = None  # printed under the drawing title (source of a redrawn diagram)
 
     @classmethod
     def load(cls, path: str | Path) -> "Netlist":
@@ -110,11 +134,14 @@ class Netlist:
                 names = spec.get(key, [])
                 for name in [names] if isinstance(names, str) else names:
                     name = str(name)
-                    ta, sep, tb = name.partition("-")
-                    if not sep or not ta or not tb:
-                        raise NetlistError(f"{cid}: part {name!r} must be written A-B")
+                    if kind in SINGLE_TERMINAL_KINDS:
+                        ta = tb = name
+                    else:
+                        ta, sep, tb = name.partition("-")
+                        if not sep or not ta or not tb:
+                            raise NetlistError(f"{cid}: part {name!r} must be written A-B")
                     resistance = None
-                    if kind in LOAD_KINDS:
+                    if kind in RESISTIVE_KINDS:
                         resistance = float(spec.get("resistance", DEFAULT_RESISTANCE[(ctype, kind)]))
                     part = Part(f"{cid}:{name}", cid, name, kind, f"{cid}:{ta}", f"{cid}:{tb}", resistance)
                     if part.id in parts:
@@ -146,6 +173,12 @@ class Netlist:
             if s not in nets:
                 raise NetlistError(f"supply net {s} is not defined in nets")
 
+        alternate = data.get("alternate_supply")  # a second source (ATS bench): {label, voltage, phases, neutral, ...}
+        if alternate is not None:
+            for s in [*alternate["phases"], alternate["neutral"]]:
+                if str(s) not in nets:
+                    raise NetlistError(f"alternate supply net {s} is not defined in nets")
+
         def check_comp(cid: str, ctypes: tuple[str, ...]) -> str:
             if cid not in components or components[cid].type not in ctypes:
                 raise NetlistError(f"{cid} must be a component of type {' or '.join(ctypes)}")
@@ -172,6 +205,8 @@ class Netlist:
             protection=protection,
             interlocks=interlocks,
             layout=data.get("layout", {}),
+            alternate=alternate,
+            drawing_note=str(data["drawing_note"]) if data.get("drawing_note") else None,
         )
 
     def components_of(self, ctype: str) -> list[Component]:
@@ -199,6 +234,17 @@ class Netlist:
             "lamp": "lamp",
             "heater": "heater",
             "winding": "winding",
+            "main_n": "main pole closed on Normal",
+            "main_e": "main pole closed on Emergency",
+            "cutoff_n": "control cut-off closed on Normal",
+            "cutoff_e": "control cut-off closed on Emergency",
+            "aux_n": "aux 14A closed on Normal",
+            "aux_e": "aux 14B closed on Emergency",
+            "solenoid": "solenoid assembly",
+            "wire": "wire",
+            "pin": "connector pin",
+            "point": "terminal",
+            "input": "input",
         }
         phase_list = ", ".join(self.phases)
         lines = [

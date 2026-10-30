@@ -10,7 +10,14 @@ Power circuit: blocks of vertical poles. A net is drawn as a horizontal trunk
 just below its topmost terminal with vertical drops to the other terminals.
 Control circuit: ladder rows between the left rail (control supply) and the
 right rail (neutral). A net is a vertical bus at its leftmost terminal with a
-horizontal branch on every row that uses it.
+horizontal branch on every row that uses it. Rails are optional (the ATS bench
+has none: its rows run between source terminals); a row item ending in "~" is
+drawn mirrored (terminal B on the left). A terminal shared by two parts (TS-17
+for the two position contacts, for example) is drawn at both places and joined
+by its net. Optional per layout: control nets listed in "stub_nets", and with
+"stub_power_nets" every control net that continues in the power circuit, are
+drawn as a short labelled stub at each terminal instead of a bus; "short_labels"
+in the power layout names such nets "<net> to control".
 """
 
 from xml.sax.saxutils import escape
@@ -46,7 +53,8 @@ class _Renderer:
         self.parts_svg: list[str] = []
         self.wires_svg: list[str] = []
         self.labels_svg: list[str] = []
-        self.points: dict[str, tuple[float, float, str]] = {}  # terminal -> x, y, region
+        self.points: dict[str, list[tuple[float, float, str]]] = {}  # terminal -> every place it is drawn
+        self.sides: dict[tuple[str, float, float], int] = {}  # control terminal placement -> -1 left end, +1 right end
         self.drawn: set[str] = set()
         self.max_x = 0.0
         self.max_y = 0.0
@@ -66,8 +74,10 @@ class _Renderer:
         )
         self._grow(x + (len(s) * 7 if anchor == "start" else 0), y)
 
-    def terminal(self, out: list[str], t: str, x, y, region: str) -> None:
-        self.points[t] = (x, y, region)
+    def terminal(self, out: list[str], t: str, x, y, region: str, side: int = 0) -> None:
+        self.points.setdefault(t, []).append((x, y, region))
+        if side:
+            self.sides[(t, x, y)] = side
         out.append(f'<circle class="terminal" data-terminal="{escape(t)}" cx="{_f(x)}" cy="{_f(y)}" r="2.6"/>')
 
     def _start_part(self, p: Part) -> list[str]:
@@ -83,7 +93,7 @@ class _Renderer:
         ox, oy = lay["origin"]
         pitch = lay.get("pole_pitch", 44)
         h = lay.get("pole_height", 50)
-        self.text(ox - 90, oy - 72, "Power circuit", "region", "start")
+        self.text(ox - 90, oy - 72, lay.get("title", "Power circuit"), "region", "start")
         links: dict[str, tuple[float, float, float]] = {}  # contactor -> x_left, x_right, y of its linkage line
         for block in lay["blocks"]:
             bx, by = block["at"]
@@ -93,7 +103,7 @@ class _Renderer:
             for i, p in enumerate(parts):
                 self.vpart(p, x0 + i * pitch, y0, y0 + h)
             x_last = x0 + (len(parts) - 1) * pitch
-            if comp.type in ("contactor", "breaker"):
+            if comp.type in ("contactor", "breaker", "transfer_switch"):
                 self.line(self.parts_svg, x0 - 9, y0 + h / 2, x_last - 9, y0 + h / 2, "link")
                 links[comp.id] = (x0 - 9, x_last - 9, y0 + h / 2)
             if comp.type == "motor":
@@ -138,11 +148,11 @@ class _Renderer:
         elif k == "fuse_pole":
             self.line(g, x, y1, x, y2)
             g.append(f'<rect class="sym" x="{_f(x - 6)}" y="{_f(y1 + 11)}" width="12" height="{_f(y2 - y1 - 22)}"/>')
-        elif k in ("main", "contact_no", "contact_nc"):
+        elif k in ("main", "contact_no", "contact_nc", "main_n", "main_e"):
             self.line(g, x, y1, x, ym - 9)
             self.line(g, x, ym + 9, x, y2)
             self.line(g, x, ym + 9, x - 10, ym - 10)
-            if k == "contact_nc":
+            if k in ("contact_nc", "main_n"):  # main_n: closed with the switch on Normal (as drawn on 978741)
                 self.line(g, x, ym - 9, x - 12, ym - 9)
         elif k == "heater":
             self.line(g, x, y1, x, y1 + 11)
@@ -178,25 +188,32 @@ class _Renderer:
         self.right_x = ox + 40 + cols * w
         self.left_rail = lay.get("left_rail")
         self.right_rail = lay.get("right_rail")
-        self.text(ox, oy - 72, "Control circuit", "region", "start")
+        self.text(ox, oy - 72, lay.get("title", "Control circuit"), "region", "start")
 
         for r, row in enumerate(rows):
             y = oy + r * rh
             for item in row:
-                pid, _, col = item.rpartition("@")
+                flip = item.endswith("~")
+                pid, _, col = item.rstrip("~").rpartition("@")
                 col = int(col)
                 xl = ox + 20 + col * w + 26
-                self.hpart(self.n.parts[pid], xl, xl + w - 52, y)
+                self.hpart(self.n.parts[pid], xl, xl + w - 52, y, flip)
 
         bottom = oy + (len(rows) - 1) * rh + 16
-        self.line(self.wires_svg, self.left_x, oy - 40, self.left_x, bottom, "wire", f' data-net="{self.left_rail}"')
-        self.line(self.wires_svg, self.right_x, oy - 40, self.right_x, bottom, "wire", f' data-net="{self.right_rail}"')
+        if self.left_rail:
+            self.line(self.wires_svg, self.left_x, oy - 40, self.left_x, bottom, "wire", f' data-net="{self.left_rail}"')
+        if self.right_rail:
+            self.line(self.wires_svg, self.right_x, oy - 40, self.right_x, bottom, "wire", f' data-net="{self.right_rail}"')
 
-    def hpart(self, p: Part, xl, xr, y) -> None:
+    def hpart(self, p: Part, xl, xr, y, flip: bool = False) -> None:
         g = self._start_part(p)
         comp = self.n.components[p.component]
         xm = (xl + xr) / 2
         k = p.kind
+        if k in ("cutoff_n", "cutoff_e", "aux_n", "aux_e"):  # transfer switch contacts: closed on N / on E
+            k = "contact_nc" if k.endswith("_n") else "contact_no"
+        if k in ("wire", "pin", "solenoid", "input", "point"):
+            return self.ats_part(p, comp, g, xl, xr, y, flip)
         if k in ("contact_no", "contact_nc", "main", "delayed_no", "delayed_nc"):
             self.line(g, xl, y, xm - 8, y)
             self.line(g, xm + 8, y, xr, y)
@@ -226,18 +243,72 @@ class _Renderer:
             g.append(f'<rect class="sym" x="{_f(xl + 10)}" y="{_f(y - 7)}" width="{_f(xr - xl - 20)}" height="14"/>')
         else:
             raise ValueError(f"cannot draw {p.id} ({k}) in the control circuit")
-        self.terminal(g, p.a, xl, y, "control")
-        self.terminal(g, p.b, xr, y, "control")
+        xa, xb = (xr, xl) if flip else (xl, xr)
+        self.terminal(g, p.a, xa, y, "control", 1 if flip else -1)
+        self.terminal(g, p.b, xb, y, "control", -1 if flip else 1)
         g.append("</g>")
         self.parts_svg.extend(g)
 
         label = comp.id
         if comp.type in ("button", "lamp") or k == "coil":
             label = f"{comp.id} {comp.label}"
+        if p.kind.startswith("aux"):
+            label = f"{comp.id} {'14A' if p.kind == 'aux_n' else '14B'}"
         self.text(xm, y - 31, label, "id")
         ta, tb = p.name.split("-")
+        if flip:
+            ta, tb = tb, ta
         self.text(xl + 3, y + 25, ta, "tn", "start")
         self.text(xr - 3, y + 25, tb, "tn", "end")
+
+    def ats_part(self, p: Part, comp, g: list[str], xl, xr, y, flip: bool) -> None:
+        """Harness wires, connector pins, the TS solenoid assembly, controller inputs and terminal-block points."""
+        xm = (xl + xr) / 2
+        k = p.kind
+        xa, xb = (xr, xl) if flip else (xl, xr)
+        if k == "wire":  # a harness wire: its number from the part name ("W3_TS6-W3_P3" -> 3)
+            self.line(g, xl, y, xr, y)
+            self.text(xm, y - 6, "wire " + p.name.split("_")[0].lstrip("W"), "tn")
+        elif k == "pin":  # plug P / jack J contact
+            self.line(g, xl, y, xm - 6, y)
+            self.line(g, xm + 6, y, xr, y)
+            for dx in (-6, 2):
+                g.append(f'<polyline class="sym" points="{_f(xm + dx)},{_f(y - 6)} {_f(xm + dx + 5)},{_f(y)} '
+                         f'{_f(xm + dx)},{_f(y + 6)}"/>')
+            self.text(xm, y - 10, p.name.replace("-", "/"), "tn")
+        elif k == "solenoid":  # bridge rectifier CR feeding the coil
+            g.append(f'<rect class="link" x="{_f(xl + 6)}" y="{_f(y - 22)}" width="{_f(xr - xl - 12)}" height="44"/>')
+            self.line(g, xl, y, xm - 22, y)
+            self.line(g, xm + 22, y, xr, y)
+            g.append(f'<polygon class="sym" points="{_f(xm - 22)},{_f(y)} {_f(xm - 11)},{_f(y - 11)} '
+                     f'{_f(xm)},{_f(y)} {_f(xm - 11)},{_f(y + 11)}"/>')
+            g.append(f'<circle class="sym" cx="{_f(xm + 12)}" cy="{_f(y)}" r="9"/>')
+            self.line(g, xm, y, xm + 3, y)
+            self.line(g, xm + 21, y, xm + 22, y)
+            self.text(xm - 11, y + 4, "CR", "tn")
+            self.text(xm, y - 31, f"{comp.id} solenoid assembly", "id")
+            self.text(xa + (3 if not flip else -3), y + 25, p.name.split("-")[0], "tn", "start" if not flip else "end")
+            self.text(xb - (3 if not flip else -3), y + 25, p.name.split("-")[1], "tn", "end" if not flip else "start")
+        elif k == "input":  # a controller input: the jack pin it arrives on
+            self.line(g, xl, y, xl + 14, y)
+            g.append(f'<rect class="sym" x="{_f(xl + 14)}" y="{_f(y - 11)}" width="{_f(xr - xl - 14)}" height="22"/>')
+            self.text(xl + 18, y + 4, comp.id, "tn", "start")
+            self.terminal(g, p.a, xl, y, "control", -1)
+            g.append("</g>")
+            self.parts_svg.extend(g)
+            return
+        elif k == "point":  # terminal-block point
+            g.append(f'<rect class="sym" x="{_f(xm - 9)}" y="{_f(y - 9)}" width="18" height="18"/>')
+            self.line(g, xl, y, xm - 9, y)
+            self.text(xm, y - 14, f"{comp.label} {p.name}", "tn")
+            self.terminal(g, p.a, xl, y, "control", -1)
+            g.append("</g>")
+            self.parts_svg.extend(g)
+            return
+        self.terminal(g, p.a, xa, y, "control", 1 if flip else -1)
+        self.terminal(g, p.b, xb, y, "control", -1 if flip else 1)
+        g.append("</g>")
+        self.parts_svg.extend(g)
 
     # ------------------------------------------------------------------ wires
 
@@ -253,15 +324,22 @@ class _Renderer:
             raise ValueError(f"layout does not place {missing}")
         trunk_slots: dict[float, int] = {}
         for net, members in self.n.nets.items():
-            pts = [(t, *self.points[t]) for t in members]
+            pts = [(t, *pl) for t in members for pl in self.points[t]]
             power = [(t, x, y) for t, x, y, region in pts if region == "power"]
             control = [(t, x, y) for t, x, y, region in pts if region == "control"]
+            lay_c = self.n.layout.get("control", {})
+            stub = net in lay_c.get("stub_nets", ()) or (bool(power) and lay_c.get("stub_power_nets", False))
             if power:
-                self.route_power(net, power, [t for t, *_ in control], trunk_slots)
-            if control:
+                elsewhere = ["control"] if control and self.n.layout["power"].get("short_labels") else [t for t, *_ in control]
+                self.route_power(net, power, elsewhere, trunk_slots)
+            if control and stub:
+                self.route_stubs(net, control)
+            elif control:
                 self.route_control(net, control, [t for t, *_ in power])
 
     def route_power(self, net, pts, elsewhere, trunk_slots) -> None:
+        if self.n.layout["power"].get("short_labels"):
+            return self.route_power_tagged(net, pts, trunk_slots)
         if len(pts) == 1 and not elsewhere:
             t, x, y = pts[0]
             up = t == self._part_of(t).a
@@ -293,6 +371,31 @@ class _Renderer:
             self.path(net, f"M {_f(x_lo)} {_f(trunk_y)} H {_f(x_lo - 34)}")
             self.text(x_lo - 38, trunk_y + 4, f"{net} to {', '.join(elsewhere)}", "net", "end")
 
+    def route_power_tagged(self, net, pts, trunk_slots) -> None:
+        """Power nets tagged with their name at every terminal (as the tags on 978741); terminals of one net are
+        joined by a trunk just outside the poles, so a trunk never runs along other poles' terminals."""
+        for t, x, y in pts:
+            top = t == self._part_of(t).a
+            self.text(x - 4, y - 6 if top else y + 14, net, "net", "end")
+        if len(pts) < 2:
+            return
+        tops = [(x, y) for t, x, y in pts if t == self._part_of(t).a]
+        bottoms = [(x, y) for t, x, y in pts if t != self._part_of(t).a]
+        if bottoms and not tops:  # e.g. load LA at the bottom of both TS blocks: trunk below
+            yb = max(y for _, y in bottoms)
+            slot = trunk_slots.get(("below", yb), 0)
+            trunk_slots[("below", yb)] = slot + 1
+            ty = yb + 20 + 9 * slot
+        else:  # from a bottom terminal down to a top terminal (52U to TS): trunk just above the upper of the tops
+            yt = min(y for _, y in tops)
+            slot = trunk_slots.get(("above", yt), 0)
+            trunk_slots[("above", yt)] = slot + 1
+            ty = yt - 20 - 9 * slot
+        xs = [x for _, x, _ in pts]
+        d = [f"M {_f(min(xs))} {_f(ty)} H {_f(max(xs))}"] if max(xs) > min(xs) else []
+        d += [f"M {_f(x)} {_f(y)} V {_f(ty)}" for _, x, y in pts]
+        self.path(net, " ".join(d))
+
     def route_control(self, net, pts, elsewhere) -> None:
         if net in (self.left_rail, self.right_rail):
             rail_x = self.left_x if net == self.left_rail else self.right_x
@@ -322,6 +425,14 @@ class _Renderer:
             self.text(x, y - 8, net, "net")
         self.text(bus_x + 6, y_top - 6, net, "net", "start")
 
+    def route_stubs(self, net, pts) -> None:
+        """A short labelled stub at each terminal (the net continues elsewhere on the drawing)."""
+        for t, x, y in pts:
+            side = self.sides.get((t, x, y), -1)
+            x2 = x + 18 * side
+            self.path(net, f"M {_f(x)} {_f(y)} H {_f(x2)}")
+            self.text(x2 + 3 * side, y + 4, net, "net", "start" if side > 0 else "end")
+
     def _part_of(self, terminal: str) -> Part:
         for p in self.n.parts.values():
             if terminal in (p.a, p.b):
@@ -335,6 +446,8 @@ class _Renderer:
         self.control()
         self.route()
         self.text(20, 32, self.n.title, "title", "start")
+        if self.n.drawing_note:  # a redrawn diagram states its source
+            self.text(20, 52, self.n.drawing_note, "lbl", "start")
         width, height = self.max_x + 40, self.max_y + 30
         return "\n".join(
             [

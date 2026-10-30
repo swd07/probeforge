@@ -80,6 +80,20 @@ For frontend development run `npm run dev` in `web/` (Vite on :5173, proxied to 
 `scripts/screenshot_ui.py` drives a full live run in headless Edge with Playwright and saves screenshots to `docs/screenshots/`.
 For reproducible demos `?fault=QF1:5-6%20open` in the URL injects a specific fault (shown as "fault chosen by URL"; the UI itself never offers this).
 
+## Level 2 bench: ASCO Series 300 Group G transfer switch (in progress)
+
+A second bench models a real automatic transfer switch used in critical infrastructure: ASCO Series 300 Group G,
+200 A, 208 V, 3 phase 4 wire, service entrance. Stage S0 is done: the netlist
+([scenarios/circuits/asco_300g_978741.yaml](scenarios/circuits/asco_300g_978741.yaml)) and our redrawn diagram
+([docs/asco_300g_978741.svg](docs/asco_300g_978741.svg)) are built only from ASCO wiring diagram 978741 and the Group G
+Controller User's Guide; every part and net carries its source, and undocumented values are listed as assumptions
+([docs/ATS_MODEL.md](docs/ATS_MODEL.md)). The diagram is redrawn from ASCO Series 300 Group G wiring diagram 978741,
+Schneider Electric, and is not the official drawing. The original drawings are in the public ASCO / Schneider Electric
+technical documents library:
+[ASCO Series 300 Group G SE product wiring, outline and mounting data](https://www.ascopower.com/us/en/products/libraries/technical-documents/300-series/asco-series-300-group-g-se-product-wiring-outline-and-mounting-data.jsp)
+and [ASCO Series 300 Group G product wiring, outline and mounting data](https://www.se.com/us/en/work/support/product-support/technical-documents/300-series/asco-series-300-group-g-product-wiring-outline-and-mounting-data).
+Review points from the electrical engineer and how the bench covers them: [docs/ENGINEER_FEEDBACK.md](docs/ENGINEER_FEEDBACK.md).
+
 ## Circuit and simulator
 
 ![Star-delta reversing starter](docs/star_delta_reversing.svg)
