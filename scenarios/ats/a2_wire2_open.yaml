@@ -1,0 +1,8 @@
+id: a2_wire2_open
+family: A
+description: harness wire 2 (TS-A to P-2) open
+fault:
+  component: H1
+  part: "W2_TSA-W2_P2"
+  mode: open
+symptom: generator running, Emergency accepted light on, Load on Emergency off, Alert on, event Transfer Failure, load not powered, UPS draining

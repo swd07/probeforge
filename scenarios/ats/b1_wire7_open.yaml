@@ -1,0 +1,8 @@
+id: b1_wire7_open
+family: B
+description: harness wire 7 (EA sensing, TS-4 to P-7) open
+fault:
+  component: H1
+  part: "W7_TS4-W7_P7"
+  mode: open
+symptom: generator running, Emergency accepted light off, display Waiting for Emergency Acceptable, no transfer command, load not powered, UPS draining

@@ -1,0 +1,12 @@
+id: a7_burnout_chain
+family: A
+description: "TS control contacts 8-9 and 71-72 do not open at top dead center (misadjusted cut-off, root cause); the coil stayed energized after the last transfer and burnt open (consequence). Assumption for the engineer to confirm."
+root_cause:
+  component: TS
+  part: "8-9"
+  mode: stuck_closed
+faults:
+  - {component: TS, part: "8-9", mode: stuck_closed}
+  - {component: TS, part: "71-72", mode: stuck_closed}
+  - {component: TS, part: "A-B", mode: burnt}
+symptom: generator running, Emergency accepted light on, Load on Emergency off, Alert on, event Transfer Failure, load not powered, UPS draining

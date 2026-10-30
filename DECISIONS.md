@@ -224,3 +224,24 @@ decisions at the end (see CLAUDE.md). Architecture: [ARCHITECTURE.md](ARCHITECTU
 - **Why:** faults on connections are the realistic failures of this circuit; the wire list makes them documentable.
 - **Evidence:** `tests/test_ats_netlist.py` (independent transcription of the sheet 6 wire list, documented paths of
   sheets 2, 3, 4, provenance of every part and net, drawing hooks); the star-delta SVG and every Level 1 test unchanged.
+
+### D27. ATS bench simulator (stage S1)
+- **What:** `src/probeforge/ats/` simulates the documented Group G 3ATS sequence (SE drops and 1C runs, NR drops for
+  the engine start, Emergency accepted at pickup, 2B, ER, transfer; retransfer with 3A, SE, 2E, NR) on the S0 netlist,
+  with the transfer mechanism following the sheet 3 cut-off table, the generator started through TB/TS 14-15 and a UPS.
+  Undocumented behaviour is in one `ASSUMPTIONS` table (docs/ATS_MODEL.md items 7 to 15). Separate from the relay-panel
+  simulator, which is unchanged.
+- **Why the manual operation check:** the twin check showed that coil open, jammed mechanism and the burnout chain read
+  identically once the coil has burnt (every electrical reading the same), so the root cause could not be found. An
+  isolated manual operation check (a jammed mechanism does not move, a cut-off that does not open still reads closed)
+  separates them; it becomes an approval-tier action in S2. Labelled as an assumption.
+- **Why the metering screen:** three failed emergency sensing inputs were twins with the lights and display alone; the
+  documented metering screen shows the measured phase voltages and separates them.
+- **Evidence:** tests/test_ats_bench.py (healthy timeline against the guide, every dev symptom, burnout chain and jam,
+  no twins in the dev set, no twins across families A and B); full-catalog twin check in docs/ATS_MODEL.md.
+- **Approved 2026-10-30** with the three additions as labelled assumptions: the manual operation check is an approval
+  tier action, only with both sources isolated and locked out, never under load; the metering screen (guide page 7);
+  the controller holds ER / SE after Transfer Failure or Position Error without retry.
+- **Wording rule (README, video):** families A and B already differ on the panel (Emergency accepted light, display);
+  the agent's real task is localizing the fault within a family with measurements. Never claim that the families look
+  identical to the agent.

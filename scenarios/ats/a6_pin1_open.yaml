@@ -1,0 +1,8 @@
+id: a6_pin1_open
+family: A
+description: plug P-1 / jack J-1 contact open
+fault:
+  component: XP
+  part: "P1-J1"
+  mode: open
+symptom: generator running, Emergency accepted light on, Load on Emergency off, Alert on, event Transfer Failure, load not powered, UPS draining

@@ -1,0 +1,8 @@
+id: x2_engine_start_open
+family: engine
+description: harness wire 9 (P-9 to TB/TS-15, engine start) open
+fault:
+  component: H1
+  part: "W9A_TB15-W9A_P9"
+  mode: open
+symptom: generator not started, display Waiting for Emergency Acceptable, load not powered, UPS draining

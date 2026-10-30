@@ -1,0 +1,7 @@
+id: a5_jammed
+family: A
+description: transfer mechanism jammed
+fault:
+  component: TS
+  mode: jammed
+symptom: generator running, Emergency accepted light on, Load on Emergency off, Alert on, event Transfer Failure, load not powered, UPS draining

@@ -1,0 +1,8 @@
+id: x1_aux14b_open
+family: position
+description: TS aux contact 14B (17-16, position feedback) does not close
+fault:
+  component: TS
+  part: "17-16"
+  mode: stuck_open
+symptom: generator running, Emergency accepted on, Load on Emergency off, Alert on, event Position Error, load powered, UPS not draining

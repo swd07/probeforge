@@ -1,0 +1,8 @@
+id: a1_coil_open
+family: A
+description: TS solenoid coil open
+fault:
+  component: TS
+  part: "A-B"
+  mode: open
+symptom: generator running, Emergency accepted light on, Load on Emergency off, Alert on, event Transfer Failure, load not powered, UPS draining

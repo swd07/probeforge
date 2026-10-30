@@ -1,0 +1,8 @@
+id: b2_pin18_open
+family: B
+description: plug P-18 / jack J-18 (EB sensing) open
+fault:
+  component: XP
+  part: "P18-J18"
+  mode: open
+symptom: generator running, Emergency accepted light off, display Waiting for Emergency Acceptable, no transfer command, load not powered, UPS draining

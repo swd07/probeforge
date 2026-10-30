@@ -44,20 +44,43 @@ In the netlist (S0):
 5. SE, ER and NR are modelled as contacts; their coils are inside the controller and driven by the controller logic.
 6. The optional extension harness 309320-005 (Px/Jx) is not modelled: plug P mates directly with jack J.
 
-Planned for the bench (S1), to be confirmed by the electrical engineer:
+In the bench simulator (S1, `src/probeforge/ats/bench.py`, the `ASSUMPTIONS` table), to be confirmed by the
+electrical engineer:
 
-7. When the controller declares **Transfer Failure** (how long ER stays energized without the position contacts changing)
-   and what it does afterwards. The guide lists the event but its HELP section is missing.
-8. When the controller declares **Position Error** (which 14A / 14B combination). Same gap in the guide.
-9. Generator start curve: crank and run-up to pickup in about 10 s (the guide: "usually about 10 seconds").
-10. Mechanism travel time and the point where the cut-off contacts open.
-11. Coil burnout chain (replaces the fuse scenario, which 978741 does not support: there is no fuse in the TS operator
-    circuit): a cut-off contact that does not open at top dead center keeps the coil energized, the coil burns out, and
-    a replacement coil burns out again on the next transfer until the cut-off contact is fixed.
-12. UPS autonomy 10 minutes and 30 s of virtual time per reading or action: simulation parameters, not ASCO data.
+7. **Transfer Failure**: declared if the position contacts do not confirm the other position 6 s after the command
+   while the switch never left its origin (its position contact is still closed). The guide lists the event but its
+   HELP section is missing.
+8. **Position Error**: declared if the switch left its origin but the other position is never confirmed 6 s after the
+   command, or if 14A / 14B disagree with a settled switch for 2 s. Same gap in the guide.
+9. After either alarm the controller keeps SE / ER as commanded and does not retry by itself.
+10. Generator start curve: 2 s cranking, rated voltage 10 s after the start signal, linear in between (the guide:
+    "usually about 10 seconds"); Emergency is accepted at 90 % pickup, about 9.2 s after the start signal.
+11. Mechanism: 0.15 s travel (open transition), top dead center at half travel; the coil operates above 70 % of
+    nominal voltage across A-B; one operation per energization (a coil that stays energized holds the plunger, it does
+    not drive the mechanism back); released before top dead center the mechanism falls back.
+12. Coil burnout chain (replaces the fuse scenario, which 978741 does not support: there is no fuse in the TS operator
+    circuit): if the cut-off contacts 8-9 and 71-72 do not open at top dead center, the coil stays energized with ER
+    on and burns open after 30 s of continuous energization; a replacement coil burns again on the next transfer until
+    the cut-off is fixed. A jammed mechanism also leaves the coil energized and burns it.
+13. With both sources isolated the controller's relays drop out, and the switch can be operated manually for a check
+    (a maintenance operation; sheet 3 only says a test and adjustment procedure sets the cut-off contacts): a jammed
+    mechanism does not move, a cut-off contact that does not open still reads closed at the far position.
+14. UPS autonomy 10 minutes and 30 s of virtual time per reading or action: simulation parameters, not ASCO data.
+15. Frequency is not simulated: a source with voltage is at nominal frequency.
 
 ## Documented but not modelled
 
 Customer auxiliary contacts 14A (12-13, 31-32) and 14B (10-11, 29-30), option relay OP1, external Features 17 and 6B,
 relay expansion modules 18RX / 18RX1, load current metering 23GB, RS-485 communications, strip heater (44G): not wired
 on this unit or not relevant to the diagnosis.
+
+## Fault catalog and twins (S1)
+
+`src/probeforge/ats/faults.py`: 118 single faults (wires and pins open; TS main, cut-off and auxiliary contacts and
+controller relay contacts stuck open or stuck closed; the solenoid open or burnt; a controller input failed; the
+mechanism jammed). In the outage scenario 51 are visible on the controller panel, 17 give exactly the same readings as
+a healthy switch everywhere (normal-side parts that only matter on retransfer, the redundant engine-start path), and
+the rest need measurements. The only observational twins (`src/probeforge/ats/ambiguity.py`) are physically justified:
+parallel engine-start contacts (TS 14B and NR NC), coil open versus burnt open, and the series SE / ER contacts inside
+the controller (no probe access between them, so they are one controller-output fault). The controller's metering
+screen (guide page 7) is part of the observations; it shows which emergency phase a sensing fault affects.

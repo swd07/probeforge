@@ -1,0 +1,8 @@
+id: b3_wire6_open
+family: B
+description: harness wire 6 (EC sensing, TS-5 to P-6) open
+fault:
+  component: H1
+  part: "W6_TS5-W6_P6"
+  mode: open
+symptom: generator running, Emergency accepted light off, display Waiting for Emergency Acceptable, no transfer command, load not powered, UPS draining

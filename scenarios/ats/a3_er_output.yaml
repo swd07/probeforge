@@ -1,0 +1,8 @@
+id: a3_er_output
+family: A
+description: controller ER output contact (J1) does not close
+fault:
+  component: ER
+  part: "J1-X1"
+  mode: stuck_open
+symptom: generator running, Emergency accepted light on, Load on Emergency off, Alert on, event Transfer Failure, load not powered, UPS draining
