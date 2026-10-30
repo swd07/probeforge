@@ -82,16 +82,59 @@ def progress(events: list[str]) -> int:
     return k
 
 
+CONTROL_KINDS = {"wire", "pin", "contact_no", "contact_nc", "point"}  # traced whatever their state
+
+
+def trace(n, seeds: list[str], extra_kinds: set[str] = frozenset()) -> list[str]:
+    """The circuit the seed terminals belong to in the MODEL: every part of a control kind (wires, pins, relay contacts,
+    terminal block points, plus extra_kinds) reachable from the seeds through such parts, whatever its state, stopping
+    at nets that hold a main pole terminal (the source phases). Returns the terminals of those parts and the nets they
+    join. Built from the transcribed model only: no terminal of the true netlist is named here."""
+    kinds = CONTROL_KINDS | set(extra_kinds)
+    power = {n.terminal_net[x] for p in n.parts.values() if p.kind in ("main_n", "main_e") for x in (p.a, p.b)}
+    by_net: dict[str, list] = {}
+    for p in n.parts.values():
+        if p.kind in kinds and p.a != p.b:
+            by_net.setdefault(n.terminal_net[p.a], []).append(p)
+            by_net.setdefault(n.terminal_net[p.b], []).append(p)
+    todo = [n.terminal_net[s] for s in seeds if s in n.terminal_net]
+    seen_nets, parts = set(todo), set()
+    while todo:
+        net = todo.pop()
+        if net in power:
+            continue  # a source phase: the circuit ends here
+        for p in by_net.get(net, []):
+            if p.id in parts:
+                continue
+            parts.add(p.id)
+            for x in (p.a, p.b):
+                if n.terminal_net[x] not in seen_nets:
+                    seen_nets.add(n.terminal_net[x])
+                    todo.append(n.terminal_net[x])
+    terms = {x for pid in parts for x in (n.parts[pid].a, n.parts[pid].b)} | {s for s in seeds if s in n.terminal_net}
+    return sorted(terms | {x for net in seen_nets - power for x in n.nets[net]})
+
+
+def _coil_seeds(n) -> list[str]:
+    """The terminals of the model's solenoid part, found by its kind (not by name)."""
+    return [x for p in n.parts.values() if p.kind == "solenoid" for x in (p.a, p.b)]
+
+
+def _until_command(b: AtsBench, stage: str, limit_s: float) -> None:
+    """Advance a bench until the controller issues the transfer command (its stage becomes `stage`) or gives up."""
+    t_end = b.t + limit_s
+    while b.ctl.stage != stage and b.t < t_end and b.ctl.stage not in ("transfer_failure", "position_error"):
+        b.step(0.5)
+
+
 def where_it_breaks(n) -> tuple[str, list[str]]:
-    """Where the model's own healthy outage departs from the documented sequence, and the terminals of that circuit
-    (computed on the transcribed model only; the documented controller ports are those of the Group G guide)."""
+    """Where the model's own healthy outage and retransfer depart from the documented sequence, and the terminals of
+    that circuit, traced in the transcribed model (never the true netlist). An empty list means the check cannot name
+    a circuit: no repair is requested then."""
     from probeforge.ats.bench import POS_14A, POS_14B, POS_COMMON, SENSE_E, SENSE_N
 
-    def circuit(*seeds: str) -> list[str]:
-        comps = {s.split(":")[0] for s in seeds}
-        terms = {s for s in seeds if s in n.terminal_net}
-        terms |= {t for p in n.parts.values() if p.component in comps for t in (p.a, p.b)}
-        return sorted({x for t in terms for x in n.nets[n.terminal_net[t]]} | terms)  # with the nets they join
+    def sensing(*ports: str) -> list[str]:
+        return trace(n, [x for x in ports if x in n.terminal_net])
 
     try:
         b = AtsBench(netlist=n)
@@ -101,27 +144,43 @@ def where_it_breaks(n) -> tuple[str, list[str]]:
         relays = sorted(c for c, s in n.components.items() if s.type == "relay" and c not in ("SE", "ER", "NR"))
         if relays:  # the Group G controller relays (guide): SE, ER, NR
             return (f"the controller relays are SE, ER and NR (Group G guide), but the transcription names {relays}",
-                    sorted(t for p in n.parts.values() if p.component in relays for t in (p.a, p.b)))
+                    sorted(x for p in n.parts.values() if p.component in relays for x in (p.a, p.b)))
         return f"the bench cannot run the transcription ({type(e).__name__}: {e})", []
     ev = [e["event"] for e in b.indicators()["events"]]
     m = b.indicators()["metering"]
     if "Engine Start" not in ev:
-        return f"the controller does not see the Normal source fail (Normal metering {m['Normal']} V)", circuit(*SENSE_N)
+        return f"the controller does not see the Normal source fail (Normal metering {m['Normal']} V)", sensing(*SENSE_N)
     if b.generator_state() == "stopped":
+        # the documented engine start signal: field terminals TB/TS 14 and 15 (Feature 7, closes to start)
+        tb = [x for p in n.parts.values() if p.kind == "point" and p.name in ("14", "15") for x in (p.a,)]
         return ("after NR drops out (engine start signal) the engine start contact between TB/TS 14 and TB/TS 15 does "
-                "not close, so the generator never starts"), circuit("TBTS:14", "TBTS:15", "NR:J8", "NR:J9", "NR:J17")
+                "not close, so the generator never starts"), trace(n, tb, {"aux_e", "aux_n"})
     if "E Source Accepted" not in ev:
         return (f"the generator runs but the controller does not accept it: the Emergency line voltages it reads are "
-                f"{m['Emergency']} V"), circuit(*SENSE_E)
+                f"{m['Emergency']} V"), sensing(*SENSE_E)
     if "Transfer N to E" not in ev and "Position Error" not in ev:
         b2 = AtsBench(netlist=n)
         b2.lose_utility()
-        b2.step(12.5)
+        _until_command(b2, "transferring", 60)
         return (f"Emergency is accepted and ER is energized but the switch does not transfer (voltage across the TS "
-                f"solenoid A-B right after the command: {b2.coil_voltage()} V)"), circuit("TS:A", "TS:B", "SE:J2", "SE:J5", "ER:J1", "ER:J16")
+                f"solenoid right after the command: {b2.coil_voltage()} V)"), trace(n, _coil_seeds(n), {"cutoff_n"})
     if "Position Error" in ev:
-        return "the switch transfers but the controller reports Position Error (TS position contacts 14A / 14B)", circuit(
-            POS_COMMON, POS_14A, POS_14B, "TS:17")
+        return "the switch transfers but the controller reports Position Error (TS position contacts 14A / 14B)", \
+            trace(n, [x for x in (POS_COMMON, POS_14A, POS_14B) if x in n.terminal_net], {"aux_n", "aux_e"})
+    # retransfer: Normal returns, Feature 3A runs, then ER off and SE on (the documented command)
+    b3 = AtsBench(netlist=n)
+    b3.lose_utility()
+    b3.step(60)
+    b3.restore_utility()
+    _until_command(b3, "retransferring", b3.s["t_3a"] + 60)
+    if b3.ctl.stage == "retransferring":
+        b3.step(0.05)
+        volts = b3.coil_voltage()
+        b3.step(10)
+        if b3.position != "N":
+            return (f"Normal is accepted and Feature 3A ends, ER drops and SE energizes, but the switch does not transfer "
+                    f"back to Normal (voltage across the TS solenoid right after the command: {volts} V)"), \
+                trace(n, _coil_seeds(n), {"cutoff_e"})
     return "the healthy retransfer to Normal departs from the documented sequence", []
 
 
@@ -308,6 +367,9 @@ def prepare_model(client, usage: Usage, data: dict, raw: dict, flags: list[dict]
     while not ok and client is not None and len(record["attempts"]) < attempts:
         where, region = where_it_breaks(to_netlist(data))
         record.setdefault("where", []).append(where)
+        if not region:  # the check cannot name a circuit: no repair attempt is spent on a guess
+            record["stopped"] = f"the check cannot name a circuit ({where}); no repair requested"
+            break
         new = repairer(data, "The transcription does not reproduce the documented fault-free sequence of the Group G "
                              f"controller: a healthy outage and retransfer gives {events}, expected {HEALTHY_EVENTS}. "
                              f"Simulating your transcription, {where}. Check that circuit on the drawing: "

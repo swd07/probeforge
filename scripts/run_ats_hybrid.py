@@ -54,22 +54,45 @@ def saved_reads(d: Path) -> tuple[list[dict], list[dict]]:
     return raws, datas
 
 
+def relay_contacts_of_data(data: dict) -> set[tuple]:
+    """Controller relay contacts as (relay, terminals in either order, make or break)."""
+    out = set()
+    for c, s in data["components"].items():
+        if s.get("type") == "relay":
+            for key, kind in (("no_contacts", "contact_no"), ("nc_contacts", "contact_nc")):
+                for part in s.get(key) or []:
+                    out.add((c, tuple(sorted(str(part).split("-", 1))), kind))
+    return out
+
+
+def relay_contacts_of_netlist(n) -> set[tuple]:
+    return {(p.component, tuple(sorted(p.name.split("-", 1))), p.kind) for p in n.parts.values()
+            if p.kind in ("contact_no", "contact_nc")}
+
+
 def read_quality(versions: list[dict], true) -> list[dict]:
     """Read quality of the transcription before repair, after each accepted repair and at the end, against the true
     netlist (evaluation only). An accepted repair that makes the connections worse is flagged."""
     keep = lambda ps: {p for p in ps if not any(t.startswith(("52U:", "NSD:")) for t in p)}  # noqa: E731
+    true_relays = relay_contacts_of_netlist(true)
     out = []
     for i, data in enumerate(versions):
         s = score(data, true)
         w = prf(keep(pairs(data["nets"])), keep(pairs(true.nets)))
+        rc = relay_contacts_of_data(data)
         q = {"version": "transcription" if i == 0 else f"after repair {i}", "parts_recall": s["parts"]["recall"],
              "connections_precision": s["connections"]["precision"], "connections_recall": s["connections"]["recall"],
              "no52u_precision": w["precision"], "no52u_recall": w["recall"],
-             "nets_exact": f"{s['nets_exact']['matched']}/{s['nets_exact']['true']}"}
+             "nets_exact": f"{s['nets_exact']['matched']}/{s['nets_exact']['true']}",
+             "relay_contacts_right": len(rc & true_relays), "relay_contacts_true": len(true_relays),
+             "relay_contacts_wrong": sorted(f"{c} {'make' if k == 'contact_no' else 'break'} {'-'.join(ts)}"
+                                           for c, ts, k in rc - true_relays)}
         if out:
             prev = out[-1]
             q["worse"] = (q["connections_precision"] < prev["connections_precision"]
-                          or q["connections_recall"] < prev["connections_recall"])
+                          or q["connections_recall"] < prev["connections_recall"]
+                          or q["relay_contacts_right"] < prev["relay_contacts_right"]
+                          or len(q["relay_contacts_wrong"]) > len(prev["relay_contacts_wrong"]))
         out.append(q)
     return out
 
@@ -137,13 +160,18 @@ def main() -> None:
             ledger.record(prep_usage.cost_usd, f"{out.name}/model")
             (out / "model_turns.json").write_text(json.dumps(prep_usage.turn_log, indent=2), encoding="utf-8")
         quality = read_quality(healthy["versions"], AtsBench().n)  # evaluation only: never sent to the model
+        (out / "versions").mkdir()
+        for k, v in enumerate(healthy["versions"]):  # every accepted model, for the record
+            (out / "versions" / f"{k}_{'transcription' if k == 0 else f'after_repair_{k}'}.yaml").write_text(
+                yaml.safe_dump(v, sort_keys=False, width=200), encoding="utf-8")
         (out / "model.yaml").write_text(yaml.safe_dump({"summary": summary, "healthy": {k: v for k, v in healthy.items()
                                                        if k != "versions"}, "read_quality": quality, "raw": raw, "data": data},
                                                        sort_keys=False, width=200), encoding="utf-8")
         for q in quality:
             print(f"read quality {q['version']}: parts R {q['parts_recall']}, connections P {q['connections_precision']} "
                   f"R {q['connections_recall']} (without 52U: P {q['no52u_precision']} R {q['no52u_recall']}), nets exact "
-                  f"{q['nets_exact']}{'  WORSE CONNECTIONS THAN BEFORE THIS REPAIR' if q.get('worse') else ''}")
+                  f"{q['nets_exact']}, relay contacts right {q['relay_contacts_right']}/{q['relay_contacts_true']} "
+                  f"(wrong: {q['relay_contacts_wrong']}){'  WORSE THAN BEFORE THIS REPAIR' if q.get('worse') else ''}")
         print(f"model: {summary}; fault-free sequence ok: {healthy['ok']} ({len(healthy['attempts'])} repair attempts); "
               f"model cost ${prep_usage.cost_usd:.3f}")
         for cid in args.cases:
@@ -168,7 +196,12 @@ def main() -> None:
     lines = [f"| {r['case']} | {r['expected']} | {r['diagnosed']} | {'yes' if r['correct'] else 'justified' if r['justified'] else 'no'} | "
              f"{'yes' if r['confident_wrong'] else 'no'} | {r['measurements']} | {r['approval_requests']} / "
              f"{r['strong_approval_requests']} ({r['approvals_denied']}) | ${r['cost_usd']:.3f} |" for r in rows]
-    md = (f"# ATS {'info-gain baseline (true netlist)' if args.baseline else 'Hybrid v2'} (dev cases, not holdout)\n\n" + head
+    disclosure = ("" if args.baseline else
+                  "Disclosure: the hybrid pipeline (drawing crops, reading conventions, the fault-free sequence checks "
+                  "and the repair messages) was developed on this one drawing, after seeing the errors of these reads. "
+                  "Generalization to other drawings is not shown.\n\n")
+    md = (f"# ATS {'info-gain baseline (true netlist)' if args.baseline else 'Hybrid v2'} (dev cases, not holdout)\n\n"
+          + disclosure + head
           + "\n" + "\n".join(lines) + f"\n\nCorrect {sum(r['correct'] for r in rows)}/{len(rows)}; confidently wrong "
           f"{sum(r['confident_wrong'] for r in rows)}; cost ${sum(r['cost_usd'] for r in rows):.3f}.\n")
     (out / "results.md").write_text(md, encoding="utf-8")

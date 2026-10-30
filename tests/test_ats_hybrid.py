@@ -222,3 +222,40 @@ def test_repair_hints_never_come_from_the_true_netlist(monkeypatch):
     assert prompts() == normal
     monkeypatch.setattr(netlist_mod.Netlist, "load", real_load)
     assert len(normal) == 2 and all("TB/TS 14" in p for p in normal)
+
+
+def three_error_read() -> dict:
+    """After the two forward fixes, the third read error seen on the real drawing: SE's make contact J5-J15 given to ER
+    (it only matters on the retransfer to Normal)."""
+    bad = perfect_transcription()
+    bad["relays"] = {"SE": {"no": ["J3-J2"], "nc": ["X1-J2", "J5-X2"]}, "ER": {"no": ["J1-X1", "X2-J16", "J5-J15"]},
+                     "NR": {"no": ["J8-J17"], "nc": ["J8-J9"]}}
+    return bad
+
+
+def test_retransfer_check_traces_the_circuit_from_the_model_and_does_not_leak(monkeypatch):
+    from probeforge.sim import netlist as netlist_mod
+
+    n = to_netlist(build(three_error_read()))
+    ok, events = pipeline.healthy_sequence(n)
+    assert not ok and events[-2:] == ["N Source Accepted", "Transfer Failure"]
+    where, region = pipeline.where_it_breaks(n)
+    assert "does not transfer back to Normal" in where and "0.0 V" in where
+    # traced from the model's solenoid through the cut-offs closed on Emergency; nothing listed by hand
+    assert {"TS:6", "TS:7", "TS:69", "TS:70", "TS:A", "TS:B"} <= set(region)
+    renamed = renamed_true_netlist()
+    monkeypatch.setattr(netlist_mod.Netlist, "load", classmethod(lambda cls, path: renamed))
+    pipeline._healthy_cache.clear()
+    assert pipeline.where_it_breaks(n) == (where, region)
+    monkeypatch.setattr(netlist_mod.Netlist, "load", classmethod(lambda cls, path: (_ for _ in ()).throw(AssertionError("true netlist used"))))
+    pipeline._healthy_cache.clear()
+    assert pipeline.where_it_breaks(n) == (where, region)
+
+
+def test_no_repair_attempt_when_the_check_cannot_name_a_circuit(monkeypatch):
+    from probeforge.hybrid.llm import Usage
+
+    monkeypatch.setattr(pipeline, "where_it_breaks", lambda n: ("somewhere unknown", []))
+    bad = three_error_read()
+    out, raw, flags, rec = pipeline.prepare_model(FakeChat([]), Usage(), build(bad), bad, [], [b"png"])  # no reply scripted
+    assert not rec["ok"] and rec["attempts"] == [] and "cannot name a circuit" in rec["stopped"]

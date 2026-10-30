@@ -355,3 +355,18 @@ decisions at the end (see CLAUDE.md). Architecture: [ARCHITECTURE.md](ARCHITECTU
   52U region); info-gain baseline 10/12 dev cases correct, the other two honest insufficient information (controller
   internal twins; X1 needs isolation of a powered load, strong approval, denied in batch).
 
+### D33. Hybrid v2 repair: traced circuits, no guessing, contact-type quality (S6)
+- **What:** the sequence check names the failing circuit by tracing the transcribed model: from the model's solenoid
+  part (found by its kind) through wires, pins, relay contacts and the cut-off contacts of the direction checked,
+  stopping at the source phases; the same for the engine start (from the documented TB/TS 14 and 15 field terminals)
+  and the sensing and position circuits (from the documented controller ports). The retransfer to Normal is checked
+  like the forward transfer (simulated solenoid voltage right after the command). No terminal list is written by
+  hand; a test renames the true netlist and blocks loading it, and the check and the prompts stay identical. If the
+  check cannot name a circuit, no repair attempt is made. Read quality gains the controller relay contacts (relay,
+  terminals in either order, make or break), because the connection metric cannot see a make / break or relay
+  attribution error; a repair that makes any metric worse is flagged; every accepted model version is saved.
+- **Why:** smoke run 20261031_001944: repair accepted only the two correct fixes and rejected both bad proposals, but
+  the retransfer check named no circuit, so the last two attempts were guesses.
+- **Disclosure (results):** the hybrid pipeline (crops, reading conventions, sequence checks, repair messages) was
+  developed on this one drawing, after seeing the errors of these reads; generalization to other drawings is not shown.
+
