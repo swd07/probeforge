@@ -387,3 +387,23 @@ def test_tool_results_never_carry_bench_internals():
     for e in tb.log:
         keys |= set(e["result"])
     assert not keys & {"faults", "coil_burnt", "position", "fault", "stage", "moving"}
+
+
+def test_power_up_resumes_from_the_position_contacts():
+    # healthy switch isolated and re-energized while on Emergency: it stays there, no alarm (D36)
+    b = AtsBench()
+    b.lose_utility()
+    b.step(30)
+    b.isolate()
+    b.deisolate()
+    b.step(30)
+    i = b.indicators()
+    assert b.position == "E" and i["alarms"] == [] and i["load_powered"] and i["display"] == "Load on Emergency"
+    # no valid position from 14A / 14B at power-up: the documented message and Position Error
+    x = AtsBench(faults=[Fault("TS", "stuck_open", "17-16")])
+    x.lose_utility()
+    x.step(60)
+    x.isolate()
+    x.deisolate()
+    assert x.ctl.display == "Switch Position Unknown" and x.indicators()["alarms"] == ["Position Error"]
+    assert x.indicators()["events"][-1] == {"t": round(x.t, 1), "event": "Position Error", "cause": "Switch Position Unknown"}

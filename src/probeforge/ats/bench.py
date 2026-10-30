@@ -303,13 +303,27 @@ class AtsBench:
 
     def deisolate(self) -> None:
         """Remove the isolation: the utility side returns to its state before (still lost during an outage), the
-        generator lock-out is removed and the controller powers up and restarts its automatic sequence, which repeats
-        the transfer attempt (assumed: active alarms clear on power-up, the event log is kept)."""
+        generator lock-out is removed and the controller powers up (active alarms clear, the event log is kept). It
+        reads the position contacts 14A / 14B and resumes from the position they give, so a restart alone never raises
+        an alarm: on Normal it runs its automatic sequence (after a Transfer Failure that repeats the transfer attempt);
+        on Emergency it stays there (ER energized, engine start signal given; with Normal acceptable the documented
+        retransfer follows). With no valid position (neither or both contacts) it shows "Switch Position Unknown" and
+        raises Position Error."""
         if not self.isolated:
             return
         self.isolated = self.gen_locked = False
         self.utility_on = self._utility_before_isolation
         self.ctl = Controller()
+        self._solve()
+        seen = self.position_seen()
+        c = self.ctl
+        if seen == "E":
+            c.se, c.er, c.nr, c.stage, c.display = False, True, False, "on_e", "Load on Emergency"
+            c.n_ok = False  # Normal is accepted again through the documented check in the on_e stage
+        elif seen == "unknown":
+            c.display = "Switch Position Unknown"
+            c.alarms.append("Position Error")
+            self._log("Position Error", "Switch Position Unknown")
         self._settle()
 
     def retry_transfer(self) -> None:

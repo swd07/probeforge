@@ -405,3 +405,16 @@ decisions at the end (see CLAUDE.md). Architecture: [ARCHITECTURE.md](ARCHITECTU
   retrofit case of S2 (position inputs read after the source voltage at power-up) could be added as an optional fault;
   it is listed as a limit for now.
 
+### D36. Controller power-up resumes from the position contacts (2026-10-31)
+- **What:** approved proposal from D35. On power-up after isolation the controller reads 14A / 14B and resumes from
+  the position they give (Emergency: stays there, ER energized, engine start signal; Normal: its automatic sequence);
+  with no valid position it shows "Switch Position Unknown" and raises Position Error. A restart alone never raises an
+  alarm.
+- **Evidence:** the recorded behaviour of all 118 catalog faults plus the healthy case (twin-check signatures and the
+  full outage and retransfer timelines) is identical to the previous bench; the info-gain baseline's diagnoses and
+  reading sequences on the 12 dev cases, the fault-free sequence check on the 4 saved hybrid model versions and the
+  frozen hybrid fingerprints are unchanged. On the isolate-then-restore path (isolated 60 s into the outage, restored,
+  60 s later), 78 of 119 cases differ from the previous bench, every one by the same change: the spurious Position
+  Error of a switch restarted on Emergency is gone (75 with the load powered, 3 with a main Emergency pole stuck open
+  and the load unpowered in both). No case gained an alarm or changed position.
+

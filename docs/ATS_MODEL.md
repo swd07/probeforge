@@ -107,7 +107,7 @@ Assumed with the policy:
 
 | # | Assumption | Status | Source and note |
 |---|---|---|---|
-| 16 | Re-energizing after isolation: the controller powers up and restarts its automatic sequence (alarms clear, the event log is kept), so restoring the sources after a Transfer Failure is a repeat transfer attempt | supported (power cycle), assumption (Transfer Failure) | S2: a power cycle clears a power-up Position Error. For Transfer Failure no source; kept as an assumption. |
+| 16 | Re-energizing after isolation: the controller powers up (alarms clear, the event log is kept), reads the position contacts 14A / 14B and resumes from that position, so a restart alone never raises an alarm. On Normal it runs its automatic sequence, so restoring the sources after a Transfer Failure is a repeat transfer attempt; on Emergency it stays there (ER energized, engine start signal given; with Normal acceptable the documented retransfer follows); with no valid position (neither or both contacts) it shows "Switch Position Unknown" and raises Position Error | supported (power cycle, position at power-up), assumption (Transfer Failure) | S2: a power cycle clears a power-up Position Error, which the controller raises when it cannot read a valid position. Restart after a Transfer Failure: no source. Changed on 2026-10-31 (D36). |
 | 17 | A repeated transfer command drops ER and energizes it again: a new operation of the TS coil | assumption | The documented way to repeat a transfer under control is the Transfer Test (S1, S3: test button, engine start, transfer, retransfer after the test delay, cooldown); repeat_transfer_attempt stands for it in the bench. |
 | 18 | Isolation means 52U opened and the generator locked out (52U is not a fault location, decision D23) | documented | S1, S3: both sources disconnected before working on the switch. |
 | 19 | The mechanism has a position indicator read with read_position_indicator (allowed tier, a reading like any other); the engineer in the UI sees it only after checking it | assumption | Not shown in our two documents; added for equal information between agent and engineer (D31). |
@@ -119,10 +119,9 @@ Assumed with the policy:
   so a handheld ohmmeter reads through two diode junctions in series with the coil: depending on its test voltage it
   shows a high or open reading, and diode mode shows junction drops, not the winding. A burnt or open coil still reads
   open on both. Assumption 1 is a placeholder.
-- **Power-up Position Error (S2) is not reproduced.** The bench never delays the position inputs at power-up, so the
-  documented retrofit case does not occur. The bench has a different, unintended power-up effect: a healthy switch
-  re-energized after isolation while on Emergency raises Position Error, because the restarted controller starts from
-  Normal (proposal in D35, not implemented).
+- **Power-up Position Error (S2) is partly reproduced.** At power-up the bench reads the position contacts at once;
+  with no valid position it raises Position Error ("Switch Position Unknown"). The retrofit case of S2, where the
+  position inputs are read only after the source voltage, is not modelled as a separate timing effect.
 - **Generator not accepted.** A real "generator running but not accepted" case can be under-frequency (S3: at least
   57 Hz) or an open generator output breaker; the bench models neither (frequency is not simulated, assumption 15).
 - **Readings are steady-state.** Every reading is a steady-state value taken after the 30 s action time, so a healthy
