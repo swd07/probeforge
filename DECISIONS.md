@@ -433,3 +433,15 @@ decisions at the end (see CLAUDE.md). Architecture: [ARCHITECTURE.md](ARCHITECTU
   readings or on cost without the cached-input discount (so the cache hint cannot win alone). A one-case difference in
   correct is not evidence either way. Budget for S6 plus S5 raised to $12.
 
+### D38. Keep Chat Completions for the ATS agent (2026-10-31)
+- **What:** by the rule fixed in D37, the ATS agent stays on Chat Completions; the Responses transport stays in the
+  repo, unused by the UI and the holdout.
+- **Evidence (12 dev cases, one run each, final bench; runs/20261031_012952_ats_agent_chat_low and
+  runs/20261031_013347_ats_agent_responses_low):** part-level correct Chat 10/12, Responses 8/12; confidently wrong 0
+  and 1 (Responses named the burnt coil, the consequence, in the burnout chain; it did so in the smoke run too); readings
+  159 and 108 (32 % fewer); cost without the cached-input discount $1.980 and $1.723 (13 % lower); actual cost $1.135
+  and $0.604; cache hit rate 72.8 % and 90.3 %; reasoning tokens 128,004 and 51,777; mean wall time 78 s and 38 s;
+  protocol errors 0 and 0. Responses is better on readings and uncached cost but worse on correct and on confidently
+  wrong, so the rule keeps Chat. One of the two correct-count differences (the coil read as burnt instead of open) is
+  an observational twin, scored justified; one run per transport is a small sample.
+
