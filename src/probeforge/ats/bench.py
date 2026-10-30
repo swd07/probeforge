@@ -35,9 +35,9 @@ SETTINGS = {
     "t_2e": 300.0,  # engine cooldown, 5 min
 }
 
-# --- assumptions (not documented); every value here is a simulation parameter for the engineer to confirm
+# --- bench parameters; the status and source of each are in ASSUMPTION_STATUS (and docs/ATS_MODEL.md)
 ASSUMPTIONS = {
-    "travel_s": 0.15,  # mechanism travel Normal <-> Emergency (open transition); top dead center at half travel
+    "travel_s": 0.08,  # mechanism travel Normal <-> Emergency (open transition); top dead center at half travel
     "coil_pickup": 0.70,  # TS coil operates above this share of nominal voltage across A-B
     "fallback_before_tdc": True,  # coil released before top dead center: the mechanism falls back
     "gen_crank_s": 2.0,  # generator cranking before voltage builds
@@ -46,9 +46,30 @@ ASSUMPTIONS = {
     "t_position_error": 2.0,  # Position Error if 14A / 14B disagree with the position this long without a command
     "coil_burnout_s": 30.0,  # a coil energized continuously this long burns open
     "ups_autonomy_s": 600.0,  # UPS autonomy (simulation parameter, labelled in the UI)
-    # with both sources isolated the switch can be operated manually for a check (maintenance operation; 978741
-    # sheet 3 only says a test and adjustment procedure sets the cut-off contacts): a jammed mechanism does not move
+    # with both sources isolated the switch can be operated manually for a check: a jammed mechanism does not move
     "manual_operation_isolated": True,
+}
+
+# documented: manufacturer source for this equipment; supported: manufacturer source not covering this exact frame, or a
+# secondary source; assumption: no source. Sources: guide = Group G Controller User's Guide 381333-400 N; S1 to S6 as
+# listed in docs/ATS_MODEL.md (Schneider FAQs, the Series 300 D-design operator's manual, ASCO patent US7898372B2, the
+# Series 300 brochure).
+ASSUMPTION_STATUS = {
+    "travel_s": ("supported", "S5: Series 300 open transition switches transfer loads in under 100 ms (a brochure "
+                              "figure for load transfer, not a measured travel time of this frame)"),
+    "coil_pickup": ("assumption", "no source"),
+    "fallback_before_tdc": ("assumption", "no source"),
+    "gen_crank_s": ("documented", "guide: Emergency usually accepted about 10 s after NR drops; S1, S3: in the transfer "
+                                  "test the engine starts and runs within 15 s (the 2 s crank split is ours)"),
+    "gen_rated_s": ("documented", "guide; S1; S3"),
+    "t_transfer_failure": ("assumption", "the guide lists Transfer Failure, its criteria and timing are not published"),
+    "t_position_error": ("assumption", "criteria not published; S2 documents Position Error at power-up when the "
+                                       "controller sees source voltage before the position inputs"),
+    "coil_burnout_s": ("assumption", "the risk is supported (S4: bad cut-off timing may lead to coil overheating and "
+                                     "switch failure); the 30 s is ours"),
+    "ups_autonomy_s": ("assumption", "simulation parameter, not ASCO data"),
+    "manual_operation_isolated": ("documented", "S1, S3: operate the handle only with both sources disconnected and "
+                                                "proven dead; the mechanism must move smoothly"),
 }
 
 PHASES = {"A": 0.0, "B": -120.0, "C": 120.0}

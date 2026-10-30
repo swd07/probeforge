@@ -20,15 +20,27 @@ stage; nothing here claims that the engineer has reviewed the ATS model yet.
 
 ## Questions for the engineer (assumptions to confirm)
 
-1. When does the Group G controller declare Transfer Failure, and what does it do afterwards? (The guide lists the event,
-   but its HELP section is missing.)
-2. Which position-contact combination gives Position Error?
-3. Is the coil burnout chain (cut-off contact not opening at top dead center) realistic for this solenoid mechanism?
-4. Realistic TS solenoid resistance and what a meter shows across terminals A-B with the rectifier in circuit.
-5. Generator start-up time to acceptance, and mechanism travel time.
-6. Does the controller keep ER energized after a Transfer Failure (so a jammed mechanism burns the coil), and does it
-   retry by itself?
-7. Is a manual operation of the switch with both sources isolated a normal check for a jammed mechanism or a cut-off
-   contact that does not open, and how is the cut-off checked in the field?
-8. How is a transfer repeated after a Transfer Failure on the Group G (alarm reset, test function), and does the
-   controller restart its automatic sequence when it is powered up again after an isolation?
+Research on public manufacturer sources (2026-10-31, docs/ATS_MODEL.md, sources S1 to S6) answers some of them; the
+others stay open.
+
+1. When does the Group G controller declare Transfer Failure, and what does it do afterwards? **Open** (exact timing;
+   the guide lists the event without criteria).
+2. Which position-contact combination gives Position Error? **Partly answered**: S2 documents Position Error at
+   power-up when the controller sees source voltage before the position inputs, cleared by a full power cycle. The
+   criteria during operation stay open.
+3. Is the coil burnout chain realistic for this solenoid mechanism? **Answered (risk)**: S4 (ASCO patent) says bad
+   cut-off timing may lead to coil overheating and switch failure. The burnout time stays open.
+4. Realistic TS solenoid resistance and what a meter shows across A-B with the rectifier in circuit. **Open**: S6 has
+   the table by frame, the D-frame value depends on the coil kit; through the bridge rectifier a meter reads diode
+   junctions (bench limit documented).
+5. Generator start-up time to acceptance, and mechanism travel time. **Answered**: guide (Emergency usually accepted
+   about 10 s after NR drops), S1 and S3 (engine runs within 15 s in the transfer test), S5 (load transfer under
+   100 ms; the bench now uses 0.08 s travel).
+6. Does the controller keep ER energized after a Transfer Failure, and does it retry by itself? **Open** (retry
+   behaviour): no source confirms an automatic retry.
+7. Is a manual operation with both sources isolated a normal check, and how is the cut-off checked in the field?
+   **Answered** for the manual operation: S1 and S3 (both sources disconnected and proven dead, the mechanism must move
+   smoothly). The cut-off check follows the transfer switch test and adjustment procedure (978741 sheet 3).
+8. How is a transfer repeated after a Transfer Failure, and does the controller restart its sequence when powered up
+   again? **Partly answered**: the documented controlled repeat is the Transfer Test (S1, S3); a power cycle clears a
+   power-up Position Error (S2). Restart after a Transfer Failure stays open.

@@ -383,3 +383,25 @@ decisions at the end (see CLAUDE.md). Architecture: [ARCHITECTURE.md](ARCHITECTU
   (the rest: 52U, not on the sheets, and the dashed optional neutral poles). The second repair, asked about the forward
   transfer circuit, also moved the contact J5-J15 that only the retransfer needs: the traced region contains it.
 
+### D35. Sources for the ATS assumptions; mechanism travel under 100 ms (2026-10-31)
+- **What:** every bench assumption has a status (documented, supported, assumption) and a source in
+  docs/ATS_MODEL.md and in `ASSUMPTION_STATUS` (src/probeforge/ats/bench.py), from public manufacturer sources
+  (guide, Schneider FAQs, the Series 300 D-design operator's manual, ASCO patent US7898372B2, the Series 300 brochure).
+  One parameter changed: mechanism travel 0.15 s to 0.08 s (brochure: open transition load transfer under 100 ms;
+  status supported). The replace_coil result recommends relubricating the operator (operator's manual), text only.
+  Known limits added: the coil resistance reading spans the bridge rectifier, the power-up Position Error of the
+  retrofit FAQ is not reproduced, under-frequency and an open generator breaker are not modelled, readings are steady
+  state.
+- **Evidence of no behaviour change from the travel time:** the recorded behaviour of all 118 catalog faults plus the
+  healthy case (twin-check signature: panel, display, alarms, metering and event log with causes at five moments, every
+  voltage and resistance, the manual check) is identical; in the full outage and retransfer timeline only event times
+  move (-0.1 s) and the UPS time left (at most 0.2 s); event names, order, final position and lights are identical. The
+  info-gain baseline's diagnoses and reading sequences on the 12 dev cases are identical, the fault-free sequence check
+  gives the same events on the 4 saved hybrid model versions, the frozen hybrid fingerprints match.
+- **Proposal, not implemented (needs approval):** a healthy switch re-energized after isolation while on Emergency
+  raises Position Error in the bench, because the restarted controller starts from Normal. Proposed fix: at power-up
+  the controller reads the position contacts and resumes from them (on Emergency with Emergency acceptable: stay on
+  Emergency, ER energized; on Normal: the normal sequence), so a restart alone never raises an alarm. Separately, the
+  retrofit case of S2 (position inputs read after the source voltage at power-up) could be added as an optional fault;
+  it is listed as a limit for now.
+

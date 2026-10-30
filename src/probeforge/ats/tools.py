@@ -366,7 +366,10 @@ class AtsToolBox:
         # only reached for repairs the policy let through (after human approval)
         self._state_version += 1
         self.bench.repair(args["action"], args["target_id"])
-        return {"done": True, **self._panel_view()}
+        out = {"done": True, **self._panel_view()}
+        if args["action"] == "replace_coil":  # the Series 300 operator's manual (docs/ATS_MODEL.md, S3)
+            out["recommendation"] = "relubricate the operator when the TS coil is replaced"
+        return out
 
     def _tool_submit_diagnosis(self, args: dict) -> dict:
         self.diagnosis = dict(args)

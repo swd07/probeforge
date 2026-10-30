@@ -33,40 +33,51 @@ against the documented paths of sheets 2, 3 and 4.
 | Source acceptability, pickup and dropout settings (Normal 85 % / 90 %, Emergency 75 % / 90 %), timers (1C 3 s, 1F 4 s, 2B 0, 2E 5 min, 3A 30 min, fail-accept 3 s with the alarm off by default) | Guide pages 7, 14 to 17 (used from S1) |
 | Lights (Normal accepted, Emergency accepted, Load on Normal, Load on Emergency, Alert, Not in automatic), display messages, event types and causes | Guide pages 6, 26 to 28, 43 and 44 (used from S1) |
 
+## Sources for the assumptions
+
+Public sources (short quotes only; no vendor PDF is in this repository):
+
+- **guide**: Group G Controller User's Guide 381333-400 N (3/2026).
+- **S1**: Schneider Electric FAQ000238967, Functional Test for the Series 300 ATS.
+- **S2**: Schneider Electric FAQ000222180, Position Error right after installing a Group G retrofit controller.
+- **S3**: ASCO Series 300 D-design 30 to 230 A operator's manual (Winco edition),
+  https://www.manualsdir.com/manuals/716169/winco-asco-300-d-design-30-230-amp.html
+- **S4**: ASCO Power Technologies patent US7898372B2, https://patents.google.com/patent/US7898372
+- **S5**: ASCO Series 300 brochure, https://www.globalpwr.com/wp-content/uploads/cut-sheets/gps-acso-series-300-brochure.pdf
+- **S6**: Schneider Electric FAQ000207844, coil resistance values by frame (the D-frame values are only in an image and
+  depend on the coil kit).
+
+Status: **documented** (a manufacturer source for this equipment), **supported** (a manufacturer source that does not
+cover this exact frame, or a secondary source), **assumption** (no source). The bench values are in the
+`ASSUMPTIONS` table of `src/probeforge/ats/bench.py`, their status and source in `ASSUMPTION_STATUS` next to it.
+
 ## Assumptions
 
 In the netlist (S0):
 
-1. TS solenoid A-B resistance 30 ohm (coil behind the rectifier): not documented, placeholder.
-2. Utility and generator are ideal 120/208 V three-phase sources.
-3. The generator starts while TB/TS 14-15 is closed (Feature 7); Feature 8 is not used by the modelled generator.
-4. Controller inputs are ideal voltage and continuity sensing points; the controller's internal circuits are not modelled.
-5. SE, ER and NR are modelled as contacts; their coils are inside the controller and driven by the controller logic.
-6. The optional extension harness 309320-005 (Px/Jx) is not modelled: plug P mates directly with jack J.
+| # | Assumption | Status | Source and note |
+|---|---|---|---|
+| 1 | TS solenoid A-B resistance 30 ohm | assumption | Placeholder. S6 has the real table by frame; the D-frame value depends on the coil kit and is only in an image. See the limit on what the reading spans. |
+| 2 | Utility and generator are ideal 120/208 V three-phase sources | assumption | Simulation model. |
+| 3 | The generator starts while TB/TS 14-15 is closed (Feature 7); Feature 8 is not used by the modelled generator | documented | 978741 sheet 2 (Feature 7 closes to start, Feature 8 opens to start); which one the site generator uses is a site choice. |
+| 4 | Controller inputs are ideal voltage and continuity sensing points | assumption | The controller's internal circuits are not published. |
+| 5 | SE, ER and NR are modelled as contacts; their coils are inside the controller | documented | 978741 sheets 2 and 3 show only the contacts; the guide names the relays. |
+| 6 | The optional extension harness 309320-005 (Px/Jx) is not modelled: plug P mates directly with jack J | documented | 978741 sheet 6 lists it as an optional extension harness. |
 
-In the bench simulator (S1, `src/probeforge/ats/bench.py`, the `ASSUMPTIONS` table), to be confirmed by the
-electrical engineer:
+In the bench simulator (S1):
 
-7. **Transfer Failure**: declared if the position contacts do not confirm the other position 6 s after the command
-   while the switch never left its origin (its position contact is still closed). The guide lists the event but its
-   HELP section is missing.
-8. **Position Error**: declared if the switch left its origin but the other position is never confirmed 6 s after the
-   command, or if 14A / 14B disagree with a settled switch for 2 s. Same gap in the guide.
-9. After either alarm the controller keeps SE / ER as commanded and does not retry by itself.
-10. Generator start curve: 2 s cranking, rated voltage 10 s after the start signal, linear in between (the guide:
-    "usually about 10 seconds"); Emergency is accepted at 90 % pickup, about 9.2 s after the start signal.
-11. Mechanism: 0.15 s travel (open transition), top dead center at half travel; the coil operates above 70 % of
-    nominal voltage across A-B; one operation per energization (a coil that stays energized holds the plunger, it does
-    not drive the mechanism back); released before top dead center the mechanism falls back.
-12. Coil burnout chain (replaces the fuse scenario, which 978741 does not support: there is no fuse in the TS operator
-    circuit): if the cut-off contacts 8-9 and 71-72 do not open at top dead center, the coil stays energized with ER
-    on and burns open after 30 s of continuous energization; a replacement coil burns again on the next transfer until
-    the cut-off is fixed. A jammed mechanism also leaves the coil energized and burns it.
-13. With both sources isolated the controller's relays drop out, and the switch can be operated manually for a check
-    (a maintenance operation; sheet 3 only says a test and adjustment procedure sets the cut-off contacts): a jammed
-    mechanism does not move, a cut-off contact that does not open still reads closed at the far position.
-14. UPS autonomy 10 minutes and 30 s of virtual time per reading or action: simulation parameters, not ASCO data.
-15. Frequency is not simulated: a source with voltage is at nominal frequency.
+| # | Assumption | Status | Source and note |
+|---|---|---|---|
+| 7 | **Transfer Failure** if the position contacts do not confirm the other position 6 s after the command while the switch never left its origin | assumption | The guide lists the event; its criteria and timing are not published. |
+| 8 | **Position Error** if the switch left its origin but the other position is never confirmed 6 s after the command, or if 14A / 14B disagree with a settled switch for 2 s | assumption | Criteria not published. S2 documents a further case: Position Error at power-up when the controller sees source voltage before the position inputs, cleared by a full power-down and re-energization. The bench does not reproduce that case (see the limits). |
+| 9 | After either alarm the controller keeps SE / ER as commanded and does not retry by itself | assumption | No source confirms an automatic retry after a failed transfer. The guide only restarts Feature 2B when Emergency becomes unacceptable during 2B. |
+| 10 | Generator start: rated voltage 10 s after the start signal (2 s cranking, linear in between); Emergency accepted at 90 % pickup, about 9.2 s after the signal | documented | Guide: Emergency usually accepted about 10 s after NR drops. S1, S3: in the transfer test the engine starts and runs within 15 s. The 2 s / 8 s split of the curve is ours. |
+| 11 | Mechanism: 0.08 s travel (open transition), top dead center at half travel | supported | S5: Series 300 open transition switches transfer loads in under 100 ms (a brochure figure for load transfer, not a measured travel time of this frame). Changed from 0.15 s on 2026-10-31 (D35). |
+| 11a | The coil operates above 70 % of nominal voltage across A-B; one operation per energization (a coil that stays energized holds the plunger); released before top dead center the mechanism falls back | assumption | No source. |
+| 12 | Coil burnout chain: cut-off contacts 8-9 and 71-72 that do not open at top dead center keep the coil energized; it burns open after 30 s; a new coil burns again until the cut-off is fixed; a jammed mechanism also burns the coil | supported (risk), assumption (30 s) | S4: the coil control contacts cut off power to the solenoid, and bad cut-off timing "may lead to possible coil overheating and switch failure". S5: the operator draws power from the destination source, as modelled. The 30 s burn time is ours. |
+| 13 | With both sources isolated the switch can be operated manually for a check: a jammed mechanism does not move, a cut-off contact that does not open still reads closed at the far position | documented | S1, S3: operate the manual handle only with both sources disconnected and proven dead; the mechanism must move smoothly. The policy matches (approval tier, isolated only, never under load). S3 also says to relubricate the operator when the TS coil is replaced: the replace_coil result carries that recommendation. |
+| 14 | UPS autonomy 10 minutes and 30 s of virtual time per reading or action | assumption | Simulation parameters, not ASCO data. |
+| 15 | Frequency is not simulated: a source with voltage is at nominal frequency | assumption | See the limits: S3's troubleshooting checks the generator frequency (at least 57 Hz) and the generator output breaker. |
 
 ## Agent action limits (S2)
 
@@ -92,18 +103,31 @@ reason). Every reading or action costs 30 s of virtual time (assumption 14).
 | submit_diagnosis | allowed | with a confidence and evidence citing executed observation steps |
 | any strong approval request | strong approval | refused before it reaches the human unless it has a reason and cites at least one executed instrument reading (evidence_steps) |
 
-Assumed with the policy, for the engineer to confirm:
+Assumed with the policy:
 
-16. Re-energizing after isolation: the controller powers up and restarts its automatic sequence (alarms clear, the
-    event log is kept), so restoring the sources after a Transfer Failure is a repeat transfer attempt.
-17. A repeated transfer command (the operator resets the alarm) drops ER and energizes it again: a new operation of
-    the TS coil.
-18. Isolation means 52U opened and the generator locked out (the outage itself is on the utility side; 52U is not a
-    fault location, decision D23).
-19. The transfer switch mechanism has a position indicator (a flag at the switch, independent of the controller's
-    position contacts 14A / 14B): not shown in our two documents. The agent reads it with read_position_indicator
-    (allowed tier, a reading like any other); the engineer in the UI sees it only after checking it with the same
-    tool, so both have the same information at the same time cost.
+| # | Assumption | Status | Source and note |
+|---|---|---|---|
+| 16 | Re-energizing after isolation: the controller powers up and restarts its automatic sequence (alarms clear, the event log is kept), so restoring the sources after a Transfer Failure is a repeat transfer attempt | supported (power cycle), assumption (Transfer Failure) | S2: a power cycle clears a power-up Position Error. For Transfer Failure no source; kept as an assumption. |
+| 17 | A repeated transfer command drops ER and energizes it again: a new operation of the TS coil | assumption | The documented way to repeat a transfer under control is the Transfer Test (S1, S3: test button, engine start, transfer, retransfer after the test delay, cooldown); repeat_transfer_attempt stands for it in the bench. |
+| 18 | Isolation means 52U opened and the generator locked out (52U is not a fault location, decision D23) | documented | S1, S3: both sources disconnected before working on the switch. |
+| 19 | The mechanism has a position indicator read with read_position_indicator (allowed tier, a reading like any other); the engineer in the UI sees it only after checking it | assumption | Not shown in our two documents; added for equal information between agent and engineer (D31). |
+
+## Known limits of the bench
+
+- **Coil resistance reading.** measure_resistance across TS A-B returns a linear 30 ohm, as if the meter reached the
+  coil winding. On the real solenoid assembly A and B are the AC terminals of the bridge rectifier CR (978741 sheet 3),
+  so a handheld ohmmeter reads through two diode junctions in series with the coil: depending on its test voltage it
+  shows a high or open reading, and diode mode shows junction drops, not the winding. A burnt or open coil still reads
+  open on both. Assumption 1 is a placeholder.
+- **Power-up Position Error (S2) is not reproduced.** The bench never delays the position inputs at power-up, so the
+  documented retrofit case does not occur. The bench has a different, unintended power-up effect: a healthy switch
+  re-energized after isolation while on Emergency raises Position Error, because the restarted controller starts from
+  Normal (proposal in D35, not implemented).
+- **Generator not accepted.** A real "generator running but not accepted" case can be under-frequency (S3: at least
+  57 Hz) or an open generator output breaker; the bench models neither (frequency is not simulated, assumption 15).
+- **Readings are steady-state.** Every reading is a steady-state value taken after the 30 s action time, so a healthy
+  coil pulse (under 0.1 s) never shows up, as with a handheld meter; the reading during a repeated transfer command is
+  taken 1 s after the command.
 
 ## Documented but not modelled
 
