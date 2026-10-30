@@ -245,3 +245,27 @@ decisions at the end (see CLAUDE.md). Architecture: [ARCHITECTURE.md](ARCHITECTU
 - **Wording rule (README, video):** families A and B already differ on the panel (Emergency accepted light, display);
   the agent's real task is localizing the fault within a family with measurements. Never claim that the families look
   identical to the agent.
+
+### D28. ATS tools and four-tier safety policy (stage S2)
+- **What:** `src/probeforge/ats/policy.py` (AtsPolicy) and `src/probeforge/ats/tools.py` (AtsToolBox), separate from
+  the relay-panel policy and toolbox, which are unchanged. Tiers: allowed / approval / strong approval / never, in one
+  `RULES` table that drives the check, the prompt summary and the generated limits table in docs/ATS_MODEL.md. Strong
+  approval: a repeat transfer attempt after a Transfer Failure or Position Error (also restoring the sources after one,
+  since the controller restarts its sequence), and the same replacement again after a repeat failure. Never: bypassing
+  an interlock, paralleling sources, operating the handle under load (including a manual operation check without
+  isolation). Resistance, the manual operation check and every repair need both sources isolated and locked out.
+  Agent tools: panel, event log, metering screen, wait, voltage, resistance, isolate / restore, manual operation check
+  with readings at the other position, repeat transfer attempt with readings during the command (1 s after it),
+  repairs. Every reading or action costs 30 s of virtual time.
+- **Why:** the engineer's points 4, 5 and 9 (root cause, stronger approval for repeats, a table of action limits);
+  the S1 twin check needs the manual operation check and a reading during the command to localize family A.
+- **Changed at approval (2026-10-30):** isolating the sources is always approval tier (lockout / tagout is a formal
+  procedure on a real site, even with the load unpowered; the batch approver approves that tier, so batch runs can
+  still measure resistance). Strong approval is enforced in code: a strong-approval request without a reason and at
+  least one cited executed instrument reading (`evidence_steps`) is refused before it reaches the approver; the UI asks
+  for a second confirmation in S4. Confirmed: assumptions 16 to 18, no repair for a jammed mechanism (diagnose and
+  escalate to vendor service; this ATS has no bypass), the generated limits table with its sync test.
+- **Evidence:** tests/test_ats_tools.py: every tier, repeat transfer and second replacement at strong approval,
+  resistance and manual operation only isolated, the replaced coil that does not fix a root cause, and the no-leak
+  test over all 118 ATS faults (a fault never adds a mention of itself compared with a healthy bench driven the same
+  way; no failure-mode word or scenario text in any result).

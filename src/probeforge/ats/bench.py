@@ -57,6 +57,16 @@ SENSE_E = ("CP:J7", "CP:J18", "CP:J6")  # EA, EB, EC (3 phase with accessory 11B
 POS_COMMON, POS_14B, POS_14A = "CP:J10", "CP:J13", "CP:J14"
 LOAD = ("TS:20", "TS:21", "TS:22")  # LA, LB, LC
 INTERNAL_NETS = ("CPX1", "CPX2")  # inside the controller: no probe access
+# repairs an authorized person can make (approval tier in the ATS policy), by the part kinds they restore
+REPAIR_KINDS = {
+    "replace_coil": ("solenoid",),
+    "repair_wire": ("wire",),
+    "repair_connector": ("pin",),
+    "replace_cutoff_contact": ("cutoff_n", "cutoff_e"),
+    "adjust_cutoff_contact": ("cutoff_n", "cutoff_e"),
+    "replace_controller": ("controller",),
+}
+CONTROLLER_PARTS = ("SE", "ER", "NR", "CP")  # the relays are inside the controller: replaced with it
 
 
 def _phasor(volts: float, deg: float) -> complex:
@@ -98,6 +108,7 @@ class AtsBench:
         self.gen_t: float | None = None  # time since the start signal (None: engine stopped)
         self.gen_locked = False  # generator locked out (isolation for resistance checks)
         self.isolated = False
+        self._utility_before_isolation = True
         self.coil_on_t = 0.0  # continuous energization of the TS coil
         self.coil_burnt = False
         self.ctl = Controller()
@@ -254,11 +265,69 @@ class AtsBench:
     def isolate(self) -> None:
         """Both sources isolated for resistance checks: utility off and the generator locked out. The switch stays
         where it is; the controller's relays drop out with no supply (assumed)."""
+        if self.isolated:
+            return
+        self._utility_before_isolation = self.utility_on
         self.utility_on = False
         self.gen_locked = True
         self.isolated = True
         self.gen_t = None
         self.ctl.se = self.ctl.er = self.ctl.nr = False
+        self._solve()
+
+    def deisolate(self) -> None:
+        """Remove the isolation: the utility side returns to its state before (still lost during an outage), the
+        generator lock-out is removed and the controller powers up and restarts its automatic sequence, which repeats
+        the transfer attempt (assumed: active alarms clear on power-up, the event log is kept)."""
+        if not self.isolated:
+            return
+        self.isolated = self.gen_locked = False
+        self.utility_on = self._utility_before_isolation
+        self.ctl = Controller()
+        self._settle()
+
+    def retry_transfer(self) -> None:
+        """The operator resets the alarm and the controller repeats the failed transfer command: ER drops and
+        energizes again, a new operation of the TS coil (assumed; the guide's HELP for Transfer Failure is missing)."""
+        c = self.ctl
+        if self.isolated:
+            raise RuntimeError("both sources are isolated: no transfer command possible")
+        if c.stage not in ("transfer_failure", "position_error"):
+            raise RuntimeError("no failed transfer to repeat")
+        if not c.e_ok:
+            raise RuntimeError("the Emergency source is not accepted: the controller cannot command a transfer")
+        c.alarms = [x for x in c.alarms if x not in ("Transfer Failure", "Position Error")]
+        c.er, c.se, c.stage, c.command_t = True, False, "transferring", 0.0
+        self.coil_on_t = 0.0  # ER dropped and energized again: a new energization of the coil
+        self._settle()
+
+    def repair_target(self, action: str, target: str) -> tuple[str, str | None]:
+        """Resolve a repair target to (component, part) or raise ValueError. replace_controller takes 'CP'."""
+        kinds = REPAIR_KINDS.get(action)
+        if kinds is None:
+            raise ValueError(f"unknown repair {action!r}")
+        if action == "replace_controller":
+            if target.strip().upper() not in ("CP", ""):
+                raise ValueError("replace_controller takes target 'CP'")
+            return "CP", None
+        part = self.n.parts.get(target.strip())
+        if part is None or part.kind not in kinds:
+            what = {"replace_coil": "the TS solenoid", "repair_wire": "a harness wire", "repair_connector": "a plug/jack pin"}
+            raise ValueError(f"{action} needs the part id of {what.get(action, 'a TS cut-off contact')} (see get_schematic)")
+        return part.component, part.name
+
+    def repair(self, action: str, target: str) -> None:
+        """An authorized repair with both sources isolated. It restores the part named, nothing else: a replaced
+        coil burns again if the cut-off contact that burnt it is still faulty."""
+        if not self.isolated:
+            raise RuntimeError("repairs only with both sources isolated")
+        comp, part = self.repair_target(action, target)
+        if action == "replace_controller":
+            self.faults = [f for f in self.faults if f.component not in CONTROLLER_PARTS]
+            return
+        self.faults = [f for f in self.faults if not (f.component == comp and f.part == part)]
+        if action == "replace_coil":
+            self.coil_burnt, self.coil_on_t = False, 0.0
         self._solve()
 
     def step(self, dt: float) -> None:

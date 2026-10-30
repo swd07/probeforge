@@ -68,6 +68,38 @@ electrical engineer:
 14. UPS autonomy 10 minutes and 30 s of virtual time per reading or action: simulation parameters, not ASCO data.
 15. Frequency is not simulated: a source with voltage is at nominal frequency.
 
+## Agent action limits (S2)
+
+Generated from `src/probeforge/ats/policy.py` (`RULES`); a test checks that this table matches the code. Tiers:
+allowed; approval (a human approves); strong approval (a second, explicit approval); never (blocked whatever the
+reason). Every reading or action costs 30 s of virtual time (assumption 14).
+
+| Action | Tier | Condition |
+|---|---|---|
+| read_panel, read_event_log, read_metering, wait, get_schematic, update_hypotheses | allowed | always |
+| measure_voltage | allowed | always (also to prove a circuit dead after isolation) |
+| measure_resistance | allowed | only with both sources isolated and locked out, otherwise blocked |
+| isolate_sources (open 52U, lock out the generator) | approval | always (lockout / tagout is a formal procedure) |
+| restore_sources | allowed | before any Transfer Failure or Position Error |
+| restore_sources | strong approval | after a Transfer Failure or Position Error: the controller restarts its sequence, a repeat transfer attempt |
+| manual_operation_check | approval | only with both sources isolated and locked out |
+| manual_operation_check | never | with any source not isolated (manual operation under load) |
+| repeat_transfer_attempt | strong approval | after a Transfer Failure or Position Error; blocked otherwise |
+| replace_coil, repair_wire, repair_connector, replace_cutoff_contact, adjust_cutoff_contact, replace_controller | approval | only with both sources isolated and locked out |
+| the same replacement again | strong approval | after a Transfer Failure or Position Error that followed the first one |
+| bypass_interlock, parallel_sources, operate_handle_under_load | never | always blocked |
+| submit_diagnosis | allowed | with a confidence and evidence citing executed observation steps |
+| any strong approval request | strong approval | refused before it reaches the human unless it has a reason and cites at least one executed instrument reading (evidence_steps) |
+
+Assumed with the policy, for the engineer to confirm:
+
+16. Re-energizing after isolation: the controller powers up and restarts its automatic sequence (alarms clear, the
+    event log is kept), so restoring the sources after a Transfer Failure is a repeat transfer attempt.
+17. A repeated transfer command (the operator resets the alarm) drops ER and energizes it again: a new operation of
+    the TS coil.
+18. Isolation means 52U opened and the generator locked out (the outage itself is on the utility side; 52U is not a
+    fault location, decision D23).
+
 ## Documented but not modelled
 
 Customer auxiliary contacts 14A (12-13, 31-32) and 14B (10-11, 29-30), option relay OP1, external Features 17 and 6B,
