@@ -444,4 +444,7 @@ decisions at the end (see CLAUDE.md). Architecture: [ARCHITECTURE.md](ARCHITECTU
   protocol errors 0 and 0. Responses is better on readings and uncached cost but worse on correct and on confidently
   wrong, so the rule keeps Chat. One of the two correct-count differences (the coil read as burnt instead of open) is
   an observational twin, scored justified; one run per transport is a small sample.
+- **Pattern (an observation, not proof; one run each):** in both Responses runs (the 5-case smoke and the 12-case run)
+  A7 stopped at the burnt coil, the consequence, while Chat found the misadjusted cut-off, the root cause. Responses was
+  faster and cheaper but closed earlier; for this domain we keep the more thorough transport.
 
