@@ -86,11 +86,33 @@ def test_repairs_need_approval_and_isolation(action):
 
 def test_isolation_always_needs_approval():
     p = AtsPolicy()  # lockout / tagout is a formal procedure, whether the load is powered or not
-    for panel in (LIVE, LIVE_FAILED, LIVE_POWERED):
+    for panel in (LIVE, LIVE_FAILED):
         d = p.check("isolate_sources", {}, panel)
         assert d.verdict == Verdict.NEEDS_APPROVAL and d.tier == "approval"
-    assert "drops the load" in p.check("isolate_sources", {}, LIVE_POWERED).reason
     assert p.check("isolate_sources", {}, ISO).verdict == Verdict.ALLOW  # already isolated: nothing to do
+
+
+def test_isolation_that_drops_a_powered_load_needs_strong_approval_and_the_policy_states_the_fact():
+    on_e = AtsPanelState(isolated=False, load_powered=True, failures=1, load_source="Emergency")
+    d = AtsPolicy().check("isolate_sources", {}, on_e)
+    assert d.verdict == Verdict.NEEDS_STRONG_APPROVAL and d.tier == STRONG
+    assert d.facts == ("Load is currently powered from the Emergency source; isolation will de-energize it.",)
+    # through the toolbox, on the position-feedback case where the generator feeds the load (the X1 smoke finding:
+    # the agent's reason said the load was on the UPS)
+    asked = []
+    tb = toolbox(faults_of(CASES["x1_aux14b_open"]), approver=lambda req: asked.append(req) or False)
+    assert tb.call("read_panel", {})["load_powered"]
+    wrong = "ohmmeter checks; load on UPS"
+    r = tb.call("isolate_sources", {"reason": wrong})
+    assert r["requires_strong_approval"] and "evidence_steps" in r["error"] and asked == []  # no cited reading
+    r = tb.call("isolate_sources", {"reason": wrong, "evidence_steps": evidence(tb)})
+    assert len(asked) == 1 and asked[0].strong and asked[0].agent_reason == wrong
+    assert asked[0].facts == ("Load is currently powered from the Emergency source; isolation will de-energize it.",)
+    assert r["policy_facts"] == list(asked[0].facts) and not tb.bench.isolated
+    # the batch approver denies it like every strong approval
+    tb = toolbox(faults_of(CASES["x1_aux14b_open"]), approver=approve_standard_only)
+    r = tb.call("isolate_sources", {"reason": wrong, "evidence_steps": evidence(tb)})
+    assert "denied" in r["error"] and not tb.bench.isolated
 
 
 def test_repeat_transfer_after_a_failure_needs_strong_approval():

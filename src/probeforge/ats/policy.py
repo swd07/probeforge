@@ -36,7 +36,10 @@ RULES = [
     ("read_panel, read_event_log, read_metering, wait, get_schematic, update_hypotheses", ALLOW, "always"),
     ("measure_voltage", ALLOW, "always (also to prove a circuit dead after isolation)"),
     ("measure_resistance", ALLOW, "only with both sources isolated and locked out, otherwise blocked"),
-    ("isolate_sources (open 52U, lock out the generator)", APPROVAL, "always (lockout / tagout is a formal procedure)"),
+    ("isolate_sources (open 52U, lock out the generator)", APPROVAL, "while the load is not powered (lockout / tagout "
+                                                                      "is a formal procedure)"),
+    ("isolate_sources", STRONG, "while the load is powered: isolation de-energizes it; the policy states that fact in "
+                                "the request shown to the approver"),
     ("restore_sources", ALLOW, "before any Transfer Failure or Position Error"),
     ("restore_sources", STRONG, "after a Transfer Failure or Position Error: the controller restarts its sequence, "
                                 "a repeat transfer attempt"),
@@ -78,6 +81,7 @@ class Decision:
     verdict: Verdict
     reason: str = ""
     never: bool = False  # blocked by a never-tier rule (not only by a condition)
+    facts: tuple[str, ...] = ()  # stated by the policy itself in the request shown to the approver
 
     @property
     def tier(self) -> str:
@@ -93,6 +97,7 @@ class AtsPanelState:
     isolated: bool  # both sources isolated and locked out
     load_powered: bool
     failures: int  # Transfer Failure / Position Error events in the controller log
+    load_source: str = ""  # "Normal", "Emergency" or "" (unknown), from what the panel shows
 
 
 @dataclass
@@ -125,8 +130,11 @@ class AtsPolicy:
         if tool == "isolate_sources":
             if panel.isolated:
                 return Decision(Verdict.ALLOW)
-            why = "; it drops the load that is powered now" if panel.load_powered else ""
-            return Decision(Verdict.NEEDS_APPROVAL, f"isolating both sources (lockout / tagout) needs human approval{why}")
+            if panel.load_powered:  # a wrong agent reason is contradicted by the fact the policy adds
+                src = f"from the {panel.load_source} source" if panel.load_source else "now"
+                return Decision(Verdict.NEEDS_STRONG_APPROVAL, "isolating both sources while the load is powered needs "
+                                "strong approval", facts=(f"Load is currently powered {src}; isolation will de-energize it.",))
+            return Decision(Verdict.NEEDS_APPROVAL, "isolating both sources (lockout / tagout) needs human approval")
         if tool == "restore_sources":
             if panel.isolated and panel.failures:
                 return Decision(Verdict.NEEDS_STRONG_APPROVAL, "re-energizing after a Transfer Failure or Position Error "

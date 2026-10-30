@@ -269,3 +269,27 @@ decisions at the end (see CLAUDE.md). Architecture: [ARCHITECTURE.md](ARCHITECTU
   resistance and manual operation only isolated, the replaced coil that does not fix a root cause, and the no-leak
   test over all 118 ATS faults (a fault never adds a mention of itself compared with a healthy bench driven the same
   way; no failure-mode word or scenario text in any result).
+
+### D29. ATS agent profile (stage S3)
+- **What:** `src/probeforge/ats/prompts.py` and `src/probeforge/ats/agent.py` (run_ats_agent), with the S2 tool specs; the
+  relay-panel agent (prompts, tool specs, loop) is untouched and its frozen "prompt" fingerprint is unchanged (a test
+  checks it). The prompt describes the equipment from the manufacturer's documentation (sequence, acceptance
+  settings, controller face), general meter facts and the labelled bench parameters; it carries no hints derived from
+  the dev scenarios (a test checks that no dev fault location appears in the prompt or tool specs; the solenoid A-B is
+  the only solenoid). Same loop protocol as the relay-panel agent, effort low, batch approver approves the approval tier
+  and denies strong approval. Every case starts 60 s after the Normal source fails. `scripts/run_ats.py` runs cases,
+  records spend and writes the table; a7 accepts either misadjusted cut-off as the root cause (`also_accepted`).
+- **Why:** P0 is the pure agent on the ATS (plan decision 1); a separate profile keeps Level 1 identical.
+- **Evidence:** 5-case dev smoke test 2026-10-30 (runs/20261030_174105_ats_agent_low, dev, not holdout): 4/5 exact,
+  the fifth names the right part with the observational twin mode (coil burnt instead of open), 0 confidently wrong,
+  $0.52.
+- **Motivating finding (X1, position feedback):** the generator was feeding the load, yet the agent asked to isolate
+  both sources with the reason "load on UPS". The policy flagged the powered load, but isolation was only approval tier,
+  so the batch approver let it through. A demo moment: the agent was wrong, the policy caught it.
+- **Changed at approval (2026-10-30), a general policy rule:** isolation that would drop a powered load is strong
+  approval (reason plus a cited reading, then the second confirmation; batch denies it). The policy itself adds the fact
+  to the request shown to the approver ("Load is currently powered from the Emergency source; isolation will
+  de-energize it."), so a wrong agent reason is visibly contradicted. The source is inferred from what the panel shows
+  (Normal lost: Emergency). The smoke test was not rerun. Checked: the agent already sees the UPS time left (autonomy,
+  time left, draining) in the step 0 observation, every read_panel and every wait; the prompt wording is unchanged.
+

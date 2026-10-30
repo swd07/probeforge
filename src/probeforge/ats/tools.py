@@ -36,6 +36,7 @@ class AtsApprovalRequest:
     policy_reason: str
     agent_reason: str
     strong: bool  # strong approval: a second, explicit confirmation
+    facts: tuple[str, ...] = ()  # added by the policy, shown to the approver next to the agent's reason
 
 
 Approver = Callable[[AtsApprovalRequest], bool]
@@ -46,7 +47,7 @@ def approve_standard_only(request: AtsApprovalRequest) -> bool:
     return not request.strong
 
 
-POINT = {"type": "string", "description": "Terminal id like 'TS:A' or 'CP:J7', or net name like 'EA', 'P2', 'TSA'."}
+POINT = {"type": "string", "description": "Terminal id like 'TS:A' or 'CP:J12', or net name like 'NA', 'P12', 'TSA'."}
 PAIR = {"type": "object", "properties": {"point_a": POINT, "point_b": POINT}, "required": ["point_a", "point_b"],
         "additionalProperties": False}
 REASON = {"type": "string", "description": "Why; required when human approval is needed."}
@@ -88,7 +89,7 @@ TOOL_SPECS = [
             "type": "object",
             "properties": {
                 "component": {"type": "string", "description": "Component id, e.g. 'TS' or 'H1'."},
-                "part": {"type": "string", "description": "Part if known, e.g. 'A-B', '8-9', 'W2_TSA-W2_P2'."},
+                "part": {"type": "string", "description": "Part if known, e.g. 'A-B', '6-7', 'W12_TS1-W12_P12'."},
                 "failure_mode": {"type": "string", "enum": FAILURE_MODES},
                 "probability": {"type": "number"},
                 "reason": {"type": "string"},
@@ -99,7 +100,7 @@ TOOL_SPECS = [
     _fn("perform_action", "Request a physical intervention. Repairs need human approval and both sources isolated; "
         "bypass_interlock, parallel_sources and operate_handle_under_load are never allowed.",
         {"action": {"type": "string", "enum": list(REPAIR_ACTIONS) + list(NEVER_ACTIONS)},
-         "target": {"type": "string", "description": "Part id, e.g. 'TS:A-B', 'TS:8-9', 'H1:W2_TSA-W2_P2', 'XP:P2-J2'; "
+         "target": {"type": "string", "description": "Part id, e.g. 'TS:A-B', 'TS:6-7', 'H1:W12_TS1-W12_P12', 'XP:P12-J12'; "
                     "'CP' for the controller."},
          "reason": {"type": "string"}, "evidence_steps": EVIDENCE_STEPS},
         ["action", "target", "reason"]),
@@ -143,7 +144,10 @@ class AtsToolBox:
 
     def panel(self) -> AtsPanelState:
         b = self.bench
-        return AtsPanelState(isolated=b.isolated, load_powered=b.indicators()["load_powered"],
+        i = b.indicators()
+        # which source feeds a powered load, from what the panel shows: with Normal lost it can only be Emergency
+        source = ("Emergency" if i["normal_source"] == "lost" else "Normal" if i["generator"] == "stopped" else "")
+        return AtsPanelState(isolated=b.isolated, load_powered=i["load_powered"], load_source=source if i["load_powered"] else "",
                              failures=sum(e in FAILURE_EVENTS for _, e, _ in b.events))
 
     def call(self, name: str, args: dict | None) -> dict:
@@ -171,12 +175,14 @@ class AtsToolBox:
                     result = {"error": f"{decision.reason}; call again with a reason", flag: True}
                 elif refused:  # enforced in code, before the human sees it
                     result = {"error": f"{decision.reason}; refused: {refused}", flag: True}
-                elif self.approver(AtsApprovalRequest(step, name, args, decision.reason, reason, strong)):
+                elif self.approver(AtsApprovalRequest(step, name, args, decision.reason, reason, strong, decision.facts)):
                     result = self._run(name, args)
                     result["approved_by_human"] = "strong approval" if strong else "approval"
                     executed = True
                 else:
                     result = {"error": f"{decision.reason}; the human denied the request", flag: True}
+                    if decision.facts:
+                        result["policy_facts"] = list(decision.facts)
             else:
                 result = self._run(name, args)
                 executed = True

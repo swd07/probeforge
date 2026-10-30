@@ -5,6 +5,8 @@ root_cause:
   component: TS
   part: "8-9"
   mode: stuck_closed
+also_accepted:  # both cut-offs are misadjusted: either one is the root cause
+  - {component: TS, part: "71-72", mode: stuck_closed}
 faults:
   - {component: TS, part: "8-9", mode: stuck_closed}
   - {component: TS, part: "71-72", mode: stuck_closed}

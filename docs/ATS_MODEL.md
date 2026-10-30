@@ -79,7 +79,8 @@ reason). Every reading or action costs 30 s of virtual time (assumption 14).
 | read_panel, read_event_log, read_metering, wait, get_schematic, update_hypotheses | allowed | always |
 | measure_voltage | allowed | always (also to prove a circuit dead after isolation) |
 | measure_resistance | allowed | only with both sources isolated and locked out, otherwise blocked |
-| isolate_sources (open 52U, lock out the generator) | approval | always (lockout / tagout is a formal procedure) |
+| isolate_sources (open 52U, lock out the generator) | approval | while the load is not powered (lockout / tagout is a formal procedure) |
+| isolate_sources | strong approval | while the load is powered: isolation de-energizes it; the policy states that fact in the request shown to the approver |
 | restore_sources | allowed | before any Transfer Failure or Position Error |
 | restore_sources | strong approval | after a Transfer Failure or Position Error: the controller restarts its sequence, a repeat transfer attempt |
 | manual_operation_check | approval | only with both sources isolated and locked out |
