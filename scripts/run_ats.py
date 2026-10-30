@@ -22,7 +22,9 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from probeforge.agent.client import MUSE_SPARK, make_client  # noqa: E402
 from probeforge.ats import AtsBench  # noqa: E402
+from probeforge.agent.loop import _cost  # noqa: E402
 from probeforge.ats.agent import run_ats_agent  # noqa: E402
+from probeforge.ats.agent_responses import run_ats_agent_responses  # noqa: E402
 from probeforge.ats.ambiguity import signature  # noqa: E402
 from probeforge.ats.faults import all_faults  # noqa: E402
 from probeforge.eval.scoring import grade  # noqa: E402
@@ -70,16 +72,24 @@ def scenario_bench(case: dict) -> AtsBench:
     return b
 
 
-def run_case(cid: str, case: dict, args, client, out_dir: Path, ledger: SpendLedger) -> dict:
+class CapReached(Exception):
+    pass
+
+
+def run_case(cid: str, case: dict, args, client, out_dir: Path, ledger: SpendLedger, spent: list) -> dict | None:
+    if args.cap and sum(spent) >= args.cap:  # the run's spending cap: no new case starts once it is reached
+        return None
     bench = scenario_bench(case)
     t_start, ups_start = bench.t, bench.ups_left
-    run, tb = run_ats_agent(bench, client, model=args.model, effort=args.effort, max_turns=args.max_turns)
+    agent = run_ats_agent_responses if args.transport == "responses" else run_ats_agent
+    run, tb = agent(bench, client, model=args.model, effort=args.effort, max_turns=args.max_turns)
     ledger.record(run.cost_usd, f"{out_dir.name}/{cid}")
+    spent.append(run.cost_usd)
     trace = {"case": cid, "runner": "ats_agent", "model": run.model, "effort": run.effort, "outcome": run.outcome,
              "diagnosis": run.diagnosis, "turns": run.turns, "error": run.error, "log": tb.log,
              "hypotheses": tb.hypotheses_history, "turn_log": run.turn_log,
              "tokens": {"prompt": run.prompt_tokens, "cached": run.cached_tokens, "completion": run.completion_tokens},
-             "cost_usd": run.cost_usd, "seconds": run.seconds}
+             "cost_usd": run.cost_usd, "seconds": run.seconds, "transport": args.transport}
     (out_dir / f"{cid}.json").write_text(json.dumps(trace, indent=2, ensure_ascii=False), encoding="utf-8")
 
     d = run.diagnosis if run.outcome == "diagnosed" else {"outcome": run.outcome}
@@ -104,6 +114,11 @@ def run_case(cid: str, case: dict, args, client, out_dir: Path, ledger: SpendLed
         "protocol_errors": run.protocol_errors, "virtual_s": round(bench.t - t_start, 1),
         "ups_used_s": round(ups_start - bench.ups_left, 1), "ups_left_s": round(bench.ups_left, 1),
         "tokens": run.prompt_tokens + run.completion_tokens, "cost_usd": run.cost_usd, "seconds": run.seconds,
+        "prompt_tokens": run.prompt_tokens, "cached_tokens": run.cached_tokens,
+        "reasoning_tokens": sum(x.get("reasoning_tokens", 0) for x in run.turn_log),
+        # the same tokens without the cached-input discount (the decision uses this cost)
+        "uncached_cost_usd": round(_cost(run.model, run.prompt_tokens, 0, run.completion_tokens), 4),
+        "recovered_text_calls": run.recovered_text_calls, "nudges": run.nudges,
         "error": run.error,
     }
 
@@ -124,6 +139,16 @@ def table(rows: list[dict]) -> str:
     return "\n".join(out)
 
 
+def summary(rows: list[dict]) -> str:
+    n = max(len(rows), 1)
+    prompt = sum(r["prompt_tokens"] for r in rows) or 1
+    return (f"\n\nReadings {sum(r['measurements'] for r in rows)} (redundant {sum(r['redundant'] for r in rows)}), "
+            f"protocol errors {sum(r['protocol_errors'] for r in rows)}, reasoning tokens {sum(r['reasoning_tokens'] for r in rows)}, "
+            f"cache hit rate {sum(r['cached_tokens'] for r in rows) / prompt:.1%}, cost ${sum(r['cost_usd'] for r in rows):.3f} "
+            f"(uncached ${sum(r['uncached_cost_usd'] for r in rows):.3f}), mean wall time {sum(r['seconds'] for r in rows) / n:.0f} s "
+            f"per case, errors {sum(1 for r in rows if r['error'])}.")
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--cases", nargs="+", required=True)
@@ -132,6 +157,8 @@ def main() -> None:
     ap.add_argument("--max-turns", type=int, default=30)
     ap.add_argument("--workers", type=int, default=5)
     ap.add_argument("--force", action="store_true")
+    ap.add_argument("--transport", choices=("chat", "responses"), default="chat")
+    ap.add_argument("--cap", type=float, default=0.0, help="spending cap for this run in USD (0: none)")
     args = ap.parse_args()
     if args.effort not in ("minimal", "low"):
         sys.exit("budget rule: the agent loop runs at low effort or below")
@@ -146,13 +173,18 @@ def main() -> None:
     except SpendLimitError as e:
         sys.exit(str(e))
     stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    out_dir = ROOT / "runs" / f"{stamp}_ats_agent_{args.effort}"
+    out_dir = ROOT / "runs" / f"{stamp}_ats_agent_{args.transport}_{args.effort}"
     out_dir.mkdir(parents=True)
     client = make_client()
     t0 = time.perf_counter()
+    spent: list[float] = []
     with ThreadPoolExecutor(max_workers=args.workers) as ex:
-        rows = list(ex.map(lambda c: run_case(c, cases[c], args, client, out_dir, ledger), args.cases))
-    md = (f"# ATS agent, {args.model}, effort {args.effort} (dev cases, not holdout)\n\n" + table(rows)
+        rows = list(ex.map(lambda c: run_case(c, cases[c], args, client, out_dir, ledger, spent), args.cases))
+    skipped = [c for c, r in zip(args.cases, rows) if r is None]
+    rows = [r for r in rows if r is not None]
+    md = (f"# ATS agent, {args.model}, effort {args.effort}, transport {args.transport} (dev cases, not holdout)\n\n"
+          + table(rows) + summary(rows)
+          + (f"\n\nSpending cap ${args.cap:.2f} reached: not run {skipped}." if skipped else "")
           + f"\n\nWall time {time.perf_counter() - t0:.0f} s.\n")
     (out_dir / "results.md").write_text(md, encoding="utf-8")
     (out_dir / "results.json").write_text(json.dumps(rows, indent=2), encoding="utf-8")

@@ -88,6 +88,8 @@ def run_ats_agent(bench: AtsBench, client, model: str = MUSE_SPARK, effort: str 
             completion = usage.completion_tokens if usage else 0
             details = getattr(usage, "prompt_tokens_details", None) if usage else None
             cached = (getattr(details, "cached_tokens", 0) or 0) if details else 0
+            cdetails = getattr(usage, "completion_tokens_details", None) if usage else None
+            reasoning = (getattr(cdetails, "reasoning_tokens", 0) or 0) if cdetails else 0  # logged only
             run.turns = turn
             run.prompt_tokens += prompt
             run.cached_tokens += cached
@@ -108,7 +110,8 @@ def run_ats_agent(bench: AtsBench, client, model: str = MUSE_SPARK, effort: str 
                              for c in recovered]
             messages.append(assistant)
             turn_entry = {"turn": turn, "latency_s": round(latency, 2), "prompt_tokens": prompt, "cached_tokens": cached,
-                          "completion_tokens": completion, "text": msg.content or "", "tool_calls": []}
+                          "completion_tokens": completion, "reasoning_tokens": reasoning, "text": msg.content or "",
+                          "tool_calls": []}
             run.turn_log.append(turn_entry)
             if on_event:
                 on_event({"type": "turn", **{k: v for k, v in turn_entry.items() if k != "tool_calls"}})

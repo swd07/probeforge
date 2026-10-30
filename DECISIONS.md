@@ -418,3 +418,18 @@ decisions at the end (see CLAUDE.md). Architecture: [ARCHITECTURE.md](ARCHITECTU
   Error of a switch restarted on Emergency is gone (75 with the load powered, 3 with a main Emergency pole stuck open
   and the load unpowered in both). No case gained an alarm or changed position.
 
+### D37. Responses API transport for the ATS agent, compared before the S5 freeze (2026-10-31)
+- **What:** `src/probeforge/ats/agent_responses.py`: the same ATS agent (prompt, first user text, tools, policy, effort
+  low, per-turn rules, scoring) over /v1/responses, so the model's reasoning carries across turns. Stateless replay
+  only: store false, include reasoning.encrypted_content, no previous_response_id, the instructions on every request,
+  our own complete input list replayed (the image only in the first request, then the Chat agent's note), the session
+  state local. Cache settings of this transport: a stable prompt_cache_key and prompt_cache_retention "24h". The Chat
+  agent's requests are byte-identical; its loop only logs reasoning tokens. `scripts/run_ats.py --transport`.
+- **Checked:** Meta docs (Responses protocol, reasoning, prompt caching, tool calling, pricing) and one live check
+  ($0.013): encrypted reasoning returned and accepted on replay; reasoning summaries empty for muse-spark-1.3 (not used);
+  no cache hit on the second call of that check.
+- **Fixed decision rule (before the runs):** one run each of Chat and Responses on the 12 dev cases on the final bench.
+  Switch to Responses only if it is not worse on part-level correct and on confidently wrong, and at least 10 % better on
+  readings or on cost without the cached-input discount (so the cache hint cannot win alone). A one-case difference in
+  correct is not evidence either way. Budget for S6 plus S5 raised to $12.
+

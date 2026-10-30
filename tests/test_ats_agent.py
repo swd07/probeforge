@@ -106,3 +106,78 @@ def test_ats_session_with_a_fake_model(no_png):
     assert log[4]["result"]["approved_by_human"] == "approval"  # batch approver: approval tier yes
     assert "denied" in tb.log[-2]["result"]["error"] or "blocked" in tb.log[-2]["result"]  # repeat: not under isolation
     assert tb.policy.stats.approval_requests == 2
+
+
+# ---------------------------------------------------------------- Responses API transport (D37)
+
+import copy as _copy  # noqa: E402
+from types import SimpleNamespace  # noqa: E402
+
+from probeforge.ats import agent_responses  # noqa: E402
+
+
+class FakeItem:
+    def __init__(self, d):
+        self.d = d
+
+    def model_dump(self, exclude_none=True):
+        return _copy.deepcopy(self.d)
+
+
+class FakeResponses:
+    """Scripted Responses API: each step is a list of output items (reasoning, message, function_call)."""
+
+    def __init__(self, script):
+        self.script, self.requests = list(script), []
+        self.responses = SimpleNamespace(create=self.create)
+
+    def create(self, **kw):
+        self.requests.append(_copy.deepcopy(kw))
+        out = self.script.pop(0)
+        usage = SimpleNamespace(input_tokens=1000, output_tokens=200,
+                                input_tokens_details=SimpleNamespace(cached_tokens=400),
+                                output_tokens_details=SimpleNamespace(reasoning_tokens=150))
+        return SimpleNamespace(output=[FakeItem(o) for o in out], usage=usage)
+
+
+def reasoning(i):
+    return {"type": "reasoning", "id": f"rs_{i}", "summary": [], "encrypted_content": f"ENC{i}"}
+
+
+def call(i, name, args):
+    return {"type": "function_call", "call_id": f"call_{i}", "name": name, "arguments": json.dumps(args), "status": "completed"}
+
+
+def test_responses_transport_replays_statelessly(no_png):
+    bench = scenario([Fault("TS", "open", "A-B")])
+    client = FakeResponses([
+        [reasoning(1), call(1, "measure_voltage", {"point_a": "TS:A", "point_b": "TS:B"})],
+        [reasoning(2), {"type": "message", "content": [{"type": "output_text", "text": "thinking"}]}],  # no call: nudge
+        [reasoning(3), call(2, "update_hypotheses", HYP),
+         call(3, "submit_diagnosis", {"outcome": "diagnosed", "component": "TS", "part": "A-B", "failure_mode": "open",
+                                      "confidence": 0.9, "evidence": [{"step": 1, "type": "instrument_reading",
+                                                                      "observation": "208 V across A-B"}]})],
+    ])
+    run, tb = agent_responses.run_ats_agent_responses(bench, client)
+    assert run.outcome == "diagnosed" and run.nudges == 1 and run.cached_tokens == 1200
+    chat_system = ats_agent.build_initial_messages(AtsToolBox(scenario([Fault("TS", "open", "A-B")])))[0]["content"]
+    for r in client.requests:  # stateless replay: nothing stored, reasoning returned, instructions every turn
+        assert r["store"] is False and r["include"] == ["reasoning.encrypted_content"] and "previous_response_id" not in r
+        assert r["instructions"] == chat_system and r["reasoning"] == {"effort": "low"} and r["tools"] == agent_responses.TOOLS
+    first, second = client.requests[0]["input"], client.requests[1]["input"]
+    assert any(c["type"] == "input_image" for c in first[0]["content"])  # the image only in the first request
+    assert all(c["type"] == "input_text" for c in second[0]["content"]) and "image was attached" in second[0]["content"][0]["text"]
+    # replay order: reasoning, its function_call, then our function_call_output with the same call_id
+    assert [x.get("type", x.get("role")) for x in second[1:]] == ["reasoning", "function_call", "function_call_output"]
+    assert second[1]["encrypted_content"] == "ENC1" and second[1]["summary"] == []
+    assert second[3]["call_id"] == "call_1" and json.loads(second[3]["output"])["volts"] == 208.0
+    third = client.requests[2]["input"]
+    assert [x.get("type", x.get("role")) for x in third[4:]] == ["reasoning", "assistant", "user"]  # nudge after the message
+    # same tools as the Chat agent, flattened
+    assert [t["name"] for t in agent_responses.TOOLS] == [t["function"]["name"] for t in TOOL_SPECS]
+    assert all(t["parameters"] == s["function"]["parameters"] for t, s in zip(agent_responses.TOOLS, TOOL_SPECS))
+
+
+def test_a_reasoning_only_turn_is_followed_by_an_assistant_message():
+    items = agent_responses.replay_items([reasoning(1)])
+    assert items[0]["type"] == "reasoning" and items[1]["role"] == "assistant"
