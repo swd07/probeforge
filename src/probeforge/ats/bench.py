@@ -100,6 +100,7 @@ class AtsBench:
         self.s = {**SETTINGS, **(settings or {})}
         self.a = {**ASSUMPTIONS, **(assumptions or {})}
         self.faults: list[Fault] = []
+        self._fault_set: set | None = None
         self.t = 0.0
         self.utility_on = True
         self.position = "N"  # mechanical position: "N" or "E"
@@ -127,11 +128,15 @@ class AtsBench:
 
         validate(self.n, fault)
         self.faults.append(fault)
+        self._fault_set = None
         if fault.mode == "burnt" and fault.part == "A-B":
             self.coil_burnt = True
 
     def _fault(self, component: str, part: str | None, *modes: str) -> bool:
-        return any(f.component == component and f.part == part and f.mode in modes for f in self.faults)
+        # the faults as a lookup set; every change of the fault list resets it (apply_fault, repair, clone)
+        if self._fault_set is None:
+            self._fault_set = {(f.component, f.part, f.mode) for f in self.faults}
+        return any((component, part, m) in self._fault_set for m in modes)
 
     # ------------------------------------------------------------------ mechanism
 
@@ -324,8 +329,10 @@ class AtsBench:
         comp, part = self.repair_target(action, target)
         if action == "replace_controller":
             self.faults = [f for f in self.faults if f.component not in CONTROLLER_PARTS]
+            self._fault_set = None
             return
         self.faults = [f for f in self.faults if not (f.component == comp and f.part == part)]
+        self._fault_set = None
         if action == "replace_coil":
             self.coil_burnt, self.coil_on_t = False, 0.0
         self._solve()
@@ -381,6 +388,7 @@ class AtsBench:
         c.ctl = copy.deepcopy(self.ctl)
         c.events = list(self.events)
         c.faults = list(self.faults)
+        c._fault_set = None
         return c
 
     # ------------------------------------------------------------------ simulation
@@ -389,7 +397,9 @@ class AtsBench:
         c = self.ctl
         if self.moving:
             return 0.01
-        busy = ("n_fail_timer", "waiting_e", "timer_2b", "transferring", "retransferring")
+        # waiting for the Emergency source changes nothing while the generator is not running up (that case is the
+        # first condition), so it needs no small steps
+        busy = ("n_fail_timer", "timer_2b", "transferring", "retransferring")
         if self.gen_t is not None and self._gen_fraction() < 1 or c.stage in busy or self.coil_energized():
             return 0.05
         return 1.0

@@ -324,3 +324,34 @@ decisions at the end (see CLAUDE.md). Architecture: [ARCHITECTURE.md](ARCHITECTU
   agent did not).
 - **Note:** the S3 smoke results were taken with the earlier tool list; the ATS profile is not frozen yet (S5).
 
+### D32. Hybrid v2 and the info-gain ceiling baseline on the ATS (S6 items 2 and 3, before the freeze)
+- **What:** `src/probeforge/ats/hybrid/` (read, pipeline) and `src/probeforge/ats/infogain.py`; the relay-panel hybrid
+  modules stay frozen and are only imported (consensus, wiring alternatives, rewired, Usage). Read: Muse Spark reads
+  crops of the drawing sheets of 978741 three times into a compact description (devices, contacts, the wire run list,
+  unnumbered joints); code builds our netlist from it (wire part ids, plug / jack pins, net names), and 52U, which is
+  not on the drawing sheets, becomes a labelled stand-in NSD. Model: the transcription must reproduce the documented
+  fault-free sequence (Group G guide, healthy outage and retransfer). Repair: where the model's own simulation departs
+  from the sequence is told to Muse Spark with the terminals of that circuit (from the model only, never the true
+  netlist; a test renames the true netlist and blocks loading it, and the prompts stay identical); a correction is
+  accepted if it gets further along the sequence without losing what worked and stays in a flagged or named region,
+  then the check reruns (at most 4 proposals per transcription, shared by every case); conflicts during a case use
+  the strict rule (whole sequence, readings explained). A model that still fails the sequence is not planned on: the
+  answer is insufficient information. Plan: information gain over candidate faults simulated on the model from the
+  scenario state, live readings first, isolation and resistances only when live readings no longer split, joint with
+  wiring variants. The same planner on the true netlist is the ceiling baseline (honest note: it needs a complete,
+  exact fault model; the catalog is extended with the documented compound fault of the burnout chain).
+- **Privacy rule:** only crops of drawing areas are sent (scripts/render_ats_sheets.py, checked by eye): no cover sheet,
+  no outline or order page, no title block, no wire list header, no PDF metadata. Vendor PDF and crops stay local.
+- **Disclosure:** the crops and the reading conventions in the read prompt were developed on this same drawing during
+  S6 (CP J numbering, the enlarged position contact crop, the shared common terminal and repeated wire number notes).
+  Read quality on 978741 is therefore dev quality, not a held-out drawing.
+- **Speed:** a case took 330 to 420 s, almost all of it simulating broken models in small time steps. The bench now
+  steps 1 s while the controller waits for a generator that is not running up, and looks faults up in a set; recorded
+  behaviour of all 118 catalog faults plus the healthy case (twin-check signature and full outage and retransfer
+  timeline) is identical before and after (scripts/ats_behaviour_dump.py). With the early exit, the early-stopping
+  sequence check, at most 12 wiring alternatives evaluated and the candidates simulated once per transcription, a case
+  takes 0.1 s on a failing model and 0.5 to 2.5 s on a passing one (one-time warm-up about 80 s per transcription).
+- **Evidence:** tests/test_ats_hybrid.py; dev reads in runs/*_ats_reads (connections up to P 0.97 / R 0.96 without the
+  52U region); info-gain baseline 10/12 dev cases correct, the other two honest insufficient information (controller
+  internal twins; X1 needs isolation of a powered load, strong approval, denied in batch).
+
