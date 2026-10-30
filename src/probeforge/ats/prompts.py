@@ -29,7 +29,7 @@ Meter facts:
 - Line to neutral is 120 V, line to line 208 V. The neutrals NN and EN are bonded to earth.
 - Voltmeter on a live circuit: across a closed contact, a wire or a connector pin it reads about 0 V. Across an open element in a path between two energized lines it reads the full voltage when the load in the path (a coil) pulls the other side to the other line. A point with no path to a source reads 0 V.
 - Ohmmeter (both sources isolated only): 0 means continuity, 'open' means no path. Readings include parallel paths, so compare with what a healthy circuit would read (the TS solenoid nominal resistance is in the netlist). With the sources isolated the controller relays drop out.
-- repeat_transfer_attempt takes voltmeter readings while the repeated command is active; manual_operation_check (sources isolated) shows whether the mechanism moves and takes ohmmeter readings at the other position.
+- repeat_transfer_attempt takes voltmeter readings while the repeated command is active; manual_operation_check (sources isolated) shows whether the mechanism moves and takes ohmmeter readings at the other position; read_position_indicator shows the position flag on the mechanism.
 
 Time: every reading or action takes 30 s of virtual time and the UPS keeps draining (autonomy and time left are on the panel). Work efficiently.
 

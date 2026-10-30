@@ -312,3 +312,15 @@ decisions at the end (see CLAUDE.md). Architecture: [ARCHITECTURE.md](ARCHITECTU
   infers it from readings). The hybrid pipeline and Compare are not offered on the ATS (P1).
 - **Evidence:** tests/test_server_ats.py; browser walkthrough 2026-10-30 (engineer A1 and B1 to Transfer verified, one
   agent run on A7: correct root cause, $0.17).
+
+### D31. Tool parity: the mechanism position indicator (S6 item 1, before the freeze)
+- **What:** new agent tool `read_position_indicator` (allowed tier, functional evidence, 30 s like any reading) that
+  returns the position flag on the TS mechanism: the information the human sees on the UI panel. Labelled assumption 19
+  in docs/ATS_MODEL.md (our two documents do not show the indicator). In Engineer mode the panel's position field now
+  shows only the value last checked with the same tool (with its time), so the agent-versus-engineer comparison uses
+  equal information at equal time cost; in agent mode and after the diagnosis the observer sees it always. The prompt
+  gained one clause naming the tool; the no-leak sweep over all 118 faults includes it.
+- **Why:** the agent-versus-engineer comparison must use equal information (S4 note: the human saw the position, the
+  agent did not).
+- **Note:** the S3 smoke results were taken with the earlier tool list; the ATS profile is not frozen yet (S5).
+

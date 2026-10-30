@@ -14,7 +14,9 @@ const mmss = (s: number) => `${Math.floor(Math.max(0, s) / 60)}:${String(Math.fl
 /** The installation as a technician at the switch sees it: sources, transfer switch, load, UPS, and the Group G
  * controller face (lights, display, metering screen, event log). The UPS status flow ends at "Transfer verified",
  * set only when the simulator confirms the load on Emergency with the position confirmed. */
-export function AtsPanel({ meta, panel }: { meta: AtsMeta | null; panel: Panel | null }) {
+/** checkedPosition: Engineer mode shows the mechanism position only as last checked with the position indicator tool
+ * (the agent has the same tool), so both diagnose with the same information. Undefined: always shown. */
+export function AtsPanel({ meta, panel, checkedPosition }: { meta: AtsMeta | null; panel: Panel | null; checkedPosition?: string | null }) {
   const flow = meta?.flow ?? [];
   const p = panel;
   const autonomy = p?.ups.autonomy_s ?? meta?.ups_autonomy_s ?? 600;
@@ -44,7 +46,18 @@ export function AtsPanel({ meta, panel }: { meta: AtsMeta | null; panel: Panel |
         <div className="ats-box">
           <div className="box-title">Transfer switch and load</div>
           <div className="src">
-            Position: <b>{p ? p.position : "-"}</b> <span className="muted">(mechanism flag at the switch)</span>
+            Position:{" "}
+            {checkedPosition === undefined ? (
+              <>
+                <b>{p ? p.position : "-"}</b> <span className="muted">(mechanism flag at the switch)</span>
+              </>
+            ) : checkedPosition ? (
+              <>
+                <b>{checkedPosition}</b> <span className="muted">(as last checked on the indicator)</span>
+              </>
+            ) : (
+              <span className="muted">not checked: use Position indicator (a reading, as for the agent)</span>
+            )}
           </div>
           <div className={`src ${p?.load_powered ? "ok" : "bad"}`}>Critical load: {p ? (p.load_powered ? "powered" : "on UPS") : "-"}</div>
         </div>

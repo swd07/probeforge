@@ -8,7 +8,7 @@ interface Evidence {
   observation: string;
 }
 
-const FUNCTIONAL = new Set(["read_indicators", "press_button", "wait", "read_panel", "read_event_log", "read_metering",
+const FUNCTIONAL = new Set(["read_indicators", "press_button", "wait", "read_panel", "read_event_log", "read_metering", "read_position_indicator",
   "manual_operation_check", "repeat_transfer_attempt", "isolate_sources", "restore_sources"]);
 const INSTRUMENT = new Set(["measure_voltage", "measure_resistance"]);
 

@@ -60,6 +60,8 @@ TOOL_SPECS = [
     _fn("read_event_log", "Read the controller event log (time, event, cause).", {}, []),
     _fn("read_metering", "Read the controller metering screen: Normal and Emergency line to line voltages as the "
         "controller measures them (A-B, B-C, C-A).", {}, []),
+    _fn("read_position_indicator", "Look at the position indicator on the transfer switch mechanism: Normal, "
+        "Emergency or moving (the flag at the switch, independent of the controller's position contacts).", {}, []),
     _fn("wait", "Let time pass with no action, then read the panel.",
         {"seconds": {"type": "number", "description": f"1 to {MAX_WAIT_S:g} s."}}, ["seconds"]),
     _fn("measure_voltage", "Voltmeter (AC RMS) between two points.", {"point_a": POINT, "point_b": POINT},
@@ -281,6 +283,12 @@ class AtsToolBox:
 
     def _tool_read_metering(self, args: dict) -> dict:
         return {"metering": self.bench.indicators()["metering"], "time_s": round(self.bench.t, 1)}
+
+    def _tool_read_position_indicator(self, args: dict) -> dict:
+        # the mechanism flag (assumption 19): what a technician sees at the switch, the same as on the UI panel
+        b = self.bench
+        return {"position_indicator": "moving" if b.moving else {"N": "Normal", "E": "Emergency"}[b.position],
+                "time_s": round(b.t, 1)}
 
     def _tool_wait(self, args: dict) -> dict:
         self._state_version += 1

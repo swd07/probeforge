@@ -76,7 +76,7 @@ reason). Every reading or action costs 30 s of virtual time (assumption 14).
 
 | Action | Tier | Condition |
 |---|---|---|
-| read_panel, read_event_log, read_metering, wait, get_schematic, update_hypotheses | allowed | always |
+| read_panel, read_event_log, read_metering, read_position_indicator, wait, get_schematic, update_hypotheses | allowed | always |
 | measure_voltage | allowed | always (also to prove a circuit dead after isolation) |
 | measure_resistance | allowed | only with both sources isolated and locked out, otherwise blocked |
 | isolate_sources (open 52U, lock out the generator) | approval | while the load is not powered (lockout / tagout is a formal procedure) |
@@ -100,6 +100,10 @@ Assumed with the policy, for the engineer to confirm:
     the TS coil.
 18. Isolation means 52U opened and the generator locked out (the outage itself is on the utility side; 52U is not a
     fault location, decision D23).
+19. The transfer switch mechanism has a position indicator (a flag at the switch, independent of the controller's
+    position contacts 14A / 14B): not shown in our two documents. The agent reads it with read_position_indicator
+    (allowed tier, a reading like any other); the engineer in the UI sees it only after checking it with the same
+    tool, so both have the same information at the same time cost.
 
 ## Documented but not modelled
 

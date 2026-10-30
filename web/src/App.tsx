@@ -78,6 +78,15 @@ export function App() {
   const atsPanel = ats && cur ? (state.panel as unknown as AtsPanelState | null) : null;
   const atsDiagnosing = ats && cur && manual && state.mode === "manual" && state.status === "running" && !state.done;
   const atsIntervention = ats && cur && !!state.done?.intervention && state.status !== "stopped" && state.status !== "error";
+  const checkedPosition = useMemo(() => {
+    for (let i = state.feed.length - 1; i >= 0; i--) {
+      const f = state.feed[i];
+      if (f.kind === "tool" && f.ev.tool === "read_position_indicator" && f.ev.executed) {
+        return `${String(f.ev.result.position_indicator)} at ${f.ev.result.time_s} s`;
+      }
+    }
+    return null;
+  }, [state.feed]);
   const suspects = useMemo(
     () => (ats && cur && state.status !== "idle" ? state.hypotheses.slice(0, 3).filter((h) => h.probability >= 0.1) : []).map((h) => ({
       component: h.component,
@@ -104,7 +113,7 @@ export function App() {
         <div className="left">
           {ats ? (
             <>
-              <AtsPanel meta={atsMeta} panel={atsPanel} />
+              <AtsPanel meta={atsMeta} panel={atsPanel} checkedPosition={atsDiagnosing ? checkedPosition : undefined} />
               <LimitsTable meta={atsMeta} />
             </>
           ) : (

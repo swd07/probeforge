@@ -97,6 +97,10 @@ export function AtsManualPanel({ meta, panel, meter, setMeter, lastProbe, feed, 
         <button className="btn small ghost" disabled={!active} onClick={() => onTool("read_panel", {})}>Read panel</button>
         <button className="btn small ghost" disabled={!active} onClick={() => onTool("read_event_log", {})}>Event log</button>
         <button className="btn small ghost" disabled={!active} onClick={() => onTool("read_metering", {})}>Metering</button>
+        <button className="btn small ghost" disabled={!active} onClick={() => onTool("read_position_indicator", {})}
+                title="Look at the position flag on the mechanism (a reading: 30 s, the same tool as the agent's)">
+          Position indicator
+        </button>
         <select value={waitS} onChange={(e) => setWaitS(Number(e.target.value))} aria-label="Wait seconds">
           {[10, 30, 60, 120].map((s) => <option key={s} value={s}>{s} s</option>)}
         </select>

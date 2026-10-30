@@ -43,7 +43,7 @@ LIVE_V = 20.0
 APPROVAL_TIMEOUT_S = 600
 FLOW = ["Fault detected", "Diagnosis in progress", "Root cause identified", "Awaiting authorized intervention",
         "Power restored", "Transfer verified"]
-MANUAL_TOOLS = {"read_panel", "read_event_log", "read_metering", "wait", "measure_voltage", "measure_resistance",
+MANUAL_TOOLS = {"read_panel", "read_event_log", "read_metering", "read_position_indicator", "wait", "measure_voltage", "measure_resistance",
                 "isolate_sources", "restore_sources", "manual_operation_check", "repeat_transfer_attempt",
                 "perform_action", "submit_diagnosis"}
 INTERVENTION_TOOLS = MANUAL_TOOLS - {"submit_diagnosis"}  # after the diagnosis, for the authorized person

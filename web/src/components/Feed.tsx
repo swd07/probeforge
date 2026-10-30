@@ -14,6 +14,7 @@ const ICON: Record<string, string> = {
   read_panel: "◉",
   read_event_log: "☰",
   read_metering: "≋",
+  read_position_indicator: "⇅",
   isolate_sources: "⏻",
   restore_sources: "⏻",
   manual_operation_check: "⇄",
@@ -55,6 +56,8 @@ export function describeTool(ev: ToolEvent): { title: string; detail: string } {
       return { title: "Read event log", detail: r.events ? `${r.events.length} events` : "" };
     case "read_metering":
       return { title: "Read metering screen", detail: r.metering ? `N ${r.metering.Normal.join("/")} V, E ${r.metering.Emergency.join("/")} V` : "" };
+    case "read_position_indicator":
+      return { title: "Look at the position indicator", detail: r.position_indicator ? `mechanism on ${r.position_indicator}` : "" };
     case "isolate_sources":
       return { title: "Isolate both sources (52U open, generator locked out)", detail: a.reason ? `reason: ${a.reason}` : "" };
     case "restore_sources":

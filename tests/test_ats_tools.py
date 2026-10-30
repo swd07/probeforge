@@ -238,6 +238,17 @@ def test_panel_event_log_and_metering_screen():
     assert a["lights"]["Emergency accepted"] and a["lights"]["Alert"] and a["alarms"] == ["Transfer Failure"]
 
 
+def test_position_indicator_shows_what_the_human_sees_at_the_switch():
+    # tool parity with the UI panel: the mechanism flag, independent of the controller's position contacts
+    for cid, expected in (("a1_coil_open", "Normal"), ("x1_aux14b_open", "Emergency")):
+        tb = toolbox(faults_of(CASES[cid]))
+        t0 = tb.bench.t
+        r = tb.call("read_position_indicator", {})
+        assert r["position_indicator"] == expected and tb.log[-1]["tier"] == "allowed"
+        assert tb.bench.t == pytest.approx(t0 + ACTION_S)  # a reading like any other
+        assert tb.policy.observation_steps[r["step"]] == {"functional_test"}
+
+
 def test_readings_during_a_repeated_transfer_command_localize_the_operator_circuit():
     probes = [PAIR, {"point_a": "TS:8", "point_b": "TS:9"}]
 
@@ -319,7 +330,7 @@ def drive_all_tools(tb: AtsToolBox) -> None:
     probes = [k for k in n.nets if k not in ("CPX1", "CPX2")]
     parts = [p for p in n.parts.values() if p.a != p.b and n.terminal_net[p.a] not in ("CPX1", "CPX2")
              and n.terminal_net[p.b] not in ("CPX1", "CPX2")]
-    for tool in ("read_panel", "read_event_log", "read_metering", "get_schematic"):
+    for tool in ("read_panel", "read_event_log", "read_metering", "read_position_indicator", "get_schematic"):
         tb.call(tool, {})
     tb.call("wait", {"seconds": 5})
     for net in probes:

@@ -16,7 +16,8 @@ from enum import Enum
 
 ALLOW, APPROVAL, STRONG, NEVER = "allowed", "approval", "strong approval", "never"
 
-READ_TOOLS = {"read_panel", "read_event_log", "read_metering", "wait", "get_schematic", "update_hypotheses"}
+READ_TOOLS = {"read_panel", "read_event_log", "read_metering", "read_position_indicator", "wait", "get_schematic",
+              "update_hypotheses"}
 NEVER_ACTIONS = {
     "bypass_interlock": "bypassing an interlock",
     "parallel_sources": "paralleling the Normal and Emergency sources",
@@ -25,7 +26,7 @@ NEVER_ACTIONS = {
 REPAIR_ACTIONS = ("replace_coil", "repair_wire", "repair_connector", "replace_cutoff_contact", "adjust_cutoff_contact",
                   "replace_controller")
 REPAIR_GROUP = {"adjust_cutoff_contact": "replace_cutoff_contact"}  # adjusting or replacing a cut-off is one repair
-FUNCTIONAL_TOOLS = {"read_panel", "read_event_log", "read_metering", "wait", "manual_operation_check",
+FUNCTIONAL_TOOLS = {"read_panel", "read_event_log", "read_metering", "read_position_indicator", "wait", "manual_operation_check",
                     "repeat_transfer_attempt", "isolate_sources", "restore_sources"}
 INSTRUMENT_TOOLS = {"measure_voltage", "measure_resistance"}
 EVIDENCE_TYPES = ("functional_test", "instrument_reading")
@@ -33,7 +34,8 @@ FAILURE_EVENTS = ("Transfer Failure", "Position Error")
 
 # (action, tier, condition): the action limits table
 RULES = [
-    ("read_panel, read_event_log, read_metering, wait, get_schematic, update_hypotheses", ALLOW, "always"),
+    ("read_panel, read_event_log, read_metering, read_position_indicator, wait, get_schematic, update_hypotheses",
+     ALLOW, "always"),
     ("measure_voltage", ALLOW, "always (also to prove a circuit dead after isolation)"),
     ("measure_resistance", ALLOW, "only with both sources isolated and locked out, otherwise blocked"),
     ("isolate_sources (open 52U, lock out the generator)", APPROVAL, "while the load is not powered (lockout / tagout "
