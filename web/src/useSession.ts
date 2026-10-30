@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useReducer, useRef } from "react";
-import type { ApprovalRequest, CompareResult, Done, FeedItem, FlagsRequest, Hypothesis, Mode, NetState, Panel, Probe, ToolEvent, WiringRequest } from "./types";
+import type { ApprovalRequest, Bench, CompareResult, Done, FeedItem, FlagsRequest, Hypothesis, Mode, NetState, Panel, Probe, ToolEvent, WiringRequest } from "./types";
 
 export type Status = "idle" | "running" | "approval" | "done" | "stopped" | "error";
 
 export interface State {
   status: Status;
   mode: Mode;
+  bench: Bench;
   engineer: string;
   saved: string;
   compare: CompareResult | null;
@@ -36,6 +37,7 @@ export interface State {
 const initial: State = {
   status: "idle",
   mode: "agent",
+  bench: "star_delta",
   engineer: "",
   saved: "",
   compare: null,
@@ -71,14 +73,15 @@ export interface StartOptions {
   includeLatent: boolean;
   engineer?: string;
   schematic?: string; // hybrid: "saved" transcription or a "live" read
+  bench?: Bench;
 }
 
 export const hypKey = (h: Hypothesis) => `${h.component}${h.part ? ":" + h.part : ""} ${h.failure_mode}`;
 
-type Action = { type: "reset"; mode: Mode } | { type: "event"; ev: any; neutral: string };
+type Action = { type: "reset"; mode: Mode; bench: Bench } | { type: "event"; ev: any; neutral: string };
 
 function reducer(s: State, a: Action): State {
-  if (a.type === "reset") return { ...initial, status: "running", mode: a.mode };
+  if (a.type === "reset") return { ...initial, status: "running", mode: a.mode, bench: a.bench };
   const ev = a.ev;
   switch (ev.type) {
     case "session":
@@ -86,6 +89,7 @@ function reducer(s: State, a: Action): State {
         ...initial,
         status: "running",
         mode: ev.mode ?? "agent",
+        bench: ev.bench ?? "star_delta",
         engineer: ev.engineer ?? "",
         source: ev.source,
         model: ev.model ?? "",
@@ -212,7 +216,7 @@ function reducer(s: State, a: Action): State {
     case "approval_answer":
       return {
         ...s,
-        status: "running",
+        status: s.done ? "done" : "running", // ATS: approvals during the intervention come after the diagnosis
         approval: null,
         feed: s.feed.map((f) => (f.kind === "approval" && f.req.id === ev.id ? { ...f, approved: ev.approved } : f)),
       };
@@ -220,6 +224,8 @@ function reducer(s: State, a: Action): State {
       return { ...s, status: "done", done: ev, panel: ev.panel, approval: null, flags: null, wiring: null, stage: "" };
     case "saved":
       return { ...s, saved: ev.path };
+    case "verified":
+      return { ...s, panel: ev.panel, feed: [...s.feed, { kind: "info", id: `verified${s.feed.length}`, text: ev.message }] };
     case "compare_progress":
       return {
         ...s,
@@ -273,7 +279,7 @@ export function useSession(neutral: string) {
 
   const start = useCallback(
     async (opts: StartOptions) => {
-      dispatch({ type: "reset", mode: opts.mode });
+      dispatch({ type: "reset", mode: opts.mode, bench: opts.bench ?? "star_delta" });
       const sock = await connect();
       // ?fault=QF1:5-6%20open picks a specific fault for reproducible demos and tests; the UI never offers it
       const fault = new URLSearchParams(location.search).get("fault") ?? undefined;
@@ -286,6 +292,7 @@ export function useSession(neutral: string) {
           include_latent: opts.includeLatent,
           engineer: opts.engineer,
           schematic: opts.schematic,
+          bench: opts.bench === "ats" ? "ats" : undefined,
           fault,
         }),
       );

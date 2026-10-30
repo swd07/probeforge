@@ -6,7 +6,8 @@ operator sees on the front panel. The fault, its observational twins and the tru
 wiring are sent only in the final "done" event.
 
 Protocol (JSON over /ws):
-  client -> server  {"action": "start", "source": "scenario" | "random", "scenario": "s01",
+  client -> server  (every start may carry "bench": "ats" for the ASCO transfer switch bench, server/ats.py)
+                    {"action": "start", "source": "scenario" | "random", "scenario": "s01",
                      "effort": "low", "include_latent": false, "fault": optional test hook}
                     {"action": "start_manual", ... same fault choice ..., "engineer": "name"}
                     {"action": "start_hybrid", ... same fault choice ..., "schematic": "saved" | "live"}
@@ -48,6 +49,7 @@ from probeforge.faults.model import COMPONENT_MODES, PART_MODES
 from probeforge.hybrid import read_consensus, run_hybrid
 from probeforge.hybrid.llm import Usage
 from probeforge.hybrid.netlist_io import flags_of, wrong_nets
+from probeforge.server import ats
 from probeforge.sim import Circuit, Netlist
 from probeforge.sim.schematic import render_png, render_svg
 from probeforge.tools import ApprovalRequest, ToolBox, deny_all
@@ -108,6 +110,16 @@ def meta() -> dict:
 @app.get("/api/schematic")
 def schematic() -> Response:
     return Response(SVG, media_type="image/svg+xml")
+
+
+@app.get("/api/ats/meta")
+def ats_meta() -> dict:
+    return ats.meta()
+
+
+@app.get("/api/ats/schematic")
+def ats_schematic() -> Response:
+    return Response(ats.SVG, media_type="image/svg+xml")
 
 
 def panel_snapshot(circuit: Circuit) -> dict:
@@ -543,7 +555,7 @@ async def ws(websocket: WebSocket) -> None:
         loop.run_in_executor(None, job)
 
     sender_task = asyncio.create_task(sender())
-    session: Session | None = None
+    session: Session | ats.AtsSession | None = None
     try:
         while True:
             msg = await websocket.receive_json()
@@ -551,6 +563,20 @@ async def ws(websocket: WebSocket) -> None:
             if action in ("start", "start_manual", "start_hybrid"):
                 if session and not session.done:
                     session.cancel(notify=False)
+                elif isinstance(session, ats.AtsSession):
+                    session.cancel(notify=False)  # close a finished ATS session's intervention
+                if msg.get("bench") == "ats":
+                    try:
+                        session = ats.start_session(action, msg, emit, client)
+                    except (ValueError, KeyError) as e:
+                        emit({"type": "error", "message": str(e)})
+                        session = None
+                        continue
+                    if isinstance(session, ats.AtsAgentSession):
+                        background(session.run)
+                    else:
+                        session.start()
+                    continue
                 try:
                     fault, source = pick_fault(msg)
                 except (ValueError, KeyError) as e:
@@ -565,7 +591,7 @@ async def ws(websocket: WebSocket) -> None:
                 else:
                     session = ManualSession(fault, source, str(msg.get("engineer") or ""), emit)
                     session.start()
-            elif action == "tool" and isinstance(session, ManualSession):
+            elif action == "tool" and isinstance(session, (ManualSession, ats.AtsSession)):
                 args = msg.get("args") if isinstance(msg.get("args"), dict) else {}
                 background(session.call, str(msg.get("name")), args)
             elif action == "tool":

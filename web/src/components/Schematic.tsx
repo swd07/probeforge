@@ -8,6 +8,7 @@ interface Props {
   truthLive: string[] | null; // set after the run: the real live wiring
   onPick?: (point: string) => void; // engineer mode: click a terminal or a wire to place a meter probe
   selected?: (string | null)[];
+  suspects?: { component: string; part: string }[]; // ATS: the leading hypotheses, outlined on the drawing
   followDefault: boolean; // agent mode: zoom to each new measurement
   fitKey: string; // changes at session start and at the reveal: zoom out to the whole drawing
 }
@@ -32,7 +33,9 @@ function formatValue(p: Probe) {
 /** The schematic is the server-rendered SVG. Every wire carries data-net and every terminal data-terminal,
  * so probes and what was learned about each net are painted straight onto it. Zoom and pan work on the
  * viewBox, so labels stay sharp at any zoom. */
-export function Schematic({ svg, nets, probes, truthLive, onPick, selected = [], followDefault, fitKey }: Props) {
+const SNAP_PX = 14; // a click this close to a terminal (screen pixels) picks the terminal
+
+export function Schematic({ svg, nets, probes, truthLive, onPick, selected = [], suspects = [], followDefault, fitKey }: Props) {
   const host = useRef<HTMLDivElement>(null);
   const full = useRef<View | null>(null);
   const view = useRef<View | null>(null);
@@ -149,11 +152,30 @@ export function Schematic({ svg, nets, probes, truthLive, onPick, selected = [],
     setTimeout(() => (drag.current = null), 0);
   };
 
+  const nearestTerminal = (cx: number, cy: number): string | null => {
+    const el = root();
+    if (!el) return null;
+    let best: string | null = null;
+    let bestD = SNAP_PX;
+    el.querySelectorAll("circle[data-terminal]").forEach((c) => {
+      const r = c.getBoundingClientRect();
+      const d = Math.hypot(r.x + r.width / 2 - cx, r.y + r.height / 2 - cy);
+      if (d < bestD) {
+        bestD = d;
+        best = c.getAttribute("data-terminal");
+      }
+    });
+    return best;
+  };
+
   const click = (e: ReactMouseEvent) => {
     if (!onPick || drag.current?.moved) return; // a pan is not a click
     const target = e.target as Element;
     const terminal = target.closest("[data-terminal]");
     if (terminal) return onPick(terminal.getAttribute("data-terminal")!);
+    // terminals are small: snap to the nearest one within a few pixels of the click before falling back to the wire
+    const near = nearestTerminal(e.clientX, e.clientY);
+    if (near) return onPick(near);
     const wire = target.closest("[data-net]");
     if (wire) onPick(wire.getAttribute("data-net")!);
   };
@@ -165,6 +187,11 @@ export function Schematic({ svg, nets, probes, truthLive, onPick, selected = [],
     el.querySelectorAll(".probe-overlay").forEach((n) => n.remove());
     el.querySelectorAll("[data-net]").forEach((n) => n.classList.remove(...NET_CLASSES, "picked"));
     el.querySelectorAll("circle[data-terminal]").forEach((n) => n.classList.remove("probe-active", "probe-old", "picked"));
+    el.querySelectorAll("[data-part].suspect").forEach((n) => n.classList.remove("suspect"));
+    for (const s of suspects) {
+      const sel = s.part ? `[data-part="${CSS.escape(`${s.component}:${s.part}`)}"]` : `[data-part^="${CSS.escape(`${s.component}:`)}"]`;
+      el.querySelectorAll(sel).forEach((n) => n.classList.add("suspect"));
+    }
     for (const point of selected) {
       if (!point) continue;
       el.querySelectorAll(`[data-terminal="${CSS.escape(point)}"], [data-net="${CSS.escape(point)}"]`).forEach((n) => n.classList.add("picked"));
@@ -219,7 +246,7 @@ export function Schematic({ svg, nets, probes, truthLive, onPick, selected = [],
       overlay.append(g);
     }
     el.append(overlay);
-  }, [svg, nets, probes, truthLive, selected]);
+  }, [svg, nets, probes, truthLive, selected, suspects]);
 
   // agent mode: zoom to the area of the latest measurement
   const lastStep = probes.length ? probes[probes.length - 1].step : -1;

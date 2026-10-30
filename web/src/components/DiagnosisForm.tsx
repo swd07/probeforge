@@ -8,7 +8,8 @@ interface Evidence {
   observation: string;
 }
 
-const FUNCTIONAL = new Set(["read_indicators", "press_button", "wait"]);
+const FUNCTIONAL = new Set(["read_indicators", "press_button", "wait", "read_panel", "read_event_log", "read_metering",
+  "manual_operation_check", "repeat_transfer_attempt", "isolate_sources", "restore_sources"]);
 const INSTRUMENT = new Set(["measure_voltage", "measure_resistance"]);
 
 /** Steps the engineer can cite, with the evidence type the policy will accept for each. */
@@ -18,7 +19,7 @@ function citable(feed: FeedItem[]): Evidence[] {
     if (f.kind !== "tool" || !f.ev.executed) continue;
     const { title, detail } = describeTool(f.ev);
     const text = `${title}${detail ? ": " + detail : ""}`;
-    if (INSTRUMENT.has(f.ev.tool) || (f.ev.tool === "press_button" && f.ev.probes.length > 0)) {
+    if (INSTRUMENT.has(f.ev.tool) || f.ev.probes.length > 0) {
       out.push({ step: f.ev.step, type: "instrument_reading", observation: text });
     }
     if (FUNCTIONAL.has(f.ev.tool)) out.push({ step: f.ev.step, type: "functional_test", observation: text });

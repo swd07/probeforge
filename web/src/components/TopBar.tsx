@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { Meta, Mode } from "../types";
+import type { Bench, Meta, Mode } from "../types";
 import type { StartOptions, State } from "../useSession";
 
 interface Props {
@@ -7,6 +7,8 @@ interface Props {
   state: State;
   mode: Mode; // the mode chosen for the next run (App shows its panels before Start)
   setMode: (m: Mode) => void;
+  bench: Bench;
+  setBench: (b: Bench) => void;
   onStart: (opts: StartOptions) => void;
   onStop: () => void;
 }
@@ -20,7 +22,8 @@ const STATUS_TEXT: Record<string, string> = {
   error: "Error",
 };
 
-export function TopBar({ meta, state, mode, setMode, onStart, onStop }: Props) {
+export function TopBar({ meta, state, mode, setMode, bench, setBench, onStart, onStop }: Props) {
+  const ats = bench === "ats";
   const [choice, setChoice] = useState("random");
   const [effort, setEffort] = useState("low");
   const [engineer, setEngineer] = useState("");
@@ -43,6 +46,7 @@ export function TopBar({ meta, state, mode, setMode, onStart, onStop }: Props) {
       includeLatent: false,
       engineer,
       schematic,
+      bench,
     });
 
   const statusText =
@@ -61,6 +65,16 @@ export function TopBar({ meta, state, mode, setMode, onStart, onStop }: Props) {
         <span className="subtitle">AI field electrician, shadow mode</span>
       </div>
       <div className="controls">
+        <div className="segmented bench" role="tablist" aria-label="Bench">
+          <button className={!ats ? "on" : ""} onClick={() => { setBench("star_delta"); setChoice("random"); }} disabled={busy}
+                  title="Level 1: star-delta reversing motor starter">
+            Motor starter
+          </button>
+          <button className={ats ? "on" : ""} onClick={() => { setBench("ats"); setChoice("random"); if (mode === "hybrid") setMode("agent"); }}
+                  disabled={busy} title="Level 2: ASCO Series 300 Group G automatic transfer switch (our redrawing of 978741)">
+            ATS
+          </button>
+        </div>
         <div className="segmented" role="tablist" aria-label="Who diagnoses">
           <button className={mode === "agent" ? "on" : ""} onClick={() => setMode("agent")} disabled={busy}>
             Agent
@@ -68,8 +82,8 @@ export function TopBar({ meta, state, mode, setMode, onStart, onStop }: Props) {
           <button
             className={mode === "hybrid" ? "on" : ""}
             onClick={() => setMode("hybrid")}
-            disabled={busy}
-            title="Muse Spark reads the schematic, a planner measures, Muse Spark repairs the netlist and explains"
+            disabled={busy || ats}
+            title={ats ? "The hybrid pipeline runs on the motor starter only (ATS hybrid: later)" : "Muse Spark reads the schematic, a planner measures, Muse Spark repairs the netlist and explains"}
           >
             Hybrid
           </button>
@@ -82,9 +96,15 @@ export function TopBar({ meta, state, mode, setMode, onStart, onStop }: Props) {
           <option value="" disabled>
             Choose a fault...
           </option>
-          <option value="random">Random fault (any of 91)</option>
-          <option value="clean">Clean test fault (from holdout_clean.yaml)</option>
-          <optgroup label="Scenarios (by symptom)">
+          {ats ? (
+            <option value="random">Random fault (any visible on the controller panel)</option>
+          ) : (
+            <>
+              <option value="random">Random fault (any of 91)</option>
+              <option value="clean">Clean test fault (from holdout_clean.yaml)</option>
+            </>
+          )}
+          <optgroup label={ats ? "ATS dev scenarios (by symptom)" : "Scenarios (by symptom)"}>
             {meta?.scenarios.map((s) => (
               <option key={s.id} value={s.id}>
                 {s.id}: {s.symptom}
@@ -119,7 +139,11 @@ export function TopBar({ meta, state, mode, setMode, onStart, onStop }: Props) {
             onClick={() => {
               if (
                 state.mode === "manual" &&
-                !window.confirm("End this engineer session? Your steps so far are not saved as a diagnosis.\n\n(To stop the motor, use the red Stop button on the front panel instead.)")
+                !window.confirm(
+                  ats
+                    ? "End this engineer session? Your steps so far are not saved as a diagnosis."
+                    : "End this engineer session? Your steps so far are not saved as a diagnosis.\n\n(To stop the motor, use the red Stop button on the front panel instead.)",
+                )
               )
                 return;
               onStop();

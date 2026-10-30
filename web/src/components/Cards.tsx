@@ -1,23 +1,83 @@
 import { useState } from "react";
 import type { ApprovalRequest, Done, FlagsRequest, WiringRequest } from "../types";
 
+/** ATS bench strong approval: the policy's own facts next to the requester's reason, the cited readings, and a second
+ * explicit confirmation before the approval goes through. */
+function StrongApprovalCard({ req, onAnswer, human }: { req: ApprovalRequest; onAnswer: (approve: boolean) => void; human: boolean }) {
+  const [checked, setChecked] = useState(false);
+  const [confirming, setConfirming] = useState(false);
+  const what = req.tool === "perform_action" ? `${String(req.args.action ?? "").replace(/_/g, " ")} ${req.args.target ?? ""}` : req.tool.replace(/_/g, " ");
+  return (
+    <div className="modal-backdrop">
+      <div className="modal approval-modal strong" role="dialog" aria-label="Strong approval request">
+        <div className="modal-kicker strong">Strong approval required</div>
+        <h2>{what}</h2>
+        <p className="policy-reason">{req.policy_reason}</p>
+        {(req.facts ?? []).map((f, i) => (
+          <p key={i} className="policy-fact">
+            Policy: {f}
+          </p>
+        ))}
+        <div className="agent-reason">
+          <span>{human ? "Your reason" : "Agent's reason"}</span>
+          <p>{req.agent_reason}</p>
+        </div>
+        <div className="evidence-list">
+          <span>Cited readings</span>
+          <ul>
+            {(req.evidence ?? []).map((e) => (
+              <li key={e.step}>
+                #{e.step} {e.text}
+              </li>
+            ))}
+          </ul>
+        </div>
+        <label className="check confirm-check">
+          <input type="checkbox" checked={checked} onChange={(e) => setChecked(e.target.checked)} />
+          I have checked the cited readings and the policy facts against the reason
+        </label>
+        <div className="modal-actions">
+          <button className="btn deny" onClick={() => onAnswer(false)}>
+            Deny
+          </button>
+          {!confirming ? (
+            <button className="btn approve" disabled={!checked} onClick={() => setConfirming(true)}>
+              Approve...
+            </button>
+          ) : (
+            <button className="btn approve strong" onClick={() => onAnswer(true)}>
+              Confirm approval (second confirmation)
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function ApprovalCard({ req, onAnswer, human = false }: { req: ApprovalRequest; onAnswer: (approve: boolean) => void; human?: boolean }) {
+  if (req.strong) return <StrongApprovalCard key={req.id} req={req} onAnswer={onAnswer} human={human} />;
   const what =
     req.tool === "set_power"
       ? "Re-apply power"
       : req.tool === "perform_action"
-        ? `${String(req.args.action ?? "").replace("_", " ")} ${req.args.target ?? ""}`
-        : req.tool;
+        ? `${String(req.args.action ?? "").replace(/_/g, " ")} ${req.args.target ?? ""}`
+        : req.tool.replace(/_/g, " ");
   return (
     <div className="modal-backdrop">
       <div className="modal approval-modal" role="dialog" aria-label="Approval request">
         <div className="modal-kicker">Human approval required</div>
         <h2>{what}</h2>
         <p className="policy-reason">{req.policy_reason}</p>
+        {(req.facts ?? []).map((f, i) => (
+          <p key={i} className="policy-fact">
+            Policy: {f}
+          </p>
+        ))}
         {human && (
           <p className="muted">
             In engineer mode you play both roles: the technician who asks and the supervisor who approves. A real
-            supervisor would check why the protection tripped before allowing it.
+            supervisor would check the reason before allowing it.
           </p>
         )}
         <div className="agent-reason">

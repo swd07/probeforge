@@ -11,7 +11,16 @@ const ICON: Record<string, string> = {
   get_schematic: "☷",
   perform_action: "⚒",
   submit_diagnosis: "✔",
+  read_panel: "◉",
+  read_event_log: "☰",
+  read_metering: "≋",
+  isolate_sources: "⏻",
+  restore_sources: "⏻",
+  manual_operation_check: "⇄",
+  repeat_transfer_attempt: "↻",
 };
+
+const readingText = (x: any) => `${x.point_a}→${x.point_b} ${x.volts !== undefined ? `${x.volts} V` : x.ohms === "open" ? "open" : `${x.ohms} Ω`}`;
 
 export function describeTool(ev: ToolEvent): { title: string; detail: string } {
   const a = ev.args as Record<string, any>;
@@ -40,6 +49,31 @@ export function describeTool(ev: ToolEvent): { title: string; detail: string } {
       return { title: "Read netlist", detail: "" };
     case "perform_action":
       return { title: `Request ${String(a.action).replace("_", " ")} ${a.target ?? ""}`, detail: a.reason ? `reason: ${a.reason}` : "" };
+    case "read_panel":
+      return { title: "Read controller panel", detail: r.display ? `${r.display}${r.load_powered ? ", load powered" : ", load on UPS"}` : "" };
+    case "read_event_log":
+      return { title: "Read event log", detail: r.events ? `${r.events.length} events` : "" };
+    case "read_metering":
+      return { title: "Read metering screen", detail: r.metering ? `N ${r.metering.Normal.join("/")} V, E ${r.metering.Emergency.join("/")} V` : "" };
+    case "isolate_sources":
+      return { title: "Isolate both sources (52U open, generator locked out)", detail: a.reason ? `reason: ${a.reason}` : "" };
+    case "restore_sources":
+      return { title: "Restore sources", detail: a.reason ? `reason: ${a.reason}` : "" };
+    case "manual_operation_check": {
+      const rs = r.readings_at_other_position ?? r.readings ?? [];
+      return {
+        title: "Manual operation check (sources isolated)",
+        detail: r.moved_to_other_position === undefined ? "" : `${r.moved_to_other_position ? "moved" : "did not move"}${rs.length ? "; at the other position " + rs.map(readingText).join(", ") : ""}`,
+      };
+    }
+    case "repeat_transfer_attempt": {
+      const rs = r.readings_during_command ?? [];
+      const after = r["panel_after_10_s"];
+      return {
+        title: "Repeat transfer attempt",
+        detail: after ? `${rs.length ? "during the command " + rs.map(readingText).join(", ") + "; " : ""}then: ${after.display}` : "",
+      };
+    }
     case "submit_diagnosis":
       return {
         title: a.outcome === "insufficient_information" ? "Diagnosis: insufficient information" : `Diagnosis: ${a.component}${a.part ? " " + a.part : ""} ${a.failure_mode}`,
@@ -164,14 +198,15 @@ export function Feed({ items, manual = false, title, running = false }: { items:
           if (it.kind === "approval")
             return (
               <div key={it.id} className={`item approval ${it.approved === undefined ? "pending" : it.approved ? "granted" : "denied"}`}>
-                <span className="step">#{it.req.step}</span> human approval requested: {it.req.policy_reason}
+                <span className="step">#{it.req.step}</span> {it.req.strong ? "STRONG approval" : "human approval"} requested: {it.req.policy_reason}
+                {it.req.facts?.map((f, i) => <div key={i} className="detail fact">policy: {f}</div>)}
                 <div className="detail">{manual ? "your reason" : "agent's reason"}: {it.req.agent_reason}</div>
                 <div className="detail">{it.approved === undefined ? "waiting..." : it.approved ? "approved by human" : "denied by human"}</div>
               </div>
             );
           const ev = it.ev;
           const { title, detail } = describeTool(ev);
-          const cls = ev.verdict === "block" ? "blocked" : ev.verdict === "needs_approval" ? "needs-approval" : ev.verdict === "error" ? "error" : "";
+          const cls = ev.verdict === "block" ? "blocked" : ev.verdict === "needs_approval" || ev.verdict === "needs_strong_approval" ? "needs-approval" : ev.verdict === "error" ? "error" : "";
           return (
             <div key={it.id} className={`item tool ${cls} ${ev.tool}`}>
               <span className="icon">{ICON[ev.tool] ?? "•"}</span>
@@ -181,7 +216,9 @@ export function Feed({ items, manual = false, title, running = false }: { items:
                   {detail && <span className="detail-inline"> {detail}</span>}
                 </div>
                 {ev.verdict === "block" && <div className="policy">BLOCKED by safety policy: {ev.policy_reason}</div>}
-                {ev.verdict === "error" && typeof ev.result.error === "string" && <div className="policy">{ev.result.error}</div>}
+                {(ev.verdict === "error" || (!ev.executed && ev.verdict.startsWith("needs_"))) && typeof ev.result.error === "string" && (
+                  <div className="policy">{ev.result.error}</div>
+                )}
                 {typeof ev.result.note === "string" && <div className="note">{ev.result.note}</div>}
               </div>
               <span className="t">{ev.sim_time_s.toFixed(1)} s</span>

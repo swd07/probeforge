@@ -1,4 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { AtsManualPanel } from "./components/AtsManualPanel";
+import { AtsPanel, LimitsTable } from "./components/AtsPanel";
 import { ApprovalCard, FlagsCard, ResultCard, WiringCard } from "./components/Cards";
 import { CompareView } from "./components/CompareView";
 import { DiagnosisForm } from "./components/DiagnosisForm";
@@ -8,23 +10,40 @@ import { Hypotheses } from "./components/Hypotheses";
 import { ManualPanel, type MeterState } from "./components/ManualPanel";
 import { Schematic } from "./components/Schematic";
 import { TopBar } from "./components/TopBar";
-import type { Meta, Mode } from "./types";
+import type { AtsMeta, AtsPanel as AtsPanelState, Bench, Meta, Mode } from "./types";
 import { useSession } from "./useSession";
 
 export function App() {
   const [meta, setMeta] = useState<Meta | null>(null);
   const [svg, setSvg] = useState("");
+  const [atsMeta, setAtsMeta] = useState<AtsMeta | null>(null);
+  const [atsSvg, setAtsSvg] = useState("");
+  const [bench, setBench] = useState<Bench>(() => (new URLSearchParams(location.search).get("bench") === "ats" ? "ats" : "star_delta"));
+  const [pickNote, setPickNote] = useState("");
   const [showTruth, setShowTruth] = useState(false);
   const [diagnosing, setDiagnosing] = useState(false);
   const [comparing, setComparing] = useState(false);
   const [meter, setMeter] = useState<MeterState>({ kind: "V", a: null, b: null, hold: 0.2, wait: 6, reason: "manual check" });
   const [chosenMode, setChosenMode] = useState<Mode>("agent");
-  const { state, start, answer, stop, tool, compare, confirmFlags, chooseWiring } = useSession(meta?.neutral ?? "N");
+  const ats = bench === "ats";
+  const { state, start, answer, stop, tool, compare, confirmFlags, chooseWiring } = useSession(ats ? "NN" : meta?.neutral ?? "N");
 
   useEffect(() => {
     fetch("/api/meta").then((r) => r.json()).then(setMeta);
     fetch("/api/schematic").then((r) => r.text()).then(setSvg);
   }, []);
+
+  useEffect(() => {
+    if (!ats || atsMeta) return;
+    fetch("/api/ats/meta").then((r) => r.json()).then(setAtsMeta);
+    fetch("/api/ats/schematic").then((r) => r.text()).then(setAtsSvg);
+  }, [ats, atsMeta]);
+
+  useEffect(() => {
+    if (!pickNote) return;
+    const t = setTimeout(() => setPickNote(""), 2500);
+    return () => clearTimeout(t);
+  }, [pickNote]);
 
   useEffect(() => {
     if (state.status === "done") {
@@ -53,39 +72,70 @@ export function App() {
   const lastBlocked = [...state.feed].reverse().find((f) => f.kind === "tool" && f.ev.verdict === "block");
   const lastProbe = state.probes.length ? state.probes[state.probes.length - 1] : null;
 
-  // first click sets probe A, second sets probe B; a third click starts a new pair
+  // the session on screen belongs to the chosen bench (switching the bench before Start shows an empty bench)
+  const cur = state.bench === bench;
+  const curMeta = ats ? atsMeta : meta;
+  const atsPanel = ats && cur ? (state.panel as unknown as AtsPanelState | null) : null;
+  const atsDiagnosing = ats && cur && manual && state.mode === "manual" && state.status === "running" && !state.done;
+  const atsIntervention = ats && cur && !!state.done?.intervention && state.status !== "stopped" && state.status !== "error";
+  const suspects = useMemo(
+    () => (ats && cur && state.status !== "idle" ? state.hypotheses.slice(0, 3).filter((h) => h.probability >= 0.1) : []).map((h) => ({
+      component: h.component,
+      part: h.part ?? "",
+    })),
+    [ats, cur, state.hypotheses, state.status],
+  );
+
+  // first click sets probe A, second sets probe B; a third click starts a new pair. A = B is refused.
   const pick = (point: string) =>
-    setMeter((m) => (!m.a || (m.a && m.b) ? { ...m, a: point, b: null } : { ...m, b: point }));
+    setMeter((m) => {
+      if (m.a && !m.b && point === m.a) {
+        setPickNote("Probe B must be a different point than A (A = B is refused).");
+        return m;
+      }
+      return !m.a || (m.a && m.b) ? { ...m, a: point, b: null } : { ...m, b: point };
+    });
 
   return (
     <div className={`app ${flashing ? "flash" : ""}`}>
-      <TopBar meta={meta} state={state} mode={chosenMode} setMode={setChosenMode} onStart={(o) => start(o)} onStop={stop} />
+      <TopBar meta={curMeta} state={state} mode={chosenMode} setMode={setChosenMode} bench={bench} setBench={setBench}
+              onStart={(o) => start(o)} onStop={stop} />
       <main className="layout">
         <div className="left">
-          <FrontPanel
-            meta={meta}
-            panel={state.panel}
-            pressed={state.pressed}
-            onPress={manualActive ? (b) => tool("press_button", { button: b, hold_seconds: meter.hold }) : undefined}
-            onPower={manualActive ? () => tool("set_power", { on: !state.panel?.power, reason: meter.reason }) : undefined}
-          />
+          {ats ? (
+            <>
+              <AtsPanel meta={atsMeta} panel={atsPanel} />
+              <LimitsTable meta={atsMeta} />
+            </>
+          ) : (
+            <FrontPanel
+              meta={meta}
+              panel={cur ? state.panel : null}
+              pressed={state.pressed}
+              onPress={manualActive ? (b) => tool("press_button", { button: b, hold_seconds: meter.hold }) : undefined}
+              onPower={manualActive ? () => tool("set_power", { on: !state.panel?.power, reason: meter.reason }) : undefined}
+            />
+          )}
           <div className="schematic-wrap">
             <Schematic
-              svg={svg}
-              nets={state.nets}
-              probes={state.probes}
-              truthLive={state.done && showTruth ? state.done.truth_live_nets : null}
-              onPick={manualActive ? pick : undefined}
-              selected={manualActive ? [meter.a, meter.b] : flagged}
+              key={bench}
+              svg={ats ? atsSvg : svg}
+              nets={cur ? state.nets : {}}
+              probes={cur ? state.probes : []}
+              truthLive={cur && state.done && showTruth ? state.done.truth_live_nets : null}
+              onPick={manualActive || atsIntervention ? pick : undefined}
+              selected={manualActive || atsIntervention ? [meter.a, meter.b] : flagged}
+              suspects={suspects}
               followDefault={state.mode !== "manual"}
               fitKey={state.done ? "reveal" : state.feed.length === 0 ? "start" : "run"}
             />
-            {state.error && <div className="error-banner">{state.error}</div>}
+            {pickNote && <div className="error-banner">{pickNote}</div>}
+            {cur && state.error && <div className="error-banner">{state.error}</div>}
             {state.stage && state.status === "running" && <div className="stage-banner">{state.stage}</div>}
           </div>
         </div>
         <aside className="right">
-          {state.done && (
+          {cur && state.done && (
             <ResultCard
               done={state.done}
               showTruth={showTruth}
@@ -101,7 +151,22 @@ export function App() {
               }
             />
           )}
-          {manual ? (
+          {ats && (manual || atsIntervention) ? (
+            <AtsManualPanel
+              meta={atsMeta}
+              panel={atsPanel}
+              meter={meter}
+              setMeter={setMeter}
+              lastProbe={cur ? lastProbe : null}
+              feed={cur ? state.feed : []}
+              diagnosing={atsDiagnosing}
+              intervention={atsIntervention}
+              started={cur && state.status !== "idle"}
+              stopped={cur && state.status === "stopped"}
+              onTool={tool}
+              onDiagnose={() => setDiagnosing(true)}
+            />
+          ) : manual ? (
             <ManualPanel
               meta={meta}
               panel={state.panel}
@@ -124,7 +189,10 @@ export function App() {
               subtitle={hybrid ? "share of simulated candidates still consistent" : "updated after each measurement"}
             />
           )}
-          <Feed items={view === state.mode ? state.feed : []} manual={manual} title={hybrid ? "Hybrid pipeline" : undefined}
+          {ats && !manual && atsIntervention && (
+            <Hypotheses hypotheses={state.hypotheses} previous={state.previous} title="Hypotheses" subtitle="the agent's final list" />
+          )}
+          <Feed items={view === state.mode && cur ? state.feed : []} manual={manual} title={hybrid ? "Hybrid pipeline" : undefined}
                 running={manualActive} />
         </aside>
       </main>
@@ -134,9 +202,9 @@ export function App() {
       {state.flags && <FlagsCard req={state.flags} onAnswer={(ok) => confirmFlags(state.flags!.id, ok)} />}
       {state.wiring && <WiringCard req={state.wiring} onChoose={(c) => chooseWiring(state.wiring!.id, c)} />}
       {state.approval && <ApprovalCard req={state.approval} human={manualRun} onAnswer={(ok) => answer(state.approval!.id, ok)} />}
-      {diagnosing && meta && (
+      {diagnosing && curMeta && (
         <DiagnosisForm
-          meta={meta}
+          meta={curMeta}
           feed={state.feed}
           onCancel={() => setDiagnosing(false)}
           onSubmit={(args) => {

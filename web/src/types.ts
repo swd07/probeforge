@@ -18,6 +18,34 @@ export interface Panel {
   time_s: number;
 }
 
+export type Bench = "star_delta" | "ats";
+
+/** ATS bench: what a technician at the transfer switch sees (server/ats.py snapshot). */
+export interface AtsPanel {
+  ats: true;
+  lights: Record<string, boolean>;
+  display: string;
+  alarms: string[];
+  metering: { Normal: number[]; Emergency: number[] };
+  events: { t: number; event: string; cause: string }[];
+  normal_source: string;
+  generator: string;
+  load_powered: boolean;
+  ups: { autonomy_s: number; left_s: number; draining: boolean; depleted: boolean };
+  time_s: number;
+  position: string;
+  isolated: boolean;
+  flow: number;
+}
+
+export interface AtsMeta extends Meta {
+  repairs: Record<string, string[]>;
+  limits: { action: string; tier: string; condition: string }[];
+  ups_autonomy_s: number;
+  action_s: number;
+  flow: string[];
+}
+
 export interface Probe {
   kind: "V" | "R";
   a: string;
@@ -43,7 +71,7 @@ export interface ToolEvent {
   step: number;
   tool: string;
   args: Record<string, unknown>;
-  verdict: "allow" | "block" | "needs_approval" | "error";
+  verdict: "allow" | "block" | "needs_approval" | "needs_strong_approval" | "error";
   policy_reason: string;
   executed: boolean;
   result: Record<string, unknown>;
@@ -59,6 +87,10 @@ export interface ApprovalRequest {
   args: Record<string, unknown>;
   policy_reason: string;
   agent_reason: string;
+  // ATS bench: strong approval (second confirmation), facts stated by the policy, cited evidence steps
+  strong?: boolean;
+  facts?: string[];
+  evidence?: { step: number; text: string }[];
 }
 
 export interface Done {
@@ -96,6 +128,10 @@ export interface Done {
     after: number;
     delta: number;
   } | null;
+  // ATS bench only
+  bench?: Bench;
+  intervention?: boolean;
+  strong_approvals?: number;
   // hybrid pipeline only
   explanation?: string;
   cited_steps?: number[];

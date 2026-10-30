@@ -293,3 +293,22 @@ decisions at the end (see CLAUDE.md). Architecture: [ARCHITECTURE.md](ARCHITECTU
   (Normal lost: Emergency). The smoke test was not rerun. Checked: the agent already sees the UPS time left (autonomy,
   time left, draining) in the step 0 observation, every read_panel and every wait; the prompt wording is unchanged.
 
+### D30. ATS bench in the web UI (stage S4)
+- **What:** the ATS bench is chosen in the top bar (Motor starter / ATS). `src/probeforge/server/ats.py` runs ATS agent
+  and engineer sessions on the same WebSocket (`"bench": "ats"`); the relay-panel sessions are unchanged. The ATS
+  panel shows the sources, the transfer switch position (the mechanism flag at the switch), the load, the UPS time
+  left (labelled simulation parameter), the controller lights, display, alarms, event log and metering screen, and
+  the UPS status flow (Fault detected, Diagnosis in progress, Root cause identified, Awaiting authorized intervention,
+  Power restored, Transfer verified). After any diagnosis the session stays open for the authorized intervention
+  (isolate, repair, restore) through the same toolbox and policy; "Transfer verified" is set only when the simulator
+  confirms the load on Emergency with the position confirmed by the controller, and the countdown stops there.
+  Engineer mode: meter on clicked terminals (a click within 14 px snaps to the nearest terminal; A = B refused),
+  readings during a repeated transfer command, the manual operation check, cited readings for strong approval. The
+  strong-approval card shows the policy's facts and the cited readings and needs a checkbox plus a second confirmation.
+  The limits table in the UI comes from the policy code. The TS17 label overlap is fixed by moving the position
+  contacts one column right (layout only).
+- **Why:** P0 needs a working UI on the ATS; the engineer's points 6, 7 and 9.
+- **Note:** the mechanism position is shown to the human on the panel; the agent's tools do not report it (the agent
+  infers it from readings). The hybrid pipeline and Compare are not offered on the ATS (P1).
+- **Evidence:** tests/test_server_ats.py; browser walkthrough 2026-10-30 (engineer A1 and B1 to Transfer verified, one
+  agent run on A7: correct root cause, $0.17).

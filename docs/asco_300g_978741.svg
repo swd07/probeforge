@@ -49,10 +49,10 @@ text { font-family: Arial, Helvetica, sans-serif; fill: #1d2430; }
 <path class="wire" data-net="TSB" d="M 1498 170 H 1550"/>
 <path class="wire" data-net="TS14" d="M 826 1132 H 878"/>
 <path class="wire" data-net="TS15" d="M 922 1132 H 974"/>
-<path class="wire" data-net="TS16" d="M 730 688 H 782"/>
+<path class="wire" data-net="TS16" d="M 826 688 H 878"/>
 <circle class="dot" cx="686" cy="762" r="3.6"/>
-<path class="wire" data-net="TS17" d="M 686 688 V 836"/>
-<path class="wire" data-net="TS18" d="M 730 762 H 782"/>
+<path class="wire" data-net="TS17" d="M 686 688 V 836 M 686 688 H 782 M 686 762 H 782"/>
+<path class="wire" data-net="TS18" d="M 826 762 H 878"/>
 <path class="wire" data-net="TB14" d="M 686 984 H 668"/>
 <path class="wire" data-net="TB14" d="M 782 984 H 764"/>
 <path class="wire" data-net="TB14" d="M 782 1132 H 764"/>
@@ -72,8 +72,8 @@ text { font-family: Arial, Helvetica, sans-serif; fill: #1d2430; }
 <path class="wire" data-net="P10" d="M 730 836 H 782"/>
 <path class="wire" data-net="P11" d="M 1114 392 H 1166"/>
 <path class="wire" data-net="P12" d="M 730 392 H 782"/>
-<path class="wire" data-net="P13" d="M 826 688 H 878"/>
-<path class="wire" data-net="P14" d="M 826 762 H 878"/>
+<path class="wire" data-net="P13" d="M 922 688 H 974"/>
+<path class="wire" data-net="P14" d="M 922 762 H 974"/>
 <path class="wire" data-net="P15" d="M 1882 170 H 1934"/>
 <path class="wire" data-net="P16" d="M 1978 244 H 2030"/>
 <path class="wire" data-net="P17" d="M 1114 1058 H 1166"/>
@@ -99,8 +99,8 @@ text { font-family: Arial, Helvetica, sans-serif; fill: #1d2430; }
 <path class="wire" data-net="J10" d="M 826 836 H 878"/>
 <path class="wire" data-net="J11" d="M 1210 392 H 1262"/>
 <path class="wire" data-net="J12" d="M 826 392 H 878"/>
-<path class="wire" data-net="J13" d="M 922 688 H 974"/>
-<path class="wire" data-net="J14" d="M 922 762 H 974"/>
+<path class="wire" data-net="J13" d="M 1018 688 H 1070"/>
+<path class="wire" data-net="J14" d="M 1018 762 H 1070"/>
 <path class="wire" data-net="J15" d="M 1786 170 H 1838"/>
 <path class="wire" data-net="J16" d="M 1882 244 H 1934"/>
 <path class="wire" data-net="J17" d="M 1018 1058 H 1070"/>
@@ -615,57 +615,57 @@ text { font-family: Arial, Helvetica, sans-serif; fill: #1d2430; }
 <circle class="terminal" data-terminal="CP:J24" cx="2030" cy="540" r="2.6"/>
 </g>
 <g class="part kind-aux_e" data-part="TS:17-16">
-<line class="sym" x1="686" y1="688" x2="700" y2="688"/>
-<line class="sym" x1="716" y1="688" x2="730" y2="688"/>
-<line class="sym" x1="700" y1="675" x2="700" y2="701"/>
-<line class="sym" x1="716" y1="675" x2="716" y2="701"/>
-<circle class="terminal" data-terminal="TS:17" cx="686" cy="688" r="2.6"/>
-<circle class="terminal" data-terminal="TS:16" cx="730" cy="688" r="2.6"/>
+<line class="sym" x1="782" y1="688" x2="796" y2="688"/>
+<line class="sym" x1="812" y1="688" x2="826" y2="688"/>
+<line class="sym" x1="796" y1="675" x2="796" y2="701"/>
+<line class="sym" x1="812" y1="675" x2="812" y2="701"/>
+<circle class="terminal" data-terminal="TS:17" cx="782" cy="688" r="2.6"/>
+<circle class="terminal" data-terminal="TS:16" cx="826" cy="688" r="2.6"/>
 </g>
 <g class="part kind-wire" data-part="H1:W13_TS16-W13_P13">
-<line class="sym" x1="782" y1="688" x2="826" y2="688"/>
-<circle class="terminal" data-terminal="H1:W13_TS16" cx="782" cy="688" r="2.6"/>
-<circle class="terminal" data-terminal="H1:W13_P13" cx="826" cy="688" r="2.6"/>
+<line class="sym" x1="878" y1="688" x2="922" y2="688"/>
+<circle class="terminal" data-terminal="H1:W13_TS16" cx="878" cy="688" r="2.6"/>
+<circle class="terminal" data-terminal="H1:W13_P13" cx="922" cy="688" r="2.6"/>
 </g>
 <g class="part kind-pin" data-part="XP:P13-J13">
-<line class="sym" x1="878" y1="688" x2="894" y2="688"/>
-<line class="sym" x1="906" y1="688" x2="922" y2="688"/>
-<polyline class="sym" points="894,682 899,688 894,694"/>
-<polyline class="sym" points="902,682 907,688 902,694"/>
-<circle class="terminal" data-terminal="XP:P13" cx="878" cy="688" r="2.6"/>
-<circle class="terminal" data-terminal="XP:J13" cx="922" cy="688" r="2.6"/>
+<line class="sym" x1="974" y1="688" x2="990" y2="688"/>
+<line class="sym" x1="1002" y1="688" x2="1018" y2="688"/>
+<polyline class="sym" points="990,682 995,688 990,694"/>
+<polyline class="sym" points="998,682 1003,688 998,694"/>
+<circle class="terminal" data-terminal="XP:P13" cx="974" cy="688" r="2.6"/>
+<circle class="terminal" data-terminal="XP:J13" cx="1018" cy="688" r="2.6"/>
 </g>
 <g class="part kind-input" data-part="CP:J13">
-<line class="sym" x1="974" y1="688" x2="988" y2="688"/>
-<rect class="sym" x="988" y="677" width="30" height="22"/>
-<circle class="terminal" data-terminal="CP:J13" cx="974" cy="688" r="2.6"/>
+<line class="sym" x1="1070" y1="688" x2="1084" y2="688"/>
+<rect class="sym" x="1084" y="677" width="30" height="22"/>
+<circle class="terminal" data-terminal="CP:J13" cx="1070" cy="688" r="2.6"/>
 </g>
 <g class="part kind-aux_n" data-part="TS:17-18">
-<line class="sym" x1="686" y1="762" x2="700" y2="762"/>
-<line class="sym" x1="716" y1="762" x2="730" y2="762"/>
-<line class="sym" x1="700" y1="749" x2="700" y2="775"/>
-<line class="sym" x1="716" y1="749" x2="716" y2="775"/>
-<line class="sym" x1="693" y1="777" x2="723" y2="747"/>
-<circle class="terminal" data-terminal="TS:17" cx="686" cy="762" r="2.6"/>
-<circle class="terminal" data-terminal="TS:18" cx="730" cy="762" r="2.6"/>
+<line class="sym" x1="782" y1="762" x2="796" y2="762"/>
+<line class="sym" x1="812" y1="762" x2="826" y2="762"/>
+<line class="sym" x1="796" y1="749" x2="796" y2="775"/>
+<line class="sym" x1="812" y1="749" x2="812" y2="775"/>
+<line class="sym" x1="789" y1="777" x2="819" y2="747"/>
+<circle class="terminal" data-terminal="TS:17" cx="782" cy="762" r="2.6"/>
+<circle class="terminal" data-terminal="TS:18" cx="826" cy="762" r="2.6"/>
 </g>
 <g class="part kind-wire" data-part="H1:W14_TS18-W14_P14">
-<line class="sym" x1="782" y1="762" x2="826" y2="762"/>
-<circle class="terminal" data-terminal="H1:W14_TS18" cx="782" cy="762" r="2.6"/>
-<circle class="terminal" data-terminal="H1:W14_P14" cx="826" cy="762" r="2.6"/>
+<line class="sym" x1="878" y1="762" x2="922" y2="762"/>
+<circle class="terminal" data-terminal="H1:W14_TS18" cx="878" cy="762" r="2.6"/>
+<circle class="terminal" data-terminal="H1:W14_P14" cx="922" cy="762" r="2.6"/>
 </g>
 <g class="part kind-pin" data-part="XP:P14-J14">
-<line class="sym" x1="878" y1="762" x2="894" y2="762"/>
-<line class="sym" x1="906" y1="762" x2="922" y2="762"/>
-<polyline class="sym" points="894,756 899,762 894,768"/>
-<polyline class="sym" points="902,756 907,762 902,768"/>
-<circle class="terminal" data-terminal="XP:P14" cx="878" cy="762" r="2.6"/>
-<circle class="terminal" data-terminal="XP:J14" cx="922" cy="762" r="2.6"/>
+<line class="sym" x1="974" y1="762" x2="990" y2="762"/>
+<line class="sym" x1="1002" y1="762" x2="1018" y2="762"/>
+<polyline class="sym" points="990,756 995,762 990,768"/>
+<polyline class="sym" points="998,756 1003,762 998,768"/>
+<circle class="terminal" data-terminal="XP:P14" cx="974" cy="762" r="2.6"/>
+<circle class="terminal" data-terminal="XP:J14" cx="1018" cy="762" r="2.6"/>
 </g>
 <g class="part kind-input" data-part="CP:J14">
-<line class="sym" x1="974" y1="762" x2="988" y2="762"/>
-<rect class="sym" x="988" y="751" width="30" height="22"/>
-<circle class="terminal" data-terminal="CP:J14" cx="974" cy="762" r="2.6"/>
+<line class="sym" x1="1070" y1="762" x2="1084" y2="762"/>
+<rect class="sym" x="1084" y="751" width="30" height="22"/>
+<circle class="terminal" data-terminal="CP:J14" cx="1070" cy="762" r="2.6"/>
 </g>
 <g class="part kind-wire" data-part="H1:W10_TS17-W10_P10">
 <line class="sym" x1="686" y1="836" x2="730" y2="836"/>
@@ -892,18 +892,18 @@ text { font-family: Arial, Helvetica, sans-serif; fill: #1d2430; }
 <text class="tn" x="1860" y="534" text-anchor="middle">wire 31</text>
 <text class="tn" x="1956" y="530" text-anchor="middle">P24/J24</text>
 <text class="tn" x="2048" y="544" text-anchor="start">CP</text>
-<text class="id" x="708" y="657" text-anchor="middle">TS 14B</text>
-<text class="tn" x="689" y="713" text-anchor="start">17</text>
-<text class="tn" x="727" y="713" text-anchor="end">16</text>
-<text class="tn" x="804" y="682" text-anchor="middle">wire 13</text>
-<text class="tn" x="900" y="678" text-anchor="middle">P13/J13</text>
-<text class="tn" x="992" y="692" text-anchor="start">CP</text>
-<text class="id" x="708" y="731" text-anchor="middle">TS 14A</text>
-<text class="tn" x="689" y="787" text-anchor="start">17</text>
-<text class="tn" x="727" y="787" text-anchor="end">18</text>
-<text class="tn" x="804" y="756" text-anchor="middle">wire 14</text>
-<text class="tn" x="900" y="752" text-anchor="middle">P14/J14</text>
-<text class="tn" x="992" y="766" text-anchor="start">CP</text>
+<text class="id" x="804" y="657" text-anchor="middle">TS 14B</text>
+<text class="tn" x="785" y="713" text-anchor="start">17</text>
+<text class="tn" x="823" y="713" text-anchor="end">16</text>
+<text class="tn" x="900" y="682" text-anchor="middle">wire 13</text>
+<text class="tn" x="996" y="678" text-anchor="middle">P13/J13</text>
+<text class="tn" x="1088" y="692" text-anchor="start">CP</text>
+<text class="id" x="804" y="731" text-anchor="middle">TS 14A</text>
+<text class="tn" x="785" y="787" text-anchor="start">17</text>
+<text class="tn" x="823" y="787" text-anchor="end">18</text>
+<text class="tn" x="900" y="756" text-anchor="middle">wire 14</text>
+<text class="tn" x="996" y="752" text-anchor="middle">P14/J14</text>
+<text class="tn" x="1088" y="766" text-anchor="start">CP</text>
 <text class="tn" x="708" y="830" text-anchor="middle">wire 10</text>
 <text class="tn" x="804" y="826" text-anchor="middle">P10/J10</text>
 <text class="tn" x="896" y="840" text-anchor="start">CP</text>
@@ -977,9 +977,9 @@ text { font-family: Arial, Helvetica, sans-serif; fill: #1d2430; }
 <text class="net" x="1504" y="164" text-anchor="start">TSB</text>
 <text class="net" x="832" y="1126" text-anchor="start">TS14</text>
 <text class="net" x="928" y="1126" text-anchor="start">TS15</text>
-<text class="net" x="736" y="682" text-anchor="start">TS16</text>
+<text class="net" x="832" y="682" text-anchor="start">TS16</text>
 <text class="net" x="692" y="682" text-anchor="start">TS17</text>
-<text class="net" x="736" y="756" text-anchor="start">TS18</text>
+<text class="net" x="832" y="756" text-anchor="start">TS18</text>
 <text class="net" x="665" y="988" text-anchor="end">TB14</text>
 <text class="net" x="761" y="988" text-anchor="end">TB14</text>
 <text class="net" x="761" y="1136" text-anchor="end">TB14</text>
@@ -999,8 +999,8 @@ text { font-family: Arial, Helvetica, sans-serif; fill: #1d2430; }
 <text class="net" x="736" y="830" text-anchor="start">P10</text>
 <text class="net" x="1120" y="386" text-anchor="start">P11</text>
 <text class="net" x="736" y="386" text-anchor="start">P12</text>
-<text class="net" x="832" y="682" text-anchor="start">P13</text>
-<text class="net" x="832" y="756" text-anchor="start">P14</text>
+<text class="net" x="928" y="682" text-anchor="start">P13</text>
+<text class="net" x="928" y="756" text-anchor="start">P14</text>
 <text class="net" x="1888" y="164" text-anchor="start">P15</text>
 <text class="net" x="1984" y="238" text-anchor="start">P16</text>
 <text class="net" x="1120" y="1052" text-anchor="start">P17</text>
@@ -1023,8 +1023,8 @@ text { font-family: Arial, Helvetica, sans-serif; fill: #1d2430; }
 <text class="net" x="832" y="830" text-anchor="start">J10</text>
 <text class="net" x="1216" y="386" text-anchor="start">J11</text>
 <text class="net" x="832" y="386" text-anchor="start">J12</text>
-<text class="net" x="928" y="682" text-anchor="start">J13</text>
-<text class="net" x="928" y="756" text-anchor="start">J14</text>
+<text class="net" x="1024" y="682" text-anchor="start">J13</text>
+<text class="net" x="1024" y="756" text-anchor="start">J14</text>
 <text class="net" x="1792" y="164" text-anchor="start">J15</text>
 <text class="net" x="1888" y="238" text-anchor="start">J16</text>
 <text class="net" x="1024" y="1052" text-anchor="start">J17</text>
