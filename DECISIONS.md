@@ -571,3 +571,19 @@ decisions at the end (see CLAUDE.md). Architecture: [ARCHITECTURE.md](ARCHITECTU
   saved transcriptions the diagnoses are identical and the tool logs identical once the new fields are removed. The
   agent sees new panel fields, so the dev agent numbers were recorded before this change (noted in
   docs/results/ats_results.md). Must land before the S5 freeze.
+
+### D44. Local list of UI runs for the holdout exclusion; taller log panel (2026-10-31)
+
+- **What:** the server appends one line per UI session to the git-ignored `runs/ui_runs.jsonl` (bench, mode, fault,
+  source, how it ended, time) after the run ends: diagnosis in, stopped, replaced by a new run, or the browser left.
+  It is written once per session, never sent to the agent or the planner, and from now on the holdout script excludes
+  every ATS fault in it (S5 exclusion (c)). The log panel is now fixed at 72 % of the window height, vertically
+  resizable, with a Hide button in its header.
+- **Why:** two UI agent runs used random faults before the list existed: 10:38 (TS:4-20 stuck_open, identified from
+  the run) and 11:33 (fault not recorded, not remembered). An exclusion that relies on memory is incomplete.
+- **Alternatives:** the fault in the spend ledger (the ledger is for cost, and its lines appear in reports); writing at
+  the start of a run (a run that never ends would still be listed, but the user asked for after the run ends, and
+  stop, replace and disconnect cover runs that do not finish).
+- **Evidence:** server test (an Engineer run writes ["TS:A-B open"], mode manual, ended "diagnosis"; tests write to a
+  temporary file); browser check of the log at 1600x950 and 1280x720 (72 % of the window, drag resize, Hide and
+  reopen; runs/ui_check/14_*).

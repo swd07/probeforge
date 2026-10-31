@@ -19,3 +19,12 @@ results under the new panel.
 
 UPS autonomy (10 minutes) is a simulation parameter within the published data center range (source S7 in
 docs/ATS_MODEL.md, assumption 14).
+
+## Faults seen in the UI before the holdout
+
+- 10:38, UI agent run on a random fault: TS:4-20 stuck_open (diagnosed correctly). Excluded from the holdout pool.
+- 11:33, UI agent run on a random fault: **the fault was not recorded and is not remembered**. It may be in the holdout
+  pool. Nothing was tuned on it: no code, prompt or setting changed because of that run.
+- Free UI runs (Engineer mode, hybrid on dev cases) were not logged before 2026-10-31 noon; the paid runs are all in the
+  spend ledger and used dev cases apart from the two above. From then on every UI run is written to the local list
+  `runs/ui_runs.jsonl` (decision D44), and the holdout excludes every ATS fault in it.

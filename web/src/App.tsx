@@ -166,7 +166,7 @@ export function App() {
             </button>
             {logOpen && (
               <div className="log-float">
-                <Feed items={logItems} manual={manual} running={manualActive}
+                <Feed items={logItems} manual={manual} running={manualActive} onClose={() => setLogOpen(false)}
                       title={hybrid ? "Hybrid pipeline log" : manual ? "Your steps" : "Agent log"} />
               </div>
             )}

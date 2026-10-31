@@ -418,10 +418,14 @@ table.quality tr.worse td { color: var(--warn); }
 
 /* agent / pipeline / engineer log: floats over the drawing, toggled, available after the run */
 .log-toggle { position: absolute; top: 52px; right: 16px; z-index: 6; font-size: 12px; padding: 4px 10px; }
+.log-close { font-size: 12px; padding: 2px 10px; margin-left: 8px; }
 .log-toggle.on { background: var(--accent); color: #04121f; }
-.log-float { position: absolute; top: 88px; right: 16px; bottom: 16px; width: min(440px, 46%); z-index: 5; display: flex;
-  flex-direction: column; box-shadow: 0 8px 28px rgba(0, 0, 0, 0.55); border-radius: 12px; }
-.log-float .feed-card { flex: 1; min-height: 0; background: rgba(16, 24, 38, 0.97); }
+/* at least 70 % of the window height, anchored over the right edge of the left column; drag the corner to resize */
+.log-float { position: fixed; top: 14vh; right: calc(clamp(360px, 25vw, 480px) + 36px); height: 72vh; min-height: 30vh;
+  max-height: calc(86vh - 12px); width: min(460px, 40vw); z-index: 20; display: flex; flex-direction: column;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.55); border-radius: 12px; resize: vertical; overflow: hidden; }
+.log-float { background: #101826; }
+.log-float .feed-card { flex: 1; min-height: 0; background: #101826; }
 .feed .item.plan { border-left: 3px solid var(--accent); padding-left: 8px; }
 .feed .item.explanation-item { border-left: 3px solid #4caf7a; padding-left: 8px; }
 .ups-at-diag { display: flex; gap: 8px; align-items: baseline; margin: 4px 0; }

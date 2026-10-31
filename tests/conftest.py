@@ -22,3 +22,9 @@ def circuit(netlist) -> Circuit:
 def powered(circuit) -> Circuit:
     circuit.set_power(True)
     return circuit
+
+
+@pytest.fixture(autouse=True)
+def _ui_runs_file(tmp_path, monkeypatch):
+    """Server tests write their UI run list to a temporary file, never to runs/ui_runs.jsonl."""
+    monkeypatch.setenv("PROBEFORGE_UI_RUNS", str(tmp_path / "ui_runs.jsonl"))

@@ -50,7 +50,7 @@ from probeforge.faults.model import COMPONENT_MODES, PART_MODES
 from probeforge.hybrid import read_consensus, run_hybrid
 from probeforge.hybrid.llm import Usage
 from probeforge.hybrid.netlist_io import flags_of, wrong_nets
-from probeforge.server import ats
+from probeforge.server import ats, ui_runs
 from probeforge.sim import Circuit, Netlist
 from probeforge.sim.schematic import render_png, render_svg
 from probeforge.tools import ApprovalRequest, ToolBox, deny_all
@@ -551,6 +551,8 @@ async def ws(websocket: WebSocket) -> None:
     queue: asyncio.Queue = asyncio.Queue()
 
     def emit(ev: dict) -> None:
+        if ev.get("type") == "done":
+            ui_runs.record(session, "diagnosis")  # the local UI run list (D44), never sent to the agent
         loop.call_soon_threadsafe(queue.put_nowait, ev)
 
     async def sender() -> None:
@@ -573,6 +575,7 @@ async def ws(websocket: WebSocket) -> None:
             msg = await websocket.receive_json()
             action = msg.get("action")
             if action in ("start", "start_manual", "start_hybrid"):
+                ui_runs.record(session, "replaced by a new run")
                 if session and not session.done:
                     session.cancel(notify=False)
                 elif isinstance(session, ats.AtsSession):
@@ -619,11 +622,13 @@ async def ws(websocket: WebSocket) -> None:
             elif action == "wiring" and isinstance(session, HybridSession):
                 session.choose(int(msg["id"]), msg.get("choice"))
             elif action == "stop" and session:
+                ui_runs.record(session, "stopped")
                 session.cancel()
             elif action == "stop":
                 emit({"type": "error", "message": "No session is running."})
     except WebSocketDisconnect:
         if session:
+            ui_runs.record(session, "browser left")
             session.cancel(notify=False)
     finally:
         sender_task.cancel()

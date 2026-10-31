@@ -9,6 +9,7 @@ from fastapi.testclient import TestClient
 
 from probeforge.ats import agent as ats_agent
 from probeforge.eval.spend import SpendLedger
+from probeforge.server import ui_runs
 from probeforge.server import app as server
 from probeforge.server import ats
 from tests.test_agent_loop import FakeClient, FakeMessage
@@ -73,6 +74,8 @@ def test_engineer_session_through_the_intervention_to_transfer_verified():
         done = until(ws, "done", events)
         assert done["verdict"] == "correct" and done["fault"] == "TS:A-B open" and done["intervention"]
         assert done["panel"]["flow"] == 3  # awaiting authorized intervention
+        runs = ui_runs.faults_run("ats")  # the local UI run list (D44), written after the diagnosis
+        assert [(r["mode"], r["faults"], r["ended"]) for r in runs] == [("manual", ["TS:A-B open"], "diagnosis")]
         u = done["ups_at_diagnosis"]  # UPS time left when the diagnosis was submitted, the load not lost yet
         assert not u["load_lost"] and 0 < u["ups_left_s"] < 600 and not done["panel"]["load_lost"]
         before_done = json.dumps(events[:-1])
