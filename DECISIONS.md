@@ -520,3 +520,25 @@ decisions at the end (see CLAUDE.md). Architecture: [ARCHITECTURE.md](ARCHITECTU
   the first unseen test of the explanation.
 - **Known gap:** the check covers the action, not every sentence; a7 repairs the cut-off contact without saying to also
   check the coil it burnt, although the input states it.
+
+### D42. Explanation rule for consequential faults: the root cause first, then the damaged part (2026-10-31)
+
+- **What:** when the remaining candidates hold the diagnosed root with further faults (the documented burnout chain:
+  both cut-off contacts of one side stuck closed and the coil they burnt), the explanation's action must name all of
+  them by kind: the root part and its co-root (the same misadjustment, the same failure mode) first, then the damaged
+  part (test, replace if burnt), with the reason: a replacement coil alone burns again at the next transfer while the
+  root cause remains. Added to `check_text` (every consequential part named by kind, no damaged part before the root),
+  to the prompt (a chain-specific action rule) and to the template. The check also counts "correct the ..." as an
+  action. Hybrid v2 fingerprint ats_hybrid_explain 65fb997fbc54 (was 1a468df099ba); read, pipeline, planner and crops
+  unchanged.
+- **Why:** the known gap of D41: on a7 the explanation repaired the cut-off contact and never mentioned the burnt coil,
+  so a technician following it would restore power to a switch that still cannot transfer.
+- **Alternatives:** the coil only as an optional mention (D41, the gap itself); a separate "also check" line appended in
+  code after the model text (would not tie the order and reason to the action).
+- **Evidence (12 dev cases, default saved transcription, the same scoring with the new rule):** before (the D41 texts
+  of runs/20261031_111839, rescored offline with the planners rebuilt, tool logs asserted equal) 1 of 12 strict and
+  lenient (a7); after 0 of 12 strict and lenient (runs/20261031_114432). Two iterations on the dev cases: the first
+  after run also scored 0 of 12, but a good a7 text was rejected once by the checker ("correct the misadjustment" was
+  not an action verb) and the stated reason was muddled ("a repaired contact alone"); both fixed. In the final run a7
+  still needed its one retry (accepted on the second try), the other 9 diagnosed cases passed on the first try, the 2
+  insufficient-information cases use the template. Tool logs and diagnoses identical to D41 (12 of 12). Cost $0.228.

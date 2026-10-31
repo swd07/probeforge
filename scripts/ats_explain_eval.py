@@ -27,7 +27,7 @@ from run_ats import load_cases, scenario_bench  # noqa: E402
 
 from probeforge.agent.client import make_client  # noqa: E402
 from probeforge.ats.freeze import ats_frozen_hashes  # noqa: E402
-from probeforge.ats.hybrid.explain import check_text, consequence_targets  # noqa: E402
+from probeforge.ats.hybrid.explain import check_text, consequence_split, template  # noqa: E402
 from probeforge.ats.hybrid.pipeline import healthy_sequence, run_ats_hybrid, warm  # noqa: E402
 from probeforge.ats.hybrid.read import sheet_images, to_netlist  # noqa: E402
 from probeforge.ats.transcriptions import DEFAULT, DIR, load  # noqa: E402
@@ -50,9 +50,11 @@ def run_case(cid, case, t, healthy, client, images):
            "seconds": round(time.perf_counter() - t0, 1), "cost_usd": round(usage.cost_usd, 5)}
     if client is not None:
         row["explanation"] = r.explanation
-        cons = consequence_targets(r.planner, r.diagnosis)
-        row["problems"] = check_text(r.explanation, r.diagnosis, r.planner.models[0], consequences=cons)
-        row["problems_lenient"] = check_text(r.explanation, r.diagnosis, r.planner.models[0], strict=False, consequences=cons)
+        co, dmg = consequence_split(r.planner, r.diagnosis)
+        row["consequences"], row["damaged"] = co + dmg, dmg
+        row["problems"] = check_text(r.explanation, r.diagnosis, r.planner.models[0], consequences=co + dmg, damaged=dmg)
+        row["problems_lenient"] = check_text(r.explanation, r.diagnosis, r.planner.models[0], strict=False,
+                                             consequences=co + dmg, damaged=dmg)
         row["record"] = getattr(r, "explain_record", None)
         row["explain_calls"] = len([x for x in usage.turn_log if x["purpose"] == "explanation"])
     return row
@@ -67,15 +69,29 @@ def compare(a: Path, b: Path) -> None:
 
 
 def rescore(d: Path) -> None:
-    n = to_netlist(load(DEFAULT)["data"])  # no repairs ran in these runs: the planner's model is the saved transcription
+    """Score saved explanations with the current check; the planners are rebuilt offline (the same tool logs, no
+    repairs ran in these runs) for the consequential faults of each diagnosis."""
+    t = load(DEFAULT)
+    n = to_netlist(t["data"])
+    ok, events = healthy_sequence(n)
+    warm(t["data"], t["flags"])
+    cases = load_cases()
     res = json.loads((d / "results.json").read_text(encoding="utf-8"))
     for r in res["rows"]:
-        r["problems"] = check_text(r["explanation"], r["diagnosis"], n)
-        r["problems_lenient"] = check_text(r["explanation"], r["diagnosis"], n, strict=False)
+        h = run_ats_hybrid(scenario_bench(cases[r["case"]]), None, t["data"], t["raw"], [], flags=t["flags"], repair=False,
+                           do_explain=False, healthy={"ok": ok, "events": events})
+        assert digest(h.planner.tb.log) == r["tool_log"], r["case"]
+        co, dmg = consequence_split(h.planner, h.diagnosis)
+        r["problems"] = check_text(r["explanation"], r["diagnosis"], n, consequences=co + dmg, damaged=dmg)
+        r["problems_lenient"] = check_text(r["explanation"], r["diagnosis"], n, strict=False, consequences=co + dmg, damaged=dmg)
+        if co or dmg:
+            tpl = template(h.diagnosis, h.planner, n)
+            print(f"  {r['case']} template: {tpl}\n    template check: "
+                  f"{check_text(tpl, h.diagnosis, n, consequences=co + dmg, damaged=dmg) or 'pass'}")
         print(f"  {r['case']}: strict {'; '.join(r['problems']) or 'pass'} | lenient {'; '.join(r['problems_lenient']) or 'pass'}")
     print(f"strict {sum(bool(r['problems']) for r in res['rows'])} of {len(res['rows'])}, lenient "
           f"{sum(bool(r['problems_lenient']) for r in res['rows'])} of {len(res['rows'])}")
-    (d / "results.json").write_text(json.dumps(res, indent=2, ensure_ascii=False), encoding="utf-8")
+    (d / "rescored.json").write_text(json.dumps(res, indent=2, ensure_ascii=False), encoding="utf-8")
 
 
 def main() -> None:

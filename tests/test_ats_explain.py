@@ -5,7 +5,7 @@ import json
 from types import SimpleNamespace
 
 from probeforge.ats import AtsBench
-from probeforge.ats.hybrid.explain import allowed_targets, check_text, explain, steps_text, template
+from probeforge.ats.hybrid.explain import allowed_targets, check_text, consequence_split, explain, steps_text, template
 from probeforge.ats.hybrid.read import build, to_netlist
 from probeforge.ats.infogain import AtsInfoGain
 from probeforge.faults.model import Fault
@@ -88,3 +88,30 @@ def test_insufficient_information_gets_the_template_listing_every_part_still_pos
     assert fake.prompts == [] and rec["template"]
     assert "No single cause" in out and "SE relay contact X1-J2" in out and "ER relay contact J1-X1" in out
     assert check_text(out, d, N) == []
+
+
+def test_consequential_faults_root_first_then_the_damaged_part():
+    """D42: the burnout chain (both cut-offs stuck closed, the coil they burnt) needs the root fixed first, then the
+    coil tested and replaced; naming the root alone, or the coil first, fails the check."""
+    b = AtsBench(netlist=N, faults=[Fault("TS", "stuck_closed", "8-9"), Fault("TS", "stuck_closed", "71-72"),
+                                    Fault("TS", "burnt", "A-B")])
+    b.lose_utility()
+    b.step(60.0)
+    p = AtsInfoGain(b, N)
+    d = p.run()
+    assert (d["component"], d["part"]) in (("TS", "8-9"), ("TS", "71-72"))
+    co, dmg = consequence_split(p, d)
+    assert dmg == ["TS:A-B"] and len(co) == 1
+    root, other = f"cut-off contact TS {d['part']}", f"cut-off contact {co[0].replace(':', ' ')}"
+    kw = {"consequences": co + dmg, "damaged": dmg}
+    good = f"Adjust or replace the {root} and the {other}. Then test the operating coil TS A-B and replace it if burnt."
+    assert check_text(good, d, N, **kw) == []
+    assert "consequential" in check_text(f"Adjust or replace the {root}.", d, N, **kw)[0]
+    assert "before the root" in " ".join(check_text(f"Replace the operating coil TS A-B, then adjust the {root} and the {other}.", d, N, **kw))
+    tpl = template(d, p, N)
+    assert check_text(tpl, d, N, **kw) == [] and "burns again at the next transfer" in tpl
+    assert check_text("Correct the misadjustment of the " + root + " and the " + other + ". Then test the operating coil TS A-B.", d, N, **kw) == []
+    fake = Fake([reply(d["component"] + ":" + d["part"], good, what=f"The {root} did not open.")])
+    out, rec = explain(fake, Usage(), p, d)
+    assert "first fix the root cause" in fake.prompts[0] and "burnt" in fake.prompts[0]
+    assert not rec["template"] and check_text(out, d, N, **kw) == []

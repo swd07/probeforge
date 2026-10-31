@@ -12,6 +12,11 @@ rendered to text in code. Check: the part to act on must be the diagnosed part o
 name no other part and must call the part by its kind (coil, wire, pin...). On a mismatch the model is asked once more
 with the reason; then a template built from the diagnosis is used. `check_text` scores any explanation text, so the
 old free-text explanations are measured by the same rule.
+
+Consequential faults (decision D42): when the remaining candidates carry the diagnosed root with further faults (the
+documented burnout chain: both cut-off contacts of one side stuck closed, and the coil they burnt), the action must
+name all of them: the root part and its co-root (the same misadjustment) first, then the damaged part (test and
+replace), because a repaired coil alone burns again at the next transfer.
 """
 
 import json
@@ -51,7 +56,7 @@ KIND_WORDS = {
     "breaker_pole": ("breaker", "pole"), "mechanism": ("mechanism", "operator", "linkage", "jam"),
 }
 ACTION_VERBS = re.compile(r"\b(check|inspect|repair|replace|tighten|test|look|verify|reseat|fix|swap|clean|adjust|free|"
-                          r"lubricate|retest|examine|trace)\w*\b", re.I)
+                          r"lubricate|retest|examine|trace)\w*\b|\bcorrect(?=\s+(?:the|a|an|this|that|its)\b)", re.I)
 TWIN_NOTE = "no reading separates: "
 STILL_NOTE = "still possible: "
 
@@ -60,8 +65,7 @@ during a utility outage. An information-gain planner took readings on the switch
 {result}
 
 The part concerned: {name} ({part})
-{twins}{consequences}
-Every other cause the planner considered was ruled out by the readings, so every other part that was measured is
+{twins}{consequences}Every other cause the planner considered was ruled out by the readings, so every other part that was measured is
 behaving normally for the switch's present position. The switch stayed on Normal; a fault-free switch would already
 have transferred to Emergency, so for readings away from the part concerned its values differ for that reason alone
 and are not shown.
@@ -73,9 +77,14 @@ candidate faults left before and after):
 Return JSON: "what_failed" (one sentence that calls the part exactly "{name}"), "evidence" (2 to 4 items, each a step
 number and one sentence on what that reading shows; a reading marked normal for the present position is not a fault),
 "action_part" (the id of the part an authorized person should repair or inspect next: {allowed_text}), and "action"
-(one or two sentences: what an authorized person should do next on "{name}" only, with both sources isolated and
-locked out, within the safety limits: no bypassing interlocks, no paralleling sources, no manual operation under load;
-name no other part in the action, not even as a location). Plain English, no dashes as punctuation.<<RETRY>>"""
+({action_rule} With both sources isolated and locked out, within the safety limits: no bypassing interlocks, no
+paralleling sources, no manual operation under load). Plain English, no dashes as punctuation.<<RETRY>>"""
+ACTION_ONE = ('one or two sentences: what an authorized person should do next on "{name}" only; name no other part in '
+              'the action, not even as a location.')
+ACTION_CHAIN = ('two or three sentences: first fix the root cause, {roots}; then test {damaged} and replace it if it is '
+                'burnt; say why the order matters: a new {damaged} alone burns again at the next transfer while the '
+                'root cause remains. '
+                'Use exactly these names, in this order, and name no other part.')
 
 
 def _faults_in(note: str, prefix: str) -> list[Fault]:
@@ -100,16 +109,25 @@ def allowed_targets(diagnosis: dict, consequences: list[str] | None = None) -> l
     return list(dict.fromkeys([first, *twins, *(consequences or [])]))
 
 
-def consequence_targets(planner, diagnosis: dict) -> list[str]:
-    """Parts of the other faults in the remaining candidates with the diagnosed root (the documented burnout chain)."""
+def consequence_split(planner, diagnosis: dict) -> tuple[list[str], list[str]]:
+    """The other faults in the remaining candidates with the diagnosed root (the documented burnout chain), as
+    (co-roots, damaged parts): a co-root shares the root's failure mode (the same misadjustment), a damaged part was
+    burnt by it."""
     if diagnosis.get("outcome") != "diagnosed":
-        return []
+        return [], []
     root = Fault(diagnosis["component"], diagnosis["failure_mode"], diagnosis.get("part") or None)
-    out = []
+    co, dmg = [], []
     for c in planner.cands:
         if c.faults and c.faults[0] == root:
-            out += [f.target if f.part else f.component for f in c.faults[1:]]
-    return list(dict.fromkeys(out))
+            for f in c.faults[1:]:
+                (co if f.mode == root.mode else dmg).append(f.target if f.part else f.component)
+    return list(dict.fromkeys(co)), list(dict.fromkeys(dmg))
+
+
+def consequence_targets(planner, diagnosis: dict) -> list[str]:
+    """Parts of the other faults in the remaining candidates with the diagnosed root (co-roots, then damaged parts)."""
+    co, dmg = consequence_split(planner, diagnosis)
+    return co + dmg
 
 
 def display_name(n: Netlist, target: str) -> str:
@@ -164,11 +182,14 @@ def _sentences(text: str) -> list[str]:
     return [s.strip() for s in re.split(r"(?<=[.!?])\s+", text) if s.strip()]
 
 
-def check_text(text: str, diagnosis: dict, n: Netlist, strict: bool = True, consequences: list[str] | None = None) -> list[str]:
+def check_text(text: str, diagnosis: dict, n: Netlist, strict: bool = True, consequences: list[str] | None = None,
+               damaged: list[str] | None = None) -> list[str]:
     """Problems with an explanation, empty if it passes: the action sentences (those with an action verb) must name
     the diagnosed part or a twin, by its kind, and no other part. For insufficient information, they may name only
     parts still possible (or none). strict=False also accepts an action that refers back by kind ("repair the wire")
-    to the diagnosed part named elsewhere in the text; a wrong part in the action fails either way."""
+    to the diagnosed part named elsewhere in the text; a wrong part in the action fails either way. With consequential
+    faults (D42) the action must also name every one of them by its kind, and the damaged parts only after the root
+    (the root part or a co-root): fix the cause first, then test and replace what it damaged."""
     allowed = allowed_targets(diagnosis)  # the action must name one of these
     excused = allowed_targets(diagnosis, consequences)  # and may also name consequential parts
     actions = [s for s in _sentences(text) if ACTION_VERBS.search(s)]
@@ -188,7 +209,30 @@ def check_text(text: str, diagnosis: dict, n: Netlist, strict: bool = True, cons
             problems.append(f"the action does not name the diagnosed part ({', '.join(allowed)})")
         elif not any(any(w in act.lower() for w in KIND_WORDS.get(_kind(n, a), ())) for a in hit):
             problems.append(f"the action does not call {hit[0]} by its kind ({' or '.join(KIND_WORDS.get(_kind(n, hit[0]), ()))})")
+        problems += _chain_problems(act, n, allowed, consequences or [], damaged or [])
     return problems
+
+
+def _first_at(text: str, n: Netlist, pid: str) -> int | None:
+    pos = [m.start() for p in _aliases(n, pid) for m in [p.search(text)] if m] if pid in n.parts else []
+    return min(pos) if pos else None
+
+
+def _chain_problems(act: str, n: Netlist, allowed: list[str], consequences: list[str], damaged: list[str]) -> list[str]:
+    """The consequential-fault rule (D42) on the action text."""
+    out = []
+    missing = [c for c in consequences if _first_at(act, n, c) is None]
+    if missing:
+        out.append(f"the action does not name the consequential faults of the same root cause ({', '.join(missing)})")
+    unkind = [c for c in consequences if c not in missing and not any(w in act.lower() for w in KIND_WORDS.get(_kind(n, c), ()))]
+    if unkind:
+        out.append(f"the action does not call {', '.join(unkind)} by its kind")
+    roots = [x for x in (_first_at(act, n, r) for r in allowed + [c for c in consequences if c not in damaged]) if x is not None]
+    for d in damaged:
+        at = _first_at(act, n, d)
+        if at is not None and roots and at < min(roots):
+            out.append(f"the action names the damaged part {d} before the root cause: fix the root cause first")
+    return out
 
 
 # ------------------------------------------------------------------ input
@@ -334,12 +378,17 @@ def _short(tool: str, args: dict) -> str:
     return tool.replace("_", " ")
 
 
+def _join(names: list[str]) -> str:
+    return names[0] if len(names) == 1 else ", ".join(names[:-1]) + " and " + names[-1]
+
+
 def template(diagnosis: dict, planner, n: Netlist) -> str:
     """Fallback built from the diagnosis and the readings only (no model text). Readings away from the diagnosed part
     are marked normal for the present position, so they cannot read as a second fault."""
     ev = [s for s in planner.steps if s.after < s.before and s.tool != "isolate_sources"][-3:]
     terms = set()
-    for tgt in allowed_targets(diagnosis):
+    co, dmg = consequence_split(planner, diagnosis)
+    for tgt in allowed_targets(diagnosis, co + dmg):
         if tgt in n.parts:
             p = n.parts[tgt]
             terms |= {p.a, p.b, n.terminal_net[p.a], n.terminal_net[p.b]}
@@ -358,6 +407,15 @@ def template(diagnosis: dict, planner, n: Netlist) -> str:
     twins = f" No reading separates {' and '.join(diagnosis['note'][len(TWIN_NOTE):].split(', '))}; the repair is the same." \
         if str(diagnosis.get("note", "")).startswith(TWIN_NOTE) else ""
     mode = diagnosis["failure_mode"].replace("_", " ")
+    if co or dmg:  # D42: the root cause first, then the damaged part
+        roots = _join([name, *(f"the {display_name(n, c)}" for c in co)])
+        damaged = _join([display_name(n, d) for d in dmg]) if dmg else ""
+        then = (f" Then test the {damaged} and replace it if it is burnt. The order matters: a "
+                "replacement alone burns again at the next transfer while the root cause remains."
+                if dmg else "")
+        return (f"The {name} is {mode}{f', with the {damaged} damaged by it' if dmg else ''}.{twins} Evidence: "
+                f"{cites or 'the panel'}. With both sources isolated and locked out, an authorized person should first "
+                f"{REPAIR_VERB.get(kind, 'repair')} {roots}.{then}")
     return (f"The {name} is {mode}.{twins} Evidence: {cites or 'the panel'}. With both sources isolated and locked out, "
             f"an authorized person should {REPAIR_VERB.get(kind, 'repair')} {name if kind != 'mechanism' else ''}".rstrip() + ".")
 
@@ -368,7 +426,8 @@ def explain(client, usage: Usage, planner, diagnosis: dict, effort: str = "low")
     n = planner.models[0]
     if diagnosis.get("outcome") != "diagnosed":
         return template(diagnosis, planner, n), {"attempts": [], "template": True, "reason": "insufficient information"}
-    consequences = consequence_targets(planner, diagnosis)
+    co, damaged = consequence_split(planner, diagnosis)
+    consequences = co + damaged
     targets = allowed_targets(diagnosis)
     d = diagnosis
     res = (f"{d['component']} {d.get('part', '')} {d['failure_mode']}" if d.get("outcome") == "diagnosed"
@@ -379,9 +438,15 @@ def explain(client, usage: Usage, planner, diagnosis: dict, effort: str = "low")
     part = "; ".join(part_text(n, t) for t in targets) or "(no single part: insufficient information)"
     allowed_text = f"one of {', '.join(targets)}" if targets else "none, or a part still possible"
     name = display_name(n, targets[0]) if targets else "the parts still possible"
-    cons = (f"The same root cause also damaged: {', '.join(display_name(n, c) for c in consequences)}; it may be named "
-            "in the action too.\n" if consequences else "")
-    base = PROMPT.format(result=res, name=name, part=part, twins=twins, consequences=cons,
+    cons = ""
+    if co:
+        cons += f"The same root cause (one misadjustment) also affects: {_join([display_name(n, c) for c in co])}.\n"
+    if damaged:
+        cons += f"The root cause also damaged (burnt): {_join([display_name(n, c) for c in damaged])}.\n"
+    roots = _join([name, *(display_name(n, c) for c in co)])
+    rule = (ACTION_CHAIN.format(roots=roots, damaged=_join([display_name(n, c) for c in damaged]) or "nothing else")
+            if consequences else ACTION_ONE.format(name=name))
+    base = PROMPT.format(result=res, name=name, part=part, twins=twins, consequences=cons, action_rule=rule,
                          steps=steps_text(planner, targets + consequences), allowed_text=allowed_text)
     record = {"attempts": [], "template": False}
     retry = ""
@@ -389,7 +454,7 @@ def explain(client, usage: Usage, planner, diagnosis: dict, effort: str = "low")
         try:
             x = _call(client, usage, base.replace("<<RETRY>>", retry), ids, effort)
             text = render(x)
-            problems = check_text(text, d, n, consequences=consequences)
+            problems = check_text(text, d, n, consequences=consequences, damaged=damaged)
             if targets and x["action_part"] not in targets + consequences and d.get("outcome") == "diagnosed":
                 problems.insert(0, f"action_part {x['action_part']} is not the diagnosed part ({', '.join(targets)})")
         except Exception as e:  # noqa: BLE001 - a failed call falls through to the template
@@ -398,6 +463,7 @@ def explain(client, usage: Usage, planner, diagnosis: dict, effort: str = "low")
         if not problems:
             return text, record
         retry = ("\n\nYour previous answer was rejected: " + "; ".join(problems) +
-                 f'. In the action, call the part exactly "{name}" and name no other part.')
+                 (f'. In the action, first {roots}, then the damaged part, by exactly these names.' if consequences
+                  else f'. In the action, call the part exactly "{name}" and name no other part.'))
     record["template"] = True
     return template(d, planner, n), record

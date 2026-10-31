@@ -51,4 +51,4 @@ def test_reading_text():
 
 def test_frozen_modules_unchanged():
     assert ats_frozen_hashes() == {"ats_hybrid_read": "08b4676a5c4b", "ats_hybrid_pipeline": "8a9c95c16c71",
-                                   "ats_hybrid_explain": "1a468df099ba", "ats_infogain": "2eff9c8764c1", "ats_sheet_crops": "5687e25c8ce3"}
+                                   "ats_hybrid_explain": "65fb997fbc54", "ats_infogain": "2eff9c8764c1", "ats_sheet_crops": "5687e25c8ce3"}
