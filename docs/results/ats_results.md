@@ -109,7 +109,8 @@ presented as holdout. Machine-readable: [ats_results.json](ats_results.json); ra
   drawing, on the 12 dev cases, after seeing the errors of the reads. Generalization to other drawings is not shown.
 - The baseline uses the true netlist and is a ceiling for the planner, not an independent method.
 - The fault catalog, the bench and the holdout sampler are written by the same author. Independence rests on seeded
-  catalog sampling after the freeze, not on an outside test set. The engineer review of the bench is still pending.
+  catalog sampling after the freeze, not on an outside test set.
+- The ATS model, the assumptions and the troubleshooting sheet have not been reviewed by an electrical engineer.
 - One run per diagnostician, 28 cases: small samples; differences of one or two cases are not significant.
 
 ## Recording note: UPS and critical load fields

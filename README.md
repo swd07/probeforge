@@ -1,327 +1,195 @@
 # ProbeForge
 
-AI agent that diagnoses faults in an industrial relay-contactor circuit (star-delta reversing motor starter) by choosing its own virtual measurements, under hard safety limits enforced in code. Built for the Meta Global AI Developer Hackathon 2026.
+**An AI field electrician in shadow mode: it reads the drawing of a real transfer switch, chooses its own measurements and
+finds the root cause, under safety limits enforced in code.**
 
-Status (Oct 28): simulator, faults, tools, safety policy, Muse Spark agent, baselines, evaluation harness, live web UI and the hybrid pipeline (Muse Spark reads the schematic three times, a planner measures over joint fault x wiring hypotheses, Muse Spark repairs and explains) are done, tested and frozen. Next: a second circuit as the final unseen test.
+Built during the Meta Global AI Developer Hackathon, Oct 26 to Nov 4, 2026 (Indie Developer track). Solo project by
+Eduard Kharaev.
 
-Design and data flow: [ARCHITECTURE.md](ARCHITECTURE.md). Why it is built this way: [DECISIONS.md](DECISIONS.md).
-Step-by-step guide to the UI and a 15-minute meeting script: [docs/HOW_TO_USE.md](docs/HOW_TO_USE.md).
+![Hybrid v2 diagnosing a transfer switch fault](docs/screenshots/ats_hybrid_midrun.png)
 
-## Setup
+## The problem
 
-Requires Python 3.11+ and [uv](https://docs.astral.sh/uv/).
+A data center loses utility power. The generator starts, but the automatic transfer switch does not move the critical
+load onto it. The UPS carries the load, and it has minutes left. A technician has to find the fault from the
+controller's lights, a drawing and a meter, without making things worse: no bypassing interlocks, no paralleling
+sources, no operating the switch by hand under load.
+
+## What ProbeForge does
+
+ProbeForge simulates that situation on an ASCO Series 300 Group G transfer switch (our redrawing of wiring diagram
+978741) with a hidden fault, and lets three diagnosticians work on it through the same tools and the same safety policy:
+
+- **Agent:** Muse Spark with tool calling picks every reading and action itself and keeps an explicit hypothesis list.
+- **Hybrid v2:** Muse Spark in three roles, each checked by deterministic code: it **reads the drawing** into a netlist
+  (checked against the documented ASCO transfer sequence), **repairs the reading** when a measurement contradicts it
+  (a repair is accepted only if the fault-free sequence still holds), and **explains the result to the technician**
+  (structured output, then a code check that the text names the diagnosed part, and the root cause before any part it
+  damaged). Between those roles an information-gain planner chooses the readings.
+- **Engineer mode:** a human does the same job on the same screen, optionally with the planner's suggestion (shadow
+  mode, the trace is marked assisted).
+
+Every reading or action passes the policy first. Anything risky waits for a human approval; some actions are never
+allowed. The UPS clock drains 30 s per reading, and a correct diagnosis after the UPS ran out is shown as what it is:
+critical load lost.
+
+![Result card: verdict, UPS time left at diagnosis, explanation for the technician](docs/screenshots/ats_result.png)
+
+## Quick start
+
+Requires Python 3.11+, [uv](https://docs.astral.sh/uv/) and Node 18+.
 
 ```
 uv sync
-```
-
-Create `.env` in the project root:
-
-```
-META_API_KEY=your_key_here
-```
-
-## Live web UI
-
-![Agent at work](docs/screenshots/w1920_2_midrun.png)
-
-One screen showing the agent working, streamed step by step over a WebSocket from FastAPI to a Vite + React + TypeScript frontend:
-
-- **Front panel** (top): lamps, push buttons (they light up when the agent presses them), main breaker, motor (spins in star / delta, shakes when humming) and clamp-meter line currents.
-- **Schematic** (center): the same SVG generated from the netlist. Every probe point the agent measures lights up with the reading next to it; nets the agent measured turn red (live) or blue (dead). The true live wiring is only shown after the run, because colouring it during the run would give the fault away. Mouse wheel zooms, drag pans, Fit shows the whole drawing; in agent mode "follow probes" zooms to each new measurement and the view zooms out at the reveal.
-- **Right panel**: hypothesis bars that move after each measurement. **Log** (floating over the drawing, toggled, kept after the run): the model's short notes, every tool call with its result, policy blocks in red, approval requests in amber.
-- **Approval card**: when the agent asks to reset a protection device or re-apply power after a trip, the run pauses until a human clicks Approve or Deny.
-- **Top bar**: "Random fault (any of 91)" or "Clean test fault (from holdout_clean.yaml)" picks a fault on the server and the browser does not learn which one until the end; or pick one of the 8 scenarios by its symptom. After a run the choice resets, and the result card says which fault and pool were actually run.
-- **Result card** (docked over the right panel, collapsible): the injected fault, the verdict (correct / justified / pole open / wrong, pole level), measurements, tokens, cost and time, and the decisive measurement: the reading that raised the winning hypothesis the most, shown next to what a healthy panel reads at the same point (the logged actions replayed on a fault-free circuit).
-
-| Approval card | Result and reveal |
-|---|---|
-| ![Approval](docs/screenshots/qf1_approval_card.png) | ![Result](docs/screenshots/w1920_8_result.png) |
-
-**Engineer mode** (same screen, a human instead of the agent): click two terminals or wires on the schematic to place the
-meter probes and measure volts or ohms, press the panel buttons, switch the breaker, wait, request a protection reset,
-then submit a diagnosis from a form (component, part, failure mode, confidence, and evidence picked from your own steps).
-Every action goes through the same tools and safety policy as the agent, so a resistance reading on a live circuit is
-blocked with the same red flash. The trace is saved in the agent trace format to `scenarios/engineer_traces/` and becomes
-the engineer reference column. **Compare** then runs the baseline and the agent on the same fault and shows engineer,
-agent and baseline side by side: verdict, measurements, redundant readings, blocked attempts, time, cost and the full
-sequence of meter readings.
-
-| Engineer mode: blocked reading | Engineer vs agent vs baseline |
-|---|---|
-| ![Blocked](docs/screenshots/manual_2_blocked.png) | ![Compare](docs/screenshots/manual_6_compare.png) |
-
-**Hybrid mode** (third button in the top bar): Muse Spark reads the schematic image into a netlist (a live read: three reads, where they disagree is flagged too; or
-a saved real read with known errors, from the PNG or from a phone photo), the regions it flagged as uncertain light up on the schematic for a human to
-confirm, then the information-gain planner measures. When a reading contradicts every candidate fault, the feed shows
-the inconsistent reading in red, Muse Spark rechecks the drawing and the correction appears as a diff before the
-planner continues; a proposal that would change fault-free behaviour no reading contradicted is shown as rejected.
-If the answer depends on a flagged region (for example which KM3 pole feeds which winding), the UI asks the human
-which wiring the panel has; without an answer the pole is reported as ambiguous. The result card carries Muse
-Spark's explanation for the technician. See
-[Hybrid pipeline](#hybrid-pipeline-phase-1).
-
-| Flagged regions for human confirmation | Netlist correction during the run |
-|---|---|
-| ![Flags](docs/screenshots/hybrid_live_flags.png) | ![Correction](docs/screenshots/hybrid_km4_2_correction.png) |
-| **Wiring question: the answer depends on a flagged region** | **After the technician picked the real wiring** |
-| ![Wiring](docs/screenshots/hybrid_photo_wiring_wiring.png) | ![Result](docs/screenshots/hybrid_photo_wiring_8_result.png) |
-
-The UI replaces em dashes in the model's text with commas for display; the content is not otherwise changed.
-
-Run it:
-
-```
 cd web && npm install && npm run build && cd ..
-uv run python -m probeforge.server          # http://127.0.0.1:8000
+echo META_API_KEY=your_key_here > .env
+uv run python -m probeforge.server --port 8000
 ```
 
-For frontend development run `npm run dev` in `web/` (Vite on :5173, proxied to the backend on :8000).
-`scripts/screenshot_ui.py` drives a full live run in headless Edge with Playwright and saves screenshots to `docs/screenshots/`.
-For reproducible demos `?fault=QF1:5-6%20open` in the URL injects a specific fault (shown as "fault chosen by URL"; the UI itself never offers this).
+Open http://127.0.0.1:8000/?bench=ats, choose Agent, Hybrid or Engineer, pick a fault (or a random one) and press
+Start. Without a key, `PROBEFORGE_OFFLINE=1` runs Engineer mode and the hybrid on the saved drawing read without model
+calls. Tests: `uv run pytest` (280 tests). The UI step by step: [docs/HOW_TO_USE.md](docs/HOW_TO_USE.md).
 
-## Level 2 bench: ASCO Series 300 Group G transfer switch (in progress)
+## Architecture
 
-A second bench models a real automatic transfer switch used in critical infrastructure: ASCO Series 300 Group G,
-200 A, 208 V, 3 phase 4 wire, service entrance. Stage S0 is done: the netlist
-([scenarios/circuits/asco_300g_978741.yaml](scenarios/circuits/asco_300g_978741.yaml)) and our redrawn diagram
-([docs/asco_300g_978741.svg](docs/asco_300g_978741.svg)) are built only from ASCO wiring diagram 978741 and the Group G
-Controller User's Guide; every part and net carries its source, and undocumented values are listed as assumptions
-([docs/ATS_MODEL.md](docs/ATS_MODEL.md)). The diagram is redrawn from ASCO Series 300 Group G wiring diagram 978741,
-Schneider Electric, and is not the official drawing. The original drawings are in the public ASCO / Schneider Electric
-technical documents library:
-[ASCO Series 300 Group G SE product wiring, outline and mounting data](https://www.ascopower.com/us/en/products/libraries/technical-documents/300-series/asco-series-300-group-g-se-product-wiring-outline-and-mounting-data.jsp)
-and [ASCO Series 300 Group G product wiring, outline and mounting data](https://www.se.com/us/en/work/support/product-support/technical-documents/300-series/asco-series-300-group-g-product-wiring-outline-and-mounting-data).
-Review points from the electrical engineer and how the bench covers them: [docs/ENGINEER_FEEDBACK.md](docs/ENGINEER_FEEDBACK.md).
-
-## Circuit and simulator
-
-![Star-delta reversing starter](docs/star_delta_reversing.svg)
-
-The circuit is a star-delta motor starter with forward / reverse, defined once in [scenarios/circuits/star_delta_reversing.yaml](scenarios/circuits/star_delta_reversing.yaml). The same file drives the simulator, the text netlist for the agent (`Netlist.to_text()`) and the schematic above (`uv run python scripts/render_schematic.py`; a test fails if the committed SVG is out of date).
-
-The simulator (`src/probeforge/sim/`) is pure Python and deterministic:
-
-- Closed contacts merge nets; coils pick up when their terminals see different phases; contactor states iterate until stable. Mechanical interlocks KM1/KM2 and KM3/KM4 (drawn with the IEC symbol: a dashed linkage with an inverted triangle).
-- Short circuits blow the first protection device that clears them (FU1, FU2, then QF1).
-- On-delay timer KT and thermal overload KK1 advance in 0.1 s ticks.
-- Motor state from the winding currents (nodal analysis, positive and negative sequence components): stopped, star / delta, forward / reverse, unbalanced, or humming (stalled, locked-rotor current). Line currents in amps (clamp meter, 10 A rated in delta) plus zero / nominal / overcurrent.
-- Measurements use nodal analysis over the same model, so a voltmeter across an open contact reads 230 V and an ohmmeter sees parallel paths through coils and lamps, like on a real panel.
-
-```python
-from probeforge.sim import Circuit
-from probeforge.faults import Fault
-
-c = Circuit.load("scenarios/circuits/star_delta_reversing.yaml")
-c.apply_fault(Fault("KM1", "stuck_open", "13-14"))   # hidden from the agent
-c.set_power(True)
-c.press("Start Fwd")
-c.indicators()             # {'lamps': {...}, 'motor': 'stopped', 'phase_currents': {...}}
-c.voltage("KM1:13", "KM1:14")   # 230.0
-c.set_power(False)
-c.resistance("KM1:A1", "KM1:A2")  # 550.0
+```mermaid
+flowchart LR
+  subgraph bench ["Simulated bench (hidden fault)"]
+    S["ATS simulator: sources, Group G controller, mechanism, UPS"]
+  end
+  T["Tool API: panel, meter, isolate, manual check, repeat transfer, repair"]
+  P["Safety policy in code: allowed / approval / strong approval / never"]
+  A["Agent: Muse Spark, tool calling"]
+  H["Hybrid v2: information-gain planner"]
+  D["Drawing sheets"] --> R["Muse Spark: read"] --> C{"Documented ASCO sequence check"}
+  C -- "contradicted" --> RP["Muse Spark: repair"] --> C
+  C -- "holds" --> H
+  H --> E["Muse Spark: explain"] --> K{"Code check: names the part, root cause first"}
+  A --> P
+  H --> P
+  P --> T --> S
+  U["Human: approvals, Engineer mode"] --> P
+  K --> W["Web UI: live drawing, log, result"]
+  A --> W
 ```
 
-Faults (`src/probeforge/faults/`): the 8 hand-written scenarios live in `scenarios/s0*.yaml`. `all_faults()` enumerates every part in every failure mode (91 faults); `random_fault(netlist, seed, visible_only=True)` picks unseen holdout faults. 15 of the 91 are latent (no visible symptom during normal operation), which `has_visible_symptom()` detects.
+The agent and the planner never see the injected fault: tests check the agent's prompt for all 118 catalog faults and
+that the UI events carry the fault only in the final result. Components, data flow and
+invariants: [ARCHITECTURE.md](ARCHITECTURE.md). Every design decision with its evidence: [DECISIONS.md](DECISIONS.md).
 
-## Tools, safety policy, agent
+## How Meta tooling is used
 
-- **Tools** (`src/probeforge/tools/`): `read_indicators`, `press_button` (with `hold_seconds`), `wait`, `set_power`, `measure_voltage`, `measure_resistance`, `get_schematic`, `update_hypotheses`, `perform_action`, `submit_diagnosis`. Every call gets a step number, goes through the policy and is logged. Outputs only contain what a technician at the panel could observe; a test drives every tool on all 91 faults and checks that no output, log or prompt names the fault.
-- **Baseline** (`src/probeforge/baseline/`): deterministic. Runs a fixed functional test mirrored on a fault-free twin, half-splits the supply path of the first load whose voltage is missing, refines with fixed rules, and falls back to an exhaustive resistance comparison.
-- **Policy** (`src/probeforge/policy/`): voltage only with power on, resistance only with power off, at most 3 consecutive Start presses, power-on after a protection trip and protection resets need human approval (auto-denied in batch runs), bypass / modify / replace / jumper are always blocked, a diagnosis must cite executed observation steps. Blocked calls come back to the agent as errors and are counted.
-- **Agent** (`src/probeforge/agent/`): Muse Spark (`muse-spark-1.3`) with native tool calling. It gets the panel state, the schematic as PNG (rendered from the SVG with resvg) plus the text netlist, the tools and the policy summary. It must call `update_hypotheses` after every measurement (in the same turn as the next measurements; up to 3 measurements per turn; skipping it is not blocked but counted as `missing_hypothesis_updates`), the image is sent only with the first request, text replies without a tool call get a short nudge, tool calls the model writes as text markup are recovered, it is warned 5 and 2 turns before the 30-turn cap, and `insufficient_information` is a valid outcome. Evidence items in a diagnosis are typed `functional_test` or `instrument_reading`.
+All model calls go to `muse-spark-1.3` through the Meta Model API (Chat Completions); the key stays server-side.
 
-```
-uv run python scripts/run_scenarios.py --effort low      # all 8 scenarios, prints a results table
-```
+- **Reading a real drawing.** Muse Spark transcribes the drawing sheets into a netlist. The transcription is checked
+  against the transfer sequence documented in the Group G User's Guide (8 of 8 events in order) before any planning;
+  where it fails, Muse Spark is asked to repair the region that explains the failure. On the saved read, relay
+  contacts were right 4/8 before repair and 8/8 after two accepted repairs
+  ([D34](DECISIONS.md#d34-hybrid-v2-frozen-2026-10-31)); on the 28-case holdout no reading contradicted it, so no
+  repair ran ([results](docs/results/ats_results.md)).
+- **Tool calling.** The agent drives the bench with tools (panel, meter, isolation, manual operation check, repeat
+  transfer, repair requests, diagnosis) and updates its hypotheses through a tool after each reading, at low reasoning
+  effort.
+- **Structured output.** The technician explanation is strict JSON with the part to act on as an enum of the netlist's
+  part ids, rendered and checked in code, with one retry and a template fallback
+  ([D41](DECISIONS.md#d41-new-explanation-step-for-hybrid-v2-on-the-ats-structured-input-checked-output-2026-10-31),
+  [D42](DECISIONS.md#d42-explanation-rule-for-consequential-faults-the-root-cause-first-then-the-damaged-part-2026-10-31)).
+  Holdout: 28/28 explanations passed the check.
+- **Chat Completions vs Responses.** On the 12 dev cases Chat got 10/12 part-level correct and 0 confidently wrong,
+  Responses 8/12 and 1, with 32 % fewer readings and 13 % lower uncached cost. We kept Chat: it found the root cause
+  of the burnout chain where Responses stopped at the burnt coil
+  ([D38](DECISIONS.md#d38-keep-chat-completions-for-the-ats-agent-2026-10-31)).
 
-Each run writes `runs/<timestamp>_<effort>/<scenario>.json` (tool calls, results, hypotheses, tokens, latency per turn; no fault inside) plus `results.md` / `results.json` with the score.
+## Safety policy
 
-## Results (clean holdout)
+Enforced in code ([src/probeforge/ats/policy.py](src/probeforge/ats/policy.py)), never only in the prompt. The full
+table is in the UI and in [docs/ATS_MODEL.md](docs/ATS_MODEL.md).
 
-Full report with failure analysis: [docs/results/2026-10-27_clean.md](docs/results/2026-10-27_clean.md).
-
-The clean holdout is every fault never used during development: 91 possible single faults minus the 8 hand-written
-scenarios minus the 40 dev holdout faults = 43 faults (38 visible, 5 latent), listed in
-[scenarios/holdout_clean.yaml](scenarios/holdout_clean.yaml). The agent prompt and the baseline rules were frozen before
-the run. Agent: `muse-spark-1.3`, reasoning effort low, approval requests denied.
-
-"Correct" is pole level: component, failure mode and part (pole or contact) must all match. The component-level
-score (part ignored) is kept as a column. Every run was rescored from its saved diagnosis:
-[docs/results/2026-10-28_pole_level.md](docs/results/2026-10-28_pole_level.md).
-
-| | Visible correct (pole) | incl. justified | Component level | Latent | Confidently wrong | Meas per case | Cost per case |
-|---|---|---|---|---|---|---|---|
-| Agent | **30/38** | **33/38** | 30/38 | 5/5 | **4** | **8.3** | $0.068 |
-| Half-split baseline | 25/38 | 25/38 | 25/38 | 5/5 | 9 | 11.0 | free |
-| Information-gain baseline (perfect fault model, see note) | 35/38 | 38/38 | 35/38 | 5/5 | 0 | 2.6 | free |
-
-The information-gain baseline simulates all 91 candidate faults in lock step with the panel and always takes the
-reading that splits the survivors best. It needs a complete, exact fault model of this very circuit, which the agent
-does not have, so it is a ceiling for measurement choice with perfect knowledge, not a peer. The agent sits between
-the rule-based half-split and that ceiling. Details: [docs/results/2026-10-28_review.md](docs/results/2026-10-28_review.md).
-
-- **Input ablation** ([docs/results/2026-10-28_input_ablation.md](docs/results/2026-10-28_input_ablation.md)): netlist
-  only 30/38, schematic image only (no netlist) 28/38 at pole level (31/38 component level: three answers left the
-  pole open), both 30/38. Within run-to-run noise. (The image-only run predates a prompt fix: it still said nominal
-  values are in the netlist; image-only mode now says unlabeled values must be inferred or measured.)
-- **Schematic transcription:** Muse Spark turns the PNG into our YAML netlist with all 17 components and 51 parts right
-  and the whole control circuit exact; the errors are at the power-circuit wire crossovers (28 to 29 of 35 nets exact).
-- **Calibration** ([docs/results/2026-10-28_calibration.md](docs/results/2026-10-28_calibration.md), pole level): 94%
-  of diagnoses are stated at 90%+ confidence and are right 92% of the time over all runs (89% on the clean holdout);
-  the few stated below 90% are overconfident (3 of 17 right).
-
-"Justified": the true fault gives exactly the same readings as another fault in every state the tools can reach (checked
-by simulation) and the answer was insufficient_information or that twin. Single run per case; reruns show individual cases
-flip between runs. Known weak spots: welded L1/L3 main poles that cause a fuse-blowing short (the agent tends to blame the
-blown fuse), and "voltage present is not coil intact" (dev scenario s06 fails 2 of 3). Everything before the clean run is in
-[docs/results/dev/](docs/results/dev/), labelled dev because the prompt and baseline were tuned with those faults visible.
-
-## Hybrid pipeline (phase 1)
-
-Report: [docs/results/2026-10-28_hybrid.md](docs/results/2026-10-28_hybrid.md). Code: `src/probeforge/hybrid/`.
-
-1. **Read:** Muse Spark transcribes the schematic image into the YAML netlist format (given the format spec, never the
-   answer) and lists uncertain regions. The UI asks a human to confirm them; batch runs accept the transcription.
-2. **Model:** the fault catalog is generated from the transcribed netlist (every part in every failure mode). Values
-   the drawing does not print are unknowns: timer delay and trip time become candidate dimensions on a log grid,
-   and without a motor rating line currents are compared as zero / nominal / overcurrent only.
-3. **Plan:** the information-gain planner simulates the transcribed netlist and picks readings; the readings come from
-   the real circuit through the same tools and safety policy as the agent.
-4. **Verify:** a reading that no candidate explains stops the planner. Muse Spark gets the image, the netlist, the
-   readings and the candidates and proposes a correction (logged as a diff); the planner rebuilds, replays every
-   reading and continues, or hands over to a human after 3 failed corrections.
-5. **Explain:** Muse Spark writes a short explanation for the technician citing the decisive readings.
-
-Evaluated on the clean holdout starting from a real transcription with 6 of 35 nets wrong
-([scenarios/transcriptions/star_delta_run2.yaml](scenarios/transcriptions/star_delta_run2.yaml)):
-
-| | Visible correct (pole) | incl. justified | Component level | Latent | Confidently wrong | Meas per case | Cost per case |
-|---|---|---|---|---|---|---|---|
-| Pure agent (true netlist + image) | 30/38 | 33/38 | 30/38 | 5/5 | 4 | 8.3 | $0.068 |
-| Info-gain on the true netlist | 35/38 | 38/38 | 35/38 | 5/5 | 0 | 2.6 | free |
-| **Hybrid (flawed transcription + repair)** | **25/38** | **28/38** | 29/38 | 5/5 | **2** | **3.2** | $0.066 |
-| Hybrid without repair (no Muse Spark after the read) | 10/38 | 13/38 | 10/38 | 5/5 | 0 | 1.4 | free |
-
-The wrong wiring contradicted the readings in 31 of 43 cases. Muse Spark proposed 35 corrections: 32 made the model
-consistent with every reading again and 29 made the healthy machine behave right, but none restored the exact true
-netlist (pin permutations a healthy panel cannot show remain). At component level no correction led to a wrong
-diagnosis, but at pole level two KM3 star-pole faults were named with the wrong pole at full confidence: the leftover
-permutation maps the poles to the wrong windings and no reading contradicts it. A real phone photo of the schematic
-reads as well as the PNG ([docs/results/2026-10-28_photo.md](docs/results/2026-10-28_photo.md)).
-
-### Changes after seeing the clean holdout (dev)
-
-Reports: [docs/results/2026-10-28_dev_changes.md](docs/results/2026-10-28_dev_changes.md) (round 1) and
-[docs/results/2026-10-28_joint.md](docs/results/2026-10-28_joint.md) (round 2, the hybrid is frozen after it).
-Because these were made after the clean results were seen, the hybrid numbers below are dev results; the final unseen
-test will be a second circuit.
-
-- **Joint hypotheses (fault x wiring):** the regions the transcription flagged as uncertain become part of each
-  candidate. When a reading contradicts every candidate, the planner first tries alternative wirings of the flagged
-  regions; when the answer narrows to one component, it adds the alternative wirings around its parts and keeps
-  measuring, including readings across the contactor's own pole (with a stop and restart if the contactor only closes
-  during start-up). A specific pole is reported only when one remains; otherwise "pole ambiguous: confirm wiring at
-  ...", and the UI asks a human which wiring the panel has.
-- **Corrections only inside flagged regions:** Muse Spark may rewire only terminals in flagged regions, or must name
-  a new region with a reason; proposals that change fault-free behaviour no reading contradicted are rejected; after
-  two rejections in a case no more are requested.
-- **Mechanical interlock symbol** in the drawing (it was missing, so no transcription could find the interlocks;
-  with it, 3 of 3 transcriptions list both).
-
-- **Self-consistency flags:** the schematic is read several times; wherever the reads disagree, the region is
-  flagged as uncertain too, and the model is the read that agrees most with the others
-  ([docs/results/2026-10-28_consensus.md](docs/results/2026-10-28_consensus.md)).
-
-Dev results, pole level, from the phone photo (38 visible faults; latent 5/5 everywhere). The first rows are the
-hybrid with no uncertain regions at all (no joint wiring variants, no Muse Spark repair): the "without Muse Spark
-after the read" comparison on the same transcriptions.
-
-| Read | Flags | Repair | Pole level | incl. justified | Component level | Pole left open | Confidently wrong | Cost per case |
-|---|---|---|---|---|---|---|---|---|
-| best read (3) | none | no | 26/38 | 29/38 | 30/38 | 2 | 2 | free |
-| worst read (1) | none | no | 26/38 | 29/38 | 30/38 | 2 | 2 | free |
-| best read (3) | Muse Spark's own | yes | 32/38 | 35/38 | 33/38 | 1 | 0 | $0.006 |
-| worst read (1) | Muse Spark's own | yes | 28/38 | 31/38 | 33/38 | 1 | 4 | $0.006 |
-| **consensus of 3 reads** | **own + disagreement** | yes | **32/38** | **35/38** | 33/38 | 1 | **0** | $0.006 |
-| worst read (1) | own + disagreement | no | 32/38 | 35/38 | 33/38 | 1 | 0 | free |
-
-Before these changes the hybrid scored 27/38 at pole level on both photo reads, with 4 and 2 confidently wrong.
-Every reading that contradicted the transcribed wiring (3 per run) was explained by an alternative wiring of a flagged
-region, so Muse Spark was never asked for a correction: with the photo reads, the repair step adds nothing, and
-Muse Spark's part is the read (now three reads) and the explanation. The disagreement flags make the weak read as good
-as the strong one: they cover exactly the misread wiring that read 1's own flags missed. The remaining misses are the
-three observational twins, one pole left open (c06) and KM1 main-pole faults that end as insufficient_information.
-
-```
-uv run python scripts/run_scenarios.py --suite clean --effort low --workers 8      # agent, clean holdout
-uv run python scripts/run_scenarios.py --runner baseline --suite clean             # half-split baseline
-uv run python scripts/run_scenarios.py --runner infogain --suite clean             # information-gain baseline
-uv run python scripts/run_scenarios.py --suite clean --no-image --effort low       # netlist only
-uv run python scripts/run_scenarios.py --suite clean --no-netlist --effort low     # schematic image only
-uv run python scripts/run_scenarios.py --runner hybrid --suite clean               # hybrid pipeline (run-2 transcription), labelled dev
-uv run python scripts/run_scenarios.py --runner hybrid --suite clean --transcription scenarios/transcriptions/star_delta_photo_run3.yaml --image scenarios/photos/star_delta_phone.jpg   # from the phone photo
-uv run python scripts/run_scenarios.py --runner hybrid --suite clean --no-repair --no-explain   # without Verify
-uv run python scripts/run_scenarios.py --runner hybrid --suite clean --no-repair --no-explain --flags none --transcription <read>   # no flags, no joint wiring variants
-uv run python scripts/consensus_read.py --replies <read1> <read2> <read3> --name NAME   # self-consistency flags from saved reads
-uv run python scripts/transcribe_schematic.py --runs 3                             # Read step, scored against the truth
-uv run python scripts/summarize_results.py OUT.md "Label=runs/<dir>" ...           # pole-level table from saved runs
-uv run python scripts/calibration.py                                               # confidence calibration
-uv run python scripts/run_scenarios.py --suite scenarios --repeat 3 --effort low   # dev scenarios, variance
-uv run python scripts/run_scenarios.py --suite clean --only c02 --approve          # simulated human approves
-```
-
-## Spend guard
-
-Every agent run records its API cost in `runs/spend.json` (started at the $21 spent before the ledger existed).
-`run_scenarios.py` estimates a batch at $0.10 per agent run and refuses to start if the total would pass $110, unless
-`--force`. The total limit is $130: the last $20 is reserved for the public demo, where live UI runs (agent, hybrid,
-compare) may use it up to a daily cap ($5 by default, `PROBEFORGE_DEMO_DAILY_USD`). Hybrid runs record their transcription,
-repair and explanation calls. Spend so far: $44.45.
-
-## Known Muse Spark behaviour: tool calls written as text
-
-With native tool calling on (`tools=[...]`, `tool_choice` auto), `muse-spark-1.3` sometimes answers with no `tool_calls` and
-the call written into the message text instead, in an internal markup:
-
-```
-<atem:function_calls>
-<atem:invoke name="default.submit_diagnosis">
-<atem:parameter name="confidence">0.95</atem:parameter>
-<atem:parameter name="component">KK1</atem:parameter>
-<atem:parameter name="evidence">[{"step": 0, "type": "functional_test", "observation": "..."}]</atem:parameter>
-...
-</atem:invoke>
-</atem:function_calls>
-```
-
-We saw it mostly for `submit_diagnosis` (the largest schema, with a nested evidence array). A plain "call the tool" nudge
-does not help: the model repeats the same text until the turn limit. The agent loop therefore parses this markup
-(`recover_text_tool_calls` in `src/probeforge/agent/loop.py`), turns it into a native tool call in the history (so the
-API's rule that every tool call is followed by its tool result still holds) and runs it. Every run counts these as
-`recovered_text_calls`; the results tables show the total.
-
-## Tests
-
-```
-uv run pytest
-```
-
-## Meta Model API check
-
-```
-uv run python scripts/check_meta_api.py
-```
-
-Runs four checks against Muse Spark (`muse-spark-1.3`, base URL `https://api.meta.ai/v1`, OpenAI-compatible Chat Completions):
-
-| Check | What it verifies |
+| Tier | Examples |
 |---|---|
-| tools | One fake `measure_voltage` tool, parallel tool calls, full round trip with tool results |
-| stream | Same tool with streaming, tool-call arguments rebuilt from deltas |
-| structured | JSON schema output (`strict: true`) for a hypothesis list |
-| image | A generated relay schematic PNG; the model lists components, terminals and wire numbers, scored against ground truth |
+| Allowed | read the panel, event log, metering; measure voltage; resistance only with both sources isolated |
+| Approval | isolate the sources while the load is not powered; manual operation check (isolated only); repairs (isolated only) |
+| Strong approval | isolate a powered load; restore or repeat a transfer after a Transfer Failure; must cite a reading and state the policy's facts to the approver |
+| Never | bypass an interlock, parallel the sources, operate the handle under load |
 
-Token usage is printed per call. A JSON report and the schematic image are written to `runs/` (git-ignored).
+Blocked attempts return to the diagnostician as an error and are counted. In the holdout run the batch approver
+approved the approval tier and denied every strong approval.
 
-Options: `--model`, `--effort minimal|low|medium|high|xhigh`, `--only tools stream structured image`.
+## Results
+
+One holdout run on 28 faults nobody picked by hand, against the 12 dev cases
+([full results](docs/results/ats_results.md)):
+
+| | Agent dev | Agent holdout | Hybrid v2 dev | Hybrid v2 holdout | Baseline holdout |
+|---|---|---|---|---|---|
+| Part-level correct | 10/12 | 17/28 | 10/12 | 18/28 | 18/28 |
+| Confidently wrong | 0/12 | 3/28 | 0/12 | 0/28 | 0/28 |
+| Insufficient information | 2/12 | 11/28 | 2/12 | 13/28 | 13/28 |
+| Latent faults (correct = insufficient information) | | 3/3 | | 3/3 | 3/3 |
+| Diagnosed before the UPS ran out | n/a | 15/28 | 10/12 | 15/28 | 15/28 |
+| Readings per case | 13.2 | 14.5 | 3.8 | 2.6 | 2.7 |
+| Cost per case (actual) | $0.095 | $0.12 | $0.009 | $0.006 | free |
+
+The baseline is the same planner on the true netlist: a ceiling for the planner, not a peer. Hybrid v2 matched it case
+by case on the holdout.
+
+**How the holdout was protected:** everything it depends on was frozen first: 13 fingerprints covering the agent,
+tools, policy, bench, fault catalog, scoring and the hybrid ([D45](DECISIONS.md#d45-s5-freeze-of-the-ats-bench-and-the-holdout-procedure-2026-10-31)).
+The 28 cases were then sampled by a fixed seed from the fault catalog, excluding every dev fault, their twins and every
+fault already run in the UI, and committed with their sha256 before any run
+([holdout.yaml](scenarios/ats_holdout/holdout.yaml)). The run refused to start unless the file, its hash, the commit and
+the fingerprints matched. One run; the first 5 cases were a smoke test for technical failures only; no changes, no
+reruns; $3.54 of a $6 cap ([D46](DECISIONS.md#d46-s5-holdout-run-and-results-2026-10-31)).
+
+**What it shows:**
+
+- The agent was confidently wrong 3 times on unseen faults: two guesses among position-feedback candidates, and once it
+  named the burnt coil (the consequence) instead of the misadjusted cut-off contact (the root cause).
+- 8 position-feedback faults ended in insufficient information for all three: the load is powered, isolating it
+  needs strong approval, and the batch rule denied it. That is the policy working as designed; such a fault needs a
+  planned outage.
+- The agent made 2 correct diagnoses after the UPS had run out; the hybrid never lost the load.
+
+## Limits and disclosures
+
+- The Hybrid v2 pipeline (drawing crops, reading conventions, the sequence checks, the repair messages and the
+  explanation step with its check) was developed on this one drawing and the 12 dev cases. Generalization to other
+  drawings is not shown.
+- The ATS model, the assumptions and the troubleshooting sheet have not been reviewed by an electrical engineer.
+- Undocumented behaviour (Transfer Failure and Position Error timing, coil burnout time, coil resistance, the UPS rule)
+  is labelled as an assumption with a status and a source where one exists, S1 to S7 in
+  [docs/ATS_MODEL.md](docs/ATS_MODEL.md). The UPS autonomy (10 min) is a simulation parameter within the published data
+  center range.
+- The bench, the fault catalog and the holdout sampler are written by the same author; independence rests on seeded
+  catalog sampling after the freeze, not on an outside test set.
+- One run per diagnostician, 28 holdout cases: small samples. The agent's dev numbers were recorded before the UPS
+  load-lost fields existed.
+- One UI agent run (Oct 31, 11:33) used a random fault that was not recorded; it may be in the holdout pool. Nothing
+  was tuned on it.
+- Saved drawing reads are real earlier Muse Spark reads, labelled as saved in the UI; nothing shown as live is
+  prerecorded.
+
+## Equipment provenance
+
+ASCO Series 300 Group G automatic transfer switch, 200 A, 208 V, 3 phase 4 wire, service entrance. The netlist
+([scenarios/circuits/asco_300g_978741.yaml](scenarios/circuits/asco_300g_978741.yaml)) and the drawing shown in the UI
+([docs/asco_300g_978741.svg](docs/asco_300g_978741.svg)) are redrawn by us from ASCO wiring diagram 978741 and the
+Group G Controller User's Guide; every part and net carries its source. **It is our redrawing, not the official
+drawing.** The original documents are in the public ASCO / Schneider Electric technical library:
+[Group G SE wiring, outline and mounting data](https://www.ascopower.com/us/en/products/libraries/technical-documents/300-series/asco-series-300-group-g-se-product-wiring-outline-and-mounting-data.jsp),
+[Group G wiring, outline and mounting data](https://www.se.com/us/en/work/support/product-support/technical-documents/300-series/asco-series-300-group-g-product-wiring-outline-and-mounting-data).
+Vendor PDFs are not in this repository.
+
+## Where it started: the motor starter
+
+ProbeForge began on a simulated star-delta reversing motor starter (17 components, 91 faults). On its clean holdout of
+38 visible faults the agent got 30/38 at pole level against 25/38 for a half-split baseline and 35/38 for the
+information-gain ceiling ([results](docs/results/2026-10-27_clean.md)). It showed the approach works and that a
+textbook circuit is too easy, so the work moved to real equipment. That stage, its hybrid pipeline and its findings:
+[docs/LEVEL1.md](docs/LEVEL1.md). The UI still offers it under "Motor starter".
+
+## Cost and spend guard
+
+Every model call records its cost in a local ledger; batches stop at $110 of the $130 total, the rest is reserved for
+the public demo with a daily cap ([src/probeforge/eval/spend.py](src/probeforge/eval/spend.py)). Total recorded spend
+for the whole project: about $55.

@@ -1,6 +1,6 @@
 id: a7_burnout_chain
 family: A
-description: "TS control contacts 8-9 and 71-72 do not open at top dead center (misadjusted cut-off, root cause); the coil stayed energized after the last transfer and burnt open (consequence). Assumption for the engineer to confirm."
+description: "TS control contacts 8-9 and 71-72 do not open at top dead center (misadjusted cut-off, root cause); the coil stayed energized after the last transfer and burnt open (consequence). An assumption, not confirmed by an electrical engineer."
 root_cause:
   component: TS
   part: "8-9"
