@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import type { FeedItem, ToolEvent } from "../types";
+import type { FeedItem, Hypothesis, NextStep, ToolEvent } from "../types";
 
 const ICON: Record<string, string> = {
   read_indicators: "◉",
@@ -98,6 +98,36 @@ export function describeTool(ev: ToolEvent): { title: string; detail: string } {
   }
 }
 
+/** A tool entry with, for the hybrid, the plan that led to it and the leading cause after it. */
+type Shown = FeedItem | { kind: "tool"; id: string; ev: ToolEvent; plan?: NextStep; lead?: Hypothesis | null };
+
+/** Hybrid log, one entry per reading: a planned step, the reading it led to and the hypotheses update right after
+ * become one entry (display only; approvals or notes in between stay as they are). A plan whose step has not come
+ * yet is shown on its own, as the live "next" line. */
+function compact(items: FeedItem[]): Shown[] {
+  const out: Shown[] = [];
+  for (let i = 0; i < items.length; i++) {
+    const it = items[i];
+    if (it.kind !== "plan") {
+      out.push(it);
+      continue;
+    }
+    let k = i + 1;
+    while (k < items.length && k <= i + 3 && items[k].kind !== "tool") k++;
+    const t = items[k];
+    if (!t || t.kind !== "tool" || t.ev.tool !== it.next.tool) {
+      out.push(it);
+      continue;
+    }
+    out.push(...items.slice(i + 1, k));
+    const h = items[k + 1];
+    const lead = h && h.kind === "hypotheses" ? h.top : undefined;
+    out.push({ ...t, plan: it.next, lead });
+    i = h && h.kind === "hypotheses" ? k + 1 : k;
+  }
+  return out;
+}
+
 /** Model text is shown as written, except dashes used as punctuation (project style rule). */
 const plain = (text: string) => text.replace(/\s*[\u2014\u2013]\s*/g, ", ");
 
@@ -108,6 +138,7 @@ export function Feed({ items, manual = false, title, running = false, idleText }
     const el = box.current;
     if (el && follow.current) el.scrollTop = el.scrollHeight;
   }, [items.length]);
+  const shown = compact(items);
   const onScroll = () => {
     const el = box.current;
     if (el) follow.current = el.scrollHeight - el.scrollTop - el.clientHeight < 40;
@@ -129,7 +160,7 @@ export function Feed({ items, manual = false, title, running = false, idleText }
                 : idleText ?? "Pick a fault and press Start."}
           </div>
         )}
-        {items.map((it) => {
+        {shown.map((it) => {
           if (it.kind === "thought") return <div key={it.id} className="item thought">{plain(it.text)}</div>;
           if (it.kind === "info") return <div key={it.id} className="item info">{it.text}</div>;
           if (it.kind === "transcription")
@@ -212,7 +243,7 @@ export function Feed({ items, manual = false, title, running = false, idleText }
           if (it.kind === "explanation")
             return (
               <div key={it.id} className="item explanation-item">
-                <b>For the technician (Muse Spark):</b> {plain(it.text)}
+                Explanation for the technician (Muse Spark): on the result card above
               </div>
             );
           if (it.kind === "wiring")
@@ -258,6 +289,13 @@ export function Feed({ items, manual = false, title, running = false, idleText }
                   <div className="policy">{ev.result.error}</div>
                 )}
                 {typeof ev.result.note === "string" && <div className="note">{ev.result.note}</div>}
+                {"plan" in it && it.plan && it.plan.tool !== "submit_diagnosis" && (
+                  <div className="detail planned-detail">
+                    planned: {it.plan.why}
+                    {it.plan.gain_bits !== undefined && ` (${it.plan.gain_bits.toFixed(2)} bits)`}, {it.plan.causes_left} causes
+                    {it.lead && ` · lead after: ${it.lead.component}${it.lead.part ? " " + it.lead.part : ""} ${it.lead.failure_mode} ${(it.lead.probability * 100).toFixed(0)}%`}
+                  </div>
+                )}
               </div>
               <span className="t">{ev.sim_time_s.toFixed(1)} s</span>
             </div>

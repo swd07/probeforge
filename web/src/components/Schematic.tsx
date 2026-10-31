@@ -13,6 +13,7 @@ interface Props {
   followDefault: boolean; // agent mode: zoom to each new measurement
   fitKey: string; // changes at session start and at the reveal: zoom out to the home view
   home?: View; // the default view (drawing units); without it the home view is the whole drawing
+  focus?: { component: string; part: string } | null; // ATS: after the diagnosis, zoom to this part and outline it
 }
 
 export interface View {
@@ -37,7 +38,7 @@ function formatValue(p: Probe) {
  * viewBox, so labels stay sharp at any zoom. */
 const SNAP_PX = 14; // a click this close to a terminal (screen pixels) picks the terminal
 
-export function Schematic({ svg, nets, probes, truthLive, onPick, selected = [], suspects = [], planned = [], followDefault, fitKey, home }: Props) {
+export function Schematic({ svg, nets, probes, truthLive, onPick, selected = [], suspects = [], planned = [], followDefault, fitKey, home, focus = null }: Props) {
   const host = useRef<HTMLDivElement>(null);
   const full = useRef<View | null>(null);
   const view = useRef<View | null>(null);
@@ -111,6 +112,29 @@ export function Schematic({ svg, nets, probes, truthLive, onPick, selected = [],
   useEffect(() => {
     goHome();
   }, [fitKey, goHome]);
+
+  // after a diagnosis: zoom to the diagnosed part (or the whole component for a device fault) and outline it;
+  // declared after the home effect so it wins at the reveal. Not found on the drawing: the home view stays.
+  const focusKey = focus ? `${focus.component}:${focus.part}` : "";
+  useEffect(() => {
+    const el = root();
+    if (!el) return;
+    el.querySelectorAll("[data-part].diagnosed").forEach((n) => n.classList.remove("diagnosed"));
+    if (!focus || !full.current) return;
+    const sel = focus.part ? `[data-part="${CSS.escape(focusKey)}"]` : `[data-part^="${CSS.escape(`${focus.component}:`)}"]`;
+    const parts = Array.from(el.querySelectorAll<SVGGraphicsElement>(sel));
+    if (!parts.length) return;
+    parts.forEach((n) => n.classList.add("diagnosed"));
+    const boxes = parts.map((n) => n.getBBox());
+    const x0 = Math.min(...boxes.map((b) => b.x));
+    const y0 = Math.min(...boxes.map((b) => b.y));
+    const x1 = Math.max(...boxes.map((b) => b.x + b.width));
+    const y1 = Math.max(...boxes.map((b) => b.y + b.height));
+    const w = Math.max(x1 - x0 + 300, 620);
+    const h = Math.max(y1 - y0 + 200, 330);
+    animateTo(normalize({ x: (x0 + x1) / 2 - w / 2, y: (y0 + y1) / 2 - h / 2, w, h }));
+    // focus is read through focusKey on purpose: zoom once per diagnosis
+  }, [focusKey, svg, fitKey, animateTo, normalize]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // mouse wheel zooms around the cursor (non-passive listener so the page does not scroll)
   useEffect(() => {

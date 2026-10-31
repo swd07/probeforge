@@ -1,6 +1,4 @@
-import { useState } from "react";
 import type { AtsMeta, AtsPanel as Panel } from "../types";
-import { LimitsTable } from "./AtsPanel";
 
 const LIGHTS: [string, string][] = [
   ["Normal accepted", "green"],
@@ -124,45 +122,8 @@ function Events({ panel: p }: Props) {
   );
 }
 
-/** Layout A: one status strip; the controller face, metering, event log and the action limits open on click. */
-export function AtsStatusStrip(props: Props) {
-  const [open, setOpen] = useState<"controller" | "limits" | null>(null);
-  const toggle = (w: "controller" | "limits") => setOpen((o) => (o === w ? null : w));
-  return (
-    <section className="st-strip">
-      <UpsClock {...props} />
-      <Sources {...props} />
-      <SwitchLoad {...props} />
-      <Display {...props} />
-      <div className="st-right">
-        <Stages {...props} />
-        <div className="st-buttons">
-          <button className={`btn ghost small ${open === "controller" ? "on" : ""}`} onClick={() => toggle("controller")}
-                  aria-expanded={open === "controller"}>Controller: lights, metering, event log</button>
-          <button className={`btn ghost small ${open === "limits" ? "on" : ""}`} onClick={() => toggle("limits")}
-                  aria-expanded={open === "limits"}>Agent action limits</button>
-        </div>
-      </div>
-      {open && (
-        <div className="st-popover">
-          <button className="close" onClick={() => setOpen(null)} aria-label="Close">{"×"}</button>
-          {open === "controller" ? (
-            <div className="st-pop-grid">
-              <div><div className="st-label">Group G controller</div><Lights {...props} /><Display {...props} /></div>
-              <div><div className="st-label">Metering screen (V, line to line)</div><Metering {...props} /></div>
-              <div><div className="st-label">Event log</div><Events {...props} /></div>
-            </div>
-          ) : (
-            <LimitsTable meta={props.meta} open />
-          )}
-        </div>
-      )}
-    </section>
-  );
-}
-
-/** Layout B: a narrow status column left of the drawing. */
-export function AtsStatusColumn(props: Props) {
+/** The status column left of the drawing; the action limits open as a modal (they need the width). */
+export function AtsStatusColumn({ onLimits, ...props }: Props & { onLimits: () => void }) {
   return (
     <section className="st-column">
       <UpsClock {...props} />
@@ -176,7 +137,7 @@ export function AtsStatusColumn(props: Props) {
       <Stages {...props} vertical />
       <details className="st-fold"><summary>Metering screen</summary><Metering {...props} /></details>
       <details className="st-fold"><summary>Event log</summary><Events {...props} /></details>
-      <LimitsTable meta={props.meta} />
+      <button className="btn ghost small limits-open" onClick={onLimits}>Agent action limits (from the policy code)</button>
     </section>
   );
 }

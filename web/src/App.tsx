@@ -1,7 +1,8 @@
 import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { AtsTranscriptionCard, NextStepCard } from "./components/AtsHybrid";
 import { AtsManualPanel } from "./components/AtsManualPanel";
-import { AtsStatusColumn, AtsStatusStrip } from "./components/AtsStatus";
+import { LimitsModal } from "./components/AtsPanel";
+import { AtsStatusColumn } from "./components/AtsStatus";
 import { ApprovalCard, FlagsCard, ResultCard, WiringCard } from "./components/Cards";
 import { CompareView } from "./components/CompareView";
 import { DiagnosisForm } from "./components/DiagnosisForm";
@@ -20,6 +21,12 @@ const ATS_HOME: View = { x: 620, y: 90, w: 1720, h: 740 };
 const ATS_SCENARIO =
   "Scenario: the utility fails, the generator starts, and the transfer switch should move the critical load to " +
   "Emergency within seconds while the UPS carries it (10 min). Pick a fault and press Start.";
+
+/** The diagnosed part (or the whole component for a device fault), to zoom to and outline after the diagnosis. */
+function diagnosedPart(d: Record<string, unknown> | null): { component: string; part: string } | null {
+  if (!d || typeof d.component !== "string") return null;
+  return { component: d.component, part: typeof d.part === "string" ? d.part : "" };
+}
 
 /** A section that collapses to one line (closed by default); its content stays mounted, so its inputs keep state. */
 function Fold({ title, children }: { title: string; children: ReactNode }) {
@@ -47,14 +54,7 @@ export function App() {
   const [comparing, setComparing] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [suggesting, setSuggesting] = useState(false);
-  // temporary: two layouts to compare in the real app (?layout=a or b); the one not chosen gets removed
-  const [layout, setLayoutState] = useState<"a" | "b">(() => (new URLSearchParams(location.search).get("layout") === "b" ? "b" : "a"));
-  const setLayout = (l: "a" | "b") => {
-    const q = new URLSearchParams(location.search);
-    q.set("layout", l);
-    history.replaceState(null, "", `?${q}`);
-    setLayoutState(l);
-  };
+  const [limitsOpen, setLimitsOpen] = useState(false);
   const [meter, setMeter] = useState<MeterState>({ kind: "V", a: null, b: null, hold: 0.2, wait: 6, reason: "manual check" });
   const [chosenMode, setChosenMode] = useState<Mode>("agent");
   const ats = bench === "ats";
@@ -151,11 +151,12 @@ export function App() {
   return (
     <div className={`app ${flashing ? "flash" : ""}`}>
       <TopBar meta={curMeta} state={state} mode={chosenMode} setMode={setChosenMode} bench={bench} setBench={setBench}
-              onStart={(o) => start(o)} onStop={stop} onCompare={onCompare} onSheet={ats ? () => setSheetOpen(true) : undefined}
-              layout={layout} setLayout={setLayout} />
-      <main className={`layout layout-${layout} ${ats ? "ats" : ""}`}>
-        {ats && layout === "a" && <AtsStatusStrip meta={atsMeta} panel={atsPanel} checkedPosition={atsDiagnosing ? checkedPosition : undefined} />}
-        {ats && layout === "b" && <AtsStatusColumn meta={atsMeta} panel={atsPanel} checkedPosition={atsDiagnosing ? checkedPosition : undefined} />}
+              onStart={(o) => start(o)} onStop={stop} onCompare={onCompare} onSheet={ats ? () => setSheetOpen(true) : undefined} />
+      <main className={`layout ${ats ? "ats" : ""}`}>
+        {ats && (
+          <AtsStatusColumn meta={atsMeta} panel={atsPanel} checkedPosition={atsDiagnosing ? checkedPosition : undefined}
+                           onLimits={() => setLimitsOpen(true)} />
+        )}
         <div className="left">
           {!ats && (
             <FrontPanel
@@ -180,6 +181,7 @@ export function App() {
               followDefault={state.mode !== "manual"}
               fitKey={state.done ? "reveal" : state.feed.length === 0 ? "start" : "run"}
               home={ats ? ATS_HOME : undefined}
+              focus={ats && cur && state.done?.outcome === "diagnosed" ? diagnosedPart(state.done.diagnosis) : null}
             />
             {pickNote && <div className="error-banner">{pickNote}</div>}
             {cur && state.error && <div className="error-banner">{state.error}</div>}
@@ -297,6 +299,7 @@ export function App() {
         />
       )}
       {sheetOpen && <TroubleshootingView onClose={() => setSheetOpen(false)} />}
+      {limitsOpen && <LimitsModal meta={atsMeta} onClose={() => setLimitsOpen(false)} />}
       {comparing && <CompareView result={state.compare} progress={state.compareProgress} onClose={() => setComparing(false)} ats={ats} />}
     </div>
   );

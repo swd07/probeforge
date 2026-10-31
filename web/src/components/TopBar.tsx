@@ -13,8 +13,6 @@ interface Props {
   onStop: () => void;
   onCompare?: () => void; // after a diagnosis: the other diagnosticians on the same fault
   onSheet?: () => void; // ATS: the troubleshooting sheet
-  layout: "a" | "b"; // temporary layout switch
-  setLayout: (l: "a" | "b") => void;
 }
 
 const STATUS_TEXT: Record<string, string> = {
@@ -26,7 +24,7 @@ const STATUS_TEXT: Record<string, string> = {
   error: "Error",
 };
 
-export function TopBar({ meta, state, mode, setMode, bench, setBench, onStart, onStop, onCompare, onSheet, layout, setLayout }: Props) {
+export function TopBar({ meta, state, mode, setMode, bench, setBench, onStart, onStop, onCompare, onSheet }: Props) {
   const ats = bench === "ats";
   const [choice, setChoice] = useState("random");
   const [effort, setEffort] = useState("low");
@@ -187,10 +185,6 @@ export function TopBar({ meta, state, mode, setMode, bench, setBench, onStart, o
             Troubleshooting sheet
           </button>
         )}
-        <div className="segmented layout-switch" role="tablist" aria-label="Layout (temporary)" title="Temporary: compare two layouts">
-          <button className={layout === "a" ? "on" : ""} onClick={() => setLayout("a")}>A</button>
-          <button className={layout === "b" ? "on" : ""} onClick={() => setLayout("b")}>B</button>
-        </div>
       </div>
       <div className="stats">
         <span className={`status status-${state.status}`}>{statusText}</span>
