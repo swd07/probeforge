@@ -6,13 +6,15 @@ export function Hypotheses({
   previous,
   title = "Hypotheses",
   subtitle = "updated after each measurement",
+  limit = 6,
 }: {
   hypotheses: Hypothesis[];
   previous: Record<string, number>;
   title?: string;
   subtitle?: string;
+  limit?: number;
 }) {
-  const top = hypotheses.slice(0, 6);
+  const top = hypotheses.slice(0, limit);
   return (
     <section className="hyp-card">
       <div className="card-title">

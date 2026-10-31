@@ -101,7 +101,7 @@ export function describeTool(ev: ToolEvent): { title: string; detail: string } {
 /** Model text is shown as written, except dashes used as punctuation (project style rule). */
 const plain = (text: string) => text.replace(/\s*[\u2014\u2013]\s*/g, ", ");
 
-export function Feed({ items, manual = false, title, running = false, onClose }: { items: FeedItem[]; manual?: boolean; title?: string; running?: boolean; onClose?: () => void }) {
+export function Feed({ items, manual = false, title, running = false, idleText }: { items: FeedItem[]; manual?: boolean; title?: string; running?: boolean; idleText?: string }) {
   const box = useRef<HTMLDivElement>(null);
   const follow = useRef(true); // follow the newest entry unless the reader scrolled up
   useEffect(() => {
@@ -117,10 +117,7 @@ export function Feed({ items, manual = false, title, running = false, onClose }:
     <section className="feed-card">
       <div className="card-title">
         <span>{title ?? (manual ? "Your steps" : "Agent reasoning")}</span>
-        <span className="muted">
-          every tool call passes the safety policy
-          {onClose && <button className="btn ghost log-close" onClick={onClose} aria-label="Hide the log">Hide</button>}
-        </span>
+        <span className="muted">every tool call passes the safety policy</span>
       </div>
       <div className="feed" ref={box} onScroll={onScroll}>
         {items.length === 0 && (
@@ -129,7 +126,7 @@ export function Feed({ items, manual = false, title, running = false, onClose }:
               ? "Your steps appear here, each checked by the safety policy (allowed, blocked, or waiting for approval)."
               : manual
                 ? "Pick a fault and press Start. Your steps will appear here."
-                : "Pick a fault and press Start."}
+                : idleText ?? "Pick a fault and press Start."}
           </div>
         )}
         {items.map((it) => {

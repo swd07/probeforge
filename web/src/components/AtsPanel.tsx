@@ -136,10 +136,10 @@ export function AtsPanel({ meta, panel, checkedPosition }: { meta: AtsMeta | nul
 }
 
 /** The agent action limits, generated from the ATS policy code (the same table as docs/ATS_MODEL.md). */
-export function LimitsTable({ meta }: { meta: AtsMeta | null }) {
+export function LimitsTable({ meta, open = false }: { meta: AtsMeta | null; open?: boolean }) {
   if (!meta) return null;
   return (
-    <details className="limits">
+    <details className="limits" open={open}>
       <summary>Agent action limits (from the policy code)</summary>
       <table>
         <tbody>

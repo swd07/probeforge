@@ -416,16 +416,6 @@ table.quality tr.worse td { color: var(--warn); }
 .suggest-btn { width: 100%; flex-shrink: 0; }
 .next-use { margin-top: 8px; }
 
-/* agent / pipeline / engineer log: floats over the drawing, toggled, available after the run */
-.log-toggle { position: absolute; top: 52px; right: 16px; z-index: 6; font-size: 12px; padding: 4px 10px; }
-.log-close { font-size: 12px; padding: 2px 10px; margin-left: 8px; }
-.log-toggle.on { background: var(--accent); color: #04121f; }
-/* at least 70 % of the window height, anchored over the right edge of the left column; drag the corner to resize */
-.log-float { position: fixed; top: 14vh; right: calc(clamp(360px, 25vw, 480px) + 36px); height: 72vh; min-height: 30vh;
-  max-height: calc(86vh - 12px); width: min(460px, 40vw); z-index: 20; display: flex; flex-direction: column;
-  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.55); border-radius: 12px; resize: vertical; overflow: hidden; }
-.log-float { background: #101826; }
-.log-float .feed-card { flex: 1; min-height: 0; background: #101826; }
 .feed .item.plan { border-left: 3px solid var(--accent); padding-left: 8px; }
 .feed .item.explanation-item { border-left: 3px solid #4caf7a; padding-left: 8px; }
 .ups-at-diag { display: flex; gap: 8px; align-items: baseline; margin: 4px 0; }
@@ -433,3 +423,72 @@ table.quality tr.worse td { color: var(--warn); }
 .load-lost { background: #3a1010; border-left: 3px solid #e05050; border-radius: 8px; padding: 8px 10px; margin: 6px 0;
   color: #ffb4b4; font-weight: 600; }
 .src.lost b { color: #ff7070; }
+
+/* thin top bar */
+.topbar { padding: 6px 14px; gap: 8px 12px; flex-wrap: nowrap; }
+.topbar .controls { flex-wrap: nowrap; gap: 6px 8px; }
+.topbar .controls select { max-width: 260px; padding: 5px 8px; }
+.topbar .btn { padding: 6px 12px; white-space: nowrap; }
+.topbar .segmented button { padding: 5px 10px; white-space: nowrap; }
+.topbar .stats { flex: 1 1 180px; font-size: 12px; }
+.topbar .next-run { display: none; }
+.layout-switch button { padding: 5px 8px; }
+
+/* layouts (temporary A / B; the drawing takes the remaining height, the log is docked on the right) */
+.layout.ats.layout-a { grid-template-columns: minmax(0, 1fr) clamp(360px, 25vw, 480px); grid-template-rows: auto minmax(0, 1fr); }
+.layout.ats.layout-a .st-strip { grid-column: 1 / -1; }
+.layout.ats.layout-b { grid-template-columns: 250px minmax(0, 1fr) clamp(360px, 25vw, 480px); grid-template-rows: minmax(0, 1fr); }
+.layout .left .schematic-wrap { flex: 1; min-height: 0; }
+
+/* docked right column: the log always keeps at least half of the height */
+.right.docked { overflow: hidden; padding-right: 0; gap: 8px; }
+.right-top { flex: 0 1 auto; max-height: calc(50% - 8px); overflow-y: auto; display: flex; flex-direction: column; gap: 8px; min-height: 0; padding-right: 4px; }
+.right-top > * { flex-shrink: 0; }
+.right-top .result-card.docked { max-height: none; }
+.log-dock { flex: 1 1 0; min-height: 50%; display: flex; flex-direction: column; }
+.log-dock .feed-card { flex: 1; min-height: 0; }
+.fold { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; }
+.fold-head { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 8px; background: transparent;
+  border: 0; color: var(--text); font-weight: 700; padding: 8px 12px; cursor: pointer; text-align: left; }
+.fold-body { padding: 0 8px 8px; }
+.fold-body > section { border: 0; padding: 4px; background: transparent; }
+
+/* status: shared pieces */
+.st-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--muted); margin-bottom: 2px; }
+.st-clock { font: 800 34px/1.05 ui-monospace, Consolas, monospace; }
+.st-ups.draining .st-clock { color: var(--warn); }
+.st-ups.depleted .st-clock { color: var(--bad); }
+.st-ups.draining .ups-bar { background: var(--warn); }
+.st-ups .ups-track { margin: 3px 0; }
+.st-block { font-size: 13px; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.btn.small { padding: 4px 10px; font-size: 12px; font-weight: 600; }
+.btn.ghost.on { background: var(--accent); border-color: var(--accent); }
+
+/* A: one strip */
+.st-strip { position: relative; display: flex; gap: 14px; align-items: stretch; background: var(--panel); border: 1px solid var(--line);
+  border-radius: 12px; padding: 8px 12px; }
+.st-strip .st-ups { min-width: 150px; }
+.st-strip .st-block { border-left: 1px solid var(--line); padding-left: 12px; }
+.st-strip .st-block .ats-display { white-space: nowrap; }
+.st-right { margin-left: auto; display: flex; flex-direction: column; justify-content: space-between; align-items: flex-end; gap: 6px; min-width: 0; }
+.st-right .ats-flow { justify-content: flex-end; }
+.st-buttons { display: flex; gap: 6px; }
+.st-popover { position: absolute; top: 100%; right: 0; margin-top: 6px; z-index: 30; background: #101826; border: 1px solid var(--line);
+  border-radius: 12px; padding: 14px 16px; box-shadow: 0 8px 28px rgba(0, 0, 0, 0.55); max-width: min(1100px, 92vw); }
+.st-popover .close { position: absolute; top: 4px; right: 8px; background: none; border: 0; color: var(--text); font-size: 20px; cursor: pointer; }
+.st-pop-grid { display: grid; grid-template-columns: minmax(260px, auto) auto minmax(280px, 1fr); gap: 18px; }
+.st-pop-grid .event-log { max-height: 220px; }
+.st-popover .limits { border: 0; padding: 0; }
+
+/* B: a status column */
+.st-column { display: flex; flex-direction: column; gap: 10px; overflow-y: auto; min-height: 0; background: var(--panel);
+  border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; }
+.st-column .st-block { border-top: 1px solid var(--line); padding-top: 8px; }
+.st-column .ats-lights { grid-template-columns: 1fr; }
+.ats-flow.vertical { flex-direction: column; align-items: flex-start; }
+.st-fold summary { cursor: pointer; font-size: 12px; font-weight: 700; }
+.st-column .limits { border: 0; padding: 0; background: transparent; }
+.topbar .segmented, .topbar .btn, .topbar .brand { flex-shrink: 0; }
+.topbar .controls { flex: 1 1 auto; }
+.topbar .controls select { flex: 1 1 120px; min-width: 90px; }
+.topbar .stats { flex: 0 0 210px; overflow: hidden; }

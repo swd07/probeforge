@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { AtsTranscriptionCard, NextStepCard } from "./components/AtsHybrid";
 import { AtsManualPanel } from "./components/AtsManualPanel";
-import { AtsPanel, LimitsTable } from "./components/AtsPanel";
+import { AtsStatusColumn, AtsStatusStrip } from "./components/AtsStatus";
 import { ApprovalCard, FlagsCard, ResultCard, WiringCard } from "./components/Cards";
 import { CompareView } from "./components/CompareView";
 import { DiagnosisForm } from "./components/DiagnosisForm";
@@ -17,6 +17,23 @@ import { useSession } from "./useSession";
 
 // ATS drawing: open on the operator circuit and sensing (the right-hand region), about 1.6 times the whole-drawing fit
 const ATS_HOME: View = { x: 620, y: 90, w: 1720, h: 740 };
+const ATS_SCENARIO =
+  "Scenario: the utility fails, the generator starts, and the transfer switch should move the critical load to " +
+  "Emergency within seconds while the UPS carries it (10 min). Pick a fault and press Start.";
+
+/** A section that collapses to one line (closed by default); its content stays mounted, so its inputs keep state. */
+function Fold({ title, children }: { title: string; children: ReactNode }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <section className={`fold ${open ? "open" : ""}`}>
+      <button className="fold-head" onClick={() => setOpen((o) => !o)} aria-expanded={open}>
+        <span>{title}</span>
+        <span className="chevron">{open ? "\u25b4" : "\u25be"}</span>
+      </button>
+      <div className="fold-body" hidden={!open}>{children}</div>
+    </section>
+  );
+}
 
 export function App() {
   const [meta, setMeta] = useState<Meta | null>(null);
@@ -30,7 +47,14 @@ export function App() {
   const [comparing, setComparing] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [suggesting, setSuggesting] = useState(false);
-  const [logOpen, setLogOpen] = useState(true); // the log floats over the drawing; it stays available after the run
+  // temporary: two layouts to compare in the real app (?layout=a or b); the one not chosen gets removed
+  const [layout, setLayoutState] = useState<"a" | "b">(() => (new URLSearchParams(location.search).get("layout") === "b" ? "b" : "a"));
+  const setLayout = (l: "a" | "b") => {
+    const q = new URLSearchParams(location.search);
+    q.set("layout", l);
+    history.replaceState(null, "", `?${q}`);
+    setLayoutState(l);
+  };
   const [meter, setMeter] = useState<MeterState>({ kind: "V", a: null, b: null, hold: 0.2, wait: 6, reason: "manual check" });
   const [chosenMode, setChosenMode] = useState<Mode>("agent");
   const ats = bench === "ats";
@@ -106,6 +130,14 @@ export function App() {
     [ats, cur, state.hypotheses, state.status],
   );
 
+  const onCompare =
+    cur && state.done && (manualRun || ats)
+      ? () => {
+          if (!state.compare) compare();
+          setComparing(true);
+        }
+      : undefined;
+
   // first click sets probe A, second sets probe B; a third click starts a new pair. A = B is refused.
   const pick = (point: string) =>
     setMeter((m) => {
@@ -119,21 +151,13 @@ export function App() {
   return (
     <div className={`app ${flashing ? "flash" : ""}`}>
       <TopBar meta={curMeta} state={state} mode={chosenMode} setMode={setChosenMode} bench={bench} setBench={setBench}
-              onStart={(o) => start(o)} onStop={stop} />
-      <main className="layout">
+              onStart={(o) => start(o)} onStop={stop} onCompare={onCompare} onSheet={ats ? () => setSheetOpen(true) : undefined}
+              layout={layout} setLayout={setLayout} />
+      <main className={`layout layout-${layout} ${ats ? "ats" : ""}`}>
+        {ats && layout === "a" && <AtsStatusStrip meta={atsMeta} panel={atsPanel} checkedPosition={atsDiagnosing ? checkedPosition : undefined} />}
+        {ats && layout === "b" && <AtsStatusColumn meta={atsMeta} panel={atsPanel} checkedPosition={atsDiagnosing ? checkedPosition : undefined} />}
         <div className="left">
-          {ats ? (
-            <>
-              <AtsPanel meta={atsMeta} panel={atsPanel} checkedPosition={atsDiagnosing ? checkedPosition : undefined} />
-              <div className="ats-tools-row">
-                <LimitsTable meta={atsMeta} />
-                <button className="btn ghost sheet-open" onClick={() => setSheetOpen(true)}
-                        title="Generated from the simulator, not reviewed by an engineer">
-                  Troubleshooting sheet (A, B)
-                </button>
-              </div>
-            </>
-          ) : (
+          {!ats && (
             <FrontPanel
               meta={meta}
               panel={cur ? state.panel : null}
@@ -160,108 +184,99 @@ export function App() {
             {pickNote && <div className="error-banner">{pickNote}</div>}
             {cur && state.error && <div className="error-banner">{state.error}</div>}
             {state.stage && state.status === "running" && <div className="stage-banner">{state.stage}</div>}
-            <button className={`btn log-toggle ${logOpen ? "on" : ""}`} onClick={() => setLogOpen((o) => !o)}
-                    aria-expanded={logOpen} title="Every step, its reasoning and the policy verdict (a live log, not a chat)">
-              {logOpen ? "Hide log" : "Log"} ({logItems.length})
-            </button>
-            {logOpen && (
-              <div className="log-float">
-                <Feed items={logItems} manual={manual} running={manualActive} onClose={() => setLogOpen(false)}
-                      title={hybrid ? "Hybrid pipeline log" : manual ? "Your steps" : "Agent log"} />
-              </div>
-            )}
           </div>
         </div>
-        <aside className="right">
-          {cur && state.done && (
-            <ResultCard
-              done={state.done}
-              showTruth={showTruth}
-              onToggleTruth={() => setShowTruth((v) => !v)}
-              saved={manualRun ? state.saved : undefined}
-              atsPanel={ats ? atsPanel : undefined}
-              compareLabel={ats ? "Compare on this fault (agent re-run about $0.10; hybrid and baseline free)" : undefined}
-              onCompare={
-                manualRun || ats
-                  ? () => {
-                      if (!state.compare) compare();
-                      setComparing(true);
-                    }
-                  : undefined
-              }
-            />
-          )}
-          {ats && (manual || atsIntervention) ? (
-            <AtsManualPanel
-              meta={atsMeta}
-              panel={atsPanel}
-              meter={meter}
-              setMeter={setMeter}
-              lastProbe={cur ? lastProbe : null}
-              feed={cur ? state.feed : []}
-              diagnosing={atsDiagnosing}
-              intervention={atsIntervention}
-              started={cur && state.status !== "idle"}
-              stopped={cur && state.status === "stopped"}
-              onTool={tool}
-              onDiagnose={() => setDiagnosing(true)}
-            />
-          ) : manual ? (
-            <ManualPanel
-              meta={meta}
-              panel={state.panel}
-              meter={meter}
-              setMeter={setMeter}
-              lastProbe={lastProbe}
-              active={manualActive}
-              started={state.mode === "manual" && state.status !== "idle"}
-              done={state.mode === "manual" && state.status === "done"}
-              stopped={state.mode === "manual" && state.status === "stopped"}
-              steps={toolSteps}
-              onTool={tool}
-              onDiagnose={() => setDiagnosing(true)}
-            />
-          ) : (
-            <>
-              {ats && hybrid && cur && state.atsTranscription && <AtsTranscriptionCard t={state.atsTranscription} check={state.modelCheck} />}
-              {ats && hybrid && cur && state.nextStep && busy && <NextStepCard next={state.nextStep} />}
+        <aside className="right docked">
+          <div className="right-top">
+            {cur && state.done && (
+              <ResultCard
+                done={state.done}
+                showTruth={showTruth}
+                onToggleTruth={() => setShowTruth((v) => !v)}
+                saved={manualRun ? state.saved : undefined}
+                atsPanel={ats ? atsPanel : undefined}
+                defaultCollapsed
+                compareLabel={ats ? "Compare on this fault (agent re-run about $0.10; hybrid and baseline free)" : undefined}
+                onCompare={onCompare}
+              />
+            )}
+            {ats && (manual || atsIntervention) ? (
+              <Fold title={atsIntervention ? "Authorized intervention: isolate, repair, restore" : "Your instruments: meter, actions, Diagnose"}>
+                <AtsManualPanel
+                  meta={atsMeta}
+                  panel={atsPanel}
+                  meter={meter}
+                  setMeter={setMeter}
+                  lastProbe={cur ? lastProbe : null}
+                  feed={cur ? state.feed : []}
+                  diagnosing={atsDiagnosing}
+                  intervention={atsIntervention}
+                  started={cur && state.status !== "idle"}
+                  stopped={cur && state.status === "stopped"}
+                  onTool={tool}
+                  onDiagnose={() => setDiagnosing(true)}
+                />
+              </Fold>
+            ) : manual ? (
+              <Fold title="Your instruments: meter, buttons, Diagnose">
+                <ManualPanel
+                  meta={meta}
+                  panel={state.panel}
+                  meter={meter}
+                  setMeter={setMeter}
+                  lastProbe={lastProbe}
+                  active={manualActive}
+                  started={state.mode === "manual" && state.status !== "idle"}
+                  done={state.mode === "manual" && state.status === "done"}
+                  stopped={state.mode === "manual" && state.status === "stopped"}
+                  steps={toolSteps}
+                  onTool={tool}
+                  onDiagnose={() => setDiagnosing(true)}
+                />
+              </Fold>
+            ) : null}
+            {ats && hybrid && cur && state.atsTranscription && (
+              <Fold title="Drawing read by Muse Spark (saved transcription)">
+                <AtsTranscriptionCard t={state.atsTranscription} check={state.modelCheck} />
+              </Fold>
+            )}
+            {ats && hybrid && cur && state.nextStep && busy && <NextStepCard next={state.nextStep} />}
+            {atsDiagnosing && (
+              state.suggestion ? (
+                <NextStepCard
+                  next={state.suggestion}
+                  title="Suggestion (planner on our redrawing)"
+                  note="Shadow mode: take it or ignore it. Computed from your own readings, never from the fault; this trace is marked assisted."
+                  onUse={
+                    state.suggestion.tool === "measure_voltage" || state.suggestion.tool === "measure_resistance"
+                      ? () => setMeter((m) => ({ ...m, kind: state.suggestion!.tool === "measure_voltage" ? "V" : "R", a: state.suggestion!.points[0], b: state.suggestion!.points[1] }))
+                      : undefined
+                  }
+                />
+              ) : (
+                <button className="btn ghost suggest-btn" disabled={suggesting}
+                        onClick={() => { setSuggesting(true); suggest(); }}
+                        title="The info-gain planner replays your readings on our redrawing and proposes the next one">
+                  {suggesting ? "Computing the suggestion (simulating every candidate fault)..."
+                              : `Suggest the next reading (planner, shadow mode${state.suggestions > 0 ? `, ${state.suggestions} shown` : ""})`}
+                </button>
+              )
+            )}
+            {!manual && (
               <Hypotheses
                 hypotheses={state.hypotheses}
                 previous={state.previous}
-                title={hybrid ? "Candidate faults" : "Hypotheses"}
-                subtitle={hybrid ? (ats ? "share of simulated candidates (fault x wiring) still consistent" : "share of simulated candidates still consistent")
-                                 : "updated after each measurement"}
+                limit={3}
+                title={hybrid ? "Candidate faults (top 3)" : "Hypotheses (top 3)"}
+                subtitle={hybrid ? "share of simulated candidates still consistent" : "updated after each measurement"}
               />
-            </>
-          )}
-          {atsDiagnosing && (
-            state.suggestion ? (
-              <NextStepCard
-                next={state.suggestion}
-                title="Suggestion (planner on our redrawing)"
-                note="Shadow mode: take it or ignore it. Computed from your own readings, never from the fault; this trace is marked assisted."
-                onUse={
-                  state.suggestion.tool === "measure_voltage" || state.suggestion.tool === "measure_resistance"
-                    ? () => setMeter((m) => ({ ...m, kind: state.suggestion!.tool === "measure_voltage" ? "V" : "R", a: state.suggestion!.points[0], b: state.suggestion!.points[1] }))
-                    : undefined
-                }
-              />
-            ) : (
-              <button className="btn ghost suggest-btn" disabled={suggesting}
-                      onClick={() => { setSuggesting(true); suggest(); }}
-                      title="The info-gain planner replays your readings on our redrawing and proposes the next one">
-                {suggesting ? "Computing the suggestion (simulating every candidate fault)..."
-                            : `Suggest the next reading (planner, shadow mode${state.suggestions > 0 ? `, ${state.suggestions} shown` : ""})`}
-              </button>
-            )
-          )}
-          {ats && !manual && atsIntervention && hybrid && state.atsTranscription && (
-            <AtsTranscriptionCard t={state.atsTranscription} check={state.modelCheck} />
-          )}
-          {ats && !manual && atsIntervention && (
-            <Hypotheses hypotheses={state.hypotheses} previous={state.previous} title={hybrid ? "Candidate faults" : "Hypotheses"}
-                        subtitle={hybrid ? "the pipeline's final list" : "the agent's final list"} />
-          )}
+            )}
+          </div>
+          <div className="log-dock">
+            <Feed items={logItems} manual={manual} running={manualActive}
+                  title={hybrid ? "Hybrid pipeline log" : manual ? "Your steps" : "Agent log"}
+                  idleText={ats ? ATS_SCENARIO : undefined} />
+          </div>
         </aside>
       </main>
       {flashing && lastBlocked && lastBlocked.kind === "tool" && (

@@ -11,6 +11,10 @@ interface Props {
   setBench: (b: Bench) => void;
   onStart: (opts: StartOptions) => void;
   onStop: () => void;
+  onCompare?: () => void; // after a diagnosis: the other diagnosticians on the same fault
+  onSheet?: () => void; // ATS: the troubleshooting sheet
+  layout: "a" | "b"; // temporary layout switch
+  setLayout: (l: "a" | "b") => void;
 }
 
 const STATUS_TEXT: Record<string, string> = {
@@ -22,7 +26,7 @@ const STATUS_TEXT: Record<string, string> = {
   error: "Error",
 };
 
-export function TopBar({ meta, state, mode, setMode, bench, setBench, onStart, onStop }: Props) {
+export function TopBar({ meta, state, mode, setMode, bench, setBench, onStart, onStop, onCompare, onSheet, layout, setLayout }: Props) {
   const ats = bench === "ats";
   const [choice, setChoice] = useState("random");
   const [effort, setEffort] = useState("low");
@@ -67,9 +71,8 @@ export function TopBar({ meta, state, mode, setMode, bench, setBench, onStart, o
 
   return (
     <header className="topbar">
-      <div className="brand">
+      <div className="brand" title="AI field electrician, shadow mode">
         <span className="logo">ProbeForge</span>
-        <span className="subtitle">AI field electrician, shadow mode</span>
       </div>
       <div className="controls">
         <div className="segmented bench" role="tablist" aria-label="Bench">
@@ -175,6 +178,19 @@ export function TopBar({ meta, state, mode, setMode, bench, setBench, onStart, o
             Start
           </button>
         )}
+        <button className="btn ghost" onClick={onCompare} disabled={!onCompare}
+                title="After a diagnosis: the other diagnosticians on the same fault, side by side">
+          Compare
+        </button>
+        {onSheet && (
+          <button className="btn ghost" onClick={onSheet} title="Generated from the simulator, not reviewed by an engineer">
+            Troubleshooting sheet
+          </button>
+        )}
+        <div className="segmented layout-switch" role="tablist" aria-label="Layout (temporary)" title="Temporary: compare two layouts">
+          <button className={layout === "a" ? "on" : ""} onClick={() => setLayout("a")}>A</button>
+          <button className={layout === "b" ? "on" : ""} onClick={() => setLayout("b")}>B</button>
+        </div>
       </div>
       <div className="stats">
         <span className={`status status-${state.status}`}>{statusText}</span>

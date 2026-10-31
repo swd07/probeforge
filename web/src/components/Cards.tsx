@@ -175,6 +175,7 @@ interface ResultProps {
   onCompare?: () => void;
   compareLabel?: string;
   atsPanel?: AtsPanel | null; // ATS: the live panel, for the critical load lost after the diagnosis
+  defaultCollapsed?: boolean;
 }
 
 const mmss = (s: number) => `${Math.floor(Math.max(0, s) / 60)}:${String(Math.floor(Math.max(0, s) % 60)).padStart(2, "0")}`;
@@ -206,8 +207,8 @@ function UpsOutcome({ done, panel }: { done: Done; panel?: AtsPanel | null }) {
 }
 
 /** Docked at the top of the right panel so the schematic stays visible; collapses to one line. */
-export function ResultCard({ done, showTruth, onToggleTruth, saved, onCompare, compareLabel, atsPanel }: ResultProps) {
-  const [collapsed, setCollapsed] = useState(false);
+export function ResultCard({ done, showTruth, onToggleTruth, saved, onCompare, compareLabel, atsPanel, defaultCollapsed = false }: ResultProps) {
+  const [collapsed, setCollapsed] = useState(defaultCollapsed);
   const manual = done.mode === "manual";
   const hybrid = done.mode === "hybrid";
   const d = done.diagnosis ?? {};
