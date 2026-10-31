@@ -178,7 +178,7 @@ export function App() {
               selected={manualActive || atsIntervention ? [meter.a, meter.b] : flagged}
               suspects={suspects}
               planned={ats && cur && busy ? (state.nextStep ?? state.suggestion)?.terminals ?? [] : []}
-              followDefault={state.mode !== "manual"}
+              followDefault
               fitKey={state.done ? "reveal" : state.feed.length === 0 ? "start" : "run"}
               home={ats ? ATS_HOME : undefined}
               focus={ats && cur && state.done?.outcome === "diagnosed" ? diagnosedPart(state.done.diagnosis) : null}

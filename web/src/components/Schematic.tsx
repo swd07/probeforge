@@ -92,11 +92,24 @@ export function Schematic({ svg, nets, probes, truthLive, onPick, selected = [],
     if (full.current) animateTo(full.current);
   }, [animateTo]);
 
+  /** The home view at the container's aspect ratio, moved back inside the drawing vertically: a tall container must
+   * not show an empty band above or below the drawing. */
+  const homeView = useCallback((): View | null => {
+    const f = full.current;
+    if (!f || !home || !host.current) return f;
+    const v = normalize(home);
+    if (v.h > f.h) {
+      // taller than the drawing: zoom in until the height fits, from the home region's left edge (the operator circuit)
+      const w = (v.w * f.h) / v.h;
+      return { x: home.x, y: f.y, w, h: f.h };
+    }
+    return { ...v, y: Math.min(Math.max(v.y, f.y), f.y + f.h - v.h) };
+  }, [normalize, home]);
+
   const goHome = useCallback(() => {
-    if (!full.current) return;
-    if (home && host.current) animateTo(normalize(home));
-    else animateTo(full.current);
-  }, [animateTo, normalize, home]);
+    const v = homeView();
+    if (v) animateTo(v);
+  }, [animateTo, homeView]);
 
   // remember the drawing's own viewBox once the SVG is in the DOM
   useEffect(() => {
@@ -105,7 +118,7 @@ export function Schematic({ svg, nets, probes, truthLive, onPick, selected = [],
     const vb = el.getAttribute("viewBox")?.split(/\s+/).map(Number);
     if (vb && vb.length === 4) {
       full.current = { x: vb[0], y: vb[1], w: vb[2], h: vb[3] };
-      apply(home && host.current ? normalize(home) : full.current);
+      apply(homeView() ?? full.current);
     }
   }, [svg]); // eslint-disable-line react-hooks/exhaustive-deps
 
