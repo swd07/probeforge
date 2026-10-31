@@ -44,6 +44,63 @@ export interface AtsMeta extends Meta {
   ups_autonomy_s: number;
   action_s: number;
   flow: string[];
+  transcriptions: { id: string; label: string; run_id: string; recorded: string; reads: number; repairs: number; cost_usd: number }[];
+  default_transcription: string;
+  live_read: { available: boolean; estimate: string };
+}
+
+/** ATS hybrid: the planner's next step (probeforge.ats.nextstep), sent before every reading. */
+export interface NextStep {
+  step: number;
+  tool: string;
+  args: Record<string, unknown>;
+  points: string[];
+  terminals: string[];
+  outcomes: { reading: string; n: number; causes: string[] }[];
+  causes_left: number;
+  candidates: number;
+  gain_bits?: number;
+  why: string;
+}
+
+export interface ReadQuality {
+  version: string;
+  parts_recall: number;
+  connections_precision: number;
+  connections_recall: number;
+  no52u_precision: number;
+  no52u_recall: number;
+  nets_exact: string;
+  relay_contacts_right: number;
+  relay_contacts_true: number;
+  relay_contacts_wrong: string[];
+  worse?: boolean;
+}
+
+/** ATS hybrid: the transcription the run uses (a recorded run's model step, or a live re-read). */
+export interface AtsTranscription {
+  id: string;
+  label: string;
+  run_id: string;
+  recorded: string;
+  reads: number;
+  repairs: number;
+  cost_usd: number;
+  seconds: number | null;
+  read_quality: ReadQuality[];
+  disclosure: string;
+  attempts: { problem: string; explanation: string; diff: string[]; accepted?: string; rejected?: string }[];
+  where: string[];
+  stopped?: string | null;
+  flags: number;
+  components: number;
+  nets: number;
+}
+
+export interface ModelCheck {
+  ok: boolean;
+  events: string[];
+  expected: string[];
 }
 
 export interface Probe {

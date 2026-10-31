@@ -125,3 +125,56 @@ def test_agent_session_then_intervention_with_policy_fact():
             assert r["executed"] and r["result"]["load_powered"]
     finally:
         app_module.client = orig
+
+
+def test_hybrid_session_on_a_saved_transcription(monkeypatch):
+    """Hybrid v2 on the ATS bench over the WebSocket: the transcription card data, the model check, the planner's next
+    step before every reading (the step then taken), human approvals, and the fault only in "done". A perfect read
+    stands in for the saved transcription (same netlist as our redrawing: about 12 s of candidate simulation)."""
+    import threading
+
+    from probeforge.ats.hybrid.read import build
+    from tests.test_ats_hybrid import perfect_transcription
+
+    data = build(perfect_transcription())
+    record = {"id": "test_read", "label": "Test read", "run_id": "test_run", "recorded": "2026-10-31 00:00", "reads": 1,
+              "repairs": 0, "cost_usd": 0.0, "seconds": 1.0, "read_quality": [], "disclosure": "test",
+              "healthy": {"ok": True, "attempts": []}, "flags": [], "data": data, "raw": {}}
+    monkeypatch.setattr(ats.transcriptions, "load", lambda tid: record)
+    ready = threading.Event()
+    ready.set()
+    monkeypatch.setattr(ats, "warm_transcription", lambda tid: ready)
+    monkeypatch.setattr(ats, "PLAN_PAUSE_S", 0)
+    monkeypatch.setattr(server, "client", lambda: (_ for _ in ()).throw(RuntimeError("no key")))  # no explanation call
+    http = TestClient(server.app)
+    events: list = []
+    with http.websocket_connect("/ws") as ws:
+        ws.send_json({"action": "start_hybrid", "bench": "ats", "source": "scenario", "scenario": "a1_coil_open",
+                      "schematic": "test_read"})
+        s = until(ws, "session", events)
+        assert s["mode"] == "hybrid" and s["bench"] == "ats"
+        t = until(ws, "ats_transcription", events)
+        assert t["run_id"] == "test_run" and t["recorded"] and t["attempts"] == []
+        assert until(ws, "model_check", events)["ok"]
+        done = until(ws, "done", events)
+    assert done["mode"] == "hybrid" and done["verdict"] == "correct" and done["fault"] == "TS:A-B open"
+    assert done["transcription"].startswith("Test read (test_run")
+    plans = [e for e in events if e["type"] == "next_step"]
+    tools = [e for e in events if e["type"] == "tool" and e["tool"] != "update_hypotheses"]
+    assert plans and plans[-1]["tool"] == "submit_diagnosis"
+    for p in plans:  # every plan is the next step taken
+        later = [e for e in tools if events.index(e) > events.index(p)]
+        assert later and later[0]["tool"] == p["tool"]
+        if p["tool"] == "measure_voltage":
+            assert later[0]["args"]["point_a"] == p["points"][0] and p["terminals"]
+    assert any(e["type"] == "approval_request" for e in events)  # isolation for the resistance check, answered by the human
+    before_done = events[:events.index(done)]
+    assert not any("fault" in e or "truth_live_nets" in e for e in before_done)
+
+
+def test_ats_meta_lists_saved_transcriptions_and_the_live_read_estimate(monkeypatch):
+    monkeypatch.setattr(ats, "warm_transcription", lambda tid: None)
+    meta = TestClient(server.app).get("/api/ats/meta").json()
+    ids = [t["id"] for t in meta["transcriptions"]]
+    assert meta["default_transcription"] in ids and all(t["run_id"] and t["recorded"] for t in meta["transcriptions"])
+    assert "$" in meta["live_read"]["estimate"] and "minutes" in meta["live_read"]["estimate"]

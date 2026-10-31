@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useReducer, useRef } from "react";
-import type { ApprovalRequest, Bench, CompareResult, Done, FeedItem, FlagsRequest, Hypothesis, Mode, NetState, Panel, Probe, ToolEvent, WiringRequest } from "./types";
+import type { ApprovalRequest, AtsTranscription, Bench, CompareResult, Done, FeedItem, FlagsRequest, Hypothesis, Mode, ModelCheck, NetState, NextStep, Panel, Probe, ToolEvent, WiringRequest } from "./types";
 
 export type Status = "idle" | "running" | "approval" | "done" | "stopped" | "error";
 
@@ -26,6 +26,9 @@ export interface State {
   wiring: WiringRequest | null;
   stage: string;
   done: Done | null;
+  nextStep: NextStep | null; // ATS hybrid: the planner's next step
+  atsTranscription: AtsTranscription | null;
+  modelCheck: ModelCheck | null;
   tokens: number;
   turns: number;
   measurements: number;
@@ -57,6 +60,9 @@ const initial: State = {
   wiring: null,
   stage: "",
   done: null,
+  nextStep: null,
+  atsTranscription: null,
+  modelCheck: null,
   tokens: 0,
   turns: 0,
   measurements: 0,
@@ -128,6 +134,7 @@ function reducer(s: State, a: Action): State {
         blocked,
         flash: t.verdict === "block" ? Date.now() : s.flash,
         measurements: s.measurements + t.probes.length,
+        nextStep: null, // the planned step was just taken; the planner sends the next one
       };
     }
     case "hypotheses": {
@@ -143,6 +150,38 @@ function reducer(s: State, a: Action): State {
     }
     case "stage":
       return { ...s, stage: ev.text, feed: [...s.feed, { kind: "info", id: `stage${s.feed.length}`, text: ev.text }] };
+    case "stage_done":
+      return { ...s, stage: "" };
+    case "ats_transcription":
+      return {
+        ...s,
+        atsTranscription: ev,
+        feed: [
+          ...s.feed,
+          {
+            kind: "info",
+            id: "ats_transcription",
+            text: `Read: ${ev.label} (${ev.run_id}, recorded ${ev.recorded}): ${ev.reads} Muse Spark reads, ${ev.components} components, ${ev.nets} nets, ${ev.flags} flagged regions`,
+          },
+        ],
+      };
+    case "model_check":
+      return {
+        ...s,
+        modelCheck: ev,
+        feed: [
+          ...s.feed,
+          {
+            kind: "info",
+            id: "model_check",
+            text: ev.ok
+              ? `Model: the transcription reproduces the documented fault-free sequence (${ev.events.length} of ${ev.expected.length} events in order)`
+              : `Model: the transcription does not reproduce the documented fault-free sequence (${ev.events.join(", ")}); no diagnosis on it`,
+          },
+        ],
+      };
+    case "next_step":
+      return { ...s, nextStep: ev };
     case "transcription":
       return {
         ...s,
@@ -221,7 +260,7 @@ function reducer(s: State, a: Action): State {
         feed: s.feed.map((f) => (f.kind === "approval" && f.req.id === ev.id ? { ...f, approved: ev.approved } : f)),
       };
     case "done":
-      return { ...s, status: "done", done: ev, panel: ev.panel, approval: null, flags: null, wiring: null, stage: "" };
+      return { ...s, status: "done", done: ev, panel: ev.panel, approval: null, flags: null, wiring: null, stage: "", nextStep: null };
     case "saved":
       return { ...s, saved: ev.path };
     case "verified":

@@ -9,6 +9,7 @@ interface Props {
   onPick?: (point: string) => void; // engineer mode: click a terminal or a wire to place a meter probe
   selected?: (string | null)[];
   suspects?: { component: string; part: string }[]; // ATS: the leading hypotheses, outlined on the drawing
+  planned?: string[]; // ATS: terminals of the next planned reading (dashed rings, "next")
   followDefault: boolean; // agent mode: zoom to each new measurement
   fitKey: string; // changes at session start and at the reveal: zoom out to the home view
   home?: View; // the default view (drawing units); without it the home view is the whole drawing
@@ -36,7 +37,7 @@ function formatValue(p: Probe) {
  * viewBox, so labels stay sharp at any zoom. */
 const SNAP_PX = 14; // a click this close to a terminal (screen pixels) picks the terminal
 
-export function Schematic({ svg, nets, probes, truthLive, onPick, selected = [], suspects = [], followDefault, fitKey, home }: Props) {
+export function Schematic({ svg, nets, probes, truthLive, onPick, selected = [], suspects = [], planned = [], followDefault, fitKey, home }: Props) {
   const host = useRef<HTMLDivElement>(null);
   const full = useRef<View | null>(null);
   const view = useRef<View | null>(null);
@@ -193,7 +194,7 @@ export function Schematic({ svg, nets, probes, truthLive, onPick, selected = [],
     if (!el) return;
     el.querySelectorAll(".probe-overlay").forEach((n) => n.remove());
     el.querySelectorAll("[data-net]").forEach((n) => n.classList.remove(...NET_CLASSES, "picked"));
-    el.querySelectorAll("circle[data-terminal]").forEach((n) => n.classList.remove("probe-active", "probe-old", "picked"));
+    el.querySelectorAll("circle[data-terminal]").forEach((n) => n.classList.remove("probe-active", "probe-old", "picked", "planned"));
     el.querySelectorAll("[data-part].suspect").forEach((n) => n.classList.remove("suspect"));
     for (const s of suspects) {
       const sel = s.part ? `[data-part="${CSS.escape(`${s.component}:${s.part}`)}"]` : `[data-part^="${CSS.escape(`${s.component}:`)}"]`;
@@ -252,8 +253,27 @@ export function Schematic({ svg, nets, probes, truthLive, onPick, selected = [],
       g.append(ring, rect, text);
       overlay.append(g);
     }
+    planned.forEach((term, i) => {
+      const c = el.querySelector(`circle[data-terminal="${CSS.escape(term)}"]`);
+      if (!c) return;
+      c.classList.add("planned");
+      const x = Number(c.getAttribute("cx"));
+      const y = Number(c.getAttribute("cy"));
+      const g = document.createElementNS(SVG_NS, "g");
+      g.setAttribute("class", "planned-mark");
+      const ring = document.createElementNS(SVG_NS, "circle");
+      ring.setAttribute("cx", String(x));
+      ring.setAttribute("cy", String(y));
+      ring.setAttribute("r", "11");
+      const text = document.createElementNS(SVG_NS, "text");
+      text.setAttribute("x", String(x - 14));
+      text.setAttribute("y", String(i === 1 ? y - 16 : y + 26)); // B above its terminal, so close pairs stay readable
+      text.textContent = planned.length > 1 ? `next ${i === 0 ? "A" : "B"}` : "next";
+      g.append(ring, text);
+      overlay.append(g);
+    });
     el.append(overlay);
-  }, [svg, nets, probes, truthLive, selected, suspects]);
+  }, [svg, nets, probes, truthLive, selected, suspects, planned]);
 
   // agent mode: zoom to the area of the latest measurement
   const lastStep = probes.length ? probes[probes.length - 1].step : -1;
@@ -280,6 +300,25 @@ export function Schematic({ svg, nets, probes, truthLive, onPick, selected = [],
     animateTo(normalize({ x: (x0 + x1) / 2 - w / 2, y: (y0 + y1) / 2 - h / 2 - 20, w, h }));
     // probes is read through lastStep on purpose: zoom only when a new measurement arrives
   }, [lastStep, follow, animateTo, normalize]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ATS hybrid: with follow on, zoom to the next planned reading as soon as it is planned
+  const plannedKey = planned.join("|");
+  useEffect(() => {
+    if (!follow || !planned.length || !full.current) return;
+    const el = root();
+    if (!el) return;
+    const pts = planned
+      .map((t) => el.querySelector(`circle[data-terminal="${CSS.escape(t)}"]`))
+      .filter((c): c is Element => !!c)
+      .map((c) => [Number(c.getAttribute("cx")), Number(c.getAttribute("cy"))]);
+    if (!pts.length) return;
+    const xs = pts.map((q) => q[0]);
+    const ys = pts.map((q) => q[1]);
+    const w = Math.max(Math.max(...xs) - Math.min(...xs) + 360, 880);
+    const h = Math.max(Math.max(...ys) - Math.min(...ys) + 240, 460);
+    animateTo(normalize({ x: (Math.min(...xs) + Math.max(...xs)) / 2 - w / 2, y: (Math.min(...ys) + Math.max(...ys)) / 2 - h / 2 - 20, w, h }));
+    // planned is read through plannedKey on purpose: zoom only when the plan changes
+  }, [plannedKey, follow, animateTo, normalize]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const zoomBy = (k: number) => {
     const v = view.current;

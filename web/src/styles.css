@@ -366,3 +366,31 @@ table.metering td:first-child { text-align: left; font-family: inherit; color: v
 .btn.approve.strong { background: #c0571a; }
 .item .fact { color: #ffb3b5; }
 .schematic svg .suspect line, .schematic svg .suspect path, .schematic svg .suspect rect, .schematic svg .suspect circle.sym { stroke: #ff9f43 !important; stroke-width: 3; }
+
+/* ATS hybrid: drawing read, model check, repair log, read quality; the planner's next step */
+.plain-button { background: none; border: 0; color: inherit; width: 100%; padding: 0; cursor: pointer; text-align: left; font: inherit; font-weight: 700; }
+.ats-hybrid-card { flex-shrink: 0; max-height: 46vh; overflow-y: auto; }
+.ats-hybrid-body { display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
+.ats-hybrid-body .kv { display: grid; grid-template-columns: 96px 1fr; gap: 8px; }
+.ats-hybrid-body .kv > span:first-child { color: var(--muted); }
+.ok-text { color: var(--ok); }
+.bad-text { color: var(--bad); }
+.repair-log { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 8px; }
+.repair-log li { border-left: 3px solid var(--ok); padding-left: 8px; }
+.repair-log li.rejected { border-left-color: var(--bad); }
+.repair-where { color: var(--text); }
+table.quality { width: 100%; border-collapse: collapse; font-size: 12px; }
+table.quality th, table.quality td { border-bottom: 1px solid var(--line); padding: 3px 4px; text-align: left; }
+table.quality th { color: var(--muted); font-weight: 600; }
+table.quality tr.worse td { color: var(--warn); }
+.disclosure { font-size: 12px; margin: 2px 0 0; }
+.next-step-card { border-color: var(--warn); flex-shrink: 0; }
+.next-what { font-weight: 700; font-size: 14px; }
+.next-why { font-size: 12px; margin: 2px 0 6px; }
+.next-outcomes { margin: 0; padding-left: 16px; font-size: 13px; display: flex; flex-direction: column; gap: 3px; }
+.next-reading { font-family: ui-monospace, Consolas, monospace; color: var(--warn); }
+.next-note { font-size: 12px; margin-top: 6px; }
+.schematic svg circle.terminal.planned { fill: var(--warn); }
+.schematic svg .planned-mark circle { fill: none; stroke: var(--warn); stroke-width: 2.5; stroke-dasharray: 4 3; }
+.schematic svg .planned-mark text { fill: var(--warn); font-size: 13px; font-weight: 700; }
+.controls select[aria-label="Drawing read"] { max-width: 230px; }

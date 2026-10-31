@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { Bench, Meta, Mode } from "../types";
+import type { AtsMeta, Bench, Meta, Mode } from "../types";
 import type { StartOptions, State } from "../useSession";
 
 interface Props {
@@ -28,6 +28,9 @@ export function TopBar({ meta, state, mode, setMode, bench, setBench, onStart, o
   const [effort, setEffort] = useState("low");
   const [engineer, setEngineer] = useState("");
   const [schematic, setSchematic] = useState("saved");
+  const atsMeta = ats ? (meta as AtsMeta | null) : null;
+  const [atsRead, setAtsRead] = useState("");
+  const atsReadChoice = atsRead || atsMeta?.default_transcription || "";
   const busy = state.status === "running" || state.status === "approval";
   const shown = busy || state.status === "done" ? state.mode : mode; // run statistics belong to the run's mode
 
@@ -37,7 +40,10 @@ export function TopBar({ meta, state, mode, setMode, bench, setBench, onStart, o
     if (state.status === "done" || state.status === "error") setChoice("");
   }, [state.status]);
 
-  const start = () =>
+  const start = () => {
+    if (ats && mode === "hybrid" && atsReadChoice === "live" &&
+        !window.confirm(`Re-read the drawing live with Muse Spark?\n\nCost and time: ${atsMeta?.live_read.estimate}. The read is reused for later runs in this server.`))
+      return;
     onStart({
       mode,
       source: choice === "random" || choice === "clean" ? choice : "scenario",
@@ -45,9 +51,10 @@ export function TopBar({ meta, state, mode, setMode, bench, setBench, onStart, o
       effort,
       includeLatent: false,
       engineer,
-      schematic,
+      schematic: ats ? atsReadChoice : schematic,
       bench,
     });
+  };
 
   const statusText =
     state.status === "running" && state.mode === "manual"
@@ -70,7 +77,7 @@ export function TopBar({ meta, state, mode, setMode, bench, setBench, onStart, o
                   title="Level 1: star-delta reversing motor starter">
             Motor starter
           </button>
-          <button className={ats ? "on" : ""} onClick={() => { setBench("ats"); setChoice("random"); if (mode === "hybrid") setMode("agent"); }}
+          <button className={ats ? "on" : ""} onClick={() => { setBench("ats"); setChoice("random"); }}
                   disabled={busy} title="Level 2: ASCO Series 300 Group G automatic transfer switch (our redrawing of 978741)">
             ATS
           </button>
@@ -82,8 +89,9 @@ export function TopBar({ meta, state, mode, setMode, bench, setBench, onStart, o
           <button
             className={mode === "hybrid" ? "on" : ""}
             onClick={() => setMode("hybrid")}
-            disabled={busy || ats}
-            title={ats ? "The hybrid pipeline runs on the motor starter only (ATS hybrid: later)" : "Muse Spark reads the schematic, a planner measures, Muse Spark repairs the netlist and explains"}
+            disabled={busy}
+            title={ats ? "Hybrid v2: Muse Spark's transcription of the drawing sheets, an information-gain planner measures, Muse Spark explains"
+                       : "Muse Spark reads the schematic, a planner measures, Muse Spark repairs the netlist and explains"}
           >
             Hybrid
           </button>
@@ -112,7 +120,18 @@ export function TopBar({ meta, state, mode, setMode, bench, setBench, onStart, o
             ))}
           </optgroup>
         </select>
-        {mode === "hybrid" ? (
+        {mode === "hybrid" && ats ? (
+          <select value={atsReadChoice} onChange={(e) => setAtsRead(e.target.value)} disabled={busy} aria-label="Drawing read">
+            {atsMeta?.transcriptions.map((t) => (
+              <option key={t.id} value={t.id}>
+                saved read: {t.label} ({t.recorded})
+              </option>
+            ))}
+            <option value="live" disabled={!atsMeta?.live_read.available}>
+              live re-read ({atsMeta?.live_read.available ? atsMeta.live_read.estimate.split(" (")[0] : "needs the drawing crops on this machine"})
+            </option>
+          </select>
+        ) : mode === "hybrid" ? (
           <select value={schematic} onChange={(e) => setSchematic(e.target.value)} disabled={busy} aria-label="Schematic read">
             <option value="saved">saved read (run 2, has errors)</option>
             <option value="photo">saved read of a phone photo (has errors)</option>

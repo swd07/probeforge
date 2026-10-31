@@ -4,6 +4,10 @@ As for the relay panel, the browser never receives the injected fault while a se
 the actor saw, panel snapshots what a technician at the switch sees (the controller face, the sources, the load, the
 UPS, the mechanism position flag). The fault, its observational twins and the true live nets are sent only in "done".
 
+The hybrid session runs the frozen Hybrid v2 (probeforge.ats.hybrid) on a saved transcription (a recorded run's model
+step, scenarios/transcriptions/ats/) or on a live re-read of the drawing crops (local only, cost shown first); the
+planner's next step is sent before every reading (probeforge.ats.nextstep, read from the planner's update hook).
+
 After the diagnosis the session stays open for the authorized intervention (isolate, repair, restore) through the
 same toolbox and policy; the UPS status flow ends at "Transfer verified" only when the simulator confirms the load on
 Emergency with the position confirmed by the controller.
@@ -21,15 +25,20 @@ import yaml
 
 from probeforge.agent.client import MUSE_SPARK
 from probeforge.ats.agent import run_ats_agent
+from probeforge.ats import transcriptions
 from probeforge.ats.ambiguity import signature
 from probeforge.ats.bench import INTERNAL_NETS, REPAIR_KINDS, AtsBench
 from probeforge.ats.faults import COMPONENT_MODES, PART_MODES, all_faults, validate
+from probeforge.ats.hybrid.pipeline import HEALTHY_EVENTS, healthy_sequence, prepare_model, run_ats_hybrid, warm
+from probeforge.ats.hybrid.read import SHEET_DIR, SHEETS, read_consensus, sheet_images, to_netlist
+from probeforge.ats.nextstep import planned_next
 from probeforge.ats.policy import RULES
 from probeforge.ats.tools import AtsApprovalRequest, AtsToolBox
 from probeforge.eval.scoring import grade
 from probeforge.eval.spend import EST_PER_AGENT_RUN_USD, SpendLedger, SpendLimitError
 from probeforge.eval.trace import make_trace
 from probeforge.faults.model import Fault
+from probeforge.hybrid.llm import Usage
 from probeforge.sim.schematic import render_svg
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -47,6 +56,10 @@ MANUAL_TOOLS = {"read_panel", "read_event_log", "read_metering", "read_position_
                 "isolate_sources", "restore_sources", "manual_operation_check", "repeat_transfer_attempt",
                 "perform_action", "submit_diagnosis"}
 INTERVENTION_TOOLS = MANUAL_TOOLS - {"submit_diagnosis"}  # after the diagnosis, for the authorized person
+EST_HYBRID_SAVED_USD = 0.02  # explanation only (recorded runs: about $0.006 per case)
+EST_HYBRID_LIVE_USD = 1.00  # 3 reads plus up to 4 repairs (recorded model steps: $0.28 and $0.48)
+PLAN_PAUSE_S = 1.0  # UI pace only: the plan stays on screen this long before the planner takes it (no effect on results)
+LIVE_READ_TEXT = "about $0.30 to $1.00 and 4 to 7 minutes (3 Muse Spark reads of the drawing crops, then the model check)"
 
 
 def _f(d: dict) -> Fault:
@@ -112,8 +125,37 @@ def warm_signatures() -> None:
         _sig_thread.start()
 
 
+_warm_lock = threading.Lock()
+_warm_events: dict[str, threading.Event] = {}
+
+
+def warm_transcription(tid: str) -> threading.Event:
+    """Simulate every candidate of a saved transcription in the background (about 80 s, once per transcription and
+    server process; the frozen planner caches them by netlist content). The event is set when they are ready."""
+    with _warm_lock:
+        ev = _warm_events.get(tid)
+        if ev is None:
+            ev = _warm_events[tid] = threading.Event()
+
+            def job():
+                try:
+                    t = transcriptions.load(tid)
+                    if healthy_sequence(to_netlist(t["data"]))[0]:
+                        warm(t["data"], t["flags"])
+                finally:
+                    ev.set()
+
+            threading.Thread(target=job, daemon=True).start()
+    return ev
+
+
+def live_read_available() -> bool:
+    return all((SHEET_DIR / s).exists() for s in SHEETS)
+
+
 def meta() -> dict:
     warm_signatures()  # the browser asks for meta when the ATS bench is chosen: precompute the pool and twins then
+    warm_transcription(transcriptions.DEFAULT)
     comps = []
     for c in NETLIST.components.values():
         parts = [{"name": p.name, "kind": p.kind, "modes": list(PART_MODES.get(p.kind, ()))} for p in c.parts]
@@ -132,6 +174,9 @@ def meta() -> dict:
         "ups_autonomy_s": BENCH.a["ups_autonomy_s"],
         "action_s": 30,
         "flow": FLOW,
+        "transcriptions": transcriptions.available(),
+        "default_transcription": transcriptions.DEFAULT,
+        "live_read": {"available": live_read_available(), "estimate": LIVE_READ_TEXT},
     }
 
 
@@ -267,7 +312,7 @@ class AtsSession:
         return {"fault": fault, "verdict": v, "twins": [str(t) for t in twins], "latent": False,
                 "component_ok": g["component_ok"], "mode_ok": g["mode_ok"]}
 
-    def finish(self, trace: dict) -> None:
+    def finish(self, trace: dict, extra: dict | None = None) -> None:
         self.trace = trace
         judged = self.judge(trace["diagnosis"], trace["outcome"])
         if trace["outcome"] == "diagnosed":
@@ -289,6 +334,7 @@ class AtsSession:
             "truth_live_nets": [n for n in NETLIST.nets if n not in INTERNAL_NETS and b.voltage(n, "NN") > LIVE_V],
             "decisive": None,
             "intervention": True,
+            **(extra or {}),
         })
         self.done = True
 
@@ -429,6 +475,148 @@ class AtsManualSession(AtsSession):
         self.emit({"type": "saved", "path": shown})
 
 
+def terminal_of(point: str) -> str | None:
+    """A drawing terminal for a probe point (a terminal, or a net drawn from its first terminal)."""
+    if point in NETLIST.terminal_net:
+        return point
+    return NETLIST.nets[point][0] if point in NETLIST.nets else None
+
+
+_live: dict = {}
+_live_lock = threading.Lock()
+
+
+class AtsHybridSession(AtsSession):
+    """Hybrid v2 on the ATS bench: Read (saved transcription or live re-read), Model (the documented fault-free
+    sequence, with the recorded repairs), Plan (info-gain on the transcription, readings on the real bench through the
+    same toolbox and policy, approvals answered by the human), Explain. The frozen modules are called, never changed."""
+
+    mode = "hybrid"
+
+    def __init__(self, faults, source, case, transcription: str, emit, client_fn):
+        super().__init__(faults, source, case, emit)
+        self.transcription = transcription or transcriptions.DEFAULT
+        self.client_fn = client_fn
+
+    def _client(self):
+        try:
+            return self.client_fn()
+        except Exception:  # noqa: BLE001 - no key: the saved model still runs, only the explanation is skipped
+            return None
+
+    def live_read(self, client, usage: Usage) -> dict:
+        """3 live reads of the drawing crops and the model step (once per server process, then reused)."""
+        with _live_lock:
+            if "t" not in _live:
+                images = sheet_images()
+                self.emit({"type": "stage", "text": f"Read: Muse Spark reads the 7 drawing-sheet crops 3 times ({LIVE_READ_TEXT})..."})
+                data, flags, summary, raws = read_consensus(client, usage, images, reads=3)
+                raw = raws[summary["model_read"] - 1]
+                self.emit({"type": "stage", "text": "Model: checking the documented fault-free sequence; Muse Spark repairs "
+                                                    "the circuit where it departs..."})
+                data, raw, flags, healthy = prepare_model(client, usage, data, raw, flags, images)
+                stamp = datetime.now()
+                _live["t"] = {"id": "live", "label": "Live re-read", "run_id": "live read in this server process",
+                              "recorded": f"{stamp:%Y-%m-%d %H:%M}", "reads": summary["reads"],
+                              "repairs": len([a for a in healthy["attempts"] if a.get("accepted")]),
+                              "cost_usd": round(usage.cost_usd, 4), "seconds": None, "read_quality": [],
+                              "disclosure": "The hybrid pipeline was developed on this one drawing.",
+                              "healthy": {k: v for k, v in healthy.items() if k != "versions"}, "flags": flags,
+                              "data": data, "raw": raw, "summary": summary}
+        return _live["t"]
+
+    def on_update(self, planner, step: int) -> None:
+        if self.cancelled:
+            raise Cancelled()
+        self.tb = planner.tb  # cited evidence on approval cards
+        plan = planned_next(planner)
+        terms = [x for x in (terminal_of(p) for p in plan["points"]) if x]
+        self.emit({"type": "next_step", "step": step, **plan, "terminals": terms})
+        if plan["tool"] != "submit_diagnosis" and PLAN_PAUSE_S:
+            time.sleep(PLAN_PAUSE_S)
+
+    def run(self) -> None:
+        live = self.transcription == "live"
+        if live and not live_read_available():
+            self.emit({"type": "error", "message": "A live re-read needs the drawing crops on this machine "
+                                                   "(scripts/render_ats_sheets.py); use a saved transcription."})
+            self.closed = True
+            return
+        try:
+            SpendLedger().check(EST_HYBRID_LIVE_USD if live else EST_HYBRID_SAVED_USD, what="an ATS hybrid run", demo=True)
+            t = None if live else transcriptions.load(self.transcription)
+        except (SpendLimitError, KeyError) as e:
+            self.emit({"type": "error", "message": str(e)})
+            self.closed = True
+            return
+        self.emit({"type": "session", "mode": "hybrid", "bench": "ats", "source": self.source, "model": MUSE_SPARK,
+                   "panel": snapshot(self.bench, self.flow)})
+        usage = Usage(effort="medium")
+        client = self._client()
+        try:
+            if live:
+                if client is None:
+                    raise RuntimeError("no Meta API key: a live re-read is not possible")
+                t = self.live_read(client, usage)
+            self.emit({"type": "ats_transcription", **{k: t.get(k) for k in ("id", "label", "run_id", "recorded", "reads",
+                       "repairs", "cost_usd", "seconds", "read_quality", "disclosure")},
+                       "attempts": t["healthy"].get("attempts", []), "where": t["healthy"].get("where", []),
+                       "stopped": t["healthy"].get("stopped"), "flags": len(t["flags"]),
+                       "components": len(t["data"].get("components") or {}), "nets": len(t["data"].get("nets") or {})})
+            ok, events = healthy_sequence(to_netlist(t["data"]))
+            self.emit({"type": "model_check", "ok": ok, "events": events, "expected": HEALTHY_EVENTS})
+            if ok:
+                if live:
+                    warm(t["data"], t["flags"])
+                else:
+                    ready = warm_transcription(t["id"])
+                    if not ready.is_set():
+                        self.emit({"type": "stage", "text": "Simulating every candidate fault of the transcription (once "
+                                                            "per transcription, about 80 s)..."})
+                        while not ready.wait(0.5):
+                            if self.cancelled:
+                                raise Cancelled()
+            self.emit({"type": "stage_done"})
+            images = sheet_images() if live_read_available() else []
+            result = run_ats_hybrid(self.bench, client, t["data"], t["raw"], images, usage=usage, flags=t["flags"],
+                                    approver=self.approver, repair=bool(client and images), do_explain=client is not None,
+                                    on_event=self.on_event, on_update=self.on_update, healthy={"ok": ok, "events": events})
+        except Cancelled:
+            SpendLedger().record(usage.cost_usd, f"ui ATS hybrid run ({self.source}, ended)", demo=True)
+            self.closed = True
+            return
+        except Exception as e:  # noqa: BLE001 - API down, unusable transcription
+            SpendLedger().record(usage.cost_usd, f"ui ATS hybrid run ({self.source}, failed)", demo=True)
+            if not self.cancelled:
+                self.emit({"type": "error", "message": f"{type(e).__name__}: {e}"})
+            self.closed = True
+            return
+        SpendLedger().record(usage.cost_usd, f"ui ATS hybrid run ({self.source})", demo=True)
+        self.tb = result.planner.tb
+        if self.cancelled:
+            self.closed = True
+            return
+        trace = make_trace(case="ui_ats", runner="ats_hybrid", tb=self.tb, diagnosis=result.diagnosis,
+                           outcome=result.outcome, seconds=result.seconds, run=usage, notes=result.planner.notes,
+                           extra={"explanation": result.explanation, "corrections": result.corrections,
+                                  "transcription": t["id"]})
+        self.finish(trace, extra={
+            "explanation": result.explanation,
+            "transcription": f"{t['label']} ({t['run_id']}, recorded {t['recorded']})",
+            "corrections": [{"step": 0, "diff": c.get("diff", []), "explanation": c.get("explanation", ""),
+                             "error": c.get("error"), "rejected": c.get("rejected"), "reasons": []}
+                            for c in result.corrections],
+            "gave_up": result.planner.gave_up,
+            "wiring_check": None,
+        })
+
+    def call(self, name: str, args: dict) -> None:
+        if not self.done:
+            self.emit({"type": "error", "message": "The pipeline is diagnosing; the intervention opens after its diagnosis."})
+            return
+        self.intervene(name, args)
+
+
 def start_session(action: str, msg: dict, emit, client_fn) -> AtsSession:
     faults, source, case = pick(msg)
     warm_signatures()
@@ -436,4 +624,6 @@ def start_session(action: str, msg: dict, emit, client_fn) -> AtsSession:
         return AtsAgentSession(faults, source, case, msg.get("effort") or "low", emit, client_fn)
     if action == "start_manual":
         return AtsManualSession(faults, source, case, str(msg.get("engineer") or ""), emit)
-    raise ValueError("the hybrid pipeline is not available on the ATS bench")
+    if action == "start_hybrid":
+        return AtsHybridSession(faults, source, case, str(msg.get("schematic") or ""), emit, client_fn)
+    raise ValueError(f"unknown action {action!r}")

@@ -26,6 +26,7 @@ Protocol (JSON over /ws):
 import asyncio
 import itertools
 import json
+import os
 import random
 import re
 import threading
@@ -72,6 +73,8 @@ _client = None
 
 def client():
     global _client
+    if os.environ.get("PROBEFORGE_OFFLINE"):  # walkthroughs and demos without API calls (the hybrid skips its explanation)
+        raise RuntimeError("offline mode (PROBEFORGE_OFFLINE is set): no Muse Spark calls")
     if _client is None:
         _client = make_client()
     return _client
@@ -572,7 +575,7 @@ async def ws(websocket: WebSocket) -> None:
                         emit({"type": "error", "message": str(e)})
                         session = None
                         continue
-                    if isinstance(session, ats.AtsAgentSession):
+                    if isinstance(session, (ats.AtsAgentSession, ats.AtsHybridSession)):
                         background(session.run)
                     else:
                         session.start()

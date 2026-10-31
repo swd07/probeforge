@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { AtsTranscriptionCard, NextStepCard } from "./components/AtsHybrid";
 import { AtsManualPanel } from "./components/AtsManualPanel";
 import { AtsPanel, LimitsTable } from "./components/AtsPanel";
 import { ApprovalCard, FlagsCard, ResultCard, WiringCard } from "./components/Cards";
@@ -138,6 +139,7 @@ export function App() {
               onPick={manualActive || atsIntervention ? pick : undefined}
               selected={manualActive || atsIntervention ? [meter.a, meter.b] : flagged}
               suspects={suspects}
+              planned={ats && cur && state.nextStep && busy ? state.nextStep.terminals : []}
               followDefault={state.mode !== "manual"}
               fitKey={state.done ? "reveal" : state.feed.length === 0 ? "start" : "run"}
               home={ats ? ATS_HOME : undefined}
@@ -195,15 +197,24 @@ export function App() {
               onDiagnose={() => setDiagnosing(true)}
             />
           ) : (
-            <Hypotheses
-              hypotheses={state.hypotheses}
-              previous={state.previous}
-              title={hybrid ? "Candidate faults" : "Hypotheses"}
-              subtitle={hybrid ? "share of simulated candidates still consistent" : "updated after each measurement"}
-            />
+            <>
+              {ats && hybrid && cur && state.atsTranscription && <AtsTranscriptionCard t={state.atsTranscription} check={state.modelCheck} />}
+              {ats && hybrid && cur && state.nextStep && busy && <NextStepCard next={state.nextStep} />}
+              <Hypotheses
+                hypotheses={state.hypotheses}
+                previous={state.previous}
+                title={hybrid ? "Candidate faults" : "Hypotheses"}
+                subtitle={hybrid ? (ats ? "share of simulated candidates (fault x wiring) still consistent" : "share of simulated candidates still consistent")
+                                 : "updated after each measurement"}
+              />
+            </>
+          )}
+          {ats && !manual && atsIntervention && hybrid && state.atsTranscription && (
+            <AtsTranscriptionCard t={state.atsTranscription} check={state.modelCheck} />
           )}
           {ats && !manual && atsIntervention && (
-            <Hypotheses hypotheses={state.hypotheses} previous={state.previous} title="Hypotheses" subtitle="the agent's final list" />
+            <Hypotheses hypotheses={state.hypotheses} previous={state.previous} title={hybrid ? "Candidate faults" : "Hypotheses"}
+                        subtitle={hybrid ? "the pipeline's final list" : "the agent's final list"} />
           )}
           <Feed items={view === state.mode && cur ? state.feed : []} manual={manual} title={hybrid ? "Hybrid pipeline" : undefined}
                 running={manualActive} />
