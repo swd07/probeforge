@@ -1,0 +1,402 @@
+created: '2026-10-31T12:35:24'
+seed: 20261031
+frozen:
+  ats_hybrid_read: 08b4676a5c4b
+  ats_hybrid_pipeline: 8a9c95c16c71
+  ats_hybrid_explain: 65fb997fbc54
+  ats_infogain: 2eff9c8764c1
+  ats_sheet_crops: 5687e25c8ce3
+  ats_agent: b3e681a84e0d
+  ats_agent_loop: efe23395808d
+  ats_tools: 9700f0488e24
+  ats_policy: 2e45800cdaff
+  ats_bench: 1897f5e2aa3e
+  ats_faults: 2f3ffeba22da
+  ats_scoring: 6eb679a9fe4f
+  ats_transcription_default: 7d269af0a274
+pool:
+  catalog: 118
+  visible: 49
+  visible_after_exclusions: 33
+  latent_after_exclusions: 67
+exclusions:
+  dev_faults:
+  - ER:J1-X1 stuck_open
+  - H1:W2_TSA-W2_P2 open
+  - H1:W6_TS5-W6_P6 open
+  - H1:W7_TS4-W7_P7 open
+  - H1:W9A_TB15-W9A_P9 open
+  - TS jammed
+  - TS:17-16 stuck_open
+  - TS:71-72 stuck_closed
+  - TS:8-9 stuck_closed
+  - TS:8-9 stuck_open
+  - TS:A-B burnt
+  - TS:A-B open
+  - XP:P1-J1 open
+  - XP:P18-J18 open
+  dev_twins:
+  - ER:X2-J16 stuck_open
+  - SE:J5-X2 stuck_open
+  - SE:X1-J2 stuck_open
+  ui_runs:
+  - when: 2026-10-31T10:38
+    mode: agent
+    faults:
+    - TS:4-20 stuck_open
+  ui_unknown: '2026-10-31T11:33: one UI agent run on a random fault that was not recorded and is not remembered; it may be
+    in this pool. Nothing was tuned on it.'
+rules:
+  latent: 'Latent faults: the correct outcome is insufficient information (no fault visible); any confident diagnosis counts
+    as confidently wrong, even one that names a twin.'
+  smoke: the first 5 cases, technical failures only, no changes
+  approvals: 'batch: approval tier approved, strong approval denied'
+  cap_usd: 6.0
+  runs: one run, no reruns
+cases:
+- id: h01
+  family: holdout
+  kind: visible single fault
+  latent: false
+  faults:
+  - component: TS
+    part: 17-18
+    mode: stuck_open
+  root_cause:
+    component: TS
+    part: 17-18
+    mode: stuck_open
+- id: h02
+  family: holdout
+  kind: visible single fault
+  latent: false
+  faults:
+  - component: H1
+    part: W8A_TB14-W8A_P8
+    mode: open
+  root_cause:
+    component: H1
+    part: W8A_TB14-W8A_P8
+    mode: open
+- id: h03
+  family: holdout
+  kind: visible single fault
+  latent: false
+  faults:
+  - component: XP
+    part: P13-J13
+    mode: open
+  root_cause:
+    component: XP
+    part: P13-J13
+    mode: open
+- id: h04
+  family: holdout
+  kind: visible single fault
+  latent: false
+  faults:
+  - component: XP
+    part: P10-J10
+    mode: open
+  root_cause:
+    component: XP
+    part: P10-J10
+    mode: open
+- id: h05
+  family: holdout
+  kind: visible single fault
+  latent: false
+  faults:
+  - component: H1
+    part: W21_TS5-W21_TS71
+    mode: open
+  root_cause:
+    component: H1
+    part: W21_TS5-W21_TS71
+    mode: open
+- id: h06
+  family: holdout
+  kind: visible single fault
+  latent: false
+  faults:
+  - component: CP
+    part: J14
+    mode: open
+  root_cause:
+    component: CP
+    part: J14
+    mode: open
+- id: h07
+  family: holdout
+  kind: visible single fault
+  latent: false
+  faults:
+  - component: NR
+    part: J8-J9
+    mode: stuck_open
+  root_cause:
+    component: NR
+    part: J8-J9
+    mode: stuck_open
+- id: h08
+  family: holdout
+  kind: visible single fault
+  latent: false
+  faults:
+  - component: CP
+    part: J13
+    mode: open
+  root_cause:
+    component: CP
+    part: J13
+    mode: open
+- id: h09
+  family: holdout
+  kind: visible single fault
+  latent: false
+  faults:
+  - component: H1
+    part: W10_TS17-W10_P10
+    mode: open
+  root_cause:
+    component: H1
+    part: W10_TS17-W10_P10
+    mode: open
+- id: h10
+  family: holdout
+  kind: visible single fault
+  latent: false
+  faults:
+  - component: H1
+    part: W13_TS16-W13_P13
+    mode: open
+  root_cause:
+    component: H1
+    part: W13_TS16-W13_P13
+    mode: open
+- id: h11
+  family: holdout
+  kind: visible single fault
+  latent: false
+  faults:
+  - component: XP
+    part: P8-J8
+    mode: open
+  root_cause:
+    component: XP
+    part: P8-J8
+    mode: open
+- id: h12
+  family: holdout
+  kind: visible single fault
+  latent: false
+  faults:
+  - component: XP
+    part: P6-J6
+    mode: open
+  root_cause:
+    component: XP
+    part: P6-J6
+    mode: open
+- id: h13
+  family: holdout
+  kind: visible single fault
+  latent: false
+  faults:
+  - component: TS
+    part: 19-21
+    mode: stuck_open
+  root_cause:
+    component: TS
+    part: 19-21
+    mode: stuck_open
+- id: h14
+  family: holdout
+  kind: visible single fault
+  latent: false
+  faults:
+  - component: CP
+    part: J7
+    mode: open
+  root_cause:
+    component: CP
+    part: J7
+    mode: open
+- id: h15
+  family: holdout
+  kind: visible single fault
+  latent: false
+  faults:
+  - component: CP
+    part: J18
+    mode: open
+  root_cause:
+    component: CP
+    part: J18
+    mode: open
+- id: h16
+  family: holdout
+  kind: visible single fault
+  latent: false
+  faults:
+  - component: XP
+    part: P14-J14
+    mode: open
+  root_cause:
+    component: XP
+    part: P14-J14
+    mode: open
+- id: h17
+  family: holdout
+  kind: visible single fault
+  latent: false
+  faults:
+  - component: H1
+    part: W14_TS18-W14_P14
+    mode: open
+  root_cause:
+    component: H1
+    part: W14_TS18-W14_P14
+    mode: open
+- id: h18
+  family: holdout
+  kind: visible single fault
+  latent: false
+  faults:
+  - component: TS
+    part: 5-22
+    mode: stuck_open
+  root_cause:
+    component: TS
+    part: 5-22
+    mode: stuck_open
+- id: h19
+  family: holdout
+  kind: visible single fault
+  latent: false
+  faults:
+  - component: TS
+    part: 17-16
+    mode: stuck_closed
+  root_cause:
+    component: TS
+    part: 17-16
+    mode: stuck_closed
+- id: h20
+  family: holdout
+  kind: visible single fault
+  latent: false
+  faults:
+  - component: TS
+    part: 17-18
+    mode: stuck_closed
+  root_cause:
+    component: TS
+    part: 17-18
+    mode: stuck_closed
+- id: h21
+  family: holdout
+  kind: visible single fault
+  latent: false
+  faults:
+  - component: H1
+    part: W16_TS72-W16_P16
+    mode: open
+  root_cause:
+    component: H1
+    part: W16_TS72-W16_P16
+    mode: open
+- id: h22
+  family: holdout
+  kind: visible single fault
+  latent: false
+  faults:
+  - component: TS
+    part: 71-72
+    mode: stuck_open
+  root_cause:
+    component: TS
+    part: 71-72
+    mode: stuck_open
+- id: h23
+  family: holdout
+  kind: visible single fault
+  latent: false
+  faults:
+  - component: XP
+    part: P2-J2
+    mode: open
+  root_cause:
+    component: XP
+    part: P2-J2
+    mode: open
+- id: h24
+  family: holdout
+  kind: visible single fault
+  latent: false
+  faults:
+  - component: XP
+    part: P7-J7
+    mode: open
+  root_cause:
+    component: XP
+    part: P7-J7
+    mode: open
+- id: h25
+  family: holdout
+  kind: 'burnout chain, other side (root: either cut-off; the coil is the consequence)'
+  latent: false
+  faults:
+  - component: TS
+    part: 6-7
+    mode: stuck_closed
+  - component: TS
+    part: 69-70
+    mode: stuck_closed
+  - component: TS
+    part: A-B
+    mode: burnt
+  root_cause:
+    component: TS
+    part: 6-7
+    mode: stuck_closed
+  also_accepted:
+  - component: TS
+    part: 69-70
+    mode: stuck_closed
+- id: h26
+  family: holdout
+  kind: latent single fault
+  latent: true
+  faults:
+  - component: TS
+    part: 5-22
+    mode: stuck_closed
+  root_cause:
+    component: TS
+    part: 5-22
+    mode: stuck_closed
+- id: h27
+  family: holdout
+  kind: latent single fault
+  latent: true
+  faults:
+  - component: SE
+    part: J3-J2
+    mode: stuck_closed
+  root_cause:
+    component: SE
+    part: J3-J2
+    mode: stuck_closed
+- id: h28
+  family: holdout
+  kind: latent single fault
+  latent: true
+  faults:
+  - component: H1
+    part: W15_TS70-W15_P15
+    mode: open
+  root_cause:
+    component: H1
+    part: W15_TS70-W15_P15
+    mode: open
