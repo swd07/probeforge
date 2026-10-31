@@ -6,6 +6,7 @@ import json
 
 from probeforge.ats import AtsBench
 from probeforge.ats.freeze import ats_frozen_hashes
+from tests.test_ats_hybrid import FROZEN_ATS
 from probeforge.ats.infogain import AtsInfoGain
 from probeforge.ats.nextstep import planned_next, reading_text
 from probeforge.faults.model import Fault
@@ -50,5 +51,4 @@ def test_reading_text():
 
 
 def test_frozen_modules_unchanged():
-    assert ats_frozen_hashes() == {"ats_hybrid_read": "08b4676a5c4b", "ats_hybrid_pipeline": "8a9c95c16c71",
-                                   "ats_hybrid_explain": "65fb997fbc54", "ats_infogain": "2eff9c8764c1", "ats_sheet_crops": "5687e25c8ce3"}
+    assert ats_frozen_hashes() == FROZEN_ATS

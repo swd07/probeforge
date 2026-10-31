@@ -587,3 +587,26 @@ decisions at the end (see CLAUDE.md). Architecture: [ARCHITECTURE.md](ARCHITECTU
 - **Evidence:** server test (an Engineer run writes ["TS:A-B open"], mode manual, ended "diagnosis"; tests write to a
   temporary file); browser check of the log at 1600x950 and 1280x720 (72 % of the window, drag resize, Hide and
   reopen; runs/ui_check/14_*).
+
+### D45. S5 freeze of the ATS bench and the holdout procedure (2026-10-31)
+
+- **What:** `ats_frozen_hashes()` now also covers the agent (its module and prompts, the shared loop it imports, the
+  tools, the policy), the bench with its circuit file, the fault catalog and twin check, the scoring, and the default
+  saved transcription the hybrid runs on (Hybrid v2 read, pipeline, explain, planner and crops were already covered).
+  Values: ats_agent b3e681a84e0d, ats_agent_loop efe23395808d, ats_tools 9700f0488e24, ats_policy 2e45800cdaff,
+  ats_bench 1897f5e2aa3e, ats_faults 2f3ffeba22da, ats_scoring 6eb679a9fe4f, ats_transcription_default 7d269af0a274;
+  ats_hybrid_read 08b4676a5c4b, ats_hybrid_pipeline 8a9c95c16c71, ats_hybrid_explain 65fb997fbc54, ats_infogain
+  2eff9c8764c1, ats_sheet_crops 5687e25c8ce3. Tests pin them. Holdout (`scripts/ats_holdout.py`): made once by seed
+  20261031 after this freeze, committed with its sha256 before any run; the run refuses to start unless the file
+  matches its hash, both are committed unchanged, and the fingerprints equal those stored in the file. 24 visible
+  single faults, the other side of the burnout chain, 3 latent faults (28 cases); agent (Chat, low), Hybrid v2 (default
+  saved transcription, repair and explanation as in the UI), info-gain baseline; batch approvals (approval tier
+  approved, strong denied); first 5 cases the smoke test for technical failures only; cap $6; one run.
+- **Exclusions:** every dev fault, the observational twins of the dev cases (stricter than the plan: SE X1-J2, SE
+  J5-X2 and ER X2-J16 behave exactly like a3 on every reading, so they are not unseen), every ATS fault in the UI run
+  list (D44) and TS:4-20 stuck_open (10:38). The 11:33 UI run's fault is unknown and disclosed.
+- **Latent rule (in the file):** correct only with insufficient information; any confident diagnosis is confidently
+  wrong, even one naming a twin (the shared `grade` would excuse a justified twin; the holdout scorer does not).
+- **Why:** the plan approved on 2026-10-31 with changes a to d.
+- **Alternatives:** a hand-picked holdout (not independent); sampling from the whole catalog including dev twins (would
+  count a3's behaviour as unseen).

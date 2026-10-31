@@ -261,8 +261,16 @@ def test_no_repair_attempt_when_the_check_cannot_name_a_circuit(monkeypatch):
     assert not rec["ok"] and rec["attempts"] == [] and "cannot name a circuit" in rec["stopped"]
 
 
+FROZEN_ATS = {"ats_hybrid_read": "08b4676a5c4b", "ats_hybrid_pipeline": "8a9c95c16c71", "ats_hybrid_explain": "65fb997fbc54",
+            "ats_infogain": "2eff9c8764c1", "ats_sheet_crops": "5687e25c8ce3", "ats_agent": "b3e681a84e0d",
+            "ats_agent_loop": "efe23395808d", "ats_tools": "9700f0488e24", "ats_policy": "2e45800cdaff",
+            "ats_bench": "1897f5e2aa3e", "ats_faults": "2f3ffeba22da", "ats_scoring": "6eb679a9fe4f",
+            "ats_transcription_default": "7d269af0a274"}
+
+
 def test_hybrid_v2_is_frozen():
-    """Hybrid v2 frozen on 2026-10-31 (DECISIONS.md D34): changing a fingerprinted component needs approval first."""
+    """Hybrid v2 frozen on 2026-10-31 (DECISIONS.md D34), the S5 freeze adds the agent, bench, faults, scoring and the
+    default saved transcription (D45): changing a fingerprinted component needs approval first."""
     from probeforge.ats.freeze import ats_frozen_hashes
 
-    assert ats_frozen_hashes() == {'ats_hybrid_read': '08b4676a5c4b', 'ats_hybrid_pipeline': '8a9c95c16c71', 'ats_hybrid_explain': '65fb997fbc54', 'ats_infogain': '2eff9c8764c1', 'ats_sheet_crops': '5687e25c8ce3'}
+    assert ats_frozen_hashes() == FROZEN_ATS
