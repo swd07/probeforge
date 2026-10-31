@@ -394,3 +394,21 @@ table.quality tr.worse td { color: var(--warn); }
 .schematic svg .planned-mark circle { fill: none; stroke: var(--warn); stroke-width: 2.5; stroke-dasharray: 4 3; }
 .schematic svg .planned-mark text { fill: var(--warn); font-size: 13px; font-weight: 700; }
 .controls select[aria-label="Drawing read"] { max-width: 230px; }
+
+/* ATS troubleshooting sheet */
+.ats-tools-row { display: flex; gap: 8px; align-items: flex-start; }
+.ats-tools-row .limits { flex: 1; min-width: 0; }
+.sheet-open { white-space: nowrap; font-size: 12px; padding: 6px 10px; }
+.sheet-label { color: var(--warn); font-weight: 700; margin: 4px 0 0; }
+.sheet-tabs { margin: 10px 0 4px; }
+.sheet-body h3 { margin: 8px 0; }
+.sheet-body h4 { margin: 10px 0 4px; color: var(--muted); text-transform: uppercase; font-size: 12px; letter-spacing: 0.04em; }
+.sheet-body ul, .sheet-body ol { margin: 0; padding-left: 18px; font-size: 13px; }
+.sheet-cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 18px; }
+.sheet-checks li { margin-bottom: 4px; }
+.sheet-checks li.isolate b { color: var(--warn); }
+.sheet-checks .detail { font-size: 12px; }
+.sheet-table-wrap { overflow-x: auto; }
+.sheet-table th, .sheet-table td { white-space: nowrap; font-family: ui-monospace, Consolas, monospace; font-size: 11px; }
+.sheet-table td:first-child, .sheet-table th:first-child { font-family: inherit; font-size: 12px; position: sticky; left: 0; background: var(--panel); }
+@media (max-width: 900px) { .sheet-cols { grid-template-columns: 1fr; } }

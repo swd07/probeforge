@@ -1,0 +1,1191 @@
+{
+  "label": "Generated from the simulator (our redrawing of drawing 978741), not reviewed by an engineer.",
+  "sheets": [
+    {
+      "family": "A",
+      "title": "operator circuit failure: Emergency accepted, transfer commanded, the switch does not operate",
+      "dev_cases": [
+        "a1_coil_open",
+        "a2_wire2_open",
+        "a3_er_output",
+        "a4_cutoff_8_9",
+        "a5_jammed",
+        "a6_pin1_open",
+        "a7_burnout_chain"
+      ],
+      "dev_cases_covered": [
+        "a1_coil_open",
+        "a2_wire2_open",
+        "a3_er_output",
+        "a4_cutoff_8_9",
+        "a5_jammed",
+        "a6_pin1_open",
+        "a7_burnout_chain"
+      ],
+      "symptom": {
+        "lights": [
+          "Emergency accepted",
+          "Load on Normal",
+          "Alert"
+        ],
+        "display": "Transfer Failure",
+        "alarms": [
+          "Transfer Failure"
+        ],
+        "generator": "running",
+        "load_powered": false,
+        "metering": {
+          "Normal": [
+            0,
+            0,
+            0
+          ],
+          "Emergency": [
+            208,
+            208,
+            208
+          ]
+        },
+        "events": [
+          "N Source Not Accepted (N Under Voltage)",
+          "Engine Start",
+          "E Source Accepted",
+          "Transfer Failure (Switch on Normal)"
+        ]
+      },
+      "causes": [
+        "TS jammed",
+        "TS 8-9 stuck_open",
+        "TS 71-72 stuck_open",
+        "TS A-B open",
+        "TS A-B burnt",
+        "SE X1-J2 stuck_open",
+        "SE J5-X2 stuck_open",
+        "ER J1-X1 stuck_open",
+        "ER X2-J16 stuck_open",
+        "XP P1-J1 open",
+        "XP P2-J2 open",
+        "XP P5-J5 open",
+        "XP P16-J16 open",
+        "H1 W1_TS8-W1_P1 open",
+        "H1 W2_TSA-W2_P2 open",
+        "H1 W5_TSB-W5_P5 open",
+        "H1 W16_TS72-W16_P16 open",
+        "H1 W17_TS4-W17_TS9 open",
+        "H1 W21_TS5-W21_TS71 open",
+        "TS 8-9 stuck_closed + TS 71-72 stuck_closed + TS A-B burnt",
+        "TS 6-7 stuck_closed + TS 69-70 stuck_closed + TS A-B burnt"
+      ],
+      "checks": [
+        {
+          "check": "Voltage TS:A to TS:B",
+          "tool": "measure_voltage",
+          "tier": "allowed (live, sources on)",
+          "expected": {
+            "TS jammed": "208 V",
+            "TS 8-9 stuck_open": "0 V",
+            "TS 71-72 stuck_open": "0 V",
+            "TS A-B open": "208 V",
+            "TS A-B burnt": "208 V",
+            "SE X1-J2 stuck_open": "0 V",
+            "SE J5-X2 stuck_open": "0 V",
+            "ER J1-X1 stuck_open": "0 V",
+            "ER X2-J16 stuck_open": "0 V",
+            "XP P1-J1 open": "0 V",
+            "XP P2-J2 open": "0 V",
+            "XP P5-J5 open": "0 V",
+            "XP P16-J16 open": "0 V",
+            "H1 W1_TS8-W1_P1 open": "0 V",
+            "H1 W2_TSA-W2_P2 open": "0 V",
+            "H1 W5_TSB-W5_P5 open": "0 V",
+            "H1 W16_TS72-W16_P16 open": "0 V",
+            "H1 W17_TS4-W17_TS9 open": "0 V",
+            "H1 W21_TS5-W21_TS71 open": "0 V",
+            "TS 8-9 stuck_closed + TS 71-72 stuck_closed + TS A-B burnt": "208 V",
+            "TS 6-7 stuck_closed + TS 69-70 stuck_closed + TS A-B burnt": "208 V"
+          },
+          "separates": [
+            [
+              [
+                "208 V",
+                [
+                  "TS jammed",
+                  "TS A-B open",
+                  "TS A-B burnt",
+                  "TS 8-9 stuck_closed + TS 71-72 stuck_closed + TS A-B burnt",
+                  "TS 6-7 stuck_closed + TS 69-70 stuck_closed + TS A-B burnt"
+                ]
+              ],
+              [
+                "0 V",
+                [
+                  "TS 8-9 stuck_open",
+                  "TS 71-72 stuck_open",
+                  "SE X1-J2 stuck_open",
+                  "SE J5-X2 stuck_open",
+                  "ER J1-X1 stuck_open",
+                  "ER X2-J16 stuck_open",
+                  "XP P1-J1 open",
+                  "XP P2-J2 open",
+                  "XP P5-J5 open",
+                  "XP P16-J16 open",
+                  "H1 W1_TS8-W1_P1 open",
+                  "H1 W2_TSA-W2_P2 open",
+                  "H1 W5_TSB-W5_P5 open",
+                  "H1 W16_TS72-W16_P16 open",
+                  "H1 W17_TS4-W17_TS9 open",
+                  "H1 W21_TS5-W21_TS71 open"
+                ]
+              ]
+            ]
+          ]
+        },
+        {
+          "check": "Voltage TS:8 to TS:9",
+          "tool": "measure_voltage",
+          "tier": "allowed (live, sources on)",
+          "expected": {
+            "TS jammed": "0 V",
+            "TS 8-9 stuck_open": "208 V",
+            "TS 71-72 stuck_open": "0 V",
+            "TS A-B open": "0 V",
+            "TS A-B burnt": "0 V",
+            "SE X1-J2 stuck_open": "0 V",
+            "SE J5-X2 stuck_open": "0 V",
+            "ER J1-X1 stuck_open": "0 V",
+            "ER X2-J16 stuck_open": "0 V",
+            "XP P1-J1 open": "0 V",
+            "XP P2-J2 open": "0 V",
+            "XP P5-J5 open": "0 V",
+            "XP P16-J16 open": "0 V",
+            "H1 W1_TS8-W1_P1 open": "0 V",
+            "H1 W2_TSA-W2_P2 open": "0 V",
+            "H1 W5_TSB-W5_P5 open": "0 V",
+            "H1 W16_TS72-W16_P16 open": "0 V",
+            "H1 W17_TS4-W17_TS9 open": "0 V",
+            "H1 W21_TS5-W21_TS71 open": "0 V",
+            "TS 8-9 stuck_closed + TS 71-72 stuck_closed + TS A-B burnt": "0 V",
+            "TS 6-7 stuck_closed + TS 69-70 stuck_closed + TS A-B burnt": "0 V"
+          },
+          "separates": [
+            [
+              [
+                "208 V",
+                [
+                  "TS 8-9 stuck_open"
+                ]
+              ],
+              [
+                "0 V",
+                [
+                  "TS 71-72 stuck_open",
+                  "SE X1-J2 stuck_open",
+                  "SE J5-X2 stuck_open",
+                  "ER J1-X1 stuck_open",
+                  "ER X2-J16 stuck_open",
+                  "XP P1-J1 open",
+                  "XP P2-J2 open",
+                  "XP P5-J5 open",
+                  "XP P16-J16 open",
+                  "H1 W1_TS8-W1_P1 open",
+                  "H1 W2_TSA-W2_P2 open",
+                  "H1 W5_TSB-W5_P5 open",
+                  "H1 W16_TS72-W16_P16 open",
+                  "H1 W17_TS4-W17_TS9 open",
+                  "H1 W21_TS5-W21_TS71 open"
+                ]
+              ]
+            ]
+          ]
+        },
+        {
+          "check": "Voltage TS:71 to TS:72",
+          "tool": "measure_voltage",
+          "tier": "allowed (live, sources on)",
+          "expected": {
+            "TS jammed": "0 V",
+            "TS 8-9 stuck_open": "0 V",
+            "TS 71-72 stuck_open": "208 V",
+            "TS A-B open": "0 V",
+            "TS A-B burnt": "0 V",
+            "SE X1-J2 stuck_open": "0 V",
+            "SE J5-X2 stuck_open": "0 V",
+            "ER J1-X1 stuck_open": "0 V",
+            "ER X2-J16 stuck_open": "0 V",
+            "XP P1-J1 open": "0 V",
+            "XP P2-J2 open": "0 V",
+            "XP P5-J5 open": "0 V",
+            "XP P16-J16 open": "0 V",
+            "H1 W1_TS8-W1_P1 open": "0 V",
+            "H1 W2_TSA-W2_P2 open": "0 V",
+            "H1 W5_TSB-W5_P5 open": "0 V",
+            "H1 W16_TS72-W16_P16 open": "0 V",
+            "H1 W17_TS4-W17_TS9 open": "0 V",
+            "H1 W21_TS5-W21_TS71 open": "0 V",
+            "TS 8-9 stuck_closed + TS 71-72 stuck_closed + TS A-B burnt": "0 V",
+            "TS 6-7 stuck_closed + TS 69-70 stuck_closed + TS A-B burnt": "0 V"
+          },
+          "separates": [
+            [
+              [
+                "208 V",
+                [
+                  "TS 71-72 stuck_open"
+                ]
+              ],
+              [
+                "0 V",
+                [
+                  "SE X1-J2 stuck_open",
+                  "SE J5-X2 stuck_open",
+                  "ER J1-X1 stuck_open",
+                  "ER X2-J16 stuck_open",
+                  "XP P1-J1 open",
+                  "XP P2-J2 open",
+                  "XP P5-J5 open",
+                  "XP P16-J16 open",
+                  "H1 W1_TS8-W1_P1 open",
+                  "H1 W2_TSA-W2_P2 open",
+                  "H1 W5_TSB-W5_P5 open",
+                  "H1 W16_TS72-W16_P16 open",
+                  "H1 W17_TS4-W17_TS9 open",
+                  "H1 W21_TS5-W21_TS71 open"
+                ]
+              ]
+            ]
+          ]
+        },
+        {
+          "check": "Voltage XP:P1 to XP:J1",
+          "tool": "measure_voltage",
+          "tier": "allowed (live, sources on)",
+          "expected": {
+            "TS jammed": "0 V",
+            "TS 8-9 stuck_open": "0 V",
+            "TS 71-72 stuck_open": "0 V",
+            "TS A-B open": "0 V",
+            "TS A-B burnt": "0 V",
+            "SE X1-J2 stuck_open": "0 V",
+            "SE J5-X2 stuck_open": "0 V",
+            "ER J1-X1 stuck_open": "0 V",
+            "ER X2-J16 stuck_open": "0 V",
+            "XP P1-J1 open": "208 V",
+            "XP P2-J2 open": "0 V",
+            "XP P5-J5 open": "0 V",
+            "XP P16-J16 open": "0 V",
+            "H1 W1_TS8-W1_P1 open": "0 V",
+            "H1 W2_TSA-W2_P2 open": "0 V",
+            "H1 W5_TSB-W5_P5 open": "0 V",
+            "H1 W16_TS72-W16_P16 open": "0 V",
+            "H1 W17_TS4-W17_TS9 open": "0 V",
+            "H1 W21_TS5-W21_TS71 open": "0 V",
+            "TS 8-9 stuck_closed + TS 71-72 stuck_closed + TS A-B burnt": "0 V",
+            "TS 6-7 stuck_closed + TS 69-70 stuck_closed + TS A-B burnt": "0 V"
+          },
+          "separates": [
+            [
+              [
+                "208 V",
+                [
+                  "XP P1-J1 open"
+                ]
+              ],
+              [
+                "0 V",
+                [
+                  "SE X1-J2 stuck_open",
+                  "SE J5-X2 stuck_open",
+                  "ER J1-X1 stuck_open",
+                  "ER X2-J16 stuck_open",
+                  "XP P2-J2 open",
+                  "XP P5-J5 open",
+                  "XP P16-J16 open",
+                  "H1 W1_TS8-W1_P1 open",
+                  "H1 W2_TSA-W2_P2 open",
+                  "H1 W5_TSB-W5_P5 open",
+                  "H1 W16_TS72-W16_P16 open",
+                  "H1 W17_TS4-W17_TS9 open",
+                  "H1 W21_TS5-W21_TS71 open"
+                ]
+              ]
+            ]
+          ]
+        },
+        {
+          "check": "Voltage XP:P2 to XP:J2",
+          "tool": "measure_voltage",
+          "tier": "allowed (live, sources on)",
+          "expected": {
+            "TS jammed": "0 V",
+            "TS 8-9 stuck_open": "0 V",
+            "TS 71-72 stuck_open": "0 V",
+            "TS A-B open": "0 V",
+            "TS A-B burnt": "0 V",
+            "SE X1-J2 stuck_open": "0 V",
+            "SE J5-X2 stuck_open": "0 V",
+            "ER J1-X1 stuck_open": "0 V",
+            "ER X2-J16 stuck_open": "0 V",
+            "XP P1-J1 open": "0 V",
+            "XP P2-J2 open": "208 V",
+            "XP P5-J5 open": "0 V",
+            "XP P16-J16 open": "0 V",
+            "H1 W1_TS8-W1_P1 open": "0 V",
+            "H1 W2_TSA-W2_P2 open": "0 V",
+            "H1 W5_TSB-W5_P5 open": "0 V",
+            "H1 W16_TS72-W16_P16 open": "0 V",
+            "H1 W17_TS4-W17_TS9 open": "0 V",
+            "H1 W21_TS5-W21_TS71 open": "0 V",
+            "TS 8-9 stuck_closed + TS 71-72 stuck_closed + TS A-B burnt": "0 V",
+            "TS 6-7 stuck_closed + TS 69-70 stuck_closed + TS A-B burnt": "0 V"
+          },
+          "separates": [
+            [
+              [
+                "208 V",
+                [
+                  "XP P2-J2 open"
+                ]
+              ],
+              [
+                "0 V",
+                [
+                  "SE X1-J2 stuck_open",
+                  "SE J5-X2 stuck_open",
+                  "ER J1-X1 stuck_open",
+                  "ER X2-J16 stuck_open",
+                  "XP P5-J5 open",
+                  "XP P16-J16 open",
+                  "H1 W1_TS8-W1_P1 open",
+                  "H1 W2_TSA-W2_P2 open",
+                  "H1 W5_TSB-W5_P5 open",
+                  "H1 W16_TS72-W16_P16 open",
+                  "H1 W17_TS4-W17_TS9 open",
+                  "H1 W21_TS5-W21_TS71 open"
+                ]
+              ]
+            ]
+          ]
+        },
+        {
+          "check": "Voltage XP:P5 to XP:J5",
+          "tool": "measure_voltage",
+          "tier": "allowed (live, sources on)",
+          "expected": {
+            "TS jammed": "0 V",
+            "TS 8-9 stuck_open": "0 V",
+            "TS 71-72 stuck_open": "0 V",
+            "TS A-B open": "0 V",
+            "TS A-B burnt": "0 V",
+            "SE X1-J2 stuck_open": "0 V",
+            "SE J5-X2 stuck_open": "0 V",
+            "ER J1-X1 stuck_open": "0 V",
+            "ER X2-J16 stuck_open": "0 V",
+            "XP P1-J1 open": "0 V",
+            "XP P2-J2 open": "0 V",
+            "XP P5-J5 open": "208 V",
+            "XP P16-J16 open": "0 V",
+            "H1 W1_TS8-W1_P1 open": "0 V",
+            "H1 W2_TSA-W2_P2 open": "0 V",
+            "H1 W5_TSB-W5_P5 open": "0 V",
+            "H1 W16_TS72-W16_P16 open": "0 V",
+            "H1 W17_TS4-W17_TS9 open": "0 V",
+            "H1 W21_TS5-W21_TS71 open": "0 V",
+            "TS 8-9 stuck_closed + TS 71-72 stuck_closed + TS A-B burnt": "0 V",
+            "TS 6-7 stuck_closed + TS 69-70 stuck_closed + TS A-B burnt": "0 V"
+          },
+          "separates": [
+            [
+              [
+                "208 V",
+                [
+                  "XP P5-J5 open"
+                ]
+              ],
+              [
+                "0 V",
+                [
+                  "SE X1-J2 stuck_open",
+                  "SE J5-X2 stuck_open",
+                  "ER J1-X1 stuck_open",
+                  "ER X2-J16 stuck_open",
+                  "XP P16-J16 open",
+                  "H1 W1_TS8-W1_P1 open",
+                  "H1 W2_TSA-W2_P2 open",
+                  "H1 W5_TSB-W5_P5 open",
+                  "H1 W16_TS72-W16_P16 open",
+                  "H1 W17_TS4-W17_TS9 open",
+                  "H1 W21_TS5-W21_TS71 open"
+                ]
+              ]
+            ]
+          ]
+        },
+        {
+          "check": "Voltage XP:P16 to XP:J16",
+          "tool": "measure_voltage",
+          "tier": "allowed (live, sources on)",
+          "expected": {
+            "TS jammed": "0 V",
+            "TS 8-9 stuck_open": "0 V",
+            "TS 71-72 stuck_open": "0 V",
+            "TS A-B open": "0 V",
+            "TS A-B burnt": "0 V",
+            "SE X1-J2 stuck_open": "0 V",
+            "SE J5-X2 stuck_open": "0 V",
+            "ER J1-X1 stuck_open": "0 V",
+            "ER X2-J16 stuck_open": "0 V",
+            "XP P1-J1 open": "0 V",
+            "XP P2-J2 open": "0 V",
+            "XP P5-J5 open": "0 V",
+            "XP P16-J16 open": "208 V",
+            "H1 W1_TS8-W1_P1 open": "0 V",
+            "H1 W2_TSA-W2_P2 open": "0 V",
+            "H1 W5_TSB-W5_P5 open": "0 V",
+            "H1 W16_TS72-W16_P16 open": "0 V",
+            "H1 W17_TS4-W17_TS9 open": "0 V",
+            "H1 W21_TS5-W21_TS71 open": "0 V",
+            "TS 8-9 stuck_closed + TS 71-72 stuck_closed + TS A-B burnt": "0 V",
+            "TS 6-7 stuck_closed + TS 69-70 stuck_closed + TS A-B burnt": "0 V"
+          },
+          "separates": [
+            [
+              [
+                "208 V",
+                [
+                  "XP P16-J16 open"
+                ]
+              ],
+              [
+                "0 V",
+                [
+                  "SE X1-J2 stuck_open",
+                  "SE J5-X2 stuck_open",
+                  "ER J1-X1 stuck_open",
+                  "ER X2-J16 stuck_open",
+                  "H1 W1_TS8-W1_P1 open",
+                  "H1 W2_TSA-W2_P2 open",
+                  "H1 W5_TSB-W5_P5 open",
+                  "H1 W16_TS72-W16_P16 open",
+                  "H1 W17_TS4-W17_TS9 open",
+                  "H1 W21_TS5-W21_TS71 open"
+                ]
+              ]
+            ]
+          ]
+        },
+        {
+          "check": "Voltage H1:W1_TS8 to H1:W1_P1",
+          "tool": "measure_voltage",
+          "tier": "allowed (live, sources on)",
+          "expected": {
+            "TS jammed": "0 V",
+            "TS 8-9 stuck_open": "0 V",
+            "TS 71-72 stuck_open": "0 V",
+            "TS A-B open": "0 V",
+            "TS A-B burnt": "0 V",
+            "SE X1-J2 stuck_open": "0 V",
+            "SE J5-X2 stuck_open": "0 V",
+            "ER J1-X1 stuck_open": "0 V",
+            "ER X2-J16 stuck_open": "0 V",
+            "XP P1-J1 open": "0 V",
+            "XP P2-J2 open": "0 V",
+            "XP P5-J5 open": "0 V",
+            "XP P16-J16 open": "0 V",
+            "H1 W1_TS8-W1_P1 open": "208 V",
+            "H1 W2_TSA-W2_P2 open": "0 V",
+            "H1 W5_TSB-W5_P5 open": "0 V",
+            "H1 W16_TS72-W16_P16 open": "0 V",
+            "H1 W17_TS4-W17_TS9 open": "0 V",
+            "H1 W21_TS5-W21_TS71 open": "0 V",
+            "TS 8-9 stuck_closed + TS 71-72 stuck_closed + TS A-B burnt": "0 V",
+            "TS 6-7 stuck_closed + TS 69-70 stuck_closed + TS A-B burnt": "0 V"
+          },
+          "separates": [
+            [
+              [
+                "208 V",
+                [
+                  "H1 W1_TS8-W1_P1 open"
+                ]
+              ],
+              [
+                "0 V",
+                [
+                  "SE X1-J2 stuck_open",
+                  "SE J5-X2 stuck_open",
+                  "ER J1-X1 stuck_open",
+                  "ER X2-J16 stuck_open",
+                  "H1 W2_TSA-W2_P2 open",
+                  "H1 W5_TSB-W5_P5 open",
+                  "H1 W16_TS72-W16_P16 open",
+                  "H1 W17_TS4-W17_TS9 open",
+                  "H1 W21_TS5-W21_TS71 open"
+                ]
+              ]
+            ]
+          ]
+        },
+        {
+          "check": "Voltage H1:W2_TSA to H1:W2_P2",
+          "tool": "measure_voltage",
+          "tier": "allowed (live, sources on)",
+          "expected": {
+            "TS jammed": "0 V",
+            "TS 8-9 stuck_open": "0 V",
+            "TS 71-72 stuck_open": "0 V",
+            "TS A-B open": "0 V",
+            "TS A-B burnt": "0 V",
+            "SE X1-J2 stuck_open": "0 V",
+            "SE J5-X2 stuck_open": "0 V",
+            "ER J1-X1 stuck_open": "0 V",
+            "ER X2-J16 stuck_open": "0 V",
+            "XP P1-J1 open": "0 V",
+            "XP P2-J2 open": "0 V",
+            "XP P5-J5 open": "0 V",
+            "XP P16-J16 open": "0 V",
+            "H1 W1_TS8-W1_P1 open": "0 V",
+            "H1 W2_TSA-W2_P2 open": "208 V",
+            "H1 W5_TSB-W5_P5 open": "0 V",
+            "H1 W16_TS72-W16_P16 open": "0 V",
+            "H1 W17_TS4-W17_TS9 open": "0 V",
+            "H1 W21_TS5-W21_TS71 open": "0 V",
+            "TS 8-9 stuck_closed + TS 71-72 stuck_closed + TS A-B burnt": "0 V",
+            "TS 6-7 stuck_closed + TS 69-70 stuck_closed + TS A-B burnt": "0 V"
+          },
+          "separates": [
+            [
+              [
+                "208 V",
+                [
+                  "H1 W2_TSA-W2_P2 open"
+                ]
+              ],
+              [
+                "0 V",
+                [
+                  "SE X1-J2 stuck_open",
+                  "SE J5-X2 stuck_open",
+                  "ER J1-X1 stuck_open",
+                  "ER X2-J16 stuck_open",
+                  "H1 W5_TSB-W5_P5 open",
+                  "H1 W16_TS72-W16_P16 open",
+                  "H1 W17_TS4-W17_TS9 open",
+                  "H1 W21_TS5-W21_TS71 open"
+                ]
+              ]
+            ]
+          ]
+        },
+        {
+          "check": "Voltage H1:W5_TSB to H1:W5_P5",
+          "tool": "measure_voltage",
+          "tier": "allowed (live, sources on)",
+          "expected": {
+            "TS jammed": "0 V",
+            "TS 8-9 stuck_open": "0 V",
+            "TS 71-72 stuck_open": "0 V",
+            "TS A-B open": "0 V",
+            "TS A-B burnt": "0 V",
+            "SE X1-J2 stuck_open": "0 V",
+            "SE J5-X2 stuck_open": "0 V",
+            "ER J1-X1 stuck_open": "0 V",
+            "ER X2-J16 stuck_open": "0 V",
+            "XP P1-J1 open": "0 V",
+            "XP P2-J2 open": "0 V",
+            "XP P5-J5 open": "0 V",
+            "XP P16-J16 open": "0 V",
+            "H1 W1_TS8-W1_P1 open": "0 V",
+            "H1 W2_TSA-W2_P2 open": "0 V",
+            "H1 W5_TSB-W5_P5 open": "208 V",
+            "H1 W16_TS72-W16_P16 open": "0 V",
+            "H1 W17_TS4-W17_TS9 open": "0 V",
+            "H1 W21_TS5-W21_TS71 open": "0 V",
+            "TS 8-9 stuck_closed + TS 71-72 stuck_closed + TS A-B burnt": "0 V",
+            "TS 6-7 stuck_closed + TS 69-70 stuck_closed + TS A-B burnt": "0 V"
+          },
+          "separates": [
+            [
+              [
+                "208 V",
+                [
+                  "H1 W5_TSB-W5_P5 open"
+                ]
+              ],
+              [
+                "0 V",
+                [
+                  "SE X1-J2 stuck_open",
+                  "SE J5-X2 stuck_open",
+                  "ER J1-X1 stuck_open",
+                  "ER X2-J16 stuck_open",
+                  "H1 W16_TS72-W16_P16 open",
+                  "H1 W17_TS4-W17_TS9 open",
+                  "H1 W21_TS5-W21_TS71 open"
+                ]
+              ]
+            ]
+          ]
+        },
+        {
+          "check": "Voltage H1:W16_TS72 to H1:W16_P16",
+          "tool": "measure_voltage",
+          "tier": "allowed (live, sources on)",
+          "expected": {
+            "TS jammed": "0 V",
+            "TS 8-9 stuck_open": "0 V",
+            "TS 71-72 stuck_open": "0 V",
+            "TS A-B open": "0 V",
+            "TS A-B burnt": "0 V",
+            "SE X1-J2 stuck_open": "0 V",
+            "SE J5-X2 stuck_open": "0 V",
+            "ER J1-X1 stuck_open": "0 V",
+            "ER X2-J16 stuck_open": "0 V",
+            "XP P1-J1 open": "0 V",
+            "XP P2-J2 open": "0 V",
+            "XP P5-J5 open": "0 V",
+            "XP P16-J16 open": "0 V",
+            "H1 W1_TS8-W1_P1 open": "0 V",
+            "H1 W2_TSA-W2_P2 open": "0 V",
+            "H1 W5_TSB-W5_P5 open": "0 V",
+            "H1 W16_TS72-W16_P16 open": "208 V",
+            "H1 W17_TS4-W17_TS9 open": "0 V",
+            "H1 W21_TS5-W21_TS71 open": "0 V",
+            "TS 8-9 stuck_closed + TS 71-72 stuck_closed + TS A-B burnt": "0 V",
+            "TS 6-7 stuck_closed + TS 69-70 stuck_closed + TS A-B burnt": "0 V"
+          },
+          "separates": [
+            [
+              [
+                "208 V",
+                [
+                  "H1 W16_TS72-W16_P16 open"
+                ]
+              ],
+              [
+                "0 V",
+                [
+                  "SE X1-J2 stuck_open",
+                  "SE J5-X2 stuck_open",
+                  "ER J1-X1 stuck_open",
+                  "ER X2-J16 stuck_open",
+                  "H1 W17_TS4-W17_TS9 open",
+                  "H1 W21_TS5-W21_TS71 open"
+                ]
+              ]
+            ]
+          ]
+        },
+        {
+          "check": "Voltage H1:W17_TS4 to H1:W17_TS9",
+          "tool": "measure_voltage",
+          "tier": "allowed (live, sources on)",
+          "expected": {
+            "TS jammed": "0 V",
+            "TS 8-9 stuck_open": "0 V",
+            "TS 71-72 stuck_open": "0 V",
+            "TS A-B open": "0 V",
+            "TS A-B burnt": "0 V",
+            "SE X1-J2 stuck_open": "0 V",
+            "SE J5-X2 stuck_open": "0 V",
+            "ER J1-X1 stuck_open": "0 V",
+            "ER X2-J16 stuck_open": "0 V",
+            "XP P1-J1 open": "0 V",
+            "XP P2-J2 open": "0 V",
+            "XP P5-J5 open": "0 V",
+            "XP P16-J16 open": "0 V",
+            "H1 W1_TS8-W1_P1 open": "0 V",
+            "H1 W2_TSA-W2_P2 open": "0 V",
+            "H1 W5_TSB-W5_P5 open": "0 V",
+            "H1 W16_TS72-W16_P16 open": "0 V",
+            "H1 W17_TS4-W17_TS9 open": "208 V",
+            "H1 W21_TS5-W21_TS71 open": "0 V",
+            "TS 8-9 stuck_closed + TS 71-72 stuck_closed + TS A-B burnt": "0 V",
+            "TS 6-7 stuck_closed + TS 69-70 stuck_closed + TS A-B burnt": "0 V"
+          },
+          "separates": [
+            [
+              [
+                "208 V",
+                [
+                  "H1 W17_TS4-W17_TS9 open"
+                ]
+              ],
+              [
+                "0 V",
+                [
+                  "SE X1-J2 stuck_open",
+                  "SE J5-X2 stuck_open",
+                  "ER J1-X1 stuck_open",
+                  "ER X2-J16 stuck_open",
+                  "H1 W21_TS5-W21_TS71 open"
+                ]
+              ]
+            ]
+          ]
+        },
+        {
+          "check": "Voltage H1:W21_TS5 to H1:W21_TS71",
+          "tool": "measure_voltage",
+          "tier": "allowed (live, sources on)",
+          "expected": {
+            "TS jammed": "0 V",
+            "TS 8-9 stuck_open": "0 V",
+            "TS 71-72 stuck_open": "0 V",
+            "TS A-B open": "0 V",
+            "TS A-B burnt": "0 V",
+            "SE X1-J2 stuck_open": "0 V",
+            "SE J5-X2 stuck_open": "0 V",
+            "ER J1-X1 stuck_open": "0 V",
+            "ER X2-J16 stuck_open": "0 V",
+            "XP P1-J1 open": "0 V",
+            "XP P2-J2 open": "0 V",
+            "XP P5-J5 open": "0 V",
+            "XP P16-J16 open": "0 V",
+            "H1 W1_TS8-W1_P1 open": "0 V",
+            "H1 W2_TSA-W2_P2 open": "0 V",
+            "H1 W5_TSB-W5_P5 open": "0 V",
+            "H1 W16_TS72-W16_P16 open": "0 V",
+            "H1 W17_TS4-W17_TS9 open": "0 V",
+            "H1 W21_TS5-W21_TS71 open": "208 V",
+            "TS 8-9 stuck_closed + TS 71-72 stuck_closed + TS A-B burnt": "0 V",
+            "TS 6-7 stuck_closed + TS 69-70 stuck_closed + TS A-B burnt": "0 V"
+          },
+          "separates": [
+            [
+              [
+                "208 V",
+                [
+                  "H1 W21_TS5-W21_TS71 open"
+                ]
+              ],
+              [
+                "0 V",
+                [
+                  "SE X1-J2 stuck_open",
+                  "SE J5-X2 stuck_open",
+                  "ER J1-X1 stuck_open",
+                  "ER X2-J16 stuck_open"
+                ]
+              ]
+            ]
+          ]
+        },
+        {
+          "check": "Isolate both sources (52U open, generator locked out)",
+          "tool": "isolate_sources",
+          "tier": "approval (strong approval if the load were powered)",
+          "expected": {},
+          "separates": []
+        },
+        {
+          "check": "Manual operation check, then resistance TS:8 to TS:9",
+          "tool": "manual_operation_check",
+          "tier": "allowed only with both sources isolated",
+          "expected": {
+            "TS jammed": "does not move, reads 0 ohm",
+            "TS 8-9 stuck_open": "moves, reads open",
+            "TS 71-72 stuck_open": "moves, reads open",
+            "TS A-B open": "moves, reads open",
+            "TS A-B burnt": "moves, reads open",
+            "SE X1-J2 stuck_open": "moves, reads open",
+            "SE J5-X2 stuck_open": "moves, reads open",
+            "ER J1-X1 stuck_open": "moves, reads open",
+            "ER X2-J16 stuck_open": "moves, reads open",
+            "XP P1-J1 open": "moves, reads open",
+            "XP P2-J2 open": "moves, reads open",
+            "XP P5-J5 open": "moves, reads open",
+            "XP P16-J16 open": "moves, reads open",
+            "H1 W1_TS8-W1_P1 open": "moves, reads open",
+            "H1 W2_TSA-W2_P2 open": "moves, reads open",
+            "H1 W5_TSB-W5_P5 open": "moves, reads open",
+            "H1 W16_TS72-W16_P16 open": "moves, reads open",
+            "H1 W17_TS4-W17_TS9 open": "moves, reads open",
+            "H1 W21_TS5-W21_TS71 open": "moves, reads open",
+            "TS 8-9 stuck_closed + TS 71-72 stuck_closed + TS A-B burnt": "moves, reads 0 ohm",
+            "TS 6-7 stuck_closed + TS 69-70 stuck_closed + TS A-B burnt": "moves, reads open"
+          },
+          "separates": [
+            [
+              [
+                "does not move, reads 0 ohm",
+                [
+                  "TS jammed"
+                ]
+              ],
+              [
+                "moves, reads 0 ohm",
+                [
+                  "TS 8-9 stuck_closed + TS 71-72 stuck_closed + TS A-B burnt"
+                ]
+              ],
+              [
+                "moves, reads open",
+                [
+                  "TS A-B open",
+                  "TS A-B burnt",
+                  "TS 6-7 stuck_closed + TS 69-70 stuck_closed + TS A-B burnt"
+                ]
+              ]
+            ]
+          ]
+        },
+        {
+          "check": "Resistance TS:6 to TS:7",
+          "tool": "measure_resistance",
+          "tier": "allowed only with both sources isolated",
+          "expected": {
+            "TS jammed": "open",
+            "TS 8-9 stuck_open": "open",
+            "TS 71-72 stuck_open": "open",
+            "TS A-B open": "open",
+            "TS A-B burnt": "open",
+            "SE X1-J2 stuck_open": "open",
+            "SE J5-X2 stuck_open": "open",
+            "ER J1-X1 stuck_open": "open",
+            "ER X2-J16 stuck_open": "open",
+            "XP P1-J1 open": "open",
+            "XP P2-J2 open": "open",
+            "XP P5-J5 open": "open",
+            "XP P16-J16 open": "open",
+            "H1 W1_TS8-W1_P1 open": "open",
+            "H1 W2_TSA-W2_P2 open": "open",
+            "H1 W5_TSB-W5_P5 open": "open",
+            "H1 W16_TS72-W16_P16 open": "open",
+            "H1 W17_TS4-W17_TS9 open": "open",
+            "H1 W21_TS5-W21_TS71 open": "open",
+            "TS 8-9 stuck_closed + TS 71-72 stuck_closed + TS A-B burnt": "open",
+            "TS 6-7 stuck_closed + TS 69-70 stuck_closed + TS A-B burnt": "0 ohm"
+          },
+          "separates": [
+            [
+              [
+                "0 ohm",
+                [
+                  "TS 6-7 stuck_closed + TS 69-70 stuck_closed + TS A-B burnt"
+                ]
+              ],
+              [
+                "open",
+                [
+                  "TS A-B open",
+                  "TS A-B burnt"
+                ]
+              ]
+            ]
+          ]
+        }
+      ],
+      "not_separated": [
+        [
+          "TS A-B open",
+          "TS A-B burnt"
+        ],
+        [
+          "SE X1-J2 stuck_open",
+          "SE J5-X2 stuck_open",
+          "ER J1-X1 stuck_open",
+          "ER X2-J16 stuck_open"
+        ]
+      ],
+      "not_separated_why": [
+        "the same part in both: the same repair",
+        "relay contacts inside the controller, between points that cannot be probed: the controller is the repair"
+      ],
+      "variant": "A"
+    },
+    {
+      "family": "B",
+      "title": "generator running but not accepted: no transfer command",
+      "dev_cases": [
+        "b1_wire7_open"
+      ],
+      "dev_cases_covered": [
+        "b1_wire7_open"
+      ],
+      "symptom": {
+        "lights": [
+          "Load on Normal"
+        ],
+        "display": "Waiting for Emergency Acceptable",
+        "alarms": [],
+        "generator": "running",
+        "load_powered": false,
+        "metering": {
+          "Normal": [
+            0,
+            0,
+            0
+          ],
+          "Emergency": [
+            0,
+            208,
+            0
+          ]
+        },
+        "events": [
+          "N Source Not Accepted (N Under Voltage)",
+          "Engine Start"
+        ]
+      },
+      "causes": [
+        "CP J7 open",
+        "XP P7-J7 open",
+        "H1 W7_TS4-W7_P7 open"
+      ],
+      "checks": [
+        {
+          "check": "Voltage XP:P7 to NN",
+          "tool": "measure_voltage",
+          "tier": "allowed (live, sources on)",
+          "expected": {
+            "CP J7 open": "120.1 V",
+            "XP P7-J7 open": "120.1 V",
+            "H1 W7_TS4-W7_P7 open": "0 V"
+          },
+          "separates": [
+            [
+              [
+                "0 V",
+                [
+                  "H1 W7_TS4-W7_P7 open"
+                ]
+              ],
+              [
+                "120.1 V",
+                [
+                  "CP J7 open",
+                  "XP P7-J7 open"
+                ]
+              ]
+            ]
+          ]
+        },
+        {
+          "check": "Voltage XP:J7 to NN",
+          "tool": "measure_voltage",
+          "tier": "allowed (live, sources on)",
+          "expected": {
+            "CP J7 open": "120.1 V",
+            "XP P7-J7 open": "0 V",
+            "H1 W7_TS4-W7_P7 open": "0 V"
+          },
+          "separates": [
+            [
+              [
+                "120.1 V",
+                [
+                  "CP J7 open"
+                ]
+              ],
+              [
+                "0 V",
+                [
+                  "XP P7-J7 open"
+                ]
+              ]
+            ]
+          ]
+        }
+      ],
+      "not_separated": [],
+      "not_separated_why": [],
+      "variant": "B1"
+    },
+    {
+      "family": "B",
+      "title": "generator running but not accepted: no transfer command",
+      "dev_cases": [
+        "b2_pin18_open"
+      ],
+      "dev_cases_covered": [
+        "b2_pin18_open"
+      ],
+      "symptom": {
+        "lights": [
+          "Load on Normal"
+        ],
+        "display": "Waiting for Emergency Acceptable",
+        "alarms": [],
+        "generator": "running",
+        "load_powered": false,
+        "metering": {
+          "Normal": [
+            0,
+            0,
+            0
+          ],
+          "Emergency": [
+            0,
+            0,
+            208
+          ]
+        },
+        "events": [
+          "N Source Not Accepted (N Under Voltage)",
+          "Engine Start"
+        ]
+      },
+      "causes": [
+        "CP J18 open",
+        "XP P18-J18 open",
+        "H1 W25_TS19-W25_P18 open"
+      ],
+      "checks": [
+        {
+          "check": "Voltage XP:P18 to NN",
+          "tool": "measure_voltage",
+          "tier": "allowed (live, sources on)",
+          "expected": {
+            "CP J18 open": "120.1 V",
+            "XP P18-J18 open": "120.1 V",
+            "H1 W25_TS19-W25_P18 open": "0 V"
+          },
+          "separates": [
+            [
+              [
+                "0 V",
+                [
+                  "H1 W25_TS19-W25_P18 open"
+                ]
+              ],
+              [
+                "120.1 V",
+                [
+                  "CP J18 open",
+                  "XP P18-J18 open"
+                ]
+              ]
+            ]
+          ]
+        },
+        {
+          "check": "Voltage XP:J18 to NN",
+          "tool": "measure_voltage",
+          "tier": "allowed (live, sources on)",
+          "expected": {
+            "CP J18 open": "120.1 V",
+            "XP P18-J18 open": "0 V",
+            "H1 W25_TS19-W25_P18 open": "0 V"
+          },
+          "separates": [
+            [
+              [
+                "120.1 V",
+                [
+                  "CP J18 open"
+                ]
+              ],
+              [
+                "0 V",
+                [
+                  "XP P18-J18 open"
+                ]
+              ]
+            ]
+          ]
+        }
+      ],
+      "not_separated": [],
+      "not_separated_why": [],
+      "variant": "B2"
+    },
+    {
+      "family": "B",
+      "title": "generator running but not accepted: no transfer command",
+      "dev_cases": [
+        "b3_wire6_open"
+      ],
+      "dev_cases_covered": [
+        "b3_wire6_open"
+      ],
+      "symptom": {
+        "lights": [
+          "Load on Normal"
+        ],
+        "display": "Waiting for Emergency Acceptable",
+        "alarms": [],
+        "generator": "running",
+        "load_powered": false,
+        "metering": {
+          "Normal": [
+            0,
+            0,
+            0
+          ],
+          "Emergency": [
+            208,
+            0,
+            0
+          ]
+        },
+        "events": [
+          "N Source Not Accepted (N Under Voltage)",
+          "Engine Start"
+        ]
+      },
+      "causes": [
+        "CP J6 open",
+        "XP P6-J6 open",
+        "H1 W6_TS5-W6_P6 open"
+      ],
+      "checks": [
+        {
+          "check": "Voltage XP:P6 to NN",
+          "tool": "measure_voltage",
+          "tier": "allowed (live, sources on)",
+          "expected": {
+            "CP J6 open": "120.1 V",
+            "XP P6-J6 open": "120.1 V",
+            "H1 W6_TS5-W6_P6 open": "0 V"
+          },
+          "separates": [
+            [
+              [
+                "0 V",
+                [
+                  "H1 W6_TS5-W6_P6 open"
+                ]
+              ],
+              [
+                "120.1 V",
+                [
+                  "CP J6 open",
+                  "XP P6-J6 open"
+                ]
+              ]
+            ]
+          ]
+        },
+        {
+          "check": "Voltage XP:J6 to NN",
+          "tool": "measure_voltage",
+          "tier": "allowed (live, sources on)",
+          "expected": {
+            "CP J6 open": "120.1 V",
+            "XP P6-J6 open": "0 V",
+            "H1 W6_TS5-W6_P6 open": "0 V"
+          },
+          "separates": [
+            [
+              [
+                "120.1 V",
+                [
+                  "CP J6 open"
+                ]
+              ],
+              [
+                "0 V",
+                [
+                  "XP P6-J6 open"
+                ]
+              ]
+            ]
+          ]
+        }
+      ],
+      "not_separated": [],
+      "not_separated_why": [],
+      "variant": "B3"
+    }
+  ]
+}

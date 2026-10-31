@@ -120,6 +120,15 @@ def ats_meta() -> dict:
     return ats.meta()
 
 
+@app.get("/api/ats/troubleshooting")
+def ats_troubleshooting() -> Response:
+    """The troubleshooting sheet for families A and B (scripts/ats_troubleshooting.py), generated from the simulator."""
+    path = ROOT / "docs" / "ATS_TROUBLESHOOTING.json"
+    if not path.is_file():
+        return Response("generate it first: scripts/ats_troubleshooting.py", status_code=404)
+    return Response(path.read_text(encoding="utf-8"), media_type="application/json")
+
+
 @app.get("/api/ats/schematic")
 def ats_schematic() -> Response:
     return Response(ats.SVG, media_type="image/svg+xml")

@@ -11,6 +11,7 @@ import { Hypotheses } from "./components/Hypotheses";
 import { ManualPanel, type MeterState } from "./components/ManualPanel";
 import { Schematic, type View } from "./components/Schematic";
 import { TopBar } from "./components/TopBar";
+import { TroubleshootingView } from "./components/Troubleshooting";
 import type { AtsMeta, AtsPanel as AtsPanelState, Bench, Meta, Mode } from "./types";
 import { useSession } from "./useSession";
 
@@ -27,6 +28,7 @@ export function App() {
   const [showTruth, setShowTruth] = useState(false);
   const [diagnosing, setDiagnosing] = useState(false);
   const [comparing, setComparing] = useState(false);
+  const [sheetOpen, setSheetOpen] = useState(false);
   const [meter, setMeter] = useState<MeterState>({ kind: "V", a: null, b: null, hold: 0.2, wait: 6, reason: "manual check" });
   const [chosenMode, setChosenMode] = useState<Mode>("agent");
   const ats = bench === "ats";
@@ -118,7 +120,13 @@ export function App() {
           {ats ? (
             <>
               <AtsPanel meta={atsMeta} panel={atsPanel} checkedPosition={atsDiagnosing ? checkedPosition : undefined} />
-              <LimitsTable meta={atsMeta} />
+              <div className="ats-tools-row">
+                <LimitsTable meta={atsMeta} />
+                <button className="btn ghost sheet-open" onClick={() => setSheetOpen(true)}
+                        title="Generated from the simulator, not reviewed by an engineer">
+                  Troubleshooting sheet (A, B)
+                </button>
+              </div>
             </>
           ) : (
             <FrontPanel
@@ -238,6 +246,7 @@ export function App() {
           }}
         />
       )}
+      {sheetOpen && <TroubleshootingView onClose={() => setSheetOpen(false)} />}
       {comparing && <CompareView result={state.compare} progress={state.compareProgress} onClose={() => setComparing(false)} ats={ats} />}
     </div>
   );
