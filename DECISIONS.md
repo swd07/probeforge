@@ -610,3 +610,15 @@ decisions at the end (see CLAUDE.md). Architecture: [ARCHITECTURE.md](ARCHITECTU
 - **Why:** the plan approved on 2026-10-31 with changes a to d.
 - **Alternatives:** a hand-picked holdout (not independent); sampling from the whole catalog including dev twins (would
   count a3's behaviour as unseen).
+
+### D46. S5 holdout run and results (2026-10-31)
+
+- **What:** the single holdout run (runs/20261031_123544_ats_holdout, list sha256 9f570d3c...c39e, fingerprints as in
+  D45), written up in docs/results/ats_results.md with dev and holdout side by side. Nothing was changed after the run
+  started; the smoke test (h01 to h05) had no technical failure.
+- **Evidence:** part-level correct agent 17/28, Hybrid v2 18/28, baseline 18/28 (hybrid equal to the ceiling case by
+  case); confidently wrong 3, 0, 0 (agent: h06, h10 position-feedback guesses, h25 the burnt coil instead of the
+  root cause); latent 3/3 for all; 8 position-feedback faults insufficient information for all three, because
+  isolating a powered load needs strong approval and the batch rule denies it; agent 2 correct diagnoses after the
+  UPS ran out (h13, h18); explanation check 28/28 (15 model texts, 13 templates); cost $3.54 of the $6 cap.
+- **Why recorded:** the results doc is the reference for the README and the demo; the holdout is the only unseen test.
