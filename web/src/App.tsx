@@ -8,10 +8,13 @@ import { Feed } from "./components/Feed";
 import { FrontPanel } from "./components/FrontPanel";
 import { Hypotheses } from "./components/Hypotheses";
 import { ManualPanel, type MeterState } from "./components/ManualPanel";
-import { Schematic } from "./components/Schematic";
+import { Schematic, type View } from "./components/Schematic";
 import { TopBar } from "./components/TopBar";
 import type { AtsMeta, AtsPanel as AtsPanelState, Bench, Meta, Mode } from "./types";
 import { useSession } from "./useSession";
+
+// ATS drawing: open on the operator circuit and sensing (the right-hand region), about 1.6 times the whole-drawing fit
+const ATS_HOME: View = { x: 620, y: 90, w: 1720, h: 740 };
 
 export function App() {
   const [meta, setMeta] = useState<Meta | null>(null);
@@ -137,6 +140,7 @@ export function App() {
               suspects={suspects}
               followDefault={state.mode !== "manual"}
               fitKey={state.done ? "reveal" : state.feed.length === 0 ? "start" : "run"}
+              home={ats ? ATS_HOME : undefined}
             />
             {pickNote && <div className="error-banner">{pickNote}</div>}
             {cur && state.error && <div className="error-banner">{state.error}</div>}

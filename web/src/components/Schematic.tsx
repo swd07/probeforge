@@ -10,10 +10,11 @@ interface Props {
   selected?: (string | null)[];
   suspects?: { component: string; part: string }[]; // ATS: the leading hypotheses, outlined on the drawing
   followDefault: boolean; // agent mode: zoom to each new measurement
-  fitKey: string; // changes at session start and at the reveal: zoom out to the whole drawing
+  fitKey: string; // changes at session start and at the reveal: zoom out to the home view
+  home?: View; // the default view (drawing units); without it the home view is the whole drawing
 }
 
-interface View {
+export interface View {
   x: number;
   y: number;
   w: number;
@@ -35,7 +36,7 @@ function formatValue(p: Probe) {
  * viewBox, so labels stay sharp at any zoom. */
 const SNAP_PX = 14; // a click this close to a terminal (screen pixels) picks the terminal
 
-export function Schematic({ svg, nets, probes, truthLive, onPick, selected = [], suspects = [], followDefault, fitKey }: Props) {
+export function Schematic({ svg, nets, probes, truthLive, onPick, selected = [], suspects = [], followDefault, fitKey, home }: Props) {
   const host = useRef<HTMLDivElement>(null);
   const full = useRef<View | null>(null);
   const view = useRef<View | null>(null);
@@ -89,6 +90,12 @@ export function Schematic({ svg, nets, probes, truthLive, onPick, selected = [],
     if (full.current) animateTo(full.current);
   }, [animateTo]);
 
+  const goHome = useCallback(() => {
+    if (!full.current) return;
+    if (home && host.current) animateTo(normalize(home));
+    else animateTo(full.current);
+  }, [animateTo, normalize, home]);
+
   // remember the drawing's own viewBox once the SVG is in the DOM
   useEffect(() => {
     const el = root();
@@ -96,13 +103,13 @@ export function Schematic({ svg, nets, probes, truthLive, onPick, selected = [],
     const vb = el.getAttribute("viewBox")?.split(/\s+/).map(Number);
     if (vb && vb.length === 4) {
       full.current = { x: vb[0], y: vb[1], w: vb[2], h: vb[3] };
-      apply(full.current);
+      apply(home && host.current ? normalize(home) : full.current);
     }
-  }, [svg]);
+  }, [svg]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    fit();
-  }, [fitKey, fit]);
+    goHome();
+  }, [fitKey, goHome]);
 
   // mouse wheel zooms around the cursor (non-passive listener so the page does not scroll)
   useEffect(() => {
@@ -303,7 +310,19 @@ export function Schematic({ svg, nets, probes, truthLive, onPick, selected = [],
           </label>
           <button onClick={() => zoomBy(1 / 1.4)} aria-label="Zoom in">+</button>
           <button onClick={() => zoomBy(1.4)} aria-label="Zoom out">{"−"}</button>
+          {home && (
+            <button
+              title="The default view"
+              onClick={() => {
+                setFollow(false);
+                goHome();
+              }}
+            >
+              Home
+            </button>
+          )}
           <button
+            title="The whole drawing"
             onClick={() => {
               setFollow(false);
               fit();
