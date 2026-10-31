@@ -448,3 +448,19 @@ decisions at the end (see CLAUDE.md). Architecture: [ARCHITECTURE.md](ARCHITECTU
   A7 stopped at the burnt coil, the consequence, while Chat found the misadjusted cut-off, the root cause. Responses was
   faster and cheaper but closed earlier; for this domain we keep the more thorough transport.
 
+
+### D39. The planner's next step in the UI, read from the frozen planner's update hook (2026-10-31)
+- **What:** `probeforge/ats/nextstep.py` (not frozen) computes the planner's next step for the UI from the update hook
+  of the frozen `AtsInfoGain`, using the planner's own choice (`_best`) and prediction (`_predict`); it changes nothing.
+  The run loop calls the hook right before it chooses, with nothing in between, so the plan shown is the step taken.
+  Saved transcriptions (the model step of two recorded Hybrid v2 runs) move to scenarios/transcriptions/ats/ so the UI
+  and offline checks run the frozen hybrid without API calls.
+- **Why:** engineer point 7 (show the next measurement and what it separates) without editing a fingerprinted module.
+- **Alternatives:** a hook inside the frozen planner (would change its fingerprint and need a re-freeze); recomputing the
+  plan with a copy of the planner logic (could drift from what the run actually does).
+- **Evidence (gate, scripts/ats_nextstep_identity.py, no API calls):** 3 models (the baseline on the true netlist and
+  the two saved transcriptions) x 12 dev cases: tool logs and diagnoses identical with and without the helper, and all
+  186 plans were the step the run then took. Frozen fingerprints unchanged.
+- **Privacy of the saved transcriptions:** model outputs only; the export refuses to write if any word of the submittal
+  cover page text (the only page with a text layer), not already public in this repo, occurs in the file (0 found for
+  both); the free-text words were also reviewed by hand (generic technical words only).
