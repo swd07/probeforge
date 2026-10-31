@@ -31,7 +31,15 @@ export interface AtsPanel {
   normal_source: string;
   generator: string;
   load_powered: boolean;
-  ups: { autonomy_s: number; left_s: number; draining: boolean; depleted: boolean };
+  load_lost?: boolean; // the UPS ran out while no source powered the load (stays true once it happened)
+  ups: {
+    autonomy_s: number;
+    left_s: number;
+    draining: boolean;
+    depleted: boolean;
+    depleted_at_s?: number | null;
+    depleted_after_outage_s?: number | null;
+  };
   time_s: number;
   position: string;
   isolated: boolean;
@@ -192,6 +200,7 @@ export interface Done {
   diagnosis_text?: string; // the diagnosis as shown (twins named instead of a split confidence)
   twins_named?: boolean;
   display_pause_s?: number; // ATS hybrid: UI display pauses, excluded from seconds
+  ups_at_diagnosis?: UpsAtDiagnosis | null;
   // hybrid pipeline only
   explanation?: string;
   cited_steps?: number[];
@@ -231,7 +240,9 @@ export type FeedItem =
   | { kind: "conflict"; id: string; step: number; action: string; actual: string; candidates: number }
   | { kind: "correction"; id: string; step: number; diff: string[]; explanation: string }
   | { kind: "correction_rejected"; id: string; step: number; diff: string[]; reasons: string[] }
-  | { kind: "wiring"; id: string; text: string };
+  | { kind: "wiring"; id: string; text: string }
+  | { kind: "plan"; id: string; next: NextStep } // ATS hybrid: the planner's next reading, before it is taken
+  | { kind: "explanation"; id: string; text: string }; // ATS hybrid: the text for the technician
 
 export type NetState = "live" | "dead" | "probed";
 
@@ -243,8 +254,17 @@ export interface ComponentInfo {
   parts: { name: string; kind: string; modes: string[] }[];
 }
 
+/** ATS: UPS state when the diagnosis was made. */
+export interface UpsAtDiagnosis {
+  ups_left_s: number;
+  load_lost: boolean;
+  depleted_after_outage_s: number | null;
+  time_s: number;
+}
+
 export interface CompareColumn {
   runner: string;
+  ups_at_diagnosis?: UpsAtDiagnosis | null;
   missing?: string; // ATS: no engineer trace recorded
   assisted?: boolean; // ATS engineer trace: planner suggestions were shown
   strong_approvals?: number;

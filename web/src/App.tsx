@@ -30,6 +30,7 @@ export function App() {
   const [comparing, setComparing] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [suggesting, setSuggesting] = useState(false);
+  const [logOpen, setLogOpen] = useState(true); // the log floats over the drawing; it stays available after the run
   const [meter, setMeter] = useState<MeterState>({ kind: "V", a: null, b: null, hold: 0.2, wait: 6, reason: "manual check" });
   const [chosenMode, setChosenMode] = useState<Mode>("agent");
   const ats = bench === "ats";
@@ -83,6 +84,7 @@ export function App() {
 
   // the session on screen belongs to the chosen bench (switching the bench before Start shows an empty bench)
   const cur = state.bench === bench;
+  const logItems = view === state.mode && cur ? state.feed : [];
   const curMeta = ats ? atsMeta : meta;
   const atsPanel = ats && cur ? (state.panel as unknown as AtsPanelState | null) : null;
   const atsDiagnosing = ats && cur && manual && state.mode === "manual" && state.status === "running" && !state.done;
@@ -158,6 +160,16 @@ export function App() {
             {pickNote && <div className="error-banner">{pickNote}</div>}
             {cur && state.error && <div className="error-banner">{state.error}</div>}
             {state.stage && state.status === "running" && <div className="stage-banner">{state.stage}</div>}
+            <button className={`btn log-toggle ${logOpen ? "on" : ""}`} onClick={() => setLogOpen((o) => !o)}
+                    aria-expanded={logOpen} title="Every step, its reasoning and the policy verdict (a live log, not a chat)">
+              {logOpen ? "Hide log" : "Log"} ({logItems.length})
+            </button>
+            {logOpen && (
+              <div className="log-float">
+                <Feed items={logItems} manual={manual} running={manualActive}
+                      title={hybrid ? "Hybrid pipeline log" : manual ? "Your steps" : "Agent log"} />
+              </div>
+            )}
           </div>
         </div>
         <aside className="right">
@@ -167,6 +179,7 @@ export function App() {
               showTruth={showTruth}
               onToggleTruth={() => setShowTruth((v) => !v)}
               saved={manualRun ? state.saved : undefined}
+              atsPanel={ats ? atsPanel : undefined}
               compareLabel={ats ? "Compare on this fault (agent re-run about $0.10; hybrid and baseline free)" : undefined}
               onCompare={
                 manualRun || ats
@@ -249,8 +262,6 @@ export function App() {
             <Hypotheses hypotheses={state.hypotheses} previous={state.previous} title={hybrid ? "Candidate faults" : "Hypotheses"}
                         subtitle={hybrid ? "the pipeline's final list" : "the agent's final list"} />
           )}
-          <Feed items={view === state.mode && cur ? state.feed : []} manual={manual} title={hybrid ? "Hybrid pipeline" : undefined}
-                running={manualActive} />
         </aside>
       </main>
       {flashing && lastBlocked && lastBlocked.kind === "tool" && (

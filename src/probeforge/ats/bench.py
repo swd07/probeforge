@@ -67,7 +67,8 @@ ASSUMPTION_STATUS = {
                                        "controller sees source voltage before the position inputs"),
     "coil_burnout_s": ("assumption", "the risk is supported (S4: bad cut-off timing may lead to coil overheating and "
                                      "switch failure); the 30 s is ours"),
-    "ups_autonomy_s": ("assumption", "simulation parameter, not ASCO data"),
+    "ups_autonomy_s": ("supported", "S7: data center UPS battery runtimes 1 to 2 min (hyperscale), about 5 (cloud, "
+                                    "colocation), 10 to 15 (financial); 10 min is within that range; not ASCO data"),
     "manual_operation_isolated": ("documented", "S1, S3: operate the handle only with both sources disconnected and "
                                                 "proven dead; the mechanism must move smoothly"),
 }
@@ -137,6 +138,7 @@ class AtsBench:
         self.events: list[tuple[float, str, str]] = []
         self.ups_left = self.a["ups_autonomy_s"]
         self.ups_draining = False
+        self.ups_depleted_at: float | None = None  # virtual time the UPS reached 0 with the load unpowered
         self.outage_t: float | None = None
         for f in faults or []:
             self.apply_fault(f)
@@ -406,7 +408,12 @@ class AtsBench:
             "generator": self.generator_state(),
             "load_powered": self.load_voltage() >= 0.9 * self.s["nominal_v"],
             "ups": {"autonomy_s": self.a["ups_autonomy_s"], "left_s": round(self.ups_left, 1),
-                    "draining": self.ups_draining, "depleted": self.ups_left <= 0},
+                    "draining": self.ups_draining, "depleted": self.ups_left <= 0,
+                    "depleted_at_s": None if self.ups_depleted_at is None else round(self.ups_depleted_at, 2),
+                    "depleted_after_outage_s": None if self.ups_depleted_at is None or self.outage_t is None
+                    else round(self.ups_depleted_at - self.outage_t, 2)},
+            # the critical load was lost: the UPS ran out while no source powered it (stays true once it happened)
+            "load_lost": self.ups_depleted_at is not None,
             "time_s": round(self.t, 1),
         }
 
@@ -483,6 +490,8 @@ class AtsBench:
         # UPS: drains while the load has no voltage
         self.ups_draining = self.load_voltage() < 0.9 * self.s["nominal_v"]
         if self.ups_draining:
+            if 0.0 < self.ups_left <= h:  # runs out inside this tick: the exact moment
+                self.ups_depleted_at = self.t - h + self.ups_left
             self.ups_left = max(0.0, self.ups_left - h)
 
     def _control(self, h: float) -> None:

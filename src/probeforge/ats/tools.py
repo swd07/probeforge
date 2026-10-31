@@ -137,6 +137,7 @@ class AtsToolBox:
         self.log: list[dict] = []
         self.hypotheses_history: list[dict] = []
         self.diagnosis: dict | None = None
+        self.ups_at_diagnosis: dict | None = None  # UPS state at the diagnosis (a metric, not an agent input)
         self.measurements = 0
         self.redundant_measurements = 0
         self._state_version = 0
@@ -261,7 +262,7 @@ class AtsToolBox:
         i = self.bench.indicators()
         return {"lights": i["lights"], "display": i["display"], "alarms": i["alarms"],
                 "normal_source": i["normal_source"], "generator": i["generator"], "load_powered": i["load_powered"],
-                "ups": i["ups"], "sources_isolated": self.bench.isolated, "time_s": i["time_s"]}
+                "load_lost": i["load_lost"], "ups": i["ups"], "sources_isolated": self.bench.isolated, "time_s": i["time_s"]}
 
     def initial_observation(self) -> dict:
         """Step 0: the panel, event log and metering screen as the agent first sees them. Citable as evidence."""
@@ -373,4 +374,12 @@ class AtsToolBox:
 
     def _tool_submit_diagnosis(self, args: dict) -> dict:
         self.diagnosis = dict(args)
+        self.ups_at_diagnosis = ups_status(self.bench)
         return {"accepted": True}
+
+
+def ups_status(bench) -> dict:
+    """UPS time left and whether the critical load was lost (the UPS ran out with no source on the load), for results."""
+    i = bench.indicators()
+    return {"ups_left_s": i["ups"]["left_s"], "load_lost": i["load_lost"],
+            "depleted_after_outage_s": i["ups"]["depleted_after_outage_s"], "time_s": i["time_s"]}

@@ -542,3 +542,32 @@ decisions at the end (see CLAUDE.md). Architecture: [ARCHITECTURE.md](ARCHITECTU
   not an action verb) and the stated reason was muddled ("a repaired contact alone"); both fixed. In the final run a7
   still needed its one retry (accepted on the second try), the other 9 diagnosed cases passed on the first try, the 2
   insufficient-information cases use the template. Tool logs and diagnoses identical to D41 (12 of 12). Cost $0.228.
+
+### D43. Critical load lost when the UPS runs out; floating log; source S7 for the UPS autonomy (2026-10-31)
+
+- **What:** (1) the bench records the virtual time the UPS reaches 0 while the load has no source (exact within the
+  tick) and marks the critical load as lost from then on (it stays lost in the record even after a source powers the
+  load again). The panel shows "Critical load: LOST (UPS depleted at m:ss after the outage)"; the agent's panel view
+  carries `load_lost` and the depletion time. Every ATS trace records the UPS state when the diagnosis was made
+  (`ups_at_diagnosis`); the result card shows "UPS time left at diagnosis" and, for a correct diagnosis, "Diagnosis
+  correct, but the UPS ran out before the diagnosis / the repair: critical load lost"; Compare and the agent and hybrid
+  results tables show the same value, and the tables count diagnoses made before the UPS ran out (the S5 metric).
+  (2) The step log moved out of the right column into a panel floating over the drawing, toggled, following the newest
+  entry unless the reader scrolled up, kept after the run; the same component for the agent, Hybrid v2 (now also each
+  planned reading and the explanation) and Engineer mode; no input box. The right column scrolls when it overflows.
+  (3) Assumption 14 (UPS autonomy 10 min) cites Schneider Electric (S7: data center battery runtimes 1 to 2 min
+  hyperscale, about 5 cloud and colocation, 10 to 15 financial; the battery bridges the 10 to 20 s until the generator
+  and transfer switch take over); status "supported" for the autonomy, the load-lost rule and 30 s per step stay ours.
+- **Why:** a live agent run (random fault TS:4-20 stuck_open, diagnosed correctly after 21 readings) ran the UPS to 0
+  and the UI still read "on UPS" with a plain "Correct": a correct diagnosis after the load is lost is not a success
+  for the data center. The log was not visible in that run (pushed below the fold in the right column).
+- **Alternatives:** stopping the run when the UPS reaches 0 (hides how long the diagnosis would have taken); a modal
+  log (blocks the drawing); a chat-style panel (invites input the agent must never take mid-run).
+- **Evidence:** bench tests (depletion inside a long step recorded to the exact time, the flag sticky, the agent sees it,
+  no depletion when the transfer comes in time); server test (UPS at diagnosis in the done event); browser walkthrough
+  (runs/ui_check 8 to 13): Engineer run waited to depletion, panel LOST at 10:00, result card message; hybrid run on the
+  saved transcription with 11 planned readings and the explanation in the log, UPS left 4:00 at diagnosis. Hybrid v2
+  and the baseline do not read the new fields (the planner keys panel observations on `ups.draining`): offline on both
+  saved transcriptions the diagnoses are identical and the tool logs identical once the new fields are removed. The
+  agent sees new panel fields, so the dev agent numbers were recorded before this change (noted in
+  docs/results/ats_results.md). Must land before the S5 freeze.

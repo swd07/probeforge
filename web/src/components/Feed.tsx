@@ -51,7 +51,7 @@ export function describeTool(ev: ToolEvent): { title: string; detail: string } {
     case "perform_action":
       return { title: `Request ${String(a.action).replace("_", " ")} ${a.target ?? ""}`, detail: a.reason ? `reason: ${a.reason}` : "" };
     case "read_panel":
-      return { title: "Read controller panel", detail: r.display ? `${r.display}${r.load_powered ? ", load powered" : ", load on UPS"}` : "" };
+      return { title: "Read controller panel", detail: r.display ? `${r.display}${r.load_lost && !r.load_powered ? ", critical load LOST (UPS depleted)" : r.load_powered ? ", load powered" : ", load on UPS"}` : "" };
     case "read_event_log":
       return { title: "Read event log", detail: r.events ? `${r.events.length} events` : "" };
     case "read_metering":
@@ -102,11 +102,16 @@ export function describeTool(ev: ToolEvent): { title: string; detail: string } {
 const plain = (text: string) => text.replace(/\s*[\u2014\u2013]\s*/g, ", ");
 
 export function Feed({ items, manual = false, title, running = false }: { items: FeedItem[]; manual?: boolean; title?: string; running?: boolean }) {
-  const end = useRef<HTMLDivElement>(null);
+  const box = useRef<HTMLDivElement>(null);
+  const follow = useRef(true); // follow the newest entry unless the reader scrolled up
   useEffect(() => {
-    // braces matter: newer browsers return a Promise from scrollIntoView, which React would call as cleanup
-    end.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+    const el = box.current;
+    if (el && follow.current) el.scrollTop = el.scrollHeight;
   }, [items.length]);
+  const onScroll = () => {
+    const el = box.current;
+    if (el) follow.current = el.scrollHeight - el.scrollTop - el.clientHeight < 40;
+  };
 
   return (
     <section className="feed-card">
@@ -114,7 +119,7 @@ export function Feed({ items, manual = false, title, running = false }: { items:
         <span>{title ?? (manual ? "Your steps" : "Agent reasoning")}</span>
         <span className="muted">every tool call passes the safety policy</span>
       </div>
-      <div className="feed">
+      <div className="feed" ref={box} onScroll={onScroll}>
         {items.length === 0 && (
           <div className="muted empty">
             {manual && running
@@ -191,6 +196,25 @@ export function Feed({ items, manual = false, title, running = false }: { items:
                 </pre>
               </div>
             );
+          if (it.kind === "plan") {
+            const n = it.next;
+            const pts = n.points.length === 2 ? `${n.points[0]} → ${n.points[1]}` : n.points.join(", ");
+            return (
+              <div key={it.id} className="item plan">
+                <span className="step">next</span> <b>Planned:</b> {n.tool.replace(/_/g, " ")} {pts}
+                <div className="detail">
+                  {n.why}
+                  {n.gain_bits !== undefined && ` (${n.gain_bits.toFixed(2)} bits)`}; {n.causes_left} causes left
+                </div>
+              </div>
+            );
+          }
+          if (it.kind === "explanation")
+            return (
+              <div key={it.id} className="item explanation-item">
+                <b>For the technician (Muse Spark):</b> {plain(it.text)}
+              </div>
+            );
           if (it.kind === "wiring")
             return (
               <div key={it.id} className="item info wiring">
@@ -239,7 +263,6 @@ export function Feed({ items, manual = false, title, running = false }: { items:
             </div>
           );
         })}
-        <div ref={end} />
       </div>
     </section>
   );

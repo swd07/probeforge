@@ -52,7 +52,8 @@ button, select { font: inherit; }
 /* layout */
 .layout { flex: 1; display: grid; grid-template-columns: minmax(0, 1fr) clamp(360px, 25vw, 480px); gap: 12px; padding: 12px; min-height: 0; }
 .left { display: flex; flex-direction: column; gap: 12px; min-height: 0; }
-.right { display: flex; flex-direction: column; gap: 12px; min-height: 0; }
+.right { display: flex; flex-direction: column; gap: 12px; min-height: 0; overflow-y: auto; padding-right: 4px; }
+.right > * { flex-shrink: 0; }
 .card-title { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 4px 12px; font-weight: 700; margin-bottom: 8px; }
 .muted { color: var(--muted); font-size: 12px; font-weight: 400; }
 .empty { padding: 10px 0; }
@@ -414,3 +415,17 @@ table.quality tr.worse td { color: var(--warn); }
 @media (max-width: 900px) { .sheet-cols { grid-template-columns: 1fr; } }
 .suggest-btn { width: 100%; flex-shrink: 0; }
 .next-use { margin-top: 8px; }
+
+/* agent / pipeline / engineer log: floats over the drawing, toggled, available after the run */
+.log-toggle { position: absolute; top: 52px; right: 16px; z-index: 6; font-size: 12px; padding: 4px 10px; }
+.log-toggle.on { background: var(--accent); color: #04121f; }
+.log-float { position: absolute; top: 88px; right: 16px; bottom: 16px; width: min(440px, 46%); z-index: 5; display: flex;
+  flex-direction: column; box-shadow: 0 8px 28px rgba(0, 0, 0, 0.55); border-radius: 12px; }
+.log-float .feed-card { flex: 1; min-height: 0; background: rgba(16, 24, 38, 0.97); }
+.feed .item.plan { border-left: 3px solid var(--accent); padding-left: 8px; }
+.feed .item.explanation-item { border-left: 3px solid #4caf7a; padding-left: 8px; }
+.ups-at-diag { display: flex; gap: 8px; align-items: baseline; margin: 4px 0; }
+.ups-at-diag .lbl { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; }
+.load-lost { background: #3a1010; border-left: 3px solid #e05050; border-radius: 8px; padding: 8px 10px; margin: 6px 0;
+  color: #ffb4b4; font-weight: 600; }
+.src.lost b { color: #ff7070; }

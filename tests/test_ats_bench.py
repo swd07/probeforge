@@ -166,3 +166,36 @@ def test_fault_catalog_and_validation():
             validate(AtsBench().n, f)
     with pytest.raises(ValueError):
         validate(AtsBench().n, Fault("52U", "open", "1-2"))  # 52U stays closed (decision D23)
+
+
+def test_ups_depletion_is_recorded_to_the_tick_and_the_critical_load_counts_as_lost():
+    """The UPS drains while the load has no source; at 0 the critical load is lost (sticky, with the exact time), also
+    when the run continues in long steps. A source on the load again does not undo the loss."""
+    from probeforge.ats.tools import AtsToolBox, ups_status
+    from probeforge.tools import approve_all
+
+    b = outage(CASES["a1_coil_open"])
+    i = b.indicators()
+    assert not i["load_lost"] and i["ups"]["depleted_at_s"] is None
+    left, t0 = b.ups_left, b.t
+    b.step(left + 37.0)  # long steps: the depletion falls inside one
+    i = b.indicators()
+    assert i["load_lost"] and i["ups"]["depleted"] and not i["load_powered"]
+    assert i["ups"]["depleted_at_s"] == pytest.approx(t0 + left, abs=1e-6)
+    assert i["ups"]["depleted_after_outage_s"] == pytest.approx(t0 + left - b.outage_t, abs=1e-6)
+    tb = AtsToolBox(b, approver=approve_all)
+    assert tb.call("read_panel", {})["load_lost"]  # the agent sees it on the panel
+    tb.call("submit_diagnosis", {"outcome": "diagnosed", "component": "TS", "part": "A-B", "failure_mode": "open",
+                                 "confidence": 0.9, "evidence": [{"step": 1, "type": "functional_test", "observation": "panel"}]})
+    assert tb.ups_at_diagnosis == ups_status(b) and tb.ups_at_diagnosis["ups_left_s"] == 0
+    b.restore_utility()
+    b.step(30.0)
+    assert b.indicators()["load_lost"]  # the load was lost once: it stays lost in the record
+
+
+def test_no_depletion_when_the_transfer_comes_in_time():
+    b = AtsBench()
+    b.lose_utility()
+    b.step(120.0)
+    i = b.indicators()
+    assert i["load_powered"] and not i["load_lost"] and i["ups"]["depleted_at_s"] is None

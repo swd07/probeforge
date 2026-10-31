@@ -186,7 +186,7 @@ function reducer(s: State, a: Action): State {
         ],
       };
     case "next_step":
-      return { ...s, nextStep: ev };
+      return { ...s, nextStep: ev, feed: [...s.feed, { kind: "plan", id: `plan${s.feed.length}`, next: ev }] };
     case "suggestion":
       return {
         ...s,
@@ -272,7 +272,10 @@ function reducer(s: State, a: Action): State {
         feed: s.feed.map((f) => (f.kind === "approval" && f.req.id === ev.id ? { ...f, approved: ev.approved } : f)),
       };
     case "done":
-      return { ...s, status: "done", done: ev, panel: ev.panel, approval: null, flags: null, wiring: null, stage: "", nextStep: null };
+      return {
+        ...s, status: "done", done: ev, panel: ev.panel, approval: null, flags: null, wiring: null, stage: "", nextStep: null,
+        feed: ev.explanation ? [...s.feed, { kind: "explanation", id: `expl${s.feed.length}`, text: ev.explanation }] : s.feed,
+      };
     case "saved":
       return { ...s, saved: ev.path };
     case "verified":

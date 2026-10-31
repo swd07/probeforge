@@ -27,6 +27,7 @@ from probeforge.ats.agent import run_ats_agent  # noqa: E402
 from probeforge.ats.agent_responses import run_ats_agent_responses  # noqa: E402
 from probeforge.ats.ambiguity import signature  # noqa: E402
 from probeforge.ats.faults import all_faults  # noqa: E402
+from probeforge.ats.tools import ups_status  # noqa: E402
 from probeforge.eval.scoring import grade  # noqa: E402
 from probeforge.eval.spend import SpendLedger, SpendLimitError  # noqa: E402
 from probeforge.faults.model import Fault  # noqa: E402
@@ -113,6 +114,7 @@ def run_case(cid: str, case: dict, args, client, out_dir: Path, ledger: SpendLed
         "approvals_denied": s.approvals_denied, "missing_hypothesis_updates": run.missing_hypothesis_updates,
         "protocol_errors": run.protocol_errors, "virtual_s": round(bench.t - t_start, 1),
         "ups_used_s": round(ups_start - bench.ups_left, 1), "ups_left_s": round(bench.ups_left, 1),
+        **ups_fields(tb, run.outcome),
         "tokens": run.prompt_tokens + run.completion_tokens, "cost_usd": run.cost_usd, "seconds": run.seconds,
         "prompt_tokens": run.prompt_tokens, "cached_tokens": run.cached_tokens,
         "reasoning_tokens": sum(x.get("reasoning_tokens", 0) for x in run.turn_log),
@@ -123,19 +125,43 @@ def run_case(cid: str, case: dict, args, client, out_dir: Path, ledger: SpendLed
     }
 
 
+def ups_fields(tb, outcome: str) -> dict:
+    """UPS time left when the diagnosis was made, whether the critical load was lost by then, and whether a diagnosis
+    was made before the UPS ran out (the S5 metric next to accuracy)."""
+    u = tb.ups_at_diagnosis or ups_status(tb.bench)
+    return {"ups_left_at_diagnosis_s": u["ups_left_s"], "load_lost": u["load_lost"],
+            "diagnosed_before_ups_out": outcome == "diagnosed" and not u["load_lost"]}
+
+
+def ups_cell(r: dict) -> str:
+    """Rows recorded before the load-lost fields existed show n/a."""
+    if "ups_left_at_diagnosis_s" not in r:
+        return "n/a"
+    return "0 s, load lost" if r["load_lost"] else f"{r['ups_left_at_diagnosis_s']:.0f} s"
+
+
+def ups_summary(rows: list[dict]) -> str:
+    known = [r for r in rows if "load_lost" in r]
+    if not known:
+        return "UPS at diagnosis not recorded (rows from before the load-lost fields)"
+    left = [r["ups_left_at_diagnosis_s"] for r in known]
+    return (f"diagnosed before the UPS ran out {sum(r['diagnosed_before_ups_out'] for r in known)}/{len(known)}, "
+            f"UPS left at diagnosis median {sorted(left)[len(left) // 2]:.0f} s")
+
+
 def table(rows: list[dict]) -> str:
     head = ("| Case | Expected | Diagnosis | Conf. | Part correct | Confidently wrong | Meas. | Blocked | Approval / strong "
-            "requests (denied) | UPS used s | Tokens | Cost |")
-    out = [head, "|" + "---|" * 12]
+            "requests (denied) | UPS used s | UPS left at diagnosis | Tokens | Cost |")
+    out = [head, "|" + "---|" * 13]
     for r in rows:
         out.append(f"| {r['case']} | {r['expected']} | {r['diagnosed']} | {r['confidence']} | "
                    f"{'yes' if r['correct'] else 'no'}{' (consequence, not cause)' if r['consequence_not_cause'] else ''} | "
                    f"{'yes' if r['confident_wrong'] else 'no'} | {r['measurements']} | {r['policy_blocked']} | "
                    f"{r['approval_requests']} / {r['strong_approval_requests']} ({r['approvals_denied']}) | "
-                   f"{r['ups_used_s']} | {r['tokens']} | ${r['cost_usd']:.3f} |")
+                   f"{r['ups_used_s']} | {ups_cell(r)} | {r['tokens']} | ${r['cost_usd']:.3f} |")
     n = len(rows)
     out.append(f"\nCorrect at part level: {sum(r['correct'] for r in rows)}/{n}; confidently wrong: "
-               f"{sum(r['confident_wrong'] for r in rows)}; total cost ${sum(r['cost_usd'] for r in rows):.3f}.")
+               f"{sum(r['confident_wrong'] for r in rows)}; {ups_summary(rows)}; total cost ${sum(r['cost_usd'] for r in rows):.3f}.")
     return "\n".join(out)
 
 

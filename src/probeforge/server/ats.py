@@ -204,7 +204,8 @@ def snapshot(b: AtsBench, flow: int) -> dict:
     mech = "moving" if b.moving else {"N": "Normal", "E": "Emergency"}[b.position]
     return {"ats": True, "lights": i["lights"], "display": i["display"], "alarms": i["alarms"], "metering": i["metering"],
             "events": i["events"], "normal_source": i["normal_source"], "generator": i["generator"],
-            "load_powered": i["load_powered"], "ups": i["ups"], "time_s": i["time_s"], "position": mech,
+            "load_powered": i["load_powered"], "load_lost": i["load_lost"], "ups": i["ups"], "time_s": i["time_s"],
+            "position": mech,
             "isolated": b.isolated, "flow": flow}
 
 
@@ -271,7 +272,7 @@ def column(trace: dict, judged: dict, strong: int, live_approvals: bool) -> dict
             "approvals_denied": trace["policy"]["approvals_denied"], "seconds": trace["seconds"],
             "cost_usd": trace["cost_usd"], "sequence": sequence(trace["tool_log"]),
             "approvals_by": "answered live in this session" if live_approvals else "batch rules",
-            "assisted": bool(trace.get("assisted"))}
+            "assisted": bool(trace.get("assisted")), "ups_at_diagnosis": trace.get("ups_at_diagnosis")}
 
 
 def engineer_trace(faults: list[Fault]) -> dict | None:
@@ -394,6 +395,7 @@ class AtsSession:
             "diagnosis_text": diagnosis_text(trace["diagnosis"], trace["outcome"])[0],
             "twins_named": diagnosis_text(trace["diagnosis"], trace["outcome"])[1],
             "panel": snapshot(b, self.flow),
+            "ups_at_diagnosis": trace.get("ups_at_diagnosis"),
             "truth_live_nets": [n for n in NETLIST.nets if n not in INTERNAL_NETS and b.voltage(n, "NN") > LIVE_V],
             "decisive": None,
             "intervention": True,

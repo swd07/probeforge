@@ -38,6 +38,15 @@ function Column({ title, col, pending }: { title: string; col?: CompareColumn; p
             <dt>approvals by</dt><dd>{col.approvals_by}</dd>
           </>
         )}
+        {col.ups_at_diagnosis !== undefined && (
+          <>
+            <dt>UPS left at diagnosis</dt>
+            <dd className={col.ups_at_diagnosis?.load_lost ? "policy" : ""}>
+              {col.ups_at_diagnosis === null ? "not recorded" : col.ups_at_diagnosis.load_lost ? "0:00, load lost"
+                : `${Math.floor(col.ups_at_diagnosis.ups_left_s / 60)}:${String(Math.floor(col.ups_at_diagnosis.ups_left_s % 60)).padStart(2, "0")}`}
+            </dd>
+          </>
+        )}
         <dt>time</dt><dd>{col.seconds?.toFixed(0)} s</dd>
         <dt>cost</dt><dd>${(col.cost_usd ?? 0).toFixed(3)}</dd>
       </dl>

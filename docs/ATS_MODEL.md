@@ -46,6 +46,11 @@ Public sources (short quotes only; no vendor PDF is in this repository):
 - **S5**: ASCO Series 300 brochure, https://www.globalpwr.com/wp-content/uploads/cut-sheets/gps-acso-series-300-brochure.pdf
 - **S6**: Schneider Electric FAQ000207844, coil resistance values by frame (the D-frame values are only in an image and
   depend on the coil kit).
+- **S7**: Schneider Electric, "Design Considerations of UPS Systems in Data Centers", blog, July 20, 2020,
+  https://blog.se.com/datacenter/2020/07/20/design-considerations-deployment-ups-systems-in-data-centers (checked
+  2026-10-31). Battery runtime is a business decision: hyperscale data centers 1 to 2 minutes, cloud and colocation
+  typically 5 minutes, financial 10 to 15 minutes; in theory the battery only carries the critical load until the
+  generators start and the load is transferred to them (typically 10 to 20 seconds).
 
 Status: **documented** (a manufacturer source for this equipment), **supported** (a manufacturer source that does not
 cover this exact frame, or a secondary source), **assumption** (no source). The bench values are in the
@@ -76,7 +81,7 @@ In the bench simulator (S1):
 | 11a | The coil operates above 70 % of nominal voltage across A-B; one operation per energization (a coil that stays energized holds the plunger); released before top dead center the mechanism falls back | assumption | No source. |
 | 12 | Coil burnout chain: cut-off contacts 8-9 and 71-72 that do not open at top dead center keep the coil energized; it burns open after 30 s; a new coil burns again until the cut-off is fixed; a jammed mechanism also burns the coil | supported (risk), assumption (30 s) | S4: the coil control contacts cut off power to the solenoid, and bad cut-off timing "may lead to possible coil overheating and switch failure". S5: the operator draws power from the destination source, as modelled. The 30 s burn time is ours. |
 | 13 | With both sources isolated the switch can be operated manually for a check: a jammed mechanism does not move, a cut-off contact that does not open still reads closed at the far position | documented | S1, S3: operate the manual handle only with both sources disconnected and proven dead; the mechanism must move smoothly. The policy matches (approval tier, isolated only, never under load). S3 also says to relubricate the operator when the TS coil is replaced: the replace_coil result carries that recommendation. |
-| 14 | UPS autonomy 10 minutes and 30 s of virtual time per reading or action | assumption | Simulation parameters, not ASCO data. |
+| 14 | UPS autonomy 10 minutes and 30 s of virtual time per reading or action; the UPS drains while the load has no source voltage, and when it reaches 0 before a source powers the load again, the critical load is lost (the time is recorded to the tick) | supported (autonomy), assumption (30 s per step, load lost at 0) | S7: data center battery runtimes range from 1 to 2 minutes (hyperscale) through about 5 (cloud, colocation) to 10 to 15 (financial); the battery only bridges the 10 to 20 s until the generator and the transfer switch take over. 10 minutes is within that range, at the long end. Not ASCO data; the 30 s per step is ours. Load lost added on 2026-10-31. |
 | 15 | Frequency is not simulated: a source with voltage is at nominal frequency | assumption | See the limits: S3's troubleshooting checks the generator frequency (at least 57 Hz) and the generator output breaker. |
 
 ## Agent action limits (S2)

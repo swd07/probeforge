@@ -73,6 +73,8 @@ def test_engineer_session_through_the_intervention_to_transfer_verified():
         done = until(ws, "done", events)
         assert done["verdict"] == "correct" and done["fault"] == "TS:A-B open" and done["intervention"]
         assert done["panel"]["flow"] == 3  # awaiting authorized intervention
+        u = done["ups_at_diagnosis"]  # UPS time left when the diagnosis was submitted, the load not lost yet
+        assert not u["load_lost"] and 0 < u["ups_left_s"] < 600 and not done["panel"]["load_lost"]
         before_done = json.dumps(events[:-1])
         assert "TS:A-B open" not in before_done and "coil_open" not in before_done.replace("a1_coil_open", "")
         until(ws, "saved", events)

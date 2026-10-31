@@ -24,7 +24,7 @@ sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(ROOT / "scripts"))
 
 from ats_read_eval import pairs, prf, score  # noqa: E402
-from run_ats import accepted_answers, case_faults, load_cases, scenario_bench, twins_of  # noqa: E402
+from run_ats import accepted_answers, case_faults, load_cases, scenario_bench, twins_of, ups_cell, ups_fields, ups_summary  # noqa: E402
 
 from probeforge.agent.client import make_client  # noqa: E402
 from probeforge.ats import AtsBench  # noqa: E402
@@ -110,7 +110,7 @@ def row(cid, case, d, outcome, tb, usage, seconds, extra) -> dict:
             "correct": g["correct"], "justified": g["justified"], "confident_wrong": g["confident_wrong"],
             "measurements": tb.measurements, "policy_blocked": s.blocked, "approval_requests": s.approval_requests,
             "strong_approval_requests": s.strong_approval_requests, "approvals_denied": s.approvals_denied,
-            "virtual_s": round(tb.bench.t - 60, 1), "model_calls": usage.turns if usage else 0,
+            "virtual_s": round(tb.bench.t - 60, 1), **ups_fields(tb, outcome), "model_calls": usage.turns if usage else 0,
             "tokens": (usage.prompt_tokens + usage.completion_tokens) if usage else 0,
             "cost_usd": round(usage.cost_usd, 4) if usage else 0.0, "seconds": round(seconds, 1), **extra}
 
@@ -192,10 +192,11 @@ def main() -> None:
             (out / f"{cid}.json").write_text(json.dumps(trace, indent=2, ensure_ascii=False), encoding="utf-8")
             print(f"{cid}: {rows[-1]['diagnosed']} correct={rows[-1]['correct']} meas={rows[-1]['measurements']} "
                   f"repairs={rows[-1]['corrections']}/{rows[-1]['rejected']} rejected ${rows[-1]['cost_usd']:.3f}")
-    head = "| Case | Expected | Diagnosis | Correct | Confidently wrong | Meas. | Approval / strong (denied) | Cost |\n|---|---|---|---|---|---|---|---|"
+    head = ("| Case | Expected | Diagnosis | Correct | Confidently wrong | Meas. | Approval / strong (denied) | "
+            "UPS left at diagnosis | Cost |\n|---|---|---|---|---|---|---|---|---|")
     lines = [f"| {r['case']} | {r['expected']} | {r['diagnosed']} | {'yes' if r['correct'] else 'justified' if r['justified'] else 'no'} | "
              f"{'yes' if r['confident_wrong'] else 'no'} | {r['measurements']} | {r['approval_requests']} / "
-             f"{r['strong_approval_requests']} ({r['approvals_denied']}) | ${r['cost_usd']:.3f} |" for r in rows]
+             f"{r['strong_approval_requests']} ({r['approvals_denied']}) | {ups_cell(r)} | ${r['cost_usd']:.3f} |" for r in rows]
     disclosure = ("" if args.baseline else
                   "Disclosure: the hybrid pipeline (drawing crops, reading conventions, the fault-free sequence checks "
                   "and the repair messages) was developed on this one drawing, after seeing the errors of these reads. "
@@ -203,7 +204,7 @@ def main() -> None:
     md = (f"# ATS {'info-gain baseline (true netlist)' if args.baseline else 'Hybrid v2'} (dev cases, not holdout)\n\n"
           + disclosure + head
           + "\n" + "\n".join(lines) + f"\n\nCorrect {sum(r['correct'] for r in rows)}/{len(rows)}; confidently wrong "
-          f"{sum(r['confident_wrong'] for r in rows)}; cost ${sum(r['cost_usd'] for r in rows):.3f}.\n")
+          f"{sum(r['confident_wrong'] for r in rows)}; {ups_summary(rows)}; cost ${sum(r['cost_usd'] for r in rows):.3f}.\n")
     (out / "results.md").write_text(md, encoding="utf-8")
     (out / "results.json").write_text(json.dumps(rows, indent=2), encoding="utf-8")
     from probeforge.ats.freeze import ats_frozen_hashes

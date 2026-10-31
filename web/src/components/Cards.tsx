@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { ApprovalRequest, Done, FlagsRequest, WiringRequest } from "../types";
+import type { ApprovalRequest, AtsPanel, Done, FlagsRequest, WiringRequest } from "../types";
 
 /** ATS bench strong approval: the policy's own facts next to the requester's reason, the cited readings, and a second
  * explicit confirmation before the approval goes through. */
@@ -174,10 +174,39 @@ interface ResultProps {
   saved?: string;
   onCompare?: () => void;
   compareLabel?: string;
+  atsPanel?: AtsPanel | null; // ATS: the live panel, for the critical load lost after the diagnosis
+}
+
+const mmss = (s: number) => `${Math.floor(Math.max(0, s) / 60)}:${String(Math.floor(Math.max(0, s) % 60)).padStart(2, "0")}`;
+
+/** ATS: what the UPS countdown means for the outcome. A correct diagnosis made after the UPS ran out, or before a
+ * repair the UPS did not last until, still lost the critical load. */
+function UpsOutcome({ done, panel }: { done: Done; panel?: AtsPanel | null }) {
+  const u = done.ups_at_diagnosis;
+  if (!u) return null;
+  const lostAfter = !u.load_lost && !!panel?.load_lost;
+  const at = u.load_lost ? u.depleted_after_outage_s : panel?.ups.depleted_after_outage_s;
+  const when = typeof at === "number" ? ` (UPS depleted ${mmss(at)} after the outage)` : "";
+  const correct = done.verdict === "correct";
+  return (
+    <>
+      <div className="ups-at-diag">
+        <span className="lbl">UPS time left at diagnosis</span>
+        <span className="val">{u.load_lost ? `0:00, critical load already lost${when}` : mmss(u.ups_left_s)}</span>
+      </div>
+      {(u.load_lost || lostAfter) && (
+        <div className="load-lost">
+          {correct
+            ? `Diagnosis correct, but the UPS ran out before the ${u.load_lost ? "diagnosis" : "repair"}: critical load lost${when}.`
+            : `Critical load lost: the UPS ran out before the ${u.load_lost ? "diagnosis" : "repair"}${when}.`}
+        </div>
+      )}
+    </>
+  );
 }
 
 /** Docked at the top of the right panel so the schematic stays visible; collapses to one line. */
-export function ResultCard({ done, showTruth, onToggleTruth, saved, onCompare, compareLabel }: ResultProps) {
+export function ResultCard({ done, showTruth, onToggleTruth, saved, onCompare, compareLabel, atsPanel }: ResultProps) {
   const [collapsed, setCollapsed] = useState(false);
   const manual = done.mode === "manual";
   const hybrid = done.mode === "hybrid";
@@ -216,6 +245,7 @@ export function ResultCard({ done, showTruth, onToggleTruth, saved, onCompare, c
               </div>
             )}
           </div>
+          <UpsOutcome done={done} panel={atsPanel} />
           {dec && (
             <div className="decisive">
               <span className="lbl">Decisive {dec.meter ? "measurement" : "observation"} (step {dec.step})</span>

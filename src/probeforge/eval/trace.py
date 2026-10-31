@@ -45,6 +45,10 @@ def make_trace(*, case: str, runner: str, tb: ToolBox, diagnosis: dict | None, o
         "tool_log": tb.log,
         "hypotheses_history": tb.hypotheses_history,
     }
+    if hasattr(getattr(tb, "bench", None), "ups_left"):  # ATS: UPS time left when the diagnosis was made
+        from probeforge.ats.tools import ups_status
+
+        trace["ups_at_diagnosis"] = getattr(tb, "ups_at_diagnosis", None) or ups_status(tb.bench)
     trace.update(extra or {})
     return trace
 

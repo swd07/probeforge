@@ -42,8 +42,13 @@ section 6).
   **red** = measured live (voltage present), **blue** = measured dead (0 V), **purple** = part of a measurement
   (probed). Reading labels appear next to the points that were measured. Use the mouse wheel to zoom, drag to move,
   **Fit** to see everything. **follow probes** moves the view to each new measurement.
-- **Right panel**: depends on the mode (hypotheses, candidate faults, or your instruments) and, below it, the list of
-  steps. Every step passes the safety policy: a **red** step was blocked, an **amber** step waits for a human answer.
+- **Right panel**: depends on the mode (hypotheses, candidate faults, or your instruments); it scrolls when it is longer
+  than the screen.
+- **Log** (button at the top right of the drawing): the list of steps, floating over the drawing. It follows the newest
+  entry unless you scroll up, and stays available after the run. Agent: its short notes, each tool call with its
+  result, approvals. Hybrid: the stages, each planned reading before it is taken, the readings, the explanation.
+  Engineer: your steps and any suggestion shown. Every step passes the safety policy: a **red** step was blocked (with
+  the policy reason), an **amber** step waits for a human answer. It is a log, not a chat: there is no input box.
 - **Result card** (appears at the top right when a run ends): the verdict, the hidden fault (revealed only now),
   the answer, the numbers, and **Show true live wiring** (paints the wires that really carry voltage).
 
@@ -58,7 +63,7 @@ told apart from another one by any measurement, and the answer named that one or
    one of the scenarios **s01 to s08** (named by their symptom).
 3. Leave **effort low**.
 4. Click **Start**.
-5. Watch: the right panel shows the agent's thinking and each tool call; **Hypotheses** shows its suspects with
+5. Watch: the **Log** shows the agent's thinking and each tool call; **Hypotheses** shows its suspects with
    probabilities that change after every measurement; the schematic lights up where it measures.
 6. If the agent asks for something that needs approval (for example switching the power back on after a protection
    trip), a card appears: click **Approve** or **Deny**.
@@ -87,7 +92,7 @@ told apart from another one by any measurement, and the answer named that one or
 
 ## 5. Engineer mode
 
-1. Click **Engineer**. The right panel becomes **Your instruments** and **Your steps**.
+1. Click **Engineer**. The right panel becomes **Your instruments**; the **Log** lists **Your steps**.
 2. Choose a fault and type your name (the name goes into the saved trace).
 3. Click **Start**.
 

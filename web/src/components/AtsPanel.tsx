@@ -59,7 +59,14 @@ export function AtsPanel({ meta, panel, checkedPosition }: { meta: AtsMeta | nul
               <span className="muted">not checked: use Position indicator (a reading, as for the agent)</span>
             )}
           </div>
-          <div className={`src ${p?.load_powered ? "ok" : "bad"}`}>Critical load: {p ? (p.load_powered ? "powered" : "on UPS") : "-"}</div>
+          <div className={`src ${p?.load_powered && !p?.load_lost ? "ok" : "bad"} ${p?.load_lost ? "lost" : ""}`}>
+            Critical load:{" "}
+            {!p ? "-" : p.load_lost && !p.load_powered ? (
+              <b>LOST (UPS depleted at {mmss(p.ups.depleted_after_outage_s ?? 0)} after the outage)</b>
+            ) : p.load_lost ? (
+              `powered again (was lost: UPS depleted at ${mmss(p.ups.depleted_after_outage_s ?? 0)} after the outage)`
+            ) : p.load_powered ? "powered" : "on UPS"}
+          </div>
         </div>
         <div className={`ats-box ups ${p?.ups.draining && !verified ? "draining" : ""} ${p?.ups.depleted ? "depleted" : ""}`}>
           <div className="box-title">UPS time left</div>
@@ -69,7 +76,8 @@ export function AtsPanel({ meta, panel, checkedPosition }: { meta: AtsMeta | nul
           </div>
           <div className="muted">
             {verified ? "countdown stopped: transfer verified" : p?.ups.depleted ? "UPS depleted" : p?.ups.draining ? "draining" : "not draining"}.
-            Simulation parameter: {autonomy / 60} min autonomy, {meta?.action_s ?? 30} s per reading or action.
+            Simulation parameter: {autonomy / 60} min autonomy (within the 1 to 15 min data center range, Schneider
+            Electric, source S7 in ATS_MODEL.md), {meta?.action_s ?? 30} s per reading or action.
           </div>
         </div>
       </div>
