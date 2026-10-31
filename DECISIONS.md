@@ -487,3 +487,36 @@ decisions at the end (see CLAUDE.md). Architecture: [ARCHITECTURE.md](ARCHITECTU
 - **Evidence:** tests (hybrid session over the WebSocket with plans checked against the steps taken, Compare columns,
   the suggestion equal to the baseline plan after the same steps and unchanged with a swapped bench fault, the sheet
   regenerated equal to the committed one and safe-ordered); browser walkthroughs with screenshots in runs/ui_check/.
+
+### D41. New explanation step for Hybrid v2 on the ATS: structured input, checked output (2026-10-31)
+- **What:** the explanation moves to `probeforge/ats/hybrid/explain.py`; the frozen pipeline calls it (new
+  fingerprints: ats_hybrid_pipeline 8a9c95c16c71, ats_hybrid_explain 1a468df099ba; read, planner and crops unchanged).
+  Input, all from the transcribed model and the planner: the diagnosed part by name and kind (for example "operating
+  coil TS A-B", "harness wire W7") with its terminals and circuit; every step with its probe points and observed reading;
+  for steps that probe the diagnosed part (or a part the same root cause damaged) what a fault-free switch would read at
+  that moment, every other step marked "normal for the present position (explained by the diagnosed fault)"; actions
+  (isolation, the manual check) as actions; twins and consequential faults named. Output: strict JSON (what failed,
+  evidence, the part to act on as a model part id, the action), rendered in code. Check in code: the part to act on
+  must be the diagnosed part or a twin (consequential parts allowed), and the action sentences must name it by its kind
+  and name no other part; one retry with the reason, then a template from the diagnosis. Insufficient information
+  always gets the template (every part still possible listed), because a model text on no single part risks
+  presenting a guess as a finding. Effort stays low.
+- **Why:** the live check (a1, coil open, correct) told the technician to inspect TS 6-7. Investigation of the recorded
+  explanations: the model got bare readings with no reference (TS 6-7 open is normal on Normal), no idea what the part
+  is (the coil called "main contacts", engine-start wire called "sense wiring"), isolation and the manual check as raw
+  tuples, and twins hidden behind "confidence 0.5".
+- **Alternatives:** prompt wording only (no guarantee); the fault-free value for every reading (tried in the first
+  version: a fault-free switch has transferred to Emergency, so for position-dependent readings it misled the model
+  again, a1 "TS 6-7 open while a good switch reads near zero"); an action part limited to the diagnosed part in the
+  schema (a wrong choice would be forced right and become unmeasurable).
+- **Evidence (12 dev cases, default saved transcription, explanation scored by `check_text`):** before (frozen code)
+  strict 6 of 12 mismatches, lenient 1 of 12 (a1: the action names TS 6-7); the strict failures are actions that refer
+  back to the part ("repair the wire") without naming it. After, three iterations on the same 12 dev cases:
+  first version 0 of 12 by the check but 4 templates and a1 evidence still misleading; second 0 of 12, 0 templates;
+  final 0 of 12 strict and lenient, 10 model texts accepted on the first try, 2 templates (the insufficient
+  information cases). Tool logs and diagnoses identical before and after in every paid run (12 of 12) and offline on
+  both saved transcriptions (24 of 24). Cost of the measurements $0.456. The check was built and its aliases fixed
+  (pins, wire end labels, "steps 1 and 2") before the after runs; the iterations used the dev cases, so the holdout is
+  the first unseen test of the explanation.
+- **Known gap:** the check covers the action, not every sentence; a7 repairs the cut-off contact without saying to also
+  check the coil it burnt, although the input states it.

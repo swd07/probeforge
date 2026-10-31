@@ -265,4 +265,4 @@ def test_hybrid_v2_is_frozen():
     """Hybrid v2 frozen on 2026-10-31 (DECISIONS.md D34): changing a fingerprinted component needs approval first."""
     from probeforge.ats.freeze import ats_frozen_hashes
 
-    assert ats_frozen_hashes() == {'ats_hybrid_read': '08b4676a5c4b', 'ats_hybrid_pipeline': '7f2625bda2ac', 'ats_infogain': '2eff9c8764c1', 'ats_sheet_crops': '5687e25c8ce3'}
+    assert ats_frozen_hashes() == {'ats_hybrid_read': '08b4676a5c4b', 'ats_hybrid_pipeline': '8a9c95c16c71', 'ats_hybrid_explain': '1a468df099ba', 'ats_infogain': '2eff9c8764c1', 'ats_sheet_crops': '5687e25c8ce3'}

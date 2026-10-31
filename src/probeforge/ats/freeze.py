@@ -1,7 +1,8 @@
 """Fingerprints of the ATS components that must not change between dev and the holdout run (see DECISIONS.md D34).
 
 Hybrid v2 is frozen on 2026-10-31: the read step (prompt included), the pipeline (sequence checks, repair, acceptance),
-the information-gain planner (also the ceiling baseline) and the drawing crops. A test pins these values; changing a
+the information-gain planner (also the ceiling baseline) and the drawing crops. The explanation step was replaced on
+2026-10-31 (D41: structured input, checked output); tool logs and diagnoses were shown unchanged. A test pins these values; changing a
 fingerprinted component needs the user's approval first. The relay-panel fingerprints stay in scripts/run_scenarios.py.
 """
 
@@ -18,13 +19,14 @@ def _sha(text: str) -> str:
 
 def ats_frozen_hashes() -> dict:
     from probeforge.ats import infogain
-    from probeforge.ats.hybrid import pipeline, read
+    from probeforge.ats.hybrid import explain, pipeline, read
 
     crops = (ROOT / "scripts" / "render_ats_sheets.py").read_text(encoding="utf-8").replace("\r\n", "\n")
     sheets = crops[crops.index("SHEETS = ["):crops.index("]\n\n\ndef main")]
     return {
         "ats_hybrid_read": _sha(inspect.getsource(read)),
         "ats_hybrid_pipeline": _sha(inspect.getsource(pipeline)),
+        "ats_hybrid_explain": _sha(inspect.getsource(explain)),
         "ats_infogain": _sha(inspect.getsource(infogain)),
         "ats_sheet_crops": _sha(sheets),
     }

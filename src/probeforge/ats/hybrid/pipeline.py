@@ -25,10 +25,11 @@ from dataclasses import dataclass, field
 import yaml
 
 from probeforge.ats.bench import AtsBench
+from probeforge.ats.hybrid.explain import explain
 from probeforge.ats.hybrid.read import build, chat_images, parse_reply, to_netlist
 from probeforge.ats.infogain import AtsInfoGain
 from probeforge.ats.tools import approve_standard_only
-from probeforge.hybrid.llm import Usage, chat
+from probeforge.hybrid.llm import Usage
 from probeforge.hybrid.repair import rewired
 from probeforge.hybrid.uncertainty import alternatives, pin_groups
 
@@ -238,15 +239,7 @@ same format inside one ```yaml block. Change only what the drawing shows differe
 listed regions, add that place to `uncertain` with the reason. Then one line starting with "Explanation:" saying what
 you changed and why."""
 
-EXPLAIN_PROMPT = """You are writing for a field technician. A transfer switch (ASCO Series 300 Group G) did not transfer the load
-during a utility outage. A diagnosis planner took these readings on the switch (step: action -> result):
-{readings}
-
-Its result: {result}
-
-Write 3 to 5 short sentences in plain English: what failed, which readings prove it (cite step numbers like "step 4"),
-and what an authorized person should check or repair next, within the safety limits (no bypassing interlocks, no
-paralleling sources, no manual operation under load). Do not use dashes as punctuation."""
+# The explanation step is probeforge.ats.hybrid.explain (decision D41).
 
 
 def readings_text(planner: AtsInfoGain) -> str:
@@ -348,6 +341,7 @@ class AtsHybridResult:
     healthy_check: dict = field(default_factory=dict)
     corrections: list[dict] = field(default_factory=list)
     variants: int = 0
+    explain_record: dict = field(default_factory=dict)
 
 
 MODEL_ATTEMPTS = 4
@@ -456,11 +450,7 @@ def run_ats_hybrid(bench: AtsBench, client, data: dict, raw: dict, images: list[
                              corrections=repairer.records, variants=len(alts))
     if do_explain:
         try:
-            d = diagnosis
-            res = (f"{d['component']} {d.get('part', '')} {d['failure_mode']} (confidence {d['confidence']})"
-                   if d.get("outcome") == "diagnosed" else f"insufficient information: {d.get('note', '')}")
-            result.explanation = chat(client, usage, "explanation", EXPLAIN_PROMPT.format(readings=readings_text(planner),
-                                                                                          result=res), None, explain_effort)
+            result.explanation, result.explain_record = explain(client, usage, planner, diagnosis, explain_effort)
         except Exception as e:  # noqa: BLE001 - a failed explanation must not lose the diagnosis
             usage.error = f"explanation failed: {type(e).__name__}: {e}"
     result.seconds = time.perf_counter() - t0
