@@ -173,10 +173,11 @@ interface ResultProps {
   onToggleTruth: () => void;
   saved?: string;
   onCompare?: () => void;
+  compareLabel?: string;
 }
 
 /** Docked at the top of the right panel so the schematic stays visible; collapses to one line. */
-export function ResultCard({ done, showTruth, onToggleTruth, saved, onCompare }: ResultProps) {
+export function ResultCard({ done, showTruth, onToggleTruth, saved, onCompare, compareLabel }: ResultProps) {
   const [collapsed, setCollapsed] = useState(false);
   const manual = done.mode === "manual";
   const hybrid = done.mode === "hybrid";
@@ -273,7 +274,7 @@ export function ResultCard({ done, showTruth, onToggleTruth, saved, onCompare }:
             </button>
             {onCompare && (
               <button className="btn primary" onClick={onCompare}>
-                Compare with agent and baseline
+                {compareLabel ?? "Compare with agent and baseline"}
               </button>
             )}
           </div>

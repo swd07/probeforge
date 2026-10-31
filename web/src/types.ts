@@ -242,6 +242,13 @@ export interface ComponentInfo {
 
 export interface CompareColumn {
   runner: string;
+  missing?: string; // ATS: no engineer trace recorded
+  strong_approvals?: number;
+  approvals_denied?: number;
+  approvals_by?: string;
+  transcription?: string;
+  engineer?: string;
+  recorded?: string;
   diagnosis?: string;
   confidence?: number | null;
   verdict?: string;
@@ -256,6 +263,8 @@ export interface CompareColumn {
 }
 
 export interface CompareResult {
+  bench?: Bench;
+  own?: string;
   fault: string;
   columns: Record<string, CompareColumn>;
   note: string;

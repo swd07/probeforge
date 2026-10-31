@@ -10,7 +10,7 @@ export interface State {
   engineer: string;
   saved: string;
   compare: CompareResult | null;
-  compareProgress: { baseline: boolean; agentTurn: number } | null;
+  compareProgress: { baseline: boolean; agentTurn: number; hybrid?: boolean } | null;
   source: string;
   model: string;
   effort: string;
@@ -270,6 +270,7 @@ function reducer(s: State, a: Action): State {
         ...s,
         compareProgress: {
           baseline: s.compareProgress?.baseline || ev.runner === "baseline",
+          hybrid: s.compareProgress?.hybrid || ev.runner === "hybrid",
           agentTurn: ev.runner === "agent" ? ev.turn : s.compareProgress?.agentTurn ?? 0,
         },
       };

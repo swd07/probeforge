@@ -31,12 +31,13 @@ from probeforge.ats.bench import INTERNAL_NETS, REPAIR_KINDS, AtsBench
 from probeforge.ats.faults import COMPONENT_MODES, PART_MODES, all_faults, validate
 from probeforge.ats.hybrid.pipeline import HEALTHY_EVENTS, healthy_sequence, prepare_model, run_ats_hybrid, warm
 from probeforge.ats.hybrid.read import SHEET_DIR, SHEETS, read_consensus, sheet_images, to_netlist
+from probeforge.ats.infogain import AtsInfoGain
 from probeforge.ats.nextstep import planned_next
 from probeforge.ats.policy import RULES
-from probeforge.ats.tools import AtsApprovalRequest, AtsToolBox
+from probeforge.ats.tools import AtsApprovalRequest, AtsToolBox, approve_standard_only
 from probeforge.eval.scoring import grade
 from probeforge.eval.spend import EST_PER_AGENT_RUN_USD, SpendLedger, SpendLimitError
-from probeforge.eval.trace import make_trace
+from probeforge.eval.trace import describe_diagnosis, make_trace
 from probeforge.faults.model import Fault
 from probeforge.hybrid.llm import Usage
 from probeforge.sim.schematic import render_svg
@@ -44,6 +45,7 @@ from probeforge.sim.schematic import render_svg
 ROOT = Path(__file__).resolve().parents[3]
 CASES_DIR = ROOT / "scenarios" / "ats"
 ENGINEER_DIR = ROOT / "scenarios" / "engineer_traces" / "ats"
+COMPARE_DIR = ROOT / "runs" / "compare"
 BENCH = AtsBench()
 NETLIST = BENCH.n
 SVG = render_svg(NETLIST)
@@ -223,6 +225,43 @@ def describe(entry: dict) -> str:
     return tool.replace("_", " ")
 
 
+def sequence(log: list[dict]) -> list[str]:
+    """Every step after the first panel look, as one line each (blocked and refused steps marked)."""
+    out = []
+    for e in log[1:]:
+        if e["tool"] in ("update_hypotheses", "submit_diagnosis", "get_schematic"):
+            continue
+        if e["verdict"] == "block":
+            out.append(f"blocked: {e['tool'].replace('_', ' ')}")
+        elif not e["executed"]:
+            out.append(f"not done: {e['tool'].replace('_', ' ')} ({str(e['result'].get('error', ''))[:60]})")
+        else:
+            out.append(describe(e))
+    return out
+
+
+def column(trace: dict, judged: dict, strong: int, live_approvals: bool) -> dict:
+    """One column of the ATS comparison."""
+    d = trace["diagnosis"] or {}
+    return {"runner": trace["runner"], "diagnosis": describe_diagnosis(trace["diagnosis"], trace["outcome"]),
+            "confidence": d.get("confidence"), "verdict": judged["verdict"], "measurements": trace["measurements"],
+            "redundant": trace["redundant_measurements"], "blocked": trace["policy"]["blocked"],
+            "approvals": trace["policy"]["approval_requests"], "strong_approvals": strong,
+            "approvals_denied": trace["policy"]["approvals_denied"], "seconds": trace["seconds"],
+            "cost_usd": trace["cost_usd"], "sequence": sequence(trace["tool_log"]),
+            "approvals_by": "answered live in this session" if live_approvals else "batch rules"}
+
+
+def engineer_trace(faults: list[Fault]) -> dict | None:
+    """A recorded engineer trace for exactly these faults (real engineers only: walkthrough traces are deleted)."""
+    want = sorted(f.to_dict().items() for f in faults)
+    for p in sorted(ENGINEER_DIR.glob("*.json"), reverse=True):
+        rec = json.loads(p.read_text(encoding="utf-8"))
+        if sorted(Fault.from_dict(x).to_dict().items() for x in rec.get("faults", [])) == want:
+            return rec
+    return None
+
+
 class AtsSession:
     """Shared by the ATS agent and engineer sessions: one bench, approvals, enriched tool events, intervention."""
 
@@ -357,6 +396,77 @@ class AtsSession:
                 self.emit({"type": "verified", "panel": snapshot(self.bench, self.flow),
                            "message": "Transfer verified by the simulator: load on Emergency, position confirmed. "
                                       "UPS countdown stopped."})
+
+    def compare(self, client_fn) -> None:
+        """The other diagnosticians on the same fault, side by side with this session. Re-runs start from the same
+        scenario state on a fresh bench and use the batch approval rules (approval tier approved, strong approval
+        denied); this session's column keeps its live approvals. The agent run is paid and passes the demo spend
+        guard; the hybrid (saved transcription, no explanation) and the baseline make no model calls. The engineer
+        column is this session if a human ran it, else a recorded engineer trace for this fault, else none."""
+        if not self.done or self.trace is None:
+            self.emit({"type": "error", "message": "finish the diagnosis first"})
+            return
+        own = {"manual": "human", "agent": "agent", "hybrid": "hybrid"}[self.mode]
+        columns = {own: column(self.trace, self.judge(self.trace["diagnosis"], self.trace["outcome"]),
+                               self.tb.policy.stats.strong_approval_requests if self.tb else 0, True)}
+
+        def judged(tr: dict) -> dict:
+            return self.judge(tr["diagnosis"], tr["outcome"])
+
+        if own != "human":
+            rec = engineer_trace(self.faults)
+            columns["human"] = ({**column(rec, judged(rec), 0, True), "engineer": rec.get("engineer"),
+                                 "recorded": rec.get("recorded")} if rec else
+                                {"runner": "human", "missing": "no engineer trace recorded for this fault"})
+        if "baseline" not in columns:
+            t0 = time.perf_counter()
+            p = AtsInfoGain(_outage(self.faults), NETLIST, model_key="true", approver=approve_standard_only)
+            d = p.run()
+            tr = make_trace(case="compare_ats", runner="ats_infogain", tb=p.tb, diagnosis=d, outcome=d["outcome"],
+                            seconds=time.perf_counter() - t0, notes=p.notes)
+            columns["baseline"] = column(tr, judged(tr), p.tb.policy.stats.strong_approval_requests, False)
+            self.emit({"type": "compare_progress", "runner": "baseline", "done": True})
+        if "hybrid" not in columns:
+            try:
+                t = transcriptions.load(transcriptions.DEFAULT)
+                ok, events = healthy_sequence(to_netlist(t["data"]))
+                ready = warm_transcription(t["id"])
+                ready.wait()
+                r = run_ats_hybrid(_outage(self.faults), None, t["data"], t["raw"], [], flags=t["flags"],
+                                   approver=approve_standard_only, repair=False, do_explain=False,
+                                   healthy={"ok": ok, "events": events})
+                tr = make_trace(case="compare_ats", runner="ats_hybrid", tb=r.planner.tb, diagnosis=r.diagnosis,
+                                outcome=r.outcome, seconds=r.seconds, notes=r.planner.notes)
+                columns["hybrid"] = {**column(tr, judged(tr), r.planner.tb.policy.stats.strong_approval_requests, False),
+                                     "transcription": f"{t['label']} ({t['run_id']})"}
+            except Exception as e:  # noqa: BLE001 - one column failing must not lose the others
+                columns["hybrid"] = {"runner": "ats_hybrid", "error": f"{type(e).__name__}: {e}"}
+            self.emit({"type": "compare_progress", "runner": "hybrid", "done": True})
+        if "agent" not in columns:
+            try:
+                SpendLedger().check(EST_PER_AGENT_RUN_USD, what="an ATS agent run (compare)", demo=True)
+
+                def progress(ev: dict) -> None:
+                    if ev["type"] == "turn":
+                        self.emit({"type": "compare_progress", "runner": "agent", "turn": ev["turn"]})
+
+                run, tb = run_ats_agent(_outage(self.faults), client_fn(), effort="low", approver=approve_standard_only,
+                                        on_event=progress)
+                SpendLedger().record(run.cost_usd, "ui ATS compare agent run", demo=True)
+                tr = make_trace(case="compare_ats", runner="ats_agent", tb=tb, diagnosis=run.diagnosis,
+                                outcome=run.outcome, seconds=run.seconds, run=run)
+                columns["agent"] = column(tr, judged(tr), tb.policy.stats.strong_approval_requests, False)
+            except Exception as e:  # noqa: BLE001 - spend limit, no key, offline mode, API down
+                columns["agent"] = {"runner": "ats_agent", "error": f"{type(e).__name__}: {e}" if not isinstance(
+                    e, SpendLimitError) else str(e)}
+        fault = self.judge(self.trace["diagnosis"], self.trace["outcome"])["fault"]
+        result = {"type": "compare", "bench": "ats", "fault": fault, "columns": columns, "own": own,
+                  "note": f"Re-runs use the batch approval rules (approval tier approved, strong approval denied); the "
+                          f"{'engineer' if own == 'human' else own} column is this session, with approvals answered live. "
+                          "Hybrid v2 runs on the default saved transcription without the explanation call."}
+        COMPARE_DIR.mkdir(parents=True, exist_ok=True)
+        (COMPARE_DIR / f"ats_{datetime.now():%Y%m%d_%H%M%S}.json").write_text(json.dumps(result, indent=2), encoding="utf-8")
+        self.emit(result)
 
     # called from the event loop ---------------------------------------------------
 

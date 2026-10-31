@@ -127,7 +127,7 @@ def test_agent_session_then_intervention_with_policy_fact():
         app_module.client = orig
 
 
-def test_hybrid_session_on_a_saved_transcription(monkeypatch):
+def test_hybrid_session_on_a_saved_transcription(monkeypatch, tmp_path):
     """Hybrid v2 on the ATS bench over the WebSocket: the transcription card data, the model check, the planner's next
     step before every reading (the step then taken), human approvals, and the fault only in "done". A perfect read
     stands in for the saved transcription (same netlist as our redrawing: about 12 s of candidate simulation)."""
@@ -145,6 +145,7 @@ def test_hybrid_session_on_a_saved_transcription(monkeypatch):
     ready.set()
     monkeypatch.setattr(ats, "warm_transcription", lambda tid: ready)
     monkeypatch.setattr(ats, "PLAN_PAUSE_S", 0)
+    monkeypatch.setattr(ats, "COMPARE_DIR", tmp_path / "compare")
     monkeypatch.setattr(server, "client", lambda: (_ for _ in ()).throw(RuntimeError("no key")))  # no explanation call
     http = TestClient(server.app)
     events: list = []
@@ -157,8 +158,17 @@ def test_hybrid_session_on_a_saved_transcription(monkeypatch):
         assert t["run_id"] == "test_run" and t["recorded"] and t["attempts"] == []
         assert until(ws, "model_check", events)["ok"]
         done = until(ws, "done", events)
+        # Compare: this session is the hybrid column; the baseline re-runs; no engineer trace exists; the agent
+        # re-run goes through the demo spend guard and the client (no key here: its column reports the error)
+        ws.send_json({"action": "compare"})
+        cmp = until(ws, "compare", events)
     assert done["mode"] == "hybrid" and done["verdict"] == "correct" and done["fault"] == "TS:A-B open"
     assert done["transcription"].startswith("Test read (test_run")
+    cols = cmp["columns"]
+    assert cmp["own"] == "hybrid" and cols["hybrid"]["approvals_by"] == "answered live in this session"
+    assert cols["baseline"]["verdict"] == "correct" and cols["baseline"]["approvals_by"] == "batch rules"
+    assert cols["human"]["missing"] == "no engineer trace recorded for this fault"
+    assert "no key" in cols["agent"]["error"]
     plans = [e for e in events if e["type"] == "next_step"]
     tools = [e for e in events if e["type"] == "tool" and e["tool"] != "update_hypotheses"]
     assert plans and plans[-1]["tool"] == "submit_diagnosis"

@@ -601,6 +601,8 @@ async def ws(websocket: WebSocket) -> None:
                 emit({"type": "error", "message": "No engineer session is running: choose Engineer, pick a fault and press Start."})
             elif action == "compare" and isinstance(session, ManualSession):
                 background(session.compare)
+            elif action == "compare" and isinstance(session, ats.AtsSession):
+                background(session.compare, client)
             elif action in ("approval", "flags") and session:
                 session.answer(int(msg["id"]), bool(msg.get("approve")))
             elif action == "wiring" and isinstance(session, HybridSession):

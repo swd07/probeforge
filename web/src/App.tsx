@@ -156,8 +156,9 @@ export function App() {
               showTruth={showTruth}
               onToggleTruth={() => setShowTruth((v) => !v)}
               saved={manualRun ? state.saved : undefined}
+              compareLabel={ats ? "Compare on this fault (agent re-run about $0.10; hybrid and baseline free)" : undefined}
               onCompare={
-                manualRun
+                manualRun || ats
                   ? () => {
                       if (!state.compare) compare();
                       setComparing(true);
@@ -237,7 +238,7 @@ export function App() {
           }}
         />
       )}
-      {comparing && <CompareView result={state.compare} progress={state.compareProgress} onClose={() => setComparing(false)} />}
+      {comparing && <CompareView result={state.compare} progress={state.compareProgress} onClose={() => setComparing(false)} ats={ats} />}
     </div>
   );
 }
