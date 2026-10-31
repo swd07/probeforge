@@ -15,6 +15,7 @@ Emergency with the position confirmed by the controller.
 
 import itertools
 import json
+import os
 import random
 import threading
 import time
@@ -241,11 +242,30 @@ def sequence(log: list[dict]) -> list[str]:
     return out
 
 
+TWIN_NOTE = "no reading separates: "
+
+
+def diagnosis_text(diagnosis: dict | None, outcome: str) -> tuple[str, bool]:
+    """The diagnosis as shown, and whether it names observational twins. A planner diagnosis whose note lists causes
+    no reading separates reads "TS A-B open or burnt (no reading separates them; same repair)" instead of a split
+    confidence, which reads as doubt."""
+    d = diagnosis or {}
+    note = str(d.get("note") or "")
+    if outcome != "diagnosed" or not note.startswith(TWIN_NOTE):
+        return describe_diagnosis(diagnosis, outcome), False
+    items = [x.strip().rsplit(" ", 1) for x in note[len(TWIN_NOTE):].split(", ") if " " in x.strip()]
+    targets = {target for target, _ in items}
+    if len(targets) == 1:
+        return f"{targets.pop().replace(':', ' ')} {' or '.join(m for _, m in items)} (no reading separates them; same repair)", True
+    return " or ".join(f"{target.replace(':', ' ')} {m}" for target, m in items) + " (no reading separates them)", True
+
+
 def column(trace: dict, judged: dict, strong: int, live_approvals: bool) -> dict:
     """One column of the ATS comparison."""
     d = trace["diagnosis"] or {}
-    return {"runner": trace["runner"], "diagnosis": describe_diagnosis(trace["diagnosis"], trace["outcome"]),
-            "confidence": d.get("confidence"), "verdict": judged["verdict"], "measurements": trace["measurements"],
+    text, twins = diagnosis_text(trace["diagnosis"], trace["outcome"])
+    return {"runner": trace["runner"], "diagnosis": text,
+            "confidence": None if twins else d.get("confidence"), "verdict": judged["verdict"], "measurements": trace["measurements"],
             "redundant": trace["redundant_measurements"], "blocked": trace["policy"]["blocked"],
             "approvals": trace["policy"]["approval_requests"], "strong_approvals": strong,
             "approvals_denied": trace["policy"]["approvals_denied"], "seconds": trace["seconds"],
@@ -371,6 +391,8 @@ class AtsSession:
             "approvals_denied": trace["policy"]["approvals_denied"],
             "strong_approvals": self.tb.policy.stats.strong_approval_requests if self.tb else 0,
             "recovered_text_calls": trace["recovered_text_calls"], "error": trace["error"],
+            "diagnosis_text": diagnosis_text(trace["diagnosis"], trace["outcome"])[0],
+            "twins_named": diagnosis_text(trace["diagnosis"], trace["outcome"])[1],
             "panel": snapshot(b, self.flow),
             "truth_live_nets": [n for n in NETLIST.nets if n not in INTERNAL_NETS and b.voltage(n, "NN") > LIVE_V],
             "decisive": None,
@@ -444,6 +466,8 @@ class AtsSession:
             except Exception as e:  # noqa: BLE001 - one column failing must not lose the others
                 columns["hybrid"] = {"runner": "ats_hybrid", "error": f"{type(e).__name__}: {e}"}
             self.emit({"type": "compare_progress", "runner": "hybrid", "done": True})
+        if "agent" not in columns and os.environ.get("PROBEFORGE_OFFLINE"):
+            columns["agent"] = {"runner": "ats_agent", "missing": "agent not run (offline mode)"}
         if "agent" not in columns:
             try:
                 SpendLedger().check(EST_PER_AGENT_RUN_USD, what="an ATS agent run (compare)", demo=True)
@@ -465,7 +489,12 @@ class AtsSession:
         result = {"type": "compare", "bench": "ats", "fault": fault, "columns": columns, "own": own,
                   "note": f"Re-runs use the batch approval rules (approval tier approved, strong approval denied); the "
                           f"{'engineer' if own == 'human' else own} column is this session, with approvals answered live. "
-                          "Hybrid v2 runs on the default saved transcription without the explanation call."}
+                          "Hybrid v2 runs on the default saved transcription without the explanation call. Times exclude the "
+                          "UI display pause."
+                          + (" The hybrid and baseline columns are identical here: the model Muse Spark read from the "
+                             "drawing behaves like our hand redrawing, so the planner takes the same steps."
+                             if columns.get("hybrid", {}).get("sequence") is not None
+                             and columns["hybrid"].get("sequence") == columns.get("baseline", {}).get("sequence") else "")}
         COMPARE_DIR.mkdir(parents=True, exist_ok=True)
         (COMPARE_DIR / f"ats_{datetime.now():%Y%m%d_%H%M%S}.json").write_text(json.dumps(result, indent=2), encoding="utf-8")
         self.emit(result)
@@ -642,6 +671,7 @@ class AtsHybridSession(AtsSession):
         super().__init__(faults, source, case, emit)
         self.transcription = transcription or transcriptions.DEFAULT
         self.client_fn = client_fn
+        self.paused_s = 0.0  # UI display pauses, subtracted from every reported time
 
     def _client(self):
         try:
@@ -679,6 +709,7 @@ class AtsHybridSession(AtsSession):
         self.emit({"type": "next_step", "step": step, **plan, "terminals": terms})
         if plan["tool"] != "submit_diagnosis" and PLAN_PAUSE_S:
             time.sleep(PLAN_PAUSE_S)
+            self.paused_s += PLAN_PAUSE_S
 
     def run(self) -> None:
         live = self.transcription == "live"
@@ -742,7 +773,8 @@ class AtsHybridSession(AtsSession):
             self.closed = True
             return
         trace = make_trace(case="ui_ats", runner="ats_hybrid", tb=self.tb, diagnosis=result.diagnosis,
-                           outcome=result.outcome, seconds=result.seconds, run=usage, notes=result.planner.notes,
+                           outcome=result.outcome, seconds=max(result.seconds - self.paused_s, 0.0), run=usage,
+                           notes=result.planner.notes,
                            extra={"explanation": result.explanation, "corrections": result.corrections,
                                   "transcription": t["id"]})
         self.finish(trace, extra={
@@ -753,6 +785,7 @@ class AtsHybridSession(AtsSession):
                             for c in result.corrections],
             "gave_up": result.planner.gave_up,
             "wiring_check": None,
+            "display_pause_s": self.paused_s,
         })
 
     def call(self, name: str, args: dict) -> None:

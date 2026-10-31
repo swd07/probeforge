@@ -189,6 +189,9 @@ export interface Done {
   bench?: Bench;
   intervention?: boolean;
   strong_approvals?: number;
+  diagnosis_text?: string; // the diagnosis as shown (twins named instead of a split confidence)
+  twins_named?: boolean;
+  display_pause_s?: number; // ATS hybrid: UI display pauses, excluded from seconds
   // hybrid pipeline only
   explanation?: string;
   cited_steps?: number[];

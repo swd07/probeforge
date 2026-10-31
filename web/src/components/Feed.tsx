@@ -78,6 +78,17 @@ export function describeTool(ev: ToolEvent): { title: string; detail: string } {
       };
     }
     case "submit_diagnosis":
+      if (typeof a.note === "string" && a.note.startsWith("no reading separates: ")) {
+        const items = a.note.slice("no reading separates: ".length).split(", ").map((x: string) => x.trim().split(" "));
+        const targets = new Set(items.map((x: string[]) => x[0]));
+        return {
+          title:
+            targets.size === 1
+              ? `Diagnosis: ${items[0][0].replace(":", " ")} ${items.map((x: string[]) => x[1]).join(" or ")}`
+              : `Diagnosis: ${items.map((x: string[]) => x.join(" ").replace(":", " ")).join(" or ")}`,
+          detail: targets.size === 1 ? "no reading separates them; same repair" : "no reading separates them",
+        };
+      }
       return {
         title: a.outcome === "insufficient_information" ? "Diagnosis: insufficient information" : `Diagnosis: ${a.component}${a.part ? " " + a.part : ""} ${a.failure_mode}`,
         detail: a.confidence !== undefined ? `confidence ${(Number(a.confidence) * 100).toFixed(0)}%` : "",

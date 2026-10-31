@@ -182,8 +182,7 @@ export function ResultCard({ done, showTruth, onToggleTruth, saved, onCompare, c
   const manual = done.mode === "manual";
   const hybrid = done.mode === "hybrid";
   const d = done.diagnosis ?? {};
-  const said =
-    done.outcome === "diagnosed"
+  const said = done.diagnosis_text ? done.diagnosis_text : done.outcome === "diagnosed"
       ? `${d.component}${d.part ? " " + d.part : ""} ${d.failure_mode}`
       : done.outcome === "insufficient_information"
         ? "insufficient information"
@@ -208,9 +207,9 @@ export function ResultCard({ done, showTruth, onToggleTruth, saved, onCompare, c
             <div>
               <span className="lbl">{manual ? "Your diagnosis" : hybrid ? "Pipeline diagnosis" : "Agent diagnosis"}</span>
               <span className="val">{said}</span>
-              {typeof d.confidence === "number" && <span className="tag">{(Number(d.confidence) * 100).toFixed(0)}%</span>}
+              {typeof d.confidence === "number" && !done.twins_named && <span className="tag">{(Number(d.confidence) * 100).toFixed(0)}%</span>}
             </div>
-            {typeof d.note === "string" && d.note && (
+            {typeof d.note === "string" && d.note && !done.twins_named && (
               <div>
                 <span className="lbl">Note</span>
                 <span className="val">{d.note}</span>
@@ -263,7 +262,9 @@ export function ResultCard({ done, showTruth, onToggleTruth, saved, onCompare, c
             {!manual && <div><b>{done.turns}</b><span>{hybrid ? "model calls" : "turns"}</span></div>}
             {!manual && <div><b>{(done.tokens / 1000).toFixed(0)}k</b><span>tokens</span></div>}
             {!manual && <div><b>${done.cost_usd.toFixed(3)}</b><span>cost</span></div>}
-            <div><b>{done.seconds.toFixed(0)} s</b><span>time</span></div>
+            <div title={done.display_pause_s ? `excludes ${done.display_pause_s.toFixed(0)} s of UI display pauses` : undefined}>
+              <b>{done.seconds.toFixed(0)} s</b><span>{done.display_pause_s ? "time (pauses excluded)" : "time"}</span>
+            </div>
             <div><b>{done.policy_blocked}</b><span>blocked</span></div>
             <div><b>{done.approvals}</b><span>approvals</span></div>
           </div>

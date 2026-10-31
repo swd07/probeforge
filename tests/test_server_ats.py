@@ -144,7 +144,8 @@ def test_hybrid_session_on_a_saved_transcription(monkeypatch, tmp_path):
     ready = threading.Event()
     ready.set()
     monkeypatch.setattr(ats, "warm_transcription", lambda tid: ready)
-    monkeypatch.setattr(ats, "PLAN_PAUSE_S", 0)
+    monkeypatch.setattr(ats, "PLAN_PAUSE_S", 0.01)  # the display pause is counted and excluded from reported times
+    monkeypatch.setenv("PROBEFORGE_OFFLINE", "1")
     monkeypatch.setattr(ats, "COMPARE_DIR", tmp_path / "compare")
     monkeypatch.setattr(server, "client", lambda: (_ for _ in ()).throw(RuntimeError("no key")))  # no explanation call
     http = TestClient(server.app)
@@ -159,7 +160,7 @@ def test_hybrid_session_on_a_saved_transcription(monkeypatch, tmp_path):
         assert until(ws, "model_check", events)["ok"]
         done = until(ws, "done", events)
         # Compare: this session is the hybrid column; the baseline re-runs; no engineer trace exists; the agent
-        # re-run goes through the demo spend guard and the client (no key here: its column reports the error)
+        # re-run is not started in offline mode (its column says so)
         ws.send_json({"action": "compare"})
         cmp = until(ws, "compare", events)
     assert done["mode"] == "hybrid" and done["verdict"] == "correct" and done["fault"] == "TS:A-B open"
@@ -168,7 +169,13 @@ def test_hybrid_session_on_a_saved_transcription(monkeypatch, tmp_path):
     assert cmp["own"] == "hybrid" and cols["hybrid"]["approvals_by"] == "answered live in this session"
     assert cols["baseline"]["verdict"] == "correct" and cols["baseline"]["approvals_by"] == "batch rules"
     assert cols["human"]["missing"] == "no engineer trace recorded for this fault"
-    assert "no key" in cols["agent"]["error"]
+    assert cols["agent"]["missing"] == "agent not run (offline mode)"
+    # twins are named instead of a split confidence
+    assert done["diagnosis_text"] == "TS A-B open or burnt (no reading separates them; same repair)" and done["twins_named"]
+    assert cols["hybrid"]["diagnosis"] == done["diagnosis_text"] and cols["hybrid"]["confidence"] is None
+    pauses = len([e for e in events if e["type"] == "next_step" and e["tool"] != "submit_diagnosis"])
+    assert done["display_pause_s"] == pytest.approx(0.01 * pauses)
+    assert "identical here" in cmp["note"] and "exclude the UI display pause" in cmp["note"]
     plans = [e for e in events if e["type"] == "next_step"]
     tools = [e for e in events if e["type"] == "tool" and e["tool"] != "update_hypotheses"]
     assert plans and plans[-1]["tool"] == "submit_diagnosis"
