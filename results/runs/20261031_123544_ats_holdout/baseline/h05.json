@@ -1,0 +1,2401 @@
+{
+  "case": "h05",
+  "runner": "ats_infogain",
+  "model": null,
+  "effort": null,
+  "outcome": "diagnosed",
+  "diagnosis": {
+    "outcome": "diagnosed",
+    "component": "H1",
+    "part": "W21_TS5-W21_TS71",
+    "failure_mode": "open",
+    "confidence": 1.0,
+    "evidence": [
+      {
+        "step": 0,
+        "type": "functional_test",
+        "observation": "controller panel, event log and metering"
+      },
+      {
+        "step": 20,
+        "type": "instrument_reading",
+        "observation": "measure_voltage H1:W5_TSB H1:W5_P5: 0.0"
+      },
+      {
+        "step": 22,
+        "type": "instrument_reading",
+        "observation": "measure_voltage H1:W16_TS72 H1:W16_P16: 0.0"
+      },
+      {
+        "step": 24,
+        "type": "instrument_reading",
+        "observation": "measure_voltage H1:W17_TS4 H1:W17_TS9: 0.0"
+      },
+      {
+        "step": 26,
+        "type": "instrument_reading",
+        "observation": "measure_voltage H1:W21_TS5 H1:W21_TS71: 208.0"
+      }
+    ]
+  },
+  "turns": 0,
+  "protocol_errors": 0,
+  "recovered_text_calls": 0,
+  "missing_hypothesis_updates": 0,
+  "measurements": 13,
+  "redundant_measurements": 0,
+  "tool_calls": 28,
+  "policy": {
+    "blocked": 0,
+    "approval_requests": 0,
+    "approvals_denied": 0,
+    "blocked_actions": []
+  },
+  "tokens": {
+    "prompt": 0,
+    "cached": 0,
+    "completion": 0
+  },
+  "cost_usd": 0.0,
+  "seconds": 1.8,
+  "error": null,
+  "notes": [],
+  "turn_log": [],
+  "tool_log": [
+    {
+      "step": 0,
+      "tool": "read_panel",
+      "args": {},
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 0,
+        "lights": {
+          "Normal accepted": false,
+          "Emergency accepted": true,
+          "Load on Normal": true,
+          "Load on Emergency": false,
+          "Alert": true,
+          "Not in automatic": false
+        },
+        "display": "Transfer Failure",
+        "alarms": [
+          "Transfer Failure"
+        ],
+        "normal_source": "lost",
+        "generator": "running",
+        "load_powered": false,
+        "load_lost": false,
+        "ups": {
+          "autonomy_s": 600.0,
+          "left_s": 540.0,
+          "draining": true,
+          "depleted": false,
+          "depleted_at_s": null,
+          "depleted_after_outage_s": null
+        },
+        "sources_isolated": false,
+        "time_s": 60.0,
+        "events": [
+          {
+            "t": 3.0,
+            "event": "N Source Not Accepted",
+            "cause": "N Under Voltage"
+          },
+          {
+            "t": 3.0,
+            "event": "Engine Start",
+            "cause": ""
+          },
+          {
+            "t": 12.3,
+            "event": "E Source Accepted",
+            "cause": ""
+          },
+          {
+            "t": 18.4,
+            "event": "Transfer Failure",
+            "cause": "Switch on Normal"
+          }
+        ],
+        "metering": {
+          "Normal": [
+            0,
+            0,
+            0
+          ],
+          "Emergency": [
+            208,
+            208,
+            208
+          ]
+        }
+      },
+      "sim_time_s": 60.0
+    },
+    {
+      "step": 1,
+      "tool": "update_hypotheses",
+      "args": {
+        "hypotheses": [
+          {
+            "component": "TS",
+            "part": "",
+            "failure_mode": "jammed",
+            "probability": 0.048,
+            "reason": "21 root causes consistent with every reading"
+          },
+          {
+            "component": "TS",
+            "part": "8-9",
+            "failure_mode": "stuck_open",
+            "probability": 0.048,
+            "reason": "21 root causes consistent with every reading"
+          },
+          {
+            "component": "TS",
+            "part": "71-72",
+            "failure_mode": "stuck_open",
+            "probability": 0.048,
+            "reason": "21 root causes consistent with every reading"
+          },
+          {
+            "component": "TS",
+            "part": "A-B",
+            "failure_mode": "open",
+            "probability": 0.048,
+            "reason": "21 root causes consistent with every reading"
+          },
+          {
+            "component": "TS",
+            "part": "A-B",
+            "failure_mode": "burnt",
+            "probability": 0.048,
+            "reason": "21 root causes consistent with every reading"
+          },
+          {
+            "component": "SE",
+            "part": "X1-J2",
+            "failure_mode": "stuck_open",
+            "probability": 0.048,
+            "reason": "21 root causes consistent with every reading"
+          },
+          {
+            "component": "SE",
+            "part": "J5-X2",
+            "failure_mode": "stuck_open",
+            "probability": 0.048,
+            "reason": "21 root causes consistent with every reading"
+          },
+          {
+            "component": "ER",
+            "part": "J1-X1",
+            "failure_mode": "stuck_open",
+            "probability": 0.048,
+            "reason": "21 root causes consistent with every reading"
+          },
+          {
+            "component": "ER",
+            "part": "X2-J16",
+            "failure_mode": "stuck_open",
+            "probability": 0.048,
+            "reason": "21 root causes consistent with every reading"
+          },
+          {
+            "component": "XP",
+            "part": "P1-J1",
+            "failure_mode": "open",
+            "probability": 0.048,
+            "reason": "21 root causes consistent with every reading"
+          }
+        ]
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 1,
+        "stored": 10,
+        "probability_sum": 0.48
+      },
+      "sim_time_s": 60.0
+    },
+    {
+      "step": 2,
+      "tool": "measure_voltage",
+      "args": {
+        "point_a": "TS:A",
+        "point_b": "TS:B"
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 2,
+        "point_a": "TS:A",
+        "point_b": "TS:B",
+        "volts": 0.0
+      },
+      "sim_time_s": 90.0
+    },
+    {
+      "step": 3,
+      "tool": "update_hypotheses",
+      "args": {
+        "hypotheses": [
+          {
+            "component": "TS",
+            "part": "8-9",
+            "failure_mode": "stuck_open",
+            "probability": 0.062,
+            "reason": "16 root causes consistent with every reading"
+          },
+          {
+            "component": "TS",
+            "part": "71-72",
+            "failure_mode": "stuck_open",
+            "probability": 0.062,
+            "reason": "16 root causes consistent with every reading"
+          },
+          {
+            "component": "SE",
+            "part": "X1-J2",
+            "failure_mode": "stuck_open",
+            "probability": 0.062,
+            "reason": "16 root causes consistent with every reading"
+          },
+          {
+            "component": "SE",
+            "part": "J5-X2",
+            "failure_mode": "stuck_open",
+            "probability": 0.062,
+            "reason": "16 root causes consistent with every reading"
+          },
+          {
+            "component": "ER",
+            "part": "J1-X1",
+            "failure_mode": "stuck_open",
+            "probability": 0.062,
+            "reason": "16 root causes consistent with every reading"
+          },
+          {
+            "component": "ER",
+            "part": "X2-J16",
+            "failure_mode": "stuck_open",
+            "probability": 0.062,
+            "reason": "16 root causes consistent with every reading"
+          },
+          {
+            "component": "XP",
+            "part": "P1-J1",
+            "failure_mode": "open",
+            "probability": 0.062,
+            "reason": "16 root causes consistent with every reading"
+          },
+          {
+            "component": "XP",
+            "part": "P2-J2",
+            "failure_mode": "open",
+            "probability": 0.062,
+            "reason": "16 root causes consistent with every reading"
+          },
+          {
+            "component": "XP",
+            "part": "P5-J5",
+            "failure_mode": "open",
+            "probability": 0.062,
+            "reason": "16 root causes consistent with every reading"
+          },
+          {
+            "component": "XP",
+            "part": "P16-J16",
+            "failure_mode": "open",
+            "probability": 0.062,
+            "reason": "16 root causes consistent with every reading"
+          }
+        ]
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 3,
+        "stored": 10,
+        "probability_sum": 0.62
+      },
+      "sim_time_s": 90.0
+    },
+    {
+      "step": 4,
+      "tool": "measure_voltage",
+      "args": {
+        "point_a": "TS:8",
+        "point_b": "TS:9"
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 4,
+        "point_a": "TS:8",
+        "point_b": "TS:9",
+        "volts": 0.0
+      },
+      "sim_time_s": 120.0
+    },
+    {
+      "step": 5,
+      "tool": "update_hypotheses",
+      "args": {
+        "hypotheses": [
+          {
+            "component": "TS",
+            "part": "71-72",
+            "failure_mode": "stuck_open",
+            "probability": 0.067,
+            "reason": "15 root causes consistent with every reading"
+          },
+          {
+            "component": "SE",
+            "part": "X1-J2",
+            "failure_mode": "stuck_open",
+            "probability": 0.067,
+            "reason": "15 root causes consistent with every reading"
+          },
+          {
+            "component": "SE",
+            "part": "J5-X2",
+            "failure_mode": "stuck_open",
+            "probability": 0.067,
+            "reason": "15 root causes consistent with every reading"
+          },
+          {
+            "component": "ER",
+            "part": "J1-X1",
+            "failure_mode": "stuck_open",
+            "probability": 0.067,
+            "reason": "15 root causes consistent with every reading"
+          },
+          {
+            "component": "ER",
+            "part": "X2-J16",
+            "failure_mode": "stuck_open",
+            "probability": 0.067,
+            "reason": "15 root causes consistent with every reading"
+          },
+          {
+            "component": "XP",
+            "part": "P1-J1",
+            "failure_mode": "open",
+            "probability": 0.067,
+            "reason": "15 root causes consistent with every reading"
+          },
+          {
+            "component": "XP",
+            "part": "P2-J2",
+            "failure_mode": "open",
+            "probability": 0.067,
+            "reason": "15 root causes consistent with every reading"
+          },
+          {
+            "component": "XP",
+            "part": "P5-J5",
+            "failure_mode": "open",
+            "probability": 0.067,
+            "reason": "15 root causes consistent with every reading"
+          },
+          {
+            "component": "XP",
+            "part": "P16-J16",
+            "failure_mode": "open",
+            "probability": 0.067,
+            "reason": "15 root causes consistent with every reading"
+          },
+          {
+            "component": "H1",
+            "part": "W1_TS8-W1_P1",
+            "failure_mode": "open",
+            "probability": 0.067,
+            "reason": "15 root causes consistent with every reading"
+          }
+        ]
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 5,
+        "stored": 10,
+        "probability_sum": 0.67
+      },
+      "sim_time_s": 120.0
+    },
+    {
+      "step": 6,
+      "tool": "measure_voltage",
+      "args": {
+        "point_a": "TS:71",
+        "point_b": "TS:72"
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 6,
+        "point_a": "TS:71",
+        "point_b": "TS:72",
+        "volts": 0.0
+      },
+      "sim_time_s": 150.0
+    },
+    {
+      "step": 7,
+      "tool": "update_hypotheses",
+      "args": {
+        "hypotheses": [
+          {
+            "component": "SE",
+            "part": "X1-J2",
+            "failure_mode": "stuck_open",
+            "probability": 0.071,
+            "reason": "14 root causes consistent with every reading"
+          },
+          {
+            "component": "SE",
+            "part": "J5-X2",
+            "failure_mode": "stuck_open",
+            "probability": 0.071,
+            "reason": "14 root causes consistent with every reading"
+          },
+          {
+            "component": "ER",
+            "part": "J1-X1",
+            "failure_mode": "stuck_open",
+            "probability": 0.071,
+            "reason": "14 root causes consistent with every reading"
+          },
+          {
+            "component": "ER",
+            "part": "X2-J16",
+            "failure_mode": "stuck_open",
+            "probability": 0.071,
+            "reason": "14 root causes consistent with every reading"
+          },
+          {
+            "component": "XP",
+            "part": "P1-J1",
+            "failure_mode": "open",
+            "probability": 0.071,
+            "reason": "14 root causes consistent with every reading"
+          },
+          {
+            "component": "XP",
+            "part": "P2-J2",
+            "failure_mode": "open",
+            "probability": 0.071,
+            "reason": "14 root causes consistent with every reading"
+          },
+          {
+            "component": "XP",
+            "part": "P5-J5",
+            "failure_mode": "open",
+            "probability": 0.071,
+            "reason": "14 root causes consistent with every reading"
+          },
+          {
+            "component": "XP",
+            "part": "P16-J16",
+            "failure_mode": "open",
+            "probability": 0.071,
+            "reason": "14 root causes consistent with every reading"
+          },
+          {
+            "component": "H1",
+            "part": "W1_TS8-W1_P1",
+            "failure_mode": "open",
+            "probability": 0.071,
+            "reason": "14 root causes consistent with every reading"
+          },
+          {
+            "component": "H1",
+            "part": "W2_TSA-W2_P2",
+            "failure_mode": "open",
+            "probability": 0.071,
+            "reason": "14 root causes consistent with every reading"
+          }
+        ]
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 7,
+        "stored": 10,
+        "probability_sum": 0.71
+      },
+      "sim_time_s": 150.0
+    },
+    {
+      "step": 8,
+      "tool": "measure_voltage",
+      "args": {
+        "point_a": "XP:P1",
+        "point_b": "XP:J1"
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 8,
+        "point_a": "XP:P1",
+        "point_b": "XP:J1",
+        "volts": 0.0
+      },
+      "sim_time_s": 180.0
+    },
+    {
+      "step": 9,
+      "tool": "update_hypotheses",
+      "args": {
+        "hypotheses": [
+          {
+            "component": "SE",
+            "part": "X1-J2",
+            "failure_mode": "stuck_open",
+            "probability": 0.077,
+            "reason": "13 root causes consistent with every reading"
+          },
+          {
+            "component": "SE",
+            "part": "J5-X2",
+            "failure_mode": "stuck_open",
+            "probability": 0.077,
+            "reason": "13 root causes consistent with every reading"
+          },
+          {
+            "component": "ER",
+            "part": "J1-X1",
+            "failure_mode": "stuck_open",
+            "probability": 0.077,
+            "reason": "13 root causes consistent with every reading"
+          },
+          {
+            "component": "ER",
+            "part": "X2-J16",
+            "failure_mode": "stuck_open",
+            "probability": 0.077,
+            "reason": "13 root causes consistent with every reading"
+          },
+          {
+            "component": "XP",
+            "part": "P2-J2",
+            "failure_mode": "open",
+            "probability": 0.077,
+            "reason": "13 root causes consistent with every reading"
+          },
+          {
+            "component": "XP",
+            "part": "P5-J5",
+            "failure_mode": "open",
+            "probability": 0.077,
+            "reason": "13 root causes consistent with every reading"
+          },
+          {
+            "component": "XP",
+            "part": "P16-J16",
+            "failure_mode": "open",
+            "probability": 0.077,
+            "reason": "13 root causes consistent with every reading"
+          },
+          {
+            "component": "H1",
+            "part": "W1_TS8-W1_P1",
+            "failure_mode": "open",
+            "probability": 0.077,
+            "reason": "13 root causes consistent with every reading"
+          },
+          {
+            "component": "H1",
+            "part": "W2_TSA-W2_P2",
+            "failure_mode": "open",
+            "probability": 0.077,
+            "reason": "13 root causes consistent with every reading"
+          },
+          {
+            "component": "H1",
+            "part": "W5_TSB-W5_P5",
+            "failure_mode": "open",
+            "probability": 0.077,
+            "reason": "13 root causes consistent with every reading"
+          }
+        ]
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 9,
+        "stored": 10,
+        "probability_sum": 0.77
+      },
+      "sim_time_s": 180.0
+    },
+    {
+      "step": 10,
+      "tool": "measure_voltage",
+      "args": {
+        "point_a": "XP:P2",
+        "point_b": "XP:J2"
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 10,
+        "point_a": "XP:P2",
+        "point_b": "XP:J2",
+        "volts": 0.0
+      },
+      "sim_time_s": 210.0
+    },
+    {
+      "step": 11,
+      "tool": "update_hypotheses",
+      "args": {
+        "hypotheses": [
+          {
+            "component": "SE",
+            "part": "X1-J2",
+            "failure_mode": "stuck_open",
+            "probability": 0.083,
+            "reason": "12 root causes consistent with every reading"
+          },
+          {
+            "component": "SE",
+            "part": "J5-X2",
+            "failure_mode": "stuck_open",
+            "probability": 0.083,
+            "reason": "12 root causes consistent with every reading"
+          },
+          {
+            "component": "ER",
+            "part": "J1-X1",
+            "failure_mode": "stuck_open",
+            "probability": 0.083,
+            "reason": "12 root causes consistent with every reading"
+          },
+          {
+            "component": "ER",
+            "part": "X2-J16",
+            "failure_mode": "stuck_open",
+            "probability": 0.083,
+            "reason": "12 root causes consistent with every reading"
+          },
+          {
+            "component": "XP",
+            "part": "P5-J5",
+            "failure_mode": "open",
+            "probability": 0.083,
+            "reason": "12 root causes consistent with every reading"
+          },
+          {
+            "component": "XP",
+            "part": "P16-J16",
+            "failure_mode": "open",
+            "probability": 0.083,
+            "reason": "12 root causes consistent with every reading"
+          },
+          {
+            "component": "H1",
+            "part": "W1_TS8-W1_P1",
+            "failure_mode": "open",
+            "probability": 0.083,
+            "reason": "12 root causes consistent with every reading"
+          },
+          {
+            "component": "H1",
+            "part": "W2_TSA-W2_P2",
+            "failure_mode": "open",
+            "probability": 0.083,
+            "reason": "12 root causes consistent with every reading"
+          },
+          {
+            "component": "H1",
+            "part": "W5_TSB-W5_P5",
+            "failure_mode": "open",
+            "probability": 0.083,
+            "reason": "12 root causes consistent with every reading"
+          },
+          {
+            "component": "H1",
+            "part": "W16_TS72-W16_P16",
+            "failure_mode": "open",
+            "probability": 0.083,
+            "reason": "12 root causes consistent with every reading"
+          }
+        ]
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 11,
+        "stored": 10,
+        "probability_sum": 0.83
+      },
+      "sim_time_s": 210.0
+    },
+    {
+      "step": 12,
+      "tool": "measure_voltage",
+      "args": {
+        "point_a": "XP:P5",
+        "point_b": "XP:J5"
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 12,
+        "point_a": "XP:P5",
+        "point_b": "XP:J5",
+        "volts": 0.0
+      },
+      "sim_time_s": 240.0
+    },
+    {
+      "step": 13,
+      "tool": "update_hypotheses",
+      "args": {
+        "hypotheses": [
+          {
+            "component": "SE",
+            "part": "X1-J2",
+            "failure_mode": "stuck_open",
+            "probability": 0.091,
+            "reason": "11 root causes consistent with every reading"
+          },
+          {
+            "component": "SE",
+            "part": "J5-X2",
+            "failure_mode": "stuck_open",
+            "probability": 0.091,
+            "reason": "11 root causes consistent with every reading"
+          },
+          {
+            "component": "ER",
+            "part": "J1-X1",
+            "failure_mode": "stuck_open",
+            "probability": 0.091,
+            "reason": "11 root causes consistent with every reading"
+          },
+          {
+            "component": "ER",
+            "part": "X2-J16",
+            "failure_mode": "stuck_open",
+            "probability": 0.091,
+            "reason": "11 root causes consistent with every reading"
+          },
+          {
+            "component": "XP",
+            "part": "P16-J16",
+            "failure_mode": "open",
+            "probability": 0.091,
+            "reason": "11 root causes consistent with every reading"
+          },
+          {
+            "component": "H1",
+            "part": "W1_TS8-W1_P1",
+            "failure_mode": "open",
+            "probability": 0.091,
+            "reason": "11 root causes consistent with every reading"
+          },
+          {
+            "component": "H1",
+            "part": "W2_TSA-W2_P2",
+            "failure_mode": "open",
+            "probability": 0.091,
+            "reason": "11 root causes consistent with every reading"
+          },
+          {
+            "component": "H1",
+            "part": "W5_TSB-W5_P5",
+            "failure_mode": "open",
+            "probability": 0.091,
+            "reason": "11 root causes consistent with every reading"
+          },
+          {
+            "component": "H1",
+            "part": "W16_TS72-W16_P16",
+            "failure_mode": "open",
+            "probability": 0.091,
+            "reason": "11 root causes consistent with every reading"
+          },
+          {
+            "component": "H1",
+            "part": "W17_TS4-W17_TS9",
+            "failure_mode": "open",
+            "probability": 0.091,
+            "reason": "11 root causes consistent with every reading"
+          }
+        ]
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 13,
+        "stored": 10,
+        "probability_sum": 0.91
+      },
+      "sim_time_s": 240.0
+    },
+    {
+      "step": 14,
+      "tool": "measure_voltage",
+      "args": {
+        "point_a": "XP:P16",
+        "point_b": "XP:J16"
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 14,
+        "point_a": "XP:P16",
+        "point_b": "XP:J16",
+        "volts": 0.0
+      },
+      "sim_time_s": 270.0
+    },
+    {
+      "step": 15,
+      "tool": "update_hypotheses",
+      "args": {
+        "hypotheses": [
+          {
+            "component": "SE",
+            "part": "X1-J2",
+            "failure_mode": "stuck_open",
+            "probability": 0.1,
+            "reason": "10 root causes consistent with every reading"
+          },
+          {
+            "component": "SE",
+            "part": "J5-X2",
+            "failure_mode": "stuck_open",
+            "probability": 0.1,
+            "reason": "10 root causes consistent with every reading"
+          },
+          {
+            "component": "ER",
+            "part": "J1-X1",
+            "failure_mode": "stuck_open",
+            "probability": 0.1,
+            "reason": "10 root causes consistent with every reading"
+          },
+          {
+            "component": "ER",
+            "part": "X2-J16",
+            "failure_mode": "stuck_open",
+            "probability": 0.1,
+            "reason": "10 root causes consistent with every reading"
+          },
+          {
+            "component": "H1",
+            "part": "W1_TS8-W1_P1",
+            "failure_mode": "open",
+            "probability": 0.1,
+            "reason": "10 root causes consistent with every reading"
+          },
+          {
+            "component": "H1",
+            "part": "W2_TSA-W2_P2",
+            "failure_mode": "open",
+            "probability": 0.1,
+            "reason": "10 root causes consistent with every reading"
+          },
+          {
+            "component": "H1",
+            "part": "W5_TSB-W5_P5",
+            "failure_mode": "open",
+            "probability": 0.1,
+            "reason": "10 root causes consistent with every reading"
+          },
+          {
+            "component": "H1",
+            "part": "W16_TS72-W16_P16",
+            "failure_mode": "open",
+            "probability": 0.1,
+            "reason": "10 root causes consistent with every reading"
+          },
+          {
+            "component": "H1",
+            "part": "W17_TS4-W17_TS9",
+            "failure_mode": "open",
+            "probability": 0.1,
+            "reason": "10 root causes consistent with every reading"
+          },
+          {
+            "component": "H1",
+            "part": "W21_TS5-W21_TS71",
+            "failure_mode": "open",
+            "probability": 0.1,
+            "reason": "10 root causes consistent with every reading"
+          }
+        ]
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 15,
+        "stored": 10,
+        "probability_sum": 1.0
+      },
+      "sim_time_s": 270.0
+    },
+    {
+      "step": 16,
+      "tool": "measure_voltage",
+      "args": {
+        "point_a": "H1:W1_TS8",
+        "point_b": "H1:W1_P1"
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 16,
+        "point_a": "H1:W1_TS8",
+        "point_b": "H1:W1_P1",
+        "volts": 0.0
+      },
+      "sim_time_s": 300.0
+    },
+    {
+      "step": 17,
+      "tool": "update_hypotheses",
+      "args": {
+        "hypotheses": [
+          {
+            "component": "SE",
+            "part": "X1-J2",
+            "failure_mode": "stuck_open",
+            "probability": 0.111,
+            "reason": "9 root causes consistent with every reading"
+          },
+          {
+            "component": "SE",
+            "part": "J5-X2",
+            "failure_mode": "stuck_open",
+            "probability": 0.111,
+            "reason": "9 root causes consistent with every reading"
+          },
+          {
+            "component": "ER",
+            "part": "J1-X1",
+            "failure_mode": "stuck_open",
+            "probability": 0.111,
+            "reason": "9 root causes consistent with every reading"
+          },
+          {
+            "component": "ER",
+            "part": "X2-J16",
+            "failure_mode": "stuck_open",
+            "probability": 0.111,
+            "reason": "9 root causes consistent with every reading"
+          },
+          {
+            "component": "H1",
+            "part": "W2_TSA-W2_P2",
+            "failure_mode": "open",
+            "probability": 0.111,
+            "reason": "9 root causes consistent with every reading"
+          },
+          {
+            "component": "H1",
+            "part": "W5_TSB-W5_P5",
+            "failure_mode": "open",
+            "probability": 0.111,
+            "reason": "9 root causes consistent with every reading"
+          },
+          {
+            "component": "H1",
+            "part": "W16_TS72-W16_P16",
+            "failure_mode": "open",
+            "probability": 0.111,
+            "reason": "9 root causes consistent with every reading"
+          },
+          {
+            "component": "H1",
+            "part": "W17_TS4-W17_TS9",
+            "failure_mode": "open",
+            "probability": 0.111,
+            "reason": "9 root causes consistent with every reading"
+          },
+          {
+            "component": "H1",
+            "part": "W21_TS5-W21_TS71",
+            "failure_mode": "open",
+            "probability": 0.111,
+            "reason": "9 root causes consistent with every reading"
+          }
+        ]
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 17,
+        "stored": 9,
+        "probability_sum": 0.999
+      },
+      "sim_time_s": 300.0
+    },
+    {
+      "step": 18,
+      "tool": "measure_voltage",
+      "args": {
+        "point_a": "H1:W2_TSA",
+        "point_b": "H1:W2_P2"
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 18,
+        "point_a": "H1:W2_TSA",
+        "point_b": "H1:W2_P2",
+        "volts": 0.0
+      },
+      "sim_time_s": 330.0
+    },
+    {
+      "step": 19,
+      "tool": "update_hypotheses",
+      "args": {
+        "hypotheses": [
+          {
+            "component": "SE",
+            "part": "X1-J2",
+            "failure_mode": "stuck_open",
+            "probability": 0.125,
+            "reason": "8 root causes consistent with every reading"
+          },
+          {
+            "component": "SE",
+            "part": "J5-X2",
+            "failure_mode": "stuck_open",
+            "probability": 0.125,
+            "reason": "8 root causes consistent with every reading"
+          },
+          {
+            "component": "ER",
+            "part": "J1-X1",
+            "failure_mode": "stuck_open",
+            "probability": 0.125,
+            "reason": "8 root causes consistent with every reading"
+          },
+          {
+            "component": "ER",
+            "part": "X2-J16",
+            "failure_mode": "stuck_open",
+            "probability": 0.125,
+            "reason": "8 root causes consistent with every reading"
+          },
+          {
+            "component": "H1",
+            "part": "W5_TSB-W5_P5",
+            "failure_mode": "open",
+            "probability": 0.125,
+            "reason": "8 root causes consistent with every reading"
+          },
+          {
+            "component": "H1",
+            "part": "W16_TS72-W16_P16",
+            "failure_mode": "open",
+            "probability": 0.125,
+            "reason": "8 root causes consistent with every reading"
+          },
+          {
+            "component": "H1",
+            "part": "W17_TS4-W17_TS9",
+            "failure_mode": "open",
+            "probability": 0.125,
+            "reason": "8 root causes consistent with every reading"
+          },
+          {
+            "component": "H1",
+            "part": "W21_TS5-W21_TS71",
+            "failure_mode": "open",
+            "probability": 0.125,
+            "reason": "8 root causes consistent with every reading"
+          }
+        ]
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 19,
+        "stored": 8,
+        "probability_sum": 1.0
+      },
+      "sim_time_s": 330.0
+    },
+    {
+      "step": 20,
+      "tool": "measure_voltage",
+      "args": {
+        "point_a": "H1:W5_TSB",
+        "point_b": "H1:W5_P5"
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 20,
+        "point_a": "H1:W5_TSB",
+        "point_b": "H1:W5_P5",
+        "volts": 0.0
+      },
+      "sim_time_s": 360.0
+    },
+    {
+      "step": 21,
+      "tool": "update_hypotheses",
+      "args": {
+        "hypotheses": [
+          {
+            "component": "SE",
+            "part": "X1-J2",
+            "failure_mode": "stuck_open",
+            "probability": 0.143,
+            "reason": "7 root causes consistent with every reading"
+          },
+          {
+            "component": "SE",
+            "part": "J5-X2",
+            "failure_mode": "stuck_open",
+            "probability": 0.143,
+            "reason": "7 root causes consistent with every reading"
+          },
+          {
+            "component": "ER",
+            "part": "J1-X1",
+            "failure_mode": "stuck_open",
+            "probability": 0.143,
+            "reason": "7 root causes consistent with every reading"
+          },
+          {
+            "component": "ER",
+            "part": "X2-J16",
+            "failure_mode": "stuck_open",
+            "probability": 0.143,
+            "reason": "7 root causes consistent with every reading"
+          },
+          {
+            "component": "H1",
+            "part": "W16_TS72-W16_P16",
+            "failure_mode": "open",
+            "probability": 0.143,
+            "reason": "7 root causes consistent with every reading"
+          },
+          {
+            "component": "H1",
+            "part": "W17_TS4-W17_TS9",
+            "failure_mode": "open",
+            "probability": 0.143,
+            "reason": "7 root causes consistent with every reading"
+          },
+          {
+            "component": "H1",
+            "part": "W21_TS5-W21_TS71",
+            "failure_mode": "open",
+            "probability": 0.143,
+            "reason": "7 root causes consistent with every reading"
+          }
+        ]
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 21,
+        "stored": 7,
+        "probability_sum": 1.001
+      },
+      "sim_time_s": 360.0
+    },
+    {
+      "step": 22,
+      "tool": "measure_voltage",
+      "args": {
+        "point_a": "H1:W16_TS72",
+        "point_b": "H1:W16_P16"
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 22,
+        "point_a": "H1:W16_TS72",
+        "point_b": "H1:W16_P16",
+        "volts": 0.0
+      },
+      "sim_time_s": 390.0
+    },
+    {
+      "step": 23,
+      "tool": "update_hypotheses",
+      "args": {
+        "hypotheses": [
+          {
+            "component": "SE",
+            "part": "X1-J2",
+            "failure_mode": "stuck_open",
+            "probability": 0.167,
+            "reason": "6 root causes consistent with every reading"
+          },
+          {
+            "component": "SE",
+            "part": "J5-X2",
+            "failure_mode": "stuck_open",
+            "probability": 0.167,
+            "reason": "6 root causes consistent with every reading"
+          },
+          {
+            "component": "ER",
+            "part": "J1-X1",
+            "failure_mode": "stuck_open",
+            "probability": 0.167,
+            "reason": "6 root causes consistent with every reading"
+          },
+          {
+            "component": "ER",
+            "part": "X2-J16",
+            "failure_mode": "stuck_open",
+            "probability": 0.167,
+            "reason": "6 root causes consistent with every reading"
+          },
+          {
+            "component": "H1",
+            "part": "W17_TS4-W17_TS9",
+            "failure_mode": "open",
+            "probability": 0.167,
+            "reason": "6 root causes consistent with every reading"
+          },
+          {
+            "component": "H1",
+            "part": "W21_TS5-W21_TS71",
+            "failure_mode": "open",
+            "probability": 0.167,
+            "reason": "6 root causes consistent with every reading"
+          }
+        ]
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 23,
+        "stored": 6,
+        "probability_sum": 1.002
+      },
+      "sim_time_s": 390.0
+    },
+    {
+      "step": 24,
+      "tool": "measure_voltage",
+      "args": {
+        "point_a": "H1:W17_TS4",
+        "point_b": "H1:W17_TS9"
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 24,
+        "point_a": "H1:W17_TS4",
+        "point_b": "H1:W17_TS9",
+        "volts": 0.0
+      },
+      "sim_time_s": 420.0
+    },
+    {
+      "step": 25,
+      "tool": "update_hypotheses",
+      "args": {
+        "hypotheses": [
+          {
+            "component": "SE",
+            "part": "X1-J2",
+            "failure_mode": "stuck_open",
+            "probability": 0.2,
+            "reason": "5 root causes consistent with every reading"
+          },
+          {
+            "component": "SE",
+            "part": "J5-X2",
+            "failure_mode": "stuck_open",
+            "probability": 0.2,
+            "reason": "5 root causes consistent with every reading"
+          },
+          {
+            "component": "ER",
+            "part": "J1-X1",
+            "failure_mode": "stuck_open",
+            "probability": 0.2,
+            "reason": "5 root causes consistent with every reading"
+          },
+          {
+            "component": "ER",
+            "part": "X2-J16",
+            "failure_mode": "stuck_open",
+            "probability": 0.2,
+            "reason": "5 root causes consistent with every reading"
+          },
+          {
+            "component": "H1",
+            "part": "W21_TS5-W21_TS71",
+            "failure_mode": "open",
+            "probability": 0.2,
+            "reason": "5 root causes consistent with every reading"
+          }
+        ]
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 25,
+        "stored": 5,
+        "probability_sum": 1.0
+      },
+      "sim_time_s": 420.0
+    },
+    {
+      "step": 26,
+      "tool": "measure_voltage",
+      "args": {
+        "point_a": "H1:W21_TS5",
+        "point_b": "H1:W21_TS71"
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 26,
+        "point_a": "H1:W21_TS5",
+        "point_b": "H1:W21_TS71",
+        "volts": 208.0
+      },
+      "sim_time_s": 450.0
+    },
+    {
+      "step": 27,
+      "tool": "update_hypotheses",
+      "args": {
+        "hypotheses": [
+          {
+            "component": "H1",
+            "part": "W21_TS5-W21_TS71",
+            "failure_mode": "open",
+            "probability": 1.0,
+            "reason": "1 root causes consistent with every reading"
+          }
+        ]
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 27,
+        "stored": 1,
+        "probability_sum": 1.0
+      },
+      "sim_time_s": 450.0
+    },
+    {
+      "step": 28,
+      "tool": "submit_diagnosis",
+      "args": {
+        "outcome": "diagnosed",
+        "component": "H1",
+        "part": "W21_TS5-W21_TS71",
+        "failure_mode": "open",
+        "confidence": 1.0,
+        "evidence": [
+          {
+            "step": 0,
+            "type": "functional_test",
+            "observation": "controller panel, event log and metering"
+          },
+          {
+            "step": 20,
+            "type": "instrument_reading",
+            "observation": "measure_voltage H1:W5_TSB H1:W5_P5: 0.0"
+          },
+          {
+            "step": 22,
+            "type": "instrument_reading",
+            "observation": "measure_voltage H1:W16_TS72 H1:W16_P16: 0.0"
+          },
+          {
+            "step": 24,
+            "type": "instrument_reading",
+            "observation": "measure_voltage H1:W17_TS4 H1:W17_TS9: 0.0"
+          },
+          {
+            "step": 26,
+            "type": "instrument_reading",
+            "observation": "measure_voltage H1:W21_TS5 H1:W21_TS71: 208.0"
+          }
+        ]
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 28,
+        "accepted": true
+      },
+      "sim_time_s": 450.0
+    }
+  ],
+  "hypotheses_history": [
+    {
+      "step": 1,
+      "sim_time_s": 60.0,
+      "hypotheses": [
+        {
+          "component": "TS",
+          "part": "",
+          "failure_mode": "jammed",
+          "probability": 0.048,
+          "reason": "21 root causes consistent with every reading"
+        },
+        {
+          "component": "TS",
+          "part": "8-9",
+          "failure_mode": "stuck_open",
+          "probability": 0.048,
+          "reason": "21 root causes consistent with every reading"
+        },
+        {
+          "component": "TS",
+          "part": "71-72",
+          "failure_mode": "stuck_open",
+          "probability": 0.048,
+          "reason": "21 root causes consistent with every reading"
+        },
+        {
+          "component": "TS",
+          "part": "A-B",
+          "failure_mode": "open",
+          "probability": 0.048,
+          "reason": "21 root causes consistent with every reading"
+        },
+        {
+          "component": "TS",
+          "part": "A-B",
+          "failure_mode": "burnt",
+          "probability": 0.048,
+          "reason": "21 root causes consistent with every reading"
+        },
+        {
+          "component": "SE",
+          "part": "X1-J2",
+          "failure_mode": "stuck_open",
+          "probability": 0.048,
+          "reason": "21 root causes consistent with every reading"
+        },
+        {
+          "component": "SE",
+          "part": "J5-X2",
+          "failure_mode": "stuck_open",
+          "probability": 0.048,
+          "reason": "21 root causes consistent with every reading"
+        },
+        {
+          "component": "ER",
+          "part": "J1-X1",
+          "failure_mode": "stuck_open",
+          "probability": 0.048,
+          "reason": "21 root causes consistent with every reading"
+        },
+        {
+          "component": "ER",
+          "part": "X2-J16",
+          "failure_mode": "stuck_open",
+          "probability": 0.048,
+          "reason": "21 root causes consistent with every reading"
+        },
+        {
+          "component": "XP",
+          "part": "P1-J1",
+          "failure_mode": "open",
+          "probability": 0.048,
+          "reason": "21 root causes consistent with every reading"
+        }
+      ]
+    },
+    {
+      "step": 3,
+      "sim_time_s": 90.0,
+      "hypotheses": [
+        {
+          "component": "TS",
+          "part": "8-9",
+          "failure_mode": "stuck_open",
+          "probability": 0.062,
+          "reason": "16 root causes consistent with every reading"
+        },
+        {
+          "component": "TS",
+          "part": "71-72",
+          "failure_mode": "stuck_open",
+          "probability": 0.062,
+          "reason": "16 root causes consistent with every reading"
+        },
+        {
+          "component": "SE",
+          "part": "X1-J2",
+          "failure_mode": "stuck_open",
+          "probability": 0.062,
+          "reason": "16 root causes consistent with every reading"
+        },
+        {
+          "component": "SE",
+          "part": "J5-X2",
+          "failure_mode": "stuck_open",
+          "probability": 0.062,
+          "reason": "16 root causes consistent with every reading"
+        },
+        {
+          "component": "ER",
+          "part": "J1-X1",
+          "failure_mode": "stuck_open",
+          "probability": 0.062,
+          "reason": "16 root causes consistent with every reading"
+        },
+        {
+          "component": "ER",
+          "part": "X2-J16",
+          "failure_mode": "stuck_open",
+          "probability": 0.062,
+          "reason": "16 root causes consistent with every reading"
+        },
+        {
+          "component": "XP",
+          "part": "P1-J1",
+          "failure_mode": "open",
+          "probability": 0.062,
+          "reason": "16 root causes consistent with every reading"
+        },
+        {
+          "component": "XP",
+          "part": "P2-J2",
+          "failure_mode": "open",
+          "probability": 0.062,
+          "reason": "16 root causes consistent with every reading"
+        },
+        {
+          "component": "XP",
+          "part": "P5-J5",
+          "failure_mode": "open",
+          "probability": 0.062,
+          "reason": "16 root causes consistent with every reading"
+        },
+        {
+          "component": "XP",
+          "part": "P16-J16",
+          "failure_mode": "open",
+          "probability": 0.062,
+          "reason": "16 root causes consistent with every reading"
+        }
+      ]
+    },
+    {
+      "step": 5,
+      "sim_time_s": 120.0,
+      "hypotheses": [
+        {
+          "component": "TS",
+          "part": "71-72",
+          "failure_mode": "stuck_open",
+          "probability": 0.067,
+          "reason": "15 root causes consistent with every reading"
+        },
+        {
+          "component": "SE",
+          "part": "X1-J2",
+          "failure_mode": "stuck_open",
+          "probability": 0.067,
+          "reason": "15 root causes consistent with every reading"
+        },
+        {
+          "component": "SE",
+          "part": "J5-X2",
+          "failure_mode": "stuck_open",
+          "probability": 0.067,
+          "reason": "15 root causes consistent with every reading"
+        },
+        {
+          "component": "ER",
+          "part": "J1-X1",
+          "failure_mode": "stuck_open",
+          "probability": 0.067,
+          "reason": "15 root causes consistent with every reading"
+        },
+        {
+          "component": "ER",
+          "part": "X2-J16",
+          "failure_mode": "stuck_open",
+          "probability": 0.067,
+          "reason": "15 root causes consistent with every reading"
+        },
+        {
+          "component": "XP",
+          "part": "P1-J1",
+          "failure_mode": "open",
+          "probability": 0.067,
+          "reason": "15 root causes consistent with every reading"
+        },
+        {
+          "component": "XP",
+          "part": "P2-J2",
+          "failure_mode": "open",
+          "probability": 0.067,
+          "reason": "15 root causes consistent with every reading"
+        },
+        {
+          "component": "XP",
+          "part": "P5-J5",
+          "failure_mode": "open",
+          "probability": 0.067,
+          "reason": "15 root causes consistent with every reading"
+        },
+        {
+          "component": "XP",
+          "part": "P16-J16",
+          "failure_mode": "open",
+          "probability": 0.067,
+          "reason": "15 root causes consistent with every reading"
+        },
+        {
+          "component": "H1",
+          "part": "W1_TS8-W1_P1",
+          "failure_mode": "open",
+          "probability": 0.067,
+          "reason": "15 root causes consistent with every reading"
+        }
+      ]
+    },
+    {
+      "step": 7,
+      "sim_time_s": 150.0,
+      "hypotheses": [
+        {
+          "component": "SE",
+          "part": "X1-J2",
+          "failure_mode": "stuck_open",
+          "probability": 0.071,
+          "reason": "14 root causes consistent with every reading"
+        },
+        {
+          "component": "SE",
+          "part": "J5-X2",
+          "failure_mode": "stuck_open",
+          "probability": 0.071,
+          "reason": "14 root causes consistent with every reading"
+        },
+        {
+          "component": "ER",
+          "part": "J1-X1",
+          "failure_mode": "stuck_open",
+          "probability": 0.071,
+          "reason": "14 root causes consistent with every reading"
+        },
+        {
+          "component": "ER",
+          "part": "X2-J16",
+          "failure_mode": "stuck_open",
+          "probability": 0.071,
+          "reason": "14 root causes consistent with every reading"
+        },
+        {
+          "component": "XP",
+          "part": "P1-J1",
+          "failure_mode": "open",
+          "probability": 0.071,
+          "reason": "14 root causes consistent with every reading"
+        },
+        {
+          "component": "XP",
+          "part": "P2-J2",
+          "failure_mode": "open",
+          "probability": 0.071,
+          "reason": "14 root causes consistent with every reading"
+        },
+        {
+          "component": "XP",
+          "part": "P5-J5",
+          "failure_mode": "open",
+          "probability": 0.071,
+          "reason": "14 root causes consistent with every reading"
+        },
+        {
+          "component": "XP",
+          "part": "P16-J16",
+          "failure_mode": "open",
+          "probability": 0.071,
+          "reason": "14 root causes consistent with every reading"
+        },
+        {
+          "component": "H1",
+          "part": "W1_TS8-W1_P1",
+          "failure_mode": "open",
+          "probability": 0.071,
+          "reason": "14 root causes consistent with every reading"
+        },
+        {
+          "component": "H1",
+          "part": "W2_TSA-W2_P2",
+          "failure_mode": "open",
+          "probability": 0.071,
+          "reason": "14 root causes consistent with every reading"
+        }
+      ]
+    },
+    {
+      "step": 9,
+      "sim_time_s": 180.0,
+      "hypotheses": [
+        {
+          "component": "SE",
+          "part": "X1-J2",
+          "failure_mode": "stuck_open",
+          "probability": 0.077,
+          "reason": "13 root causes consistent with every reading"
+        },
+        {
+          "component": "SE",
+          "part": "J5-X2",
+          "failure_mode": "stuck_open",
+          "probability": 0.077,
+          "reason": "13 root causes consistent with every reading"
+        },
+        {
+          "component": "ER",
+          "part": "J1-X1",
+          "failure_mode": "stuck_open",
+          "probability": 0.077,
+          "reason": "13 root causes consistent with every reading"
+        },
+        {
+          "component": "ER",
+          "part": "X2-J16",
+          "failure_mode": "stuck_open",
+          "probability": 0.077,
+          "reason": "13 root causes consistent with every reading"
+        },
+        {
+          "component": "XP",
+          "part": "P2-J2",
+          "failure_mode": "open",
+          "probability": 0.077,
+          "reason": "13 root causes consistent with every reading"
+        },
+        {
+          "component": "XP",
+          "part": "P5-J5",
+          "failure_mode": "open",
+          "probability": 0.077,
+          "reason": "13 root causes consistent with every reading"
+        },
+        {
+          "component": "XP",
+          "part": "P16-J16",
+          "failure_mode": "open",
+          "probability": 0.077,
+          "reason": "13 root causes consistent with every reading"
+        },
+        {
+          "component": "H1",
+          "part": "W1_TS8-W1_P1",
+          "failure_mode": "open",
+          "probability": 0.077,
+          "reason": "13 root causes consistent with every reading"
+        },
+        {
+          "component": "H1",
+          "part": "W2_TSA-W2_P2",
+          "failure_mode": "open",
+          "probability": 0.077,
+          "reason": "13 root causes consistent with every reading"
+        },
+        {
+          "component": "H1",
+          "part": "W5_TSB-W5_P5",
+          "failure_mode": "open",
+          "probability": 0.077,
+          "reason": "13 root causes consistent with every reading"
+        }
+      ]
+    },
+    {
+      "step": 11,
+      "sim_time_s": 210.0,
+      "hypotheses": [
+        {
+          "component": "SE",
+          "part": "X1-J2",
+          "failure_mode": "stuck_open",
+          "probability": 0.083,
+          "reason": "12 root causes consistent with every reading"
+        },
+        {
+          "component": "SE",
+          "part": "J5-X2",
+          "failure_mode": "stuck_open",
+          "probability": 0.083,
+          "reason": "12 root causes consistent with every reading"
+        },
+        {
+          "component": "ER",
+          "part": "J1-X1",
+          "failure_mode": "stuck_open",
+          "probability": 0.083,
+          "reason": "12 root causes consistent with every reading"
+        },
+        {
+          "component": "ER",
+          "part": "X2-J16",
+          "failure_mode": "stuck_open",
+          "probability": 0.083,
+          "reason": "12 root causes consistent with every reading"
+        },
+        {
+          "component": "XP",
+          "part": "P5-J5",
+          "failure_mode": "open",
+          "probability": 0.083,
+          "reason": "12 root causes consistent with every reading"
+        },
+        {
+          "component": "XP",
+          "part": "P16-J16",
+          "failure_mode": "open",
+          "probability": 0.083,
+          "reason": "12 root causes consistent with every reading"
+        },
+        {
+          "component": "H1",
+          "part": "W1_TS8-W1_P1",
+          "failure_mode": "open",
+          "probability": 0.083,
+          "reason": "12 root causes consistent with every reading"
+        },
+        {
+          "component": "H1",
+          "part": "W2_TSA-W2_P2",
+          "failure_mode": "open",
+          "probability": 0.083,
+          "reason": "12 root causes consistent with every reading"
+        },
+        {
+          "component": "H1",
+          "part": "W5_TSB-W5_P5",
+          "failure_mode": "open",
+          "probability": 0.083,
+          "reason": "12 root causes consistent with every reading"
+        },
+        {
+          "component": "H1",
+          "part": "W16_TS72-W16_P16",
+          "failure_mode": "open",
+          "probability": 0.083,
+          "reason": "12 root causes consistent with every reading"
+        }
+      ]
+    },
+    {
+      "step": 13,
+      "sim_time_s": 240.0,
+      "hypotheses": [
+        {
+          "component": "SE",
+          "part": "X1-J2",
+          "failure_mode": "stuck_open",
+          "probability": 0.091,
+          "reason": "11 root causes consistent with every reading"
+        },
+        {
+          "component": "SE",
+          "part": "J5-X2",
+          "failure_mode": "stuck_open",
+          "probability": 0.091,
+          "reason": "11 root causes consistent with every reading"
+        },
+        {
+          "component": "ER",
+          "part": "J1-X1",
+          "failure_mode": "stuck_open",
+          "probability": 0.091,
+          "reason": "11 root causes consistent with every reading"
+        },
+        {
+          "component": "ER",
+          "part": "X2-J16",
+          "failure_mode": "stuck_open",
+          "probability": 0.091,
+          "reason": "11 root causes consistent with every reading"
+        },
+        {
+          "component": "XP",
+          "part": "P16-J16",
+          "failure_mode": "open",
+          "probability": 0.091,
+          "reason": "11 root causes consistent with every reading"
+        },
+        {
+          "component": "H1",
+          "part": "W1_TS8-W1_P1",
+          "failure_mode": "open",
+          "probability": 0.091,
+          "reason": "11 root causes consistent with every reading"
+        },
+        {
+          "component": "H1",
+          "part": "W2_TSA-W2_P2",
+          "failure_mode": "open",
+          "probability": 0.091,
+          "reason": "11 root causes consistent with every reading"
+        },
+        {
+          "component": "H1",
+          "part": "W5_TSB-W5_P5",
+          "failure_mode": "open",
+          "probability": 0.091,
+          "reason": "11 root causes consistent with every reading"
+        },
+        {
+          "component": "H1",
+          "part": "W16_TS72-W16_P16",
+          "failure_mode": "open",
+          "probability": 0.091,
+          "reason": "11 root causes consistent with every reading"
+        },
+        {
+          "component": "H1",
+          "part": "W17_TS4-W17_TS9",
+          "failure_mode": "open",
+          "probability": 0.091,
+          "reason": "11 root causes consistent with every reading"
+        }
+      ]
+    },
+    {
+      "step": 15,
+      "sim_time_s": 270.0,
+      "hypotheses": [
+        {
+          "component": "SE",
+          "part": "X1-J2",
+          "failure_mode": "stuck_open",
+          "probability": 0.1,
+          "reason": "10 root causes consistent with every reading"
+        },
+        {
+          "component": "SE",
+          "part": "J5-X2",
+          "failure_mode": "stuck_open",
+          "probability": 0.1,
+          "reason": "10 root causes consistent with every reading"
+        },
+        {
+          "component": "ER",
+          "part": "J1-X1",
+          "failure_mode": "stuck_open",
+          "probability": 0.1,
+          "reason": "10 root causes consistent with every reading"
+        },
+        {
+          "component": "ER",
+          "part": "X2-J16",
+          "failure_mode": "stuck_open",
+          "probability": 0.1,
+          "reason": "10 root causes consistent with every reading"
+        },
+        {
+          "component": "H1",
+          "part": "W1_TS8-W1_P1",
+          "failure_mode": "open",
+          "probability": 0.1,
+          "reason": "10 root causes consistent with every reading"
+        },
+        {
+          "component": "H1",
+          "part": "W2_TSA-W2_P2",
+          "failure_mode": "open",
+          "probability": 0.1,
+          "reason": "10 root causes consistent with every reading"
+        },
+        {
+          "component": "H1",
+          "part": "W5_TSB-W5_P5",
+          "failure_mode": "open",
+          "probability": 0.1,
+          "reason": "10 root causes consistent with every reading"
+        },
+        {
+          "component": "H1",
+          "part": "W16_TS72-W16_P16",
+          "failure_mode": "open",
+          "probability": 0.1,
+          "reason": "10 root causes consistent with every reading"
+        },
+        {
+          "component": "H1",
+          "part": "W17_TS4-W17_TS9",
+          "failure_mode": "open",
+          "probability": 0.1,
+          "reason": "10 root causes consistent with every reading"
+        },
+        {
+          "component": "H1",
+          "part": "W21_TS5-W21_TS71",
+          "failure_mode": "open",
+          "probability": 0.1,
+          "reason": "10 root causes consistent with every reading"
+        }
+      ]
+    },
+    {
+      "step": 17,
+      "sim_time_s": 300.0,
+      "hypotheses": [
+        {
+          "component": "SE",
+          "part": "X1-J2",
+          "failure_mode": "stuck_open",
+          "probability": 0.111,
+          "reason": "9 root causes consistent with every reading"
+        },
+        {
+          "component": "SE",
+          "part": "J5-X2",
+          "failure_mode": "stuck_open",
+          "probability": 0.111,
+          "reason": "9 root causes consistent with every reading"
+        },
+        {
+          "component": "ER",
+          "part": "J1-X1",
+          "failure_mode": "stuck_open",
+          "probability": 0.111,
+          "reason": "9 root causes consistent with every reading"
+        },
+        {
+          "component": "ER",
+          "part": "X2-J16",
+          "failure_mode": "stuck_open",
+          "probability": 0.111,
+          "reason": "9 root causes consistent with every reading"
+        },
+        {
+          "component": "H1",
+          "part": "W2_TSA-W2_P2",
+          "failure_mode": "open",
+          "probability": 0.111,
+          "reason": "9 root causes consistent with every reading"
+        },
+        {
+          "component": "H1",
+          "part": "W5_TSB-W5_P5",
+          "failure_mode": "open",
+          "probability": 0.111,
+          "reason": "9 root causes consistent with every reading"
+        },
+        {
+          "component": "H1",
+          "part": "W16_TS72-W16_P16",
+          "failure_mode": "open",
+          "probability": 0.111,
+          "reason": "9 root causes consistent with every reading"
+        },
+        {
+          "component": "H1",
+          "part": "W17_TS4-W17_TS9",
+          "failure_mode": "open",
+          "probability": 0.111,
+          "reason": "9 root causes consistent with every reading"
+        },
+        {
+          "component": "H1",
+          "part": "W21_TS5-W21_TS71",
+          "failure_mode": "open",
+          "probability": 0.111,
+          "reason": "9 root causes consistent with every reading"
+        }
+      ]
+    },
+    {
+      "step": 19,
+      "sim_time_s": 330.0,
+      "hypotheses": [
+        {
+          "component": "SE",
+          "part": "X1-J2",
+          "failure_mode": "stuck_open",
+          "probability": 0.125,
+          "reason": "8 root causes consistent with every reading"
+        },
+        {
+          "component": "SE",
+          "part": "J5-X2",
+          "failure_mode": "stuck_open",
+          "probability": 0.125,
+          "reason": "8 root causes consistent with every reading"
+        },
+        {
+          "component": "ER",
+          "part": "J1-X1",
+          "failure_mode": "stuck_open",
+          "probability": 0.125,
+          "reason": "8 root causes consistent with every reading"
+        },
+        {
+          "component": "ER",
+          "part": "X2-J16",
+          "failure_mode": "stuck_open",
+          "probability": 0.125,
+          "reason": "8 root causes consistent with every reading"
+        },
+        {
+          "component": "H1",
+          "part": "W5_TSB-W5_P5",
+          "failure_mode": "open",
+          "probability": 0.125,
+          "reason": "8 root causes consistent with every reading"
+        },
+        {
+          "component": "H1",
+          "part": "W16_TS72-W16_P16",
+          "failure_mode": "open",
+          "probability": 0.125,
+          "reason": "8 root causes consistent with every reading"
+        },
+        {
+          "component": "H1",
+          "part": "W17_TS4-W17_TS9",
+          "failure_mode": "open",
+          "probability": 0.125,
+          "reason": "8 root causes consistent with every reading"
+        },
+        {
+          "component": "H1",
+          "part": "W21_TS5-W21_TS71",
+          "failure_mode": "open",
+          "probability": 0.125,
+          "reason": "8 root causes consistent with every reading"
+        }
+      ]
+    },
+    {
+      "step": 21,
+      "sim_time_s": 360.0,
+      "hypotheses": [
+        {
+          "component": "SE",
+          "part": "X1-J2",
+          "failure_mode": "stuck_open",
+          "probability": 0.143,
+          "reason": "7 root causes consistent with every reading"
+        },
+        {
+          "component": "SE",
+          "part": "J5-X2",
+          "failure_mode": "stuck_open",
+          "probability": 0.143,
+          "reason": "7 root causes consistent with every reading"
+        },
+        {
+          "component": "ER",
+          "part": "J1-X1",
+          "failure_mode": "stuck_open",
+          "probability": 0.143,
+          "reason": "7 root causes consistent with every reading"
+        },
+        {
+          "component": "ER",
+          "part": "X2-J16",
+          "failure_mode": "stuck_open",
+          "probability": 0.143,
+          "reason": "7 root causes consistent with every reading"
+        },
+        {
+          "component": "H1",
+          "part": "W16_TS72-W16_P16",
+          "failure_mode": "open",
+          "probability": 0.143,
+          "reason": "7 root causes consistent with every reading"
+        },
+        {
+          "component": "H1",
+          "part": "W17_TS4-W17_TS9",
+          "failure_mode": "open",
+          "probability": 0.143,
+          "reason": "7 root causes consistent with every reading"
+        },
+        {
+          "component": "H1",
+          "part": "W21_TS5-W21_TS71",
+          "failure_mode": "open",
+          "probability": 0.143,
+          "reason": "7 root causes consistent with every reading"
+        }
+      ]
+    },
+    {
+      "step": 23,
+      "sim_time_s": 390.0,
+      "hypotheses": [
+        {
+          "component": "SE",
+          "part": "X1-J2",
+          "failure_mode": "stuck_open",
+          "probability": 0.167,
+          "reason": "6 root causes consistent with every reading"
+        },
+        {
+          "component": "SE",
+          "part": "J5-X2",
+          "failure_mode": "stuck_open",
+          "probability": 0.167,
+          "reason": "6 root causes consistent with every reading"
+        },
+        {
+          "component": "ER",
+          "part": "J1-X1",
+          "failure_mode": "stuck_open",
+          "probability": 0.167,
+          "reason": "6 root causes consistent with every reading"
+        },
+        {
+          "component": "ER",
+          "part": "X2-J16",
+          "failure_mode": "stuck_open",
+          "probability": 0.167,
+          "reason": "6 root causes consistent with every reading"
+        },
+        {
+          "component": "H1",
+          "part": "W17_TS4-W17_TS9",
+          "failure_mode": "open",
+          "probability": 0.167,
+          "reason": "6 root causes consistent with every reading"
+        },
+        {
+          "component": "H1",
+          "part": "W21_TS5-W21_TS71",
+          "failure_mode": "open",
+          "probability": 0.167,
+          "reason": "6 root causes consistent with every reading"
+        }
+      ]
+    },
+    {
+      "step": 25,
+      "sim_time_s": 420.0,
+      "hypotheses": [
+        {
+          "component": "SE",
+          "part": "X1-J2",
+          "failure_mode": "stuck_open",
+          "probability": 0.2,
+          "reason": "5 root causes consistent with every reading"
+        },
+        {
+          "component": "SE",
+          "part": "J5-X2",
+          "failure_mode": "stuck_open",
+          "probability": 0.2,
+          "reason": "5 root causes consistent with every reading"
+        },
+        {
+          "component": "ER",
+          "part": "J1-X1",
+          "failure_mode": "stuck_open",
+          "probability": 0.2,
+          "reason": "5 root causes consistent with every reading"
+        },
+        {
+          "component": "ER",
+          "part": "X2-J16",
+          "failure_mode": "stuck_open",
+          "probability": 0.2,
+          "reason": "5 root causes consistent with every reading"
+        },
+        {
+          "component": "H1",
+          "part": "W21_TS5-W21_TS71",
+          "failure_mode": "open",
+          "probability": 0.2,
+          "reason": "5 root causes consistent with every reading"
+        }
+      ]
+    },
+    {
+      "step": 27,
+      "sim_time_s": 450.0,
+      "hypotheses": [
+        {
+          "component": "H1",
+          "part": "W21_TS5-W21_TS71",
+          "failure_mode": "open",
+          "probability": 1.0,
+          "reason": "1 root causes consistent with every reading"
+        }
+      ]
+    }
+  ],
+  "ups_at_diagnosis": {
+    "ups_left_s": 150.0,
+    "load_lost": false,
+    "depleted_after_outage_s": null,
+    "time_s": 450.0
+  }
+}

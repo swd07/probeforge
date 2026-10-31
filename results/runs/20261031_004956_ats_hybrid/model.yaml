@@ -1,0 +1,741 @@
+summary:
+  reads: 3
+  model_read: 1
+  disagreement_regions: 6
+  errors: []
+healthy:
+  ok: true
+  events:
+  - N Source Not Accepted
+  - Engine Start
+  - E Source Accepted
+  - Transfer N to E
+  - N Source Accepted
+  - Transfer E to N
+  - Engine Stop
+  - E Source Not Accepted
+  attempts: []
+  progress:
+  - 8
+read_quality:
+- version: transcription
+  parts_recall: 0.909
+  connections_precision: 0.889
+  connections_recall: 0.88
+  no52u_precision: 0.967
+  no52u_recall: 0.957
+  nets_exact: 72/83
+  relay_contacts_right: 6
+  relay_contacts_true: 8
+  relay_contacts_wrong:
+  - ER make J5-X2
+  - SE break J16-X2
+raw:
+  title: Automatic transfer switch
+  normal_source:
+    A: TS:1
+    B: TS:2
+    C: TS:3
+  emergency_source:
+    A: TS:4
+    B: TS:19
+    C: TS:5
+  neutrals:
+    normal: TS:NN
+    emergency: TS:EN
+    load: TS:LN
+  load:
+    A: TS:20
+    B: TS:21
+    C: TS:22
+  transfer_switch:
+    main_normal:
+    - 1-20
+    - 2-21
+    - 3-22
+    main_emergency:
+    - 4-20
+    - 19-21
+    - 5-22
+    control_closed_normal:
+    - 8-9
+    - 71-72
+    control_closed_emergency:
+    - 6-7
+    - 69-70
+    aux_closed_normal:
+    - 17-18
+    aux_closed_emergency:
+    - 14-15
+    - 16-17
+    solenoid: A-B
+  relays:
+    SE:
+      false:
+      - J2-J3
+      - J5-J15
+      nc:
+      - X1-J2
+      - J16-X2
+    ER:
+      false:
+      - J1-X1
+      - X2-J5
+    NR:
+      false:
+      - J8-J17
+      nc:
+      - J8-J9
+  controller_inputs:
+  - J4
+  - J6
+  - J7
+  - J10
+  - J11
+  - J12
+  - J13
+  - J14
+  - J18
+  - J19
+  - J20
+  - J21
+  - J22
+  - J23
+  - J24
+  terminal_block:
+    id: TB/TS
+    label: Engine starting signals
+    points:
+    - 14
+    - 15
+    - 16
+  wires:
+  - - 1
+    - TS-8
+    - P-1
+  - - 2
+    - TS-A
+    - P-2
+  - - 3
+    - TS-6
+    - P-3
+  - - 4
+    - TS-3
+    - P-4
+  - - 5
+    - TS-B
+    - P-5
+  - - 6
+    - TS-5
+    - P-6
+  - - 7
+    - TS-4
+    - P-7
+  - - 8
+    - TB/TS-14
+    - P-8
+  - - 9
+    - TB/TS-15
+    - P-9
+  - - 10
+    - TS-17
+    - P-10
+  - - 11
+    - TS-2
+    - P-11
+  - - 12
+    - TS-1
+    - P-12
+  - - 13
+    - TS-16
+    - P-13
+  - - 14
+    - TS-18
+    - P-14
+  - - 15
+    - TS-70
+    - P-15
+  - - 16
+    - TS-72
+    - P-16
+  - - 17
+    - TS-4
+    - TS-9
+  - - 18
+    - TS-7
+    - TS-1
+  - - 20
+    - TS-3
+    - TS-69
+  - - 21
+    - TS-5
+    - TS-71
+  - - 8
+    - TS-14
+    - TB/TS-14
+  - - 9
+    - TS-15
+    - TB/TS-15
+  - - 24
+    - TB/TS-16
+    - P-17
+  - - 25
+    - TS-19
+    - P-18
+  - - 26
+    - TS-20
+    - P-19
+  - - 27
+    - TS-21
+    - P-20
+  - - 28
+    - TS-22
+    - P-21
+  - - 29
+    - TS-NN
+    - P-22
+  - - 30
+    - TS-EN
+    - P-23
+  - - 31
+    - TS-LN
+    - P-24
+  joints: []
+  uncertain:
+  - terminals:
+    - TS:4
+    - TS:19
+    - TS:5
+    reason: emergency main terminal numbers small, EB 19 hard to read
+  - terminals:
+    - CP:J2
+    - CP:J3
+    - CP:J1
+    - CP:J5
+    - CP:J15
+    - CP:J16
+    reason: operator CP jack numbers and SE/ER labels very small/blurry, J5 read as 6
+  - terminals:
+    - CP:J8
+    - CP:J9
+    - CP:J17
+    reason: NR contact wiring and common hard to read
+  - terminals:
+    - TS:14
+    - TS:15
+    - TB/TS:14
+    - TB/TS:15
+    - TB/TS:16
+    reason: engine start interconnection lines overlap, TB/TS-16 to TS connection unclear
+  - terminals:
+    - TS:16
+    - TS:17
+    - TS:18
+    reason: aux common assumed 17, pairing 16-17 emergency and 17-18 normal
+  - terminals:
+    - TS:NN
+    - TS:EN
+    - TS:LN
+    reason: optional switching/overlapping neutral dashed, normal vs emergency NN/EN assignment assumed
+  - terminals:
+    - P-20
+    - P-21
+    reason: wire numbers 20 and 21 blurry, numbers 19/22/23 missing, assumed as printed
+data:
+  name: ats_transcription
+  title: Automatic transfer switch
+  supply:
+    voltage: 120
+    phases:
+      UA: 0
+      UB: -120
+      UC: 120
+    neutral: NN
+  alternate_supply:
+    label: Emergency source
+    voltage: 120
+    phases:
+      EA: 0
+      EB: -120
+      EC: 120
+    neutral: EN
+    start_contact:
+    - TB14
+    - TB15
+  power_switch: NSD
+  protection:
+  - NSD
+  components:
+    NSD:
+      type: breaker
+      label: Normal source disconnect (not on the drawing sheets, added by the builder)
+      poles:
+      - 1-2
+      - 3-4
+      - 5-6
+    TS:
+      type: transfer_switch
+      label: Transfer switch
+      main_normal:
+      - 1-20
+      - 2-21
+      - 3-22
+      main_emergency:
+      - 4-20
+      - 19-21
+      - 5-22
+      cutoff_normal:
+      - 8-9
+      - 71-72
+      cutoff_emergency:
+      - 6-7
+      - 69-70
+      aux_normal:
+      - 17-18
+      aux_emergency:
+      - 14-15
+      - 16-17
+      solenoid:
+      - A-B
+    SE:
+      type: relay
+      label: SE relay (in controller)
+      no_contacts:
+      - J2-J3
+      - J5-J15
+      nc_contacts:
+      - X1-J2
+      - J16-X2
+    ER:
+      type: relay
+      label: ER relay (in controller)
+      no_contacts:
+      - J1-X1
+      - X2-J5
+      nc_contacts: []
+    NR:
+      type: relay
+      label: NR relay (in controller)
+      no_contacts:
+      - J8-J17
+      nc_contacts:
+      - J8-J9
+    CP:
+      type: controller
+      label: Controller
+      inputs:
+      - J4
+      - J6
+      - J7
+      - J10
+      - J11
+      - J12
+      - J13
+      - J14
+      - J18
+      - J19
+      - J20
+      - J21
+      - J22
+      - J23
+      - J24
+    TBTS:
+      type: terminal_block
+      label: Engine starting signals
+      points:
+      - '14'
+      - '15'
+      - '16'
+    H1:
+      type: harness
+      label: Harness
+      wires:
+      - W1_TS8-W1_P1
+      - W2_TSA-W2_P2
+      - W3_TS6-W3_P3
+      - W4_TS3-W4_P4
+      - W5_TSB-W5_P5
+      - W6_TS5-W6_P6
+      - W7_TS4-W7_P7
+      - W8A_TB14-W8A_P8
+      - W9A_TB15-W9A_P9
+      - W10_TS17-W10_P10
+      - W11_TS2-W11_P11
+      - W12_TS1-W12_P12
+      - W13_TS16-W13_P13
+      - W14_TS18-W14_P14
+      - W15_TS70-W15_P15
+      - W16_TS72-W16_P16
+      - W17_TS4-W17_TS9
+      - W18_TS7-W18_TS1
+      - W20_TS3-W20_TS69
+      - W21_TS5-W21_TS71
+      - W8B_TS14-W8B_TB14
+      - W9B_TS15-W9B_TB15
+      - W24_TB16-W24_P17
+      - W25_TS19-W25_P18
+      - W26_TS20-W26_P19
+      - W27_TS21-W27_P20
+      - W28_TS22-W28_P21
+      - W29_TSNN-W29_P22
+      - W30_TSEN-W30_P23
+      - W31_TSLN-W31_P24
+    XP:
+      type: connector
+      label: Plug P / jack J
+      pins:
+      - P1-J1
+      - P2-J2
+      - P3-J3
+      - P4-J4
+      - P5-J5
+      - P6-J6
+      - P7-J7
+      - P8-J8
+      - P9-J9
+      - P10-J10
+      - P11-J11
+      - P12-J12
+      - P13-J13
+      - P14-J14
+      - P15-J15
+      - P16-J16
+      - P17-J17
+      - P18-J18
+      - P19-J19
+      - P20-J20
+      - P21-J21
+      - P22-J22
+      - P23-J23
+      - P24-J24
+  nets:
+    J10:
+    - CP:J10
+    - XP:J10
+    J11:
+    - CP:J11
+    - XP:J11
+    J12:
+    - CP:J12
+    - XP:J12
+    J13:
+    - CP:J13
+    - XP:J13
+    J14:
+    - CP:J14
+    - XP:J14
+    J18:
+    - CP:J18
+    - XP:J18
+    J19:
+    - CP:J19
+    - XP:J19
+    J20:
+    - CP:J20
+    - XP:J20
+    J21:
+    - CP:J21
+    - XP:J21
+    J22:
+    - CP:J22
+    - XP:J22
+    J23:
+    - CP:J23
+    - XP:J23
+    J24:
+    - CP:J24
+    - XP:J24
+    J4:
+    - CP:J4
+    - XP:J4
+    J6:
+    - CP:J6
+    - XP:J6
+    J7:
+    - CP:J7
+    - XP:J7
+    J1:
+    - ER:J1
+    - XP:J1
+    J5:
+    - ER:J5
+    - SE:J5
+    - XP:J5
+    CPX1:
+    - ER:X1
+    - SE:X1
+    CPX2:
+    - ER:X2
+    - SE:X2
+    P10:
+    - H1:W10_P10
+    - XP:P10
+    TS17:
+    - H1:W10_TS17
+    - TS:17
+    P11:
+    - H1:W11_P11
+    - XP:P11
+    TS2:
+    - H1:W11_TS2
+    - NSD:4
+    - TS:2
+    P12:
+    - H1:W12_P12
+    - XP:P12
+    TS1:
+    - H1:W12_TS1
+    - H1:W18_TS1
+    - NSD:2
+    - TS:1
+    P13:
+    - H1:W13_P13
+    - XP:P13
+    TS16:
+    - H1:W13_TS16
+    - TS:16
+    P14:
+    - H1:W14_P14
+    - XP:P14
+    TS18:
+    - H1:W14_TS18
+    - TS:18
+    P15:
+    - H1:W15_P15
+    - XP:P15
+    TS70:
+    - H1:W15_TS70
+    - TS:70
+    P16:
+    - H1:W16_P16
+    - XP:P16
+    TS72:
+    - H1:W16_TS72
+    - TS:72
+    EA:
+    - H1:W17_TS4
+    - H1:W7_TS4
+    - TS:4
+    TS9:
+    - H1:W17_TS9
+    - TS:9
+    TS7:
+    - H1:W18_TS7
+    - TS:7
+    P1:
+    - H1:W1_P1
+    - XP:P1
+    TS8:
+    - H1:W1_TS8
+    - TS:8
+    TS3:
+    - H1:W20_TS3
+    - H1:W4_TS3
+    - NSD:6
+    - TS:3
+    TS69:
+    - H1:W20_TS69
+    - TS:69
+    EC:
+    - H1:W21_TS5
+    - H1:W6_TS5
+    - TS:5
+    TS71:
+    - H1:W21_TS71
+    - TS:71
+    P17:
+    - H1:W24_P17
+    - XP:P17
+    TB16:
+    - H1:W24_TB16
+    - TBTS:16
+    P18:
+    - H1:W25_P18
+    - XP:P18
+    EB:
+    - H1:W25_TS19
+    - TS:19
+    P19:
+    - H1:W26_P19
+    - XP:P19
+    LA:
+    - H1:W26_TS20
+    - TS:20
+    P20:
+    - H1:W27_P20
+    - XP:P20
+    LB:
+    - H1:W27_TS21
+    - TS:21
+    P21:
+    - H1:W28_P21
+    - XP:P21
+    LC:
+    - H1:W28_TS22
+    - TS:22
+    P22:
+    - H1:W29_P22
+    - XP:P22
+    NN:
+    - H1:W29_TSNN
+    P2:
+    - H1:W2_P2
+    - XP:P2
+    TSA:
+    - H1:W2_TSA
+    - TS:A
+    P23:
+    - H1:W30_P23
+    - XP:P23
+    EN:
+    - H1:W30_TSEN
+    P24:
+    - H1:W31_P24
+    - XP:P24
+    LN:
+    - H1:W31_TSLN
+    P3:
+    - H1:W3_P3
+    - XP:P3
+    TS6:
+    - H1:W3_TS6
+    - TS:6
+    P4:
+    - H1:W4_P4
+    - XP:P4
+    P5:
+    - H1:W5_P5
+    - XP:P5
+    TSB:
+    - H1:W5_TSB
+    - TS:B
+    P6:
+    - H1:W6_P6
+    - XP:P6
+    P7:
+    - H1:W7_P7
+    - XP:P7
+    P8:
+    - H1:W8A_P8
+    - XP:P8
+    TB14:
+    - H1:W8A_TB14
+    - H1:W8B_TB14
+    - TBTS:14
+    TS14:
+    - H1:W8B_TS14
+    - TS:14
+    P9:
+    - H1:W9A_P9
+    - XP:P9
+    TB15:
+    - H1:W9A_TB15
+    - H1:W9B_TB15
+    - TBTS:15
+    TS15:
+    - H1:W9B_TS15
+    - TS:15
+    J17:
+    - NR:J17
+    - XP:J17
+    J8:
+    - NR:J8
+    - XP:J8
+    J9:
+    - NR:J9
+    - XP:J9
+    UA:
+    - NSD:1
+    UB:
+    - NSD:3
+    UC:
+    - NSD:5
+    J15:
+    - SE:J15
+    - XP:J15
+    J16:
+    - SE:J16
+    - XP:J16
+    J2:
+    - SE:J2
+    - XP:J2
+    J3:
+    - SE:J3
+    - XP:J3
+  unattached_terminals:
+  - TS:EN
+  - TS:LN
+  - TS:NN
+  uncertain:
+  - terminals:
+    - TS:4
+    - TS:19
+    - TS:5
+    reason: emergency main terminal numbers small, EB 19 hard to read
+  - terminals:
+    - CP:J2
+    - CP:J3
+    - CP:J1
+    - CP:J5
+    - CP:J15
+    - CP:J16
+    reason: operator CP jack numbers and SE/ER labels very small/blurry, J5 read as 6
+  - terminals:
+    - CP:J8
+    - CP:J9
+    - CP:J17
+    reason: NR contact wiring and common hard to read
+  - terminals:
+    - TS:14
+    - TS:15
+    - TBTS:14
+    - TBTS:15
+    - TBTS:16
+    reason: engine start interconnection lines overlap, TB/TS-16 to TS connection unclear
+  - terminals:
+    - TS:16
+    - TS:17
+    - TS:18
+    reason: aux common assumed 17, pairing 16-17 emergency and 17-18 normal
+  - terminals:
+    - TS:NN
+    - TS:EN
+    - TS:LN
+    reason: optional switching/overlapping neutral dashed, normal vs emergency NN/EN assignment assumed
+  - terminals:
+    - P-20
+    - P-21
+    reason: wire numbers 20 and 21 blurry, numbers 19/22/23 missing, assumed as printed
+  - terminals:
+    - ER:J16
+    - SE:J16
+    - XP:J16
+    reason: the 3 reads of the drawing disagree about how these terminals are connected
+  - terminals:
+    - ER:J5
+    - SE:J5
+    - XP:J5
+    reason: the 3 reads of the drawing disagree about how these terminals are connected
+  - terminals:
+    - H1:W19_TS3
+    - H1:W20_TS3
+    - H1:W4_TS3
+    - NSD:6
+    - TS:3
+    reason: the 3 reads of the drawing disagree about how these terminals are connected
+  - terminals:
+    - H1:W19_TS69
+    - H1:W20_TS69
+    - TS:69
+    reason: the 3 reads of the drawing disagree about how these terminals are connected
+  - terminals:
+    - H1:W20_TS5
+    - H1:W21_TS5
+    - H1:W6_TS5
+    - TS:5
+    reason: the 3 reads of the drawing disagree about how these terminals are connected
+  - terminals:
+    - H1:W20_TS71
+    - H1:W21_TS71
+    - TS:71
+    reason: the 3 reads of the drawing disagree about how these terminals are connected

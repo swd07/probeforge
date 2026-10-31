@@ -1,8 +1,9 @@
 # ATS bench results (ASCO Series 300 Group G, drawing 978741)
 
 S5 holdout, run once on 2026-10-31 after the freeze (D45). Dev results sit next to it for reference and are never
-presented as holdout. Machine-readable: [ats_results.json](ats_results.json); raw traces in
-`runs/20261031_123544_ats_holdout/` (local, not in the repo).
+presented as holdout. Machine-readable: [ats_results.json](ats_results.json); per-case traces in
+[results/runs/20261031_123544_ats_holdout/](../../results/runs/20261031_123544_ats_holdout/) (all cited runs:
+[results/runs/](../../results/runs/README.md)).
 
 ## What was run
 

@@ -1,0 +1,425 @@
+{
+  "summary": {
+    "reads": 3,
+    "model_read": 3,
+    "disagreement_regions": 6,
+    "errors": []
+  },
+  "cost_usd": 0.3161,
+  "tokens": 109119,
+  "reads": [
+    {
+      "components": {
+        "found": 10,
+        "true": 9,
+        "matched": 8,
+        "precision": 0.8,
+        "recall": 0.889
+      },
+      "parts": {
+        "found": 97,
+        "true": 99,
+        "matched": 90,
+        "precision": 0.928,
+        "recall": 0.909
+      },
+      "parts_missing": [
+        "52U:1-2",
+        "52U:3-4",
+        "52U:5-6",
+        "ER:X2-J16",
+        "SE:J3-J2",
+        "SE:J5-J15",
+        "SE:J5-X2",
+        "TS:EN-LN",
+        "TS:NN-LN"
+      ],
+      "parts_extra": [
+        "ER:J16-X2",
+        "GE:J3-J2",
+        "GE:J5-J15",
+        "NSD:1-2",
+        "NSD:3-4",
+        "NSD:5-6",
+        "SE:X2-J5"
+      ],
+      "connections": {
+        "found": 101,
+        "true": 100,
+        "matched": 87,
+        "precision": 0.861,
+        "recall": 0.87
+      },
+      "nets_exact": {
+        "matched": 70,
+        "true": 83
+      },
+      "nets_wrong": [
+        [
+          "52U:1"
+        ],
+        [
+          "52U:3"
+        ],
+        [
+          "52U:5"
+        ],
+        [
+          "52U:2",
+          "H1:W12_TS1",
+          "H1:W18_TS1",
+          "TS:1"
+        ],
+        [
+          "52U:4",
+          "H1:W11_TS2",
+          "TS:2"
+        ],
+        [
+          "52U:6",
+          "H1:W20_TS3",
+          "H1:W4_TS3",
+          "TS:3"
+        ],
+        [
+          "H1:W29_TSNN",
+          "TS:NN"
+        ],
+        [
+          "H1:W30_TSEN",
+          "TS:EN"
+        ],
+        [
+          "H1:W31_TSLN",
+          "TS:LN"
+        ],
+        [
+          "SE:J2",
+          "XP:J2"
+        ],
+        [
+          "SE:J3",
+          "XP:J3"
+        ],
+        [
+          "SE:J5",
+          "XP:J5"
+        ],
+        [
+          "SE:J15",
+          "XP:J15"
+        ]
+      ],
+      "flags": {
+        "flags": 5,
+        "flags_on_wrong_nets": 2,
+        "wrong_nets": 13,
+        "wrong_nets_flagged": 4
+      }
+    },
+    {
+      "components": {
+        "found": 9,
+        "true": 9,
+        "matched": 8,
+        "precision": 0.889,
+        "recall": 0.889
+      },
+      "parts": {
+        "found": 98,
+        "true": 99,
+        "matched": 90,
+        "precision": 0.918,
+        "recall": 0.909
+      },
+      "parts_missing": [
+        "52U:1-2",
+        "52U:3-4",
+        "52U:5-6",
+        "ER:X2-J16",
+        "NR:J8-J9",
+        "SE:J5-J15",
+        "SE:J5-X2",
+        "TS:EN-LN",
+        "TS:NN-LN"
+      ],
+      "parts_extra": [
+        "ER:J16-X2",
+        "H1:W19_TS3-W19_TS69",
+        "NR:J9-J17",
+        "NSD:1-2",
+        "NSD:3-4",
+        "NSD:5-6",
+        "SE:J15-J5",
+        "SE:X2-J5"
+      ],
+      "connections": {
+        "found": 103,
+        "true": 100,
+        "matched": 89,
+        "precision": 0.864,
+        "recall": 0.89
+      },
+      "nets_exact": {
+        "matched": 73,
+        "true": 83
+      },
+      "nets_wrong": [
+        [
+          "52U:1"
+        ],
+        [
+          "52U:3"
+        ],
+        [
+          "52U:5"
+        ],
+        [
+          "52U:2",
+          "H1:W12_TS1",
+          "H1:W18_TS1",
+          "TS:1"
+        ],
+        [
+          "52U:4",
+          "H1:W11_TS2",
+          "TS:2"
+        ],
+        [
+          "52U:6",
+          "H1:W20_TS3",
+          "H1:W4_TS3",
+          "TS:3"
+        ],
+        [
+          "H1:W29_TSNN",
+          "TS:NN"
+        ],
+        [
+          "H1:W30_TSEN",
+          "TS:EN"
+        ],
+        [
+          "H1:W31_TSLN",
+          "TS:LN"
+        ],
+        [
+          "H1:W20_TS69",
+          "TS:69"
+        ]
+      ],
+      "flags": {
+        "flags": 5,
+        "flags_on_wrong_nets": 2,
+        "wrong_nets": 10,
+        "wrong_nets_flagged": 5
+      }
+    },
+    {
+      "components": {
+        "found": 9,
+        "true": 9,
+        "matched": 8,
+        "precision": 0.889,
+        "recall": 0.889
+      },
+      "parts": {
+        "found": 97,
+        "true": 99,
+        "matched": 89,
+        "precision": 0.918,
+        "recall": 0.899
+      },
+      "parts_missing": [
+        "52U:1-2",
+        "52U:3-4",
+        "52U:5-6",
+        "ER:X2-J16",
+        "NR:J8-J9",
+        "SE:J3-J2",
+        "SE:J5-J15",
+        "SE:J5-X2",
+        "TS:EN-LN",
+        "TS:NN-LN"
+      ],
+      "parts_extra": [
+        "ER:J16-X2",
+        "ER:J5-J15",
+        "NR:J9-J17",
+        "NSD:1-2",
+        "NSD:3-4",
+        "NSD:5-6",
+        "SE:J2-J3",
+        "SE:X2-J5"
+      ],
+      "connections": {
+        "found": 99,
+        "true": 100,
+        "matched": 88,
+        "precision": 0.889,
+        "recall": 0.88
+      },
+      "nets_exact": {
+        "matched": 72,
+        "true": 83
+      },
+      "nets_wrong": [
+        [
+          "52U:1"
+        ],
+        [
+          "52U:3"
+        ],
+        [
+          "52U:5"
+        ],
+        [
+          "52U:2",
+          "H1:W12_TS1",
+          "H1:W18_TS1",
+          "TS:1"
+        ],
+        [
+          "52U:4",
+          "H1:W11_TS2",
+          "TS:2"
+        ],
+        [
+          "52U:6",
+          "H1:W20_TS3",
+          "H1:W4_TS3",
+          "TS:3"
+        ],
+        [
+          "H1:W29_TSNN",
+          "TS:NN"
+        ],
+        [
+          "H1:W30_TSEN",
+          "TS:EN"
+        ],
+        [
+          "H1:W31_TSLN",
+          "TS:LN"
+        ],
+        [
+          "SE:J5",
+          "XP:J5"
+        ],
+        [
+          "SE:J15",
+          "XP:J15"
+        ]
+      ],
+      "flags": {
+        "flags": 10,
+        "flags_on_wrong_nets": 2,
+        "wrong_nets": 11,
+        "wrong_nets_flagged": 4
+      }
+    }
+  ],
+  "consensus": {
+    "components": {
+      "found": 9,
+      "true": 9,
+      "matched": 8,
+      "precision": 0.889,
+      "recall": 0.889
+    },
+    "parts": {
+      "found": 97,
+      "true": 99,
+      "matched": 89,
+      "precision": 0.918,
+      "recall": 0.899
+    },
+    "parts_missing": [
+      "52U:1-2",
+      "52U:3-4",
+      "52U:5-6",
+      "ER:X2-J16",
+      "NR:J8-J9",
+      "SE:J3-J2",
+      "SE:J5-J15",
+      "SE:J5-X2",
+      "TS:EN-LN",
+      "TS:NN-LN"
+    ],
+    "parts_extra": [
+      "ER:J16-X2",
+      "ER:J5-J15",
+      "NR:J9-J17",
+      "NSD:1-2",
+      "NSD:3-4",
+      "NSD:5-6",
+      "SE:J2-J3",
+      "SE:X2-J5"
+    ],
+    "connections": {
+      "found": 99,
+      "true": 100,
+      "matched": 88,
+      "precision": 0.889,
+      "recall": 0.88
+    },
+    "nets_exact": {
+      "matched": 72,
+      "true": 83
+    },
+    "nets_wrong": [
+      [
+        "52U:1"
+      ],
+      [
+        "52U:3"
+      ],
+      [
+        "52U:5"
+      ],
+      [
+        "52U:2",
+        "H1:W12_TS1",
+        "H1:W18_TS1",
+        "TS:1"
+      ],
+      [
+        "52U:4",
+        "H1:W11_TS2",
+        "TS:2"
+      ],
+      [
+        "52U:6",
+        "H1:W20_TS3",
+        "H1:W4_TS3",
+        "TS:3"
+      ],
+      [
+        "H1:W29_TSNN",
+        "TS:NN"
+      ],
+      [
+        "H1:W30_TSEN",
+        "TS:EN"
+      ],
+      [
+        "H1:W31_TSLN",
+        "TS:LN"
+      ],
+      [
+        "SE:J5",
+        "XP:J5"
+      ],
+      [
+        "SE:J15",
+        "XP:J15"
+      ]
+    ],
+    "flags": {
+      "flags": 16,
+      "flags_on_wrong_nets": 5,
+      "wrong_nets": 11,
+      "wrong_nets_flagged": 6
+    }
+  }
+}

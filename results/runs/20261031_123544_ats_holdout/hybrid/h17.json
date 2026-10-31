@@ -1,0 +1,276 @@
+{
+  "case": "h17",
+  "runner": "ats_hybrid",
+  "model": "muse-spark-1.3",
+  "effort": "medium",
+  "outcome": "insufficient_information",
+  "diagnosis": {
+    "outcome": "insufficient_information",
+    "confidence": 0.0,
+    "evidence": [
+      {
+        "step": 0,
+        "type": "functional_test",
+        "observation": "controller panel, event log and metering"
+      }
+    ],
+    "note": "still possible: TS:17-18 stuck_open, TS:17-16 stuck_closed, CP:J14 open, H1:W14_TS18-W14_P14 open, XP:P14-J14 open"
+  },
+  "turns": 0,
+  "protocol_errors": 0,
+  "recovered_text_calls": 0,
+  "missing_hypothesis_updates": 0,
+  "measurements": 0,
+  "redundant_measurements": 0,
+  "tool_calls": 3,
+  "policy": {
+    "blocked": 0,
+    "approval_requests": 0,
+    "approvals_denied": 1,
+    "blocked_actions": []
+  },
+  "tokens": {
+    "prompt": 0,
+    "cached": 0,
+    "completion": 0
+  },
+  "cost_usd": 0.0,
+  "seconds": 0.0,
+  "error": null,
+  "notes": [
+    "step 2: isolate_sources not executed (isolating both sources while the load is powered needs strong approval; refused: a strong-approval request needs evidence_steps: the step numbers of readings that support it)"
+  ],
+  "turn_log": [],
+  "tool_log": [
+    {
+      "step": 0,
+      "tool": "read_panel",
+      "args": {},
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 0,
+        "lights": {
+          "Normal accepted": false,
+          "Emergency accepted": true,
+          "Load on Normal": false,
+          "Load on Emergency": true,
+          "Alert": true,
+          "Not in automatic": false
+        },
+        "display": "Load on Emergency",
+        "alarms": [
+          "Position Error"
+        ],
+        "normal_source": "lost",
+        "generator": "running",
+        "load_powered": true,
+        "load_lost": false,
+        "ups": {
+          "autonomy_s": 600.0,
+          "left_s": 587.6,
+          "draining": false,
+          "depleted": false,
+          "depleted_at_s": null,
+          "depleted_after_outage_s": null
+        },
+        "sources_isolated": false,
+        "time_s": 60.0,
+        "events": [
+          {
+            "t": 2.0,
+            "event": "Position Error",
+            "cause": ""
+          },
+          {
+            "t": 3.0,
+            "event": "N Source Not Accepted",
+            "cause": "N Under Voltage"
+          },
+          {
+            "t": 3.0,
+            "event": "Engine Start",
+            "cause": ""
+          },
+          {
+            "t": 12.3,
+            "event": "E Source Accepted",
+            "cause": ""
+          },
+          {
+            "t": 12.4,
+            "event": "Transfer N to E",
+            "cause": "N Not Accepted"
+          }
+        ],
+        "metering": {
+          "Normal": [
+            0,
+            0,
+            0
+          ],
+          "Emergency": [
+            208,
+            208,
+            208
+          ]
+        }
+      },
+      "sim_time_s": 60.0
+    },
+    {
+      "step": 1,
+      "tool": "update_hypotheses",
+      "args": {
+        "hypotheses": [
+          {
+            "component": "TS",
+            "part": "17-18",
+            "failure_mode": "stuck_open",
+            "probability": 0.2,
+            "reason": "5 root causes consistent with every reading"
+          },
+          {
+            "component": "TS",
+            "part": "17-16",
+            "failure_mode": "stuck_closed",
+            "probability": 0.2,
+            "reason": "5 root causes consistent with every reading"
+          },
+          {
+            "component": "CP",
+            "part": "J14",
+            "failure_mode": "open",
+            "probability": 0.2,
+            "reason": "5 root causes consistent with every reading"
+          },
+          {
+            "component": "H1",
+            "part": "W14_TS18-W14_P14",
+            "failure_mode": "open",
+            "probability": 0.2,
+            "reason": "5 root causes consistent with every reading"
+          },
+          {
+            "component": "XP",
+            "part": "P14-J14",
+            "failure_mode": "open",
+            "probability": 0.2,
+            "reason": "5 root causes consistent with every reading"
+          }
+        ]
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 1,
+        "stored": 5,
+        "probability_sum": 1.0
+      },
+      "sim_time_s": 60.0
+    },
+    {
+      "step": 2,
+      "tool": "isolate_sources",
+      "args": {
+        "reason": "resistance checks and a manual operation check: live readings no longer separate the remaining causes",
+        "evidence_steps": []
+      },
+      "verdict": "needs_strong_approval",
+      "tier": "strong approval",
+      "policy_reason": "isolating both sources while the load is powered needs strong approval",
+      "executed": false,
+      "result": {
+        "step": 2,
+        "error": "isolating both sources while the load is powered needs strong approval; refused: a strong-approval request needs evidence_steps: the step numbers of readings that support it",
+        "requires_strong_approval": true
+      },
+      "sim_time_s": 60.0
+    },
+    {
+      "step": 3,
+      "tool": "submit_diagnosis",
+      "args": {
+        "outcome": "insufficient_information",
+        "confidence": 0.0,
+        "evidence": [
+          {
+            "step": 0,
+            "type": "functional_test",
+            "observation": "controller panel, event log and metering"
+          }
+        ],
+        "note": "still possible: TS:17-18 stuck_open, TS:17-16 stuck_closed, CP:J14 open, H1:W14_TS18-W14_P14 open, XP:P14-J14 open"
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 3,
+        "accepted": true
+      },
+      "sim_time_s": 60.0
+    }
+  ],
+  "hypotheses_history": [
+    {
+      "step": 1,
+      "sim_time_s": 60.0,
+      "hypotheses": [
+        {
+          "component": "TS",
+          "part": "17-18",
+          "failure_mode": "stuck_open",
+          "probability": 0.2,
+          "reason": "5 root causes consistent with every reading"
+        },
+        {
+          "component": "TS",
+          "part": "17-16",
+          "failure_mode": "stuck_closed",
+          "probability": 0.2,
+          "reason": "5 root causes consistent with every reading"
+        },
+        {
+          "component": "CP",
+          "part": "J14",
+          "failure_mode": "open",
+          "probability": 0.2,
+          "reason": "5 root causes consistent with every reading"
+        },
+        {
+          "component": "H1",
+          "part": "W14_TS18-W14_P14",
+          "failure_mode": "open",
+          "probability": 0.2,
+          "reason": "5 root causes consistent with every reading"
+        },
+        {
+          "component": "XP",
+          "part": "P14-J14",
+          "failure_mode": "open",
+          "probability": 0.2,
+          "reason": "5 root causes consistent with every reading"
+        }
+      ]
+    }
+  ],
+  "ups_at_diagnosis": {
+    "ups_left_s": 587.6,
+    "load_lost": false,
+    "depleted_after_outage_s": null,
+    "time_s": 60.0
+  },
+  "explanation": "No single cause can be named from the readings the policy allows. Still possible: auxiliary contact TS 17-18, auxiliary contact TS 17-16, controller input J14, harness wire W14, plug and jack pin P14-J14. Evidence: the controller panel. Next, an authorized person, with both sources isolated and locked out, tests each of these parts in turn; a relay contact inside the controller cannot be probed, so for those the controller is the repair.",
+  "explain_record": {
+    "attempts": [],
+    "template": true,
+    "reason": "insufficient information"
+  },
+  "corrections": []
+}

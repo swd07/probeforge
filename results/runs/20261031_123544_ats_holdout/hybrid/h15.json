@@ -1,0 +1,298 @@
+{
+  "case": "h15",
+  "runner": "ats_hybrid",
+  "model": "muse-spark-1.3",
+  "effort": "medium",
+  "outcome": "diagnosed",
+  "diagnosis": {
+    "outcome": "diagnosed",
+    "component": "CP",
+    "part": "J18",
+    "failure_mode": "open",
+    "confidence": 1.0,
+    "evidence": [
+      {
+        "step": 0,
+        "type": "functional_test",
+        "observation": "controller panel, event log and metering"
+      },
+      {
+        "step": 2,
+        "type": "instrument_reading",
+        "observation": "measure_voltage CP:J18 NN: 120.1"
+      }
+    ]
+  },
+  "turns": 1,
+  "protocol_errors": 0,
+  "recovered_text_calls": 0,
+  "missing_hypothesis_updates": 0,
+  "measurements": 1,
+  "redundant_measurements": 0,
+  "tool_calls": 4,
+  "policy": {
+    "blocked": 0,
+    "approval_requests": 0,
+    "approvals_denied": 0,
+    "blocked_actions": []
+  },
+  "tokens": {
+    "prompt": 408,
+    "cached": 0,
+    "completion": 2833
+  },
+  "cost_usd": 0.01255025,
+  "seconds": 14.7,
+  "error": null,
+  "notes": [],
+  "turn_log": [
+    {
+      "turn": 1,
+      "purpose": "explanation",
+      "effort": "low",
+      "prompt_tokens": 408,
+      "cached_tokens": 0,
+      "completion_tokens": 2833,
+      "cost_usd": 0.01255,
+      "latency_s": 14.5,
+      "text": "{\"action\": \"With all energy isolated and secured under lockout, have an authorized person inspect controller input J18 for an open and restore sound continuity while observing all safety limits.\", \"action_part\": \"CP:J18\", \"evidence\": [{\"meaning\": \"Step 2 shows 120.1 V at controller input J18 which confirms sense voltage is present but transfer did not happen.\", \"step\": 2}, {\"meaning\": \"Step 2 reduced the candidate set sharply while leaving an open at controller input J18 as the remaining cause.\", \"step\": 2}], \"what_failed\": \"controller input J18 failed open and prevented transfer to Emergency.\"}"
+    }
+  ],
+  "tool_log": [
+    {
+      "step": 0,
+      "tool": "read_panel",
+      "args": {},
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 0,
+        "lights": {
+          "Normal accepted": false,
+          "Emergency accepted": false,
+          "Load on Normal": true,
+          "Load on Emergency": false,
+          "Alert": false,
+          "Not in automatic": false
+        },
+        "display": "Waiting for Emergency Acceptable",
+        "alarms": [],
+        "normal_source": "lost",
+        "generator": "running",
+        "load_powered": false,
+        "load_lost": false,
+        "ups": {
+          "autonomy_s": 600.0,
+          "left_s": 540.0,
+          "draining": true,
+          "depleted": false,
+          "depleted_at_s": null,
+          "depleted_after_outage_s": null
+        },
+        "sources_isolated": false,
+        "time_s": 60.0,
+        "events": [
+          {
+            "t": 3.0,
+            "event": "N Source Not Accepted",
+            "cause": "N Under Voltage"
+          },
+          {
+            "t": 3.0,
+            "event": "Engine Start",
+            "cause": ""
+          }
+        ],
+        "metering": {
+          "Normal": [
+            0,
+            0,
+            0
+          ],
+          "Emergency": [
+            0,
+            0,
+            208
+          ]
+        }
+      },
+      "sim_time_s": 60.0
+    },
+    {
+      "step": 1,
+      "tool": "update_hypotheses",
+      "args": {
+        "hypotheses": [
+          {
+            "component": "CP",
+            "part": "J18",
+            "failure_mode": "open",
+            "probability": 0.333,
+            "reason": "3 root causes consistent with every reading"
+          },
+          {
+            "component": "H1",
+            "part": "W25_TS19-W25_P18",
+            "failure_mode": "open",
+            "probability": 0.333,
+            "reason": "3 root causes consistent with every reading"
+          },
+          {
+            "component": "XP",
+            "part": "P18-J18",
+            "failure_mode": "open",
+            "probability": 0.333,
+            "reason": "3 root causes consistent with every reading"
+          }
+        ]
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 1,
+        "stored": 3,
+        "probability_sum": 0.999
+      },
+      "sim_time_s": 60.0
+    },
+    {
+      "step": 2,
+      "tool": "measure_voltage",
+      "args": {
+        "point_a": "CP:J18",
+        "point_b": "NN"
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 2,
+        "point_a": "CP:J18",
+        "point_b": "NN",
+        "volts": 120.1
+      },
+      "sim_time_s": 90.0
+    },
+    {
+      "step": 3,
+      "tool": "update_hypotheses",
+      "args": {
+        "hypotheses": [
+          {
+            "component": "CP",
+            "part": "J18",
+            "failure_mode": "open",
+            "probability": 1.0,
+            "reason": "1 root causes consistent with every reading"
+          }
+        ]
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 3,
+        "stored": 1,
+        "probability_sum": 1.0
+      },
+      "sim_time_s": 90.0
+    },
+    {
+      "step": 4,
+      "tool": "submit_diagnosis",
+      "args": {
+        "outcome": "diagnosed",
+        "component": "CP",
+        "part": "J18",
+        "failure_mode": "open",
+        "confidence": 1.0,
+        "evidence": [
+          {
+            "step": 0,
+            "type": "functional_test",
+            "observation": "controller panel, event log and metering"
+          },
+          {
+            "step": 2,
+            "type": "instrument_reading",
+            "observation": "measure_voltage CP:J18 NN: 120.1"
+          }
+        ]
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 4,
+        "accepted": true
+      },
+      "sim_time_s": 90.0
+    }
+  ],
+  "hypotheses_history": [
+    {
+      "step": 1,
+      "sim_time_s": 60.0,
+      "hypotheses": [
+        {
+          "component": "CP",
+          "part": "J18",
+          "failure_mode": "open",
+          "probability": 0.333,
+          "reason": "3 root causes consistent with every reading"
+        },
+        {
+          "component": "H1",
+          "part": "W25_TS19-W25_P18",
+          "failure_mode": "open",
+          "probability": 0.333,
+          "reason": "3 root causes consistent with every reading"
+        },
+        {
+          "component": "XP",
+          "part": "P18-J18",
+          "failure_mode": "open",
+          "probability": 0.333,
+          "reason": "3 root causes consistent with every reading"
+        }
+      ]
+    },
+    {
+      "step": 3,
+      "sim_time_s": 90.0,
+      "hypotheses": [
+        {
+          "component": "CP",
+          "part": "J18",
+          "failure_mode": "open",
+          "probability": 1.0,
+          "reason": "1 root causes consistent with every reading"
+        }
+      ]
+    }
+  ],
+  "ups_at_diagnosis": {
+    "ups_left_s": 510.0,
+    "load_lost": false,
+    "depleted_after_outage_s": null,
+    "time_s": 90.0
+  },
+  "explanation": "Controller input J18 failed open and prevented transfer to Emergency. Step 2: Step 2 shows 120.1 V at controller input J18 which confirms sense voltage is present but transfer did not happen. Step 2: Step 2 reduced the candidate set sharply while leaving an open at controller input J18 as the remaining cause. With all energy isolated and secured under lockout, have an authorized person inspect controller input J18 for an open and restore sound continuity while observing all safety limits.",
+  "explain_record": {
+    "attempts": [
+      {
+        "text": "Controller input J18 failed open and prevented transfer to Emergency. Step 2: Step 2 shows 120.1 V at controller input J18 which confirms sense voltage is present but transfer did not happen. Step 2: Step 2 reduced the candidate set sharply while leaving an open at controller input J18 as the remaining cause. With all energy isolated and secured under lockout, have an authorized person inspect controller input J18 for an open and restore sound continuity while observing all safety limits.",
+        "problems": []
+      }
+    ],
+    "template": false
+  },
+  "corrections": []
+}

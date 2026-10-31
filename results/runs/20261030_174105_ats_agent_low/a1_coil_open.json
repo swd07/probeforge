@@ -1,0 +1,626 @@
+{
+  "case": "a1_coil_open",
+  "runner": "ats_agent",
+  "model": "muse-spark-1.3",
+  "effort": "low",
+  "outcome": "diagnosed",
+  "diagnosis": {
+    "component": "TS",
+    "confidence": 0.95,
+    "evidence": [
+      {
+        "observation": "Transfer Failure, switch on Normal, Emergency accepted 208V, load unpowered",
+        "step": 0,
+        "type": "functional_test"
+      },
+      {
+        "observation": "208V across solenoid A-B while transfer commanded, Emergency source 208V present",
+        "step": 1,
+        "type": "instrument_reading"
+      },
+      {
+        "observation": "0V across 8-9 cutoff closed, solenoid circuit energized",
+        "step": 3,
+        "type": "instrument_reading"
+      },
+      {
+        "observation": "Solenoid A-B open with sources isolated (nominal 30 ohm)",
+        "step": 7,
+        "type": "instrument_reading"
+      },
+      {
+        "observation": "Manual operation moves freely to Emergency and back, 6-7 closed / 8-9 open at Emergency, so not jammed and cutoffs operate",
+        "step": 8,
+        "type": "functional_test"
+      }
+    ],
+    "failure_mode": "burnt",
+    "outcome": "diagnosed",
+    "part": "A-B"
+  },
+  "turns": 7,
+  "error": null,
+  "log": [
+    {
+      "step": 0,
+      "tool": "read_panel",
+      "args": {},
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 0,
+        "lights": {
+          "Normal accepted": false,
+          "Emergency accepted": true,
+          "Load on Normal": true,
+          "Load on Emergency": false,
+          "Alert": true,
+          "Not in automatic": false
+        },
+        "display": "Transfer Failure",
+        "alarms": [
+          "Transfer Failure"
+        ],
+        "normal_source": "lost",
+        "generator": "running",
+        "load_powered": false,
+        "ups": {
+          "autonomy_s": 600.0,
+          "left_s": 540.0,
+          "draining": true,
+          "depleted": false
+        },
+        "sources_isolated": false,
+        "time_s": 60.0,
+        "events": [
+          {
+            "t": 3.0,
+            "event": "N Source Not Accepted",
+            "cause": "N Under Voltage"
+          },
+          {
+            "t": 3.0,
+            "event": "Engine Start",
+            "cause": ""
+          },
+          {
+            "t": 12.3,
+            "event": "E Source Accepted",
+            "cause": ""
+          },
+          {
+            "t": 18.4,
+            "event": "Transfer Failure",
+            "cause": "Switch on Normal"
+          }
+        ],
+        "metering": {
+          "Normal": [
+            0,
+            0,
+            0
+          ],
+          "Emergency": [
+            208,
+            208,
+            208
+          ]
+        }
+      },
+      "sim_time_s": 60.0
+    },
+    {
+      "step": 1,
+      "tool": "measure_voltage",
+      "args": {
+        "point_a": "TS:A",
+        "point_b": "TS:B"
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 1,
+        "point_a": "TS:A",
+        "point_b": "TS:B",
+        "volts": 208.0
+      },
+      "sim_time_s": 90.0
+    },
+    {
+      "step": 2,
+      "tool": "measure_voltage",
+      "args": {
+        "point_a": "EA",
+        "point_b": "EC"
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 2,
+        "point_a": "EA",
+        "point_b": "EC",
+        "volts": 208.0
+      },
+      "sim_time_s": 120.0
+    },
+    {
+      "step": 3,
+      "tool": "measure_voltage",
+      "args": {
+        "point_a": "TS:8",
+        "point_b": "TS:9"
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 3,
+        "point_a": "TS:8",
+        "point_b": "TS:9",
+        "volts": 0.0
+      },
+      "sim_time_s": 150.0
+    },
+    {
+      "step": 4,
+      "tool": "update_hypotheses",
+      "args": {
+        "hypotheses": [
+          {
+            "component": "TS",
+            "failure_mode": "jammed",
+            "part": "",
+            "probability": 0.5,
+            "reason": "Solenoid has 208V across A-B and 8-9 closed, yet switch stayed on Normal -> mechanism may be jammed"
+          },
+          {
+            "component": "TS",
+            "failure_mode": "open",
+            "part": "A-B",
+            "probability": 0.4,
+            "reason": "Open coil also gives full voltage across A-B with both sides connected to EA/EC, no force, no transfer"
+          },
+          {
+            "component": "TS",
+            "failure_mode": "stuck_open",
+            "part": "71-72",
+            "probability": 0.05,
+            "reason": "71-72 open would break B side return, but A-B reads 208 so unlikely"
+          },
+          {
+            "component": "H1",
+            "failure_mode": "open",
+            "part": "",
+            "probability": 0.05,
+            "reason": "Harness open elsewhere unlikely given full solenoid voltage"
+          }
+        ]
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 4,
+        "stored": 4,
+        "probability_sum": 1.0
+      },
+      "sim_time_s": 150.0
+    },
+    {
+      "step": 5,
+      "tool": "isolate_sources",
+      "args": {},
+      "verdict": "needs_approval",
+      "tier": "approval",
+      "policy_reason": "isolating both sources (lockout / tagout) needs human approval",
+      "executed": false,
+      "result": {
+        "step": 5,
+        "error": "isolating both sources (lockout / tagout) needs human approval; call again with a reason",
+        "requires_approval": true
+      },
+      "sim_time_s": 150.0
+    },
+    {
+      "step": 6,
+      "tool": "isolate_sources",
+      "args": {
+        "reason": "Need to do ohmmeter check of solenoid to distinguish jammed vs open coil; sources isolated required, load on UPS"
+      },
+      "verdict": "needs_approval",
+      "tier": "approval",
+      "policy_reason": "isolating both sources (lockout / tagout) needs human approval",
+      "executed": true,
+      "result": {
+        "step": 6,
+        "lights": {
+          "Normal accepted": false,
+          "Emergency accepted": true,
+          "Load on Normal": true,
+          "Load on Emergency": false,
+          "Alert": true,
+          "Not in automatic": false
+        },
+        "display": "Transfer Failure",
+        "alarms": [
+          "Transfer Failure"
+        ],
+        "normal_source": "lost",
+        "generator": "stopped",
+        "load_powered": false,
+        "ups": {
+          "autonomy_s": 600.0,
+          "left_s": 450.0,
+          "draining": true,
+          "depleted": false
+        },
+        "sources_isolated": true,
+        "time_s": 150.0,
+        "approved_by_human": "approval"
+      },
+      "sim_time_s": 180.0
+    },
+    {
+      "step": 7,
+      "tool": "measure_resistance",
+      "args": {
+        "point_a": "TS:A",
+        "point_b": "TS:B"
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 7,
+        "point_a": "TS:A",
+        "point_b": "TS:B",
+        "ohms": "open"
+      },
+      "sim_time_s": 210.0
+    },
+    {
+      "step": 8,
+      "tool": "manual_operation_check",
+      "args": {
+        "readings": [
+          {
+            "point_a": "TS:A",
+            "point_b": "TS:B"
+          },
+          {
+            "point_a": "TS:6",
+            "point_b": "TS:7"
+          },
+          {
+            "point_a": "TS:8",
+            "point_b": "TS:9"
+          }
+        ],
+        "reason": "Check if mechanism jammed vs coil open; verify cutoff contacts operate"
+      },
+      "verdict": "needs_approval",
+      "tier": "approval",
+      "policy_reason": "manual operation of the transfer switch needs human approval",
+      "executed": true,
+      "result": {
+        "step": 8,
+        "moved_to_other_position": true,
+        "readings_at_other_position": [
+          {
+            "point_a": "TS:A",
+            "point_b": "TS:B",
+            "ohms": "open"
+          },
+          {
+            "point_a": "TS:6",
+            "point_b": "TS:7",
+            "ohms": 0.0
+          },
+          {
+            "point_a": "TS:8",
+            "point_b": "TS:9",
+            "ohms": "open"
+          }
+        ],
+        "returned_to_original_position": true,
+        "approved_by_human": "approval"
+      },
+      "sim_time_s": 240.0
+    },
+    {
+      "step": 9,
+      "tool": "submit_diagnosis",
+      "args": {
+        "component": "TS",
+        "confidence": 0.95,
+        "evidence": [
+          {
+            "observation": "Transfer Failure, switch on Normal, Emergency accepted 208V, load unpowered",
+            "step": 0,
+            "type": "functional_test"
+          },
+          {
+            "observation": "208V across solenoid A-B while transfer commanded, Emergency source 208V present",
+            "step": 1,
+            "type": "instrument_reading"
+          },
+          {
+            "observation": "0V across 8-9 cutoff closed, solenoid circuit energized",
+            "step": 3,
+            "type": "instrument_reading"
+          },
+          {
+            "observation": "Solenoid A-B open with sources isolated (nominal 30 ohm)",
+            "step": 7,
+            "type": "instrument_reading"
+          },
+          {
+            "observation": "Manual operation moves freely to Emergency and back, 6-7 closed / 8-9 open at Emergency, so not jammed and cutoffs operate",
+            "step": 8,
+            "type": "functional_test"
+          }
+        ],
+        "failure_mode": "burnt",
+        "outcome": "diagnosed",
+        "part": "A-B"
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 9,
+        "accepted": true
+      },
+      "sim_time_s": 240.0
+    }
+  ],
+  "hypotheses": [
+    {
+      "step": 4,
+      "sim_time_s": 150.0,
+      "hypotheses": [
+        {
+          "component": "TS",
+          "failure_mode": "jammed",
+          "part": "",
+          "probability": 0.5,
+          "reason": "Solenoid has 208V across A-B and 8-9 closed, yet switch stayed on Normal -> mechanism may be jammed"
+        },
+        {
+          "component": "TS",
+          "failure_mode": "open",
+          "part": "A-B",
+          "probability": 0.4,
+          "reason": "Open coil also gives full voltage across A-B with both sides connected to EA/EC, no force, no transfer"
+        },
+        {
+          "component": "TS",
+          "failure_mode": "stuck_open",
+          "part": "71-72",
+          "probability": 0.05,
+          "reason": "71-72 open would break B side return, but A-B reads 208 so unlikely"
+        },
+        {
+          "component": "H1",
+          "failure_mode": "open",
+          "part": "",
+          "probability": 0.05,
+          "reason": "Harness open elsewhere unlikely given full solenoid voltage"
+        }
+      ]
+    }
+  ],
+  "turn_log": [
+    {
+      "turn": 1,
+      "latency_s": 12.56,
+      "prompt_tokens": 9947,
+      "cached_tokens": 0,
+      "completion_tokens": 1771,
+      "text": "Transfer failed with Emergency available — I'll probe the operator circuit to isolate the break.",
+      "tool_calls": [
+        {
+          "name": "measure_voltage",
+          "arguments": "{\"point_a\":\"TS:A\",\"point_b\":\"TS:B\"}",
+          "result": {
+            "step": 1,
+            "point_a": "TS:A",
+            "point_b": "TS:B",
+            "volts": 208.0
+          }
+        },
+        {
+          "name": "measure_voltage",
+          "arguments": "{\"point_a\":\"EA\",\"point_b\":\"EC\"}",
+          "result": {
+            "step": 2,
+            "point_a": "EA",
+            "point_b": "EC",
+            "volts": 208.0
+          }
+        },
+        {
+          "name": "measure_voltage",
+          "arguments": "{\"point_a\":\"TS:8\",\"point_b\":\"TS:9\"}",
+          "result": {
+            "step": 3,
+            "point_a": "TS:8",
+            "point_b": "TS:9",
+            "volts": 0.0
+          }
+        }
+      ]
+    },
+    {
+      "turn": 2,
+      "latency_s": 7.93,
+      "prompt_tokens": 6867,
+      "cached_tokens": 0,
+      "completion_tokens": 1587,
+      "text": "The solenoid is powered but the switch didn't move — I'll isolate the sources to test the coil and mechanism.",
+      "tool_calls": [
+        {
+          "name": "update_hypotheses",
+          "arguments": "{\"hypotheses\":[{\"component\":\"TS\",\"failure_mode\":\"jammed\",\"part\":\"\",\"probability\":0.5,\"reason\":\"Solenoid has 208V across A-B and 8-9 closed, yet switch stayed on Normal -> mechanism may be jammed\"},{\"component\":\"TS\",\"failure_mode\":\"open\",\"part\":\"A-B\",\"probability\":0.4,\"reason\":\"Open coil also gives full voltage across A-B with both sides connected to EA/EC, no force, no transfer\"},{\"component\":\"TS\",\"failure_mode\":\"stuck_open\",\"part\":\"71-72\",\"probability\":0.05,\"reason\":\"71-72 open would break B side return, but A-B reads 208 so unlikely\"},{\"component\":\"H1\",\"failure_mode\":\"open\",\"part\":\"\",\"probability\":0.05,\"reason\":\"Harness open elsewhere unlikely given full solenoid voltage\"}]}",
+          "result": {
+            "step": 4,
+            "stored": 4,
+            "probability_sum": 1.0
+          }
+        }
+      ]
+    },
+    {
+      "turn": 3,
+      "latency_s": 7.35,
+      "prompt_tokens": 7201,
+      "cached_tokens": 0,
+      "completion_tokens": 1362,
+      "text": "",
+      "tool_calls": [
+        {
+          "name": "isolate_sources",
+          "arguments": "{}",
+          "result": {
+            "step": 5,
+            "error": "isolating both sources (lockout / tagout) needs human approval; call again with a reason",
+            "requires_approval": true
+          }
+        }
+      ]
+    },
+    {
+      "turn": 4,
+      "latency_s": 1.08,
+      "prompt_tokens": 7296,
+      "cached_tokens": 7153,
+      "completion_tokens": 77,
+      "text": "",
+      "tool_calls": [
+        {
+          "name": "isolate_sources",
+          "arguments": "{\"reason\":\"Need to do ohmmeter check of solenoid to distinguish jammed vs open coil; sources isolated required, load on UPS\"}",
+          "result": {
+            "step": 6,
+            "lights": {
+              "Normal accepted": false,
+              "Emergency accepted": true,
+              "Load on Normal": true,
+              "Load on Emergency": false,
+              "Alert": true,
+              "Not in automatic": false
+            },
+            "display": "Transfer Failure",
+            "alarms": [
+              "Transfer Failure"
+            ],
+            "normal_source": "lost",
+            "generator": "stopped",
+            "load_powered": false,
+            "ups": {
+              "autonomy_s": 600.0,
+              "left_s": 450.0,
+              "draining": true,
+              "depleted": false
+            },
+            "sources_isolated": true,
+            "time_s": 150.0,
+            "approved_by_human": "approval"
+          }
+        }
+      ]
+    },
+    {
+      "turn": 5,
+      "latency_s": 1.29,
+      "prompt_tokens": 7531,
+      "cached_tokens": 7281,
+      "completion_tokens": 95,
+      "text": "Sources isolated — now testing for a jam or broken coil.",
+      "tool_calls": [
+        {
+          "name": "measure_resistance",
+          "arguments": "{\"point_a\":\"TS:A\",\"point_b\":\"TS:B\"}",
+          "result": {
+            "step": 7,
+            "point_a": "TS:A",
+            "point_b": "TS:B",
+            "ohms": "open"
+          }
+        }
+      ]
+    },
+    {
+      "turn": 6,
+      "latency_s": 6.51,
+      "prompt_tokens": 7668,
+      "cached_tokens": 7409,
+      "completion_tokens": 1192,
+      "text": "Solenoid reads open — I'll exercise the mechanism to rule out a jam and confirm the coil.",
+      "tool_calls": [
+        {
+          "name": "manual_operation_check",
+          "arguments": "{\"readings\":[{\"point_a\":\"TS:A\",\"point_b\":\"TS:B\"},{\"point_a\":\"TS:6\",\"point_b\":\"TS:7\"},{\"point_a\":\"TS:8\",\"point_b\":\"TS:9\"}],\"reason\":\"Check if mechanism jammed vs coil open; verify cutoff contacts operate\"}",
+          "result": {
+            "step": 8,
+            "moved_to_other_position": true,
+            "readings_at_other_position": [
+              {
+                "point_a": "TS:A",
+                "point_b": "TS:B",
+                "ohms": "open"
+              },
+              {
+                "point_a": "TS:6",
+                "point_b": "TS:7",
+                "ohms": 0.0
+              },
+              {
+                "point_a": "TS:8",
+                "point_b": "TS:9",
+                "ohms": "open"
+              }
+            ],
+            "returned_to_original_position": true,
+            "approved_by_human": "approval"
+          }
+        }
+      ]
+    },
+    {
+      "turn": 7,
+      "latency_s": 8.57,
+      "prompt_tokens": 7955,
+      "cached_tokens": 0,
+      "completion_tokens": 1599,
+      "text": "",
+      "tool_calls": [
+        {
+          "name": "submit_diagnosis",
+          "arguments": "{\"component\":\"TS\",\"confidence\":0.95,\"evidence\":[{\"observation\":\"Transfer Failure, switch on Normal, Emergency accepted 208V, load unpowered\",\"step\":0,\"type\":\"functional_test\"},{\"observation\":\"208V across solenoid A-B while transfer commanded, Emergency source 208V present\",\"step\":1,\"type\":\"instrument_reading\"},{\"observation\":\"0V across 8-9 cutoff closed, solenoid circuit energized\",\"step\":3,\"type\":\"instrument_reading\"},{\"observation\":\"Solenoid A-B open with sources isolated (nominal 30 ohm)\",\"step\":7,\"type\":\"instrument_reading\"},{\"observation\":\"Manual operation moves freely to Emergency and back, 6-7 closed / 8-9 open at Emergency, so not jammed and cutoffs operate\",\"step\":8,\"type\":\"functional_test\"}],\"failure_mode\":\"burnt\",\"outcome\":\"diagnosed\",\"part\":\"A-B\"}",
+          "result": {
+            "step": 9,
+            "accepted": true
+          }
+        }
+      ]
+    }
+  ],
+  "tokens": {
+    "prompt": 54465,
+    "cached": 21843,
+    "completion": 7683
+  },
+  "cost_usd": 0.0767,
+  "seconds": 45.35
+}

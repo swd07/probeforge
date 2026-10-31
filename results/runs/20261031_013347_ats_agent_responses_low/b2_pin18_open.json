@@ -1,0 +1,608 @@
+{
+  "case": "b2_pin18_open",
+  "runner": "ats_agent",
+  "model": "muse-spark-1.3",
+  "effort": "low",
+  "outcome": "diagnosed",
+  "diagnosis": {
+    "component": "XP",
+    "confidence": 0.95,
+    "evidence": [
+      {
+        "observation": "Metering Emergency [0,0,208] with Waiting for Emergency Acceptable, generator running",
+        "step": 0,
+        "type": "functional_test"
+      },
+      {
+        "observation": "TS:19 to EN 120V, generator EB phase present",
+        "step": 2,
+        "type": "instrument_reading"
+      },
+      {
+        "observation": "XP:P18 to neutral 120V, EB signal reaches plug",
+        "step": 9,
+        "type": "instrument_reading"
+      },
+      {
+        "observation": "XP:J18 to neutral 0V, EB signal missing at controller side",
+        "step": 5,
+        "type": "instrument_reading"
+      }
+    ],
+    "failure_mode": "open",
+    "outcome": "diagnosed",
+    "part": "P18-J18"
+  },
+  "turns": 6,
+  "error": null,
+  "log": [
+    {
+      "step": 0,
+      "tool": "read_panel",
+      "args": {},
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 0,
+        "lights": {
+          "Normal accepted": false,
+          "Emergency accepted": false,
+          "Load on Normal": true,
+          "Load on Emergency": false,
+          "Alert": false,
+          "Not in automatic": false
+        },
+        "display": "Waiting for Emergency Acceptable",
+        "alarms": [],
+        "normal_source": "lost",
+        "generator": "running",
+        "load_powered": false,
+        "ups": {
+          "autonomy_s": 600.0,
+          "left_s": 540.0,
+          "draining": true,
+          "depleted": false
+        },
+        "sources_isolated": false,
+        "time_s": 60.0,
+        "events": [
+          {
+            "t": 3.0,
+            "event": "N Source Not Accepted",
+            "cause": "N Under Voltage"
+          },
+          {
+            "t": 3.0,
+            "event": "Engine Start",
+            "cause": ""
+          }
+        ],
+        "metering": {
+          "Normal": [
+            0,
+            0,
+            0
+          ],
+          "Emergency": [
+            0,
+            0,
+            208
+          ]
+        }
+      },
+      "sim_time_s": 60.0
+    },
+    {
+      "step": 1,
+      "tool": "update_hypotheses",
+      "args": {
+        "hypotheses": [
+          {
+            "component": "H1",
+            "failure_mode": "open",
+            "part": "W25_TS19-W25_P18",
+            "probability": 0.33,
+            "reason": "Metering [0,0,208] matches loss of EB sense J18; wire open is common"
+          },
+          {
+            "component": "XP",
+            "failure_mode": "open",
+            "part": "P18-J18",
+            "probability": 0.33,
+            "reason": "Same metering signature, connector pin open"
+          },
+          {
+            "component": "CP",
+            "failure_mode": "open",
+            "part": "J18",
+            "probability": 0.34,
+            "reason": "Same signature, controller input reads nothing"
+          }
+        ]
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 1,
+        "stored": 3,
+        "probability_sum": 1.0
+      },
+      "sim_time_s": 60.0
+    },
+    {
+      "step": 2,
+      "tool": "measure_voltage",
+      "args": {
+        "point_a": "TS:19",
+        "point_b": "TS:EN"
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 2,
+        "point_a": "TS:19",
+        "point_b": "TS:EN",
+        "volts": 120.1
+      },
+      "sim_time_s": 90.0
+    },
+    {
+      "step": 3,
+      "tool": "measure_voltage",
+      "args": {
+        "point_a": "XP:P18",
+        "point_b": "P23"
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 3,
+        "point_a": "XP:P18",
+        "point_b": "P23",
+        "volts": 120.1
+      },
+      "sim_time_s": 120.0
+    },
+    {
+      "step": 4,
+      "tool": "measure_voltage",
+      "args": {
+        "point_a": "XP:P7",
+        "point_b": "P23"
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 4,
+        "point_a": "XP:P7",
+        "point_b": "P23",
+        "volts": 120.1
+      },
+      "sim_time_s": 150.0
+    },
+    {
+      "step": 5,
+      "tool": "measure_voltage",
+      "args": {
+        "point_a": "XP:J18",
+        "point_b": "XP:J23"
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 5,
+        "point_a": "XP:J18",
+        "point_b": "XP:J23",
+        "volts": 0.0
+      },
+      "sim_time_s": 180.0
+    },
+    {
+      "step": 6,
+      "tool": "measure_voltage",
+      "args": {
+        "point_a": "XP:P18",
+        "point_b": "XP:J18"
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 6,
+        "point_a": "XP:P18",
+        "point_b": "XP:J18",
+        "volts": 0.0
+      },
+      "sim_time_s": 210.0
+    },
+    {
+      "step": 7,
+      "tool": "measure_voltage",
+      "args": {
+        "point_a": "XP:P23",
+        "point_b": "TS:EN"
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 7,
+        "point_a": "XP:P23",
+        "point_b": "TS:EN",
+        "volts": 0.0
+      },
+      "sim_time_s": 240.0
+    },
+    {
+      "step": 8,
+      "tool": "measure_voltage",
+      "args": {
+        "point_a": "XP:J23",
+        "point_b": "TS:EN"
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 8,
+        "point_a": "XP:J23",
+        "point_b": "TS:EN",
+        "volts": 0.0
+      },
+      "sim_time_s": 270.0
+    },
+    {
+      "step": 9,
+      "tool": "measure_voltage",
+      "args": {
+        "point_a": "XP:P18",
+        "point_b": "XP:J23"
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 9,
+        "point_a": "XP:P18",
+        "point_b": "XP:J23",
+        "volts": 120.1
+      },
+      "sim_time_s": 300.0
+    },
+    {
+      "step": 10,
+      "tool": "update_hypotheses",
+      "args": {
+        "hypotheses": [
+          {
+            "component": "XP",
+            "failure_mode": "open",
+            "part": "P18-J18",
+            "probability": 0.95,
+            "reason": "P18 live 120V, J18 0V to same neutral; wire and generator proven good"
+          },
+          {
+            "component": "CP",
+            "failure_mode": "open",
+            "part": "J18",
+            "probability": 0.03,
+            "reason": "Would leave J18 terminal live, but J18 measures 0V"
+          },
+          {
+            "component": "H1",
+            "failure_mode": "open",
+            "part": "W25_TS19-W25_P18",
+            "probability": 0.02,
+            "reason": "P18 live proves wire continuous"
+          }
+        ]
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 10,
+        "stored": 3,
+        "probability_sum": 1.0
+      },
+      "sim_time_s": 300.0
+    },
+    {
+      "step": 11,
+      "tool": "submit_diagnosis",
+      "args": {
+        "component": "XP",
+        "confidence": 0.95,
+        "evidence": [
+          {
+            "observation": "Metering Emergency [0,0,208] with Waiting for Emergency Acceptable, generator running",
+            "step": 0,
+            "type": "functional_test"
+          },
+          {
+            "observation": "TS:19 to EN 120V, generator EB phase present",
+            "step": 2,
+            "type": "instrument_reading"
+          },
+          {
+            "observation": "XP:P18 to neutral 120V, EB signal reaches plug",
+            "step": 9,
+            "type": "instrument_reading"
+          },
+          {
+            "observation": "XP:J18 to neutral 0V, EB signal missing at controller side",
+            "step": 5,
+            "type": "instrument_reading"
+          }
+        ],
+        "failure_mode": "open",
+        "outcome": "diagnosed",
+        "part": "P18-J18"
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 11,
+        "accepted": true
+      },
+      "sim_time_s": 300.0
+    }
+  ],
+  "hypotheses": [
+    {
+      "step": 1,
+      "sim_time_s": 60.0,
+      "hypotheses": [
+        {
+          "component": "H1",
+          "failure_mode": "open",
+          "part": "W25_TS19-W25_P18",
+          "probability": 0.33,
+          "reason": "Metering [0,0,208] matches loss of EB sense J18; wire open is common"
+        },
+        {
+          "component": "XP",
+          "failure_mode": "open",
+          "part": "P18-J18",
+          "probability": 0.33,
+          "reason": "Same metering signature, connector pin open"
+        },
+        {
+          "component": "CP",
+          "failure_mode": "open",
+          "part": "J18",
+          "probability": 0.34,
+          "reason": "Same signature, controller input reads nothing"
+        }
+      ]
+    },
+    {
+      "step": 10,
+      "sim_time_s": 300.0,
+      "hypotheses": [
+        {
+          "component": "XP",
+          "failure_mode": "open",
+          "part": "P18-J18",
+          "probability": 0.95,
+          "reason": "P18 live 120V, J18 0V to same neutral; wire and generator proven good"
+        },
+        {
+          "component": "CP",
+          "failure_mode": "open",
+          "part": "J18",
+          "probability": 0.03,
+          "reason": "Would leave J18 terminal live, but J18 measures 0V"
+        },
+        {
+          "component": "H1",
+          "failure_mode": "open",
+          "part": "W25_TS19-W25_P18",
+          "probability": 0.02,
+          "reason": "P18 live proves wire continuous"
+        }
+      ]
+    }
+  ],
+  "turn_log": [
+    {
+      "turn": 1,
+      "latency_s": 11.45,
+      "prompt_tokens": 10026,
+      "cached_tokens": 4209,
+      "completion_tokens": 1777,
+      "reasoning_tokens": 1552,
+      "text": "Emergency is not being accepted on one phase — I'll trace the sensing path to isolate the break.",
+      "tool_calls": [
+        {
+          "name": "update_hypotheses",
+          "arguments": "{\"hypotheses\":[{\"component\":\"H1\",\"failure_mode\":\"open\",\"part\":\"W25_TS19-W25_P18\",\"probability\":0.33,\"reason\":\"Metering [0,0,208] matches loss of EB sense J18; wire open is common\"},{\"component\":\"XP\",\"failure_mode\":\"open\",\"part\":\"P18-J18\",\"probability\":0.33,\"reason\":\"Same metering signature, connector pin open\"},{\"component\":\"CP\",\"failure_mode\":\"open\",\"part\":\"J18\",\"probability\":0.34,\"reason\":\"Same signature, controller input reads nothing\"}]}",
+          "result": {
+            "step": 1,
+            "stored": 3,
+            "probability_sum": 1.0
+          }
+        }
+      ]
+    },
+    {
+      "turn": 2,
+      "latency_s": 1.77,
+      "prompt_tokens": 8385,
+      "cached_tokens": 4465,
+      "completion_tokens": 238,
+      "reasoning_tokens": 3,
+      "text": "I've narrowed it to the EB sensing path; now I'll take voltage readings to pinpoint the open.",
+      "tool_calls": [
+        {
+          "name": "measure_voltage",
+          "arguments": "{\"point_a\":\"TS:19\",\"point_b\":\"TS:EN\"}",
+          "result": {
+            "step": 2,
+            "point_a": "TS:19",
+            "point_b": "TS:EN",
+            "volts": 120.1
+          }
+        },
+        {
+          "name": "measure_voltage",
+          "arguments": "{\"point_a\":\"XP:P18\",\"point_b\":\"P23\"}",
+          "result": {
+            "step": 3,
+            "point_a": "XP:P18",
+            "point_b": "P23",
+            "volts": 120.1
+          }
+        },
+        {
+          "name": "measure_voltage",
+          "arguments": "{\"point_a\":\"XP:P7\",\"point_b\":\"P23\"}",
+          "result": {
+            "step": 4,
+            "point_a": "XP:P7",
+            "point_b": "P23",
+            "volts": 120.1
+          }
+        }
+      ]
+    },
+    {
+      "turn": 3,
+      "latency_s": 5.49,
+      "prompt_tokens": 8787,
+      "cached_tokens": 8305,
+      "completion_tokens": 1009,
+      "reasoning_tokens": 838,
+      "text": "Signal reaches the plug, so the break is downstream. I'll check the controller side to separate pin versus input.",
+      "tool_calls": [
+        {
+          "name": "measure_voltage",
+          "arguments": "{\"point_a\":\"XP:J18\",\"point_b\":\"XP:J23\"}",
+          "result": {
+            "step": 5,
+            "point_a": "XP:J18",
+            "point_b": "XP:J23",
+            "volts": 0.0
+          }
+        },
+        {
+          "name": "measure_voltage",
+          "arguments": "{\"point_a\":\"XP:P18\",\"point_b\":\"XP:J18\"}",
+          "result": {
+            "step": 6,
+            "point_a": "XP:P18",
+            "point_b": "XP:J18",
+            "volts": 0.0
+          }
+        }
+      ]
+    },
+    {
+      "turn": 4,
+      "latency_s": 2.99,
+      "prompt_tokens": 9907,
+      "cached_tokens": 8689,
+      "completion_tokens": 522,
+      "reasoning_tokens": 291,
+      "text": "Those two readings conflict, so I'll verify the reference before concluding.",
+      "tool_calls": [
+        {
+          "name": "measure_voltage",
+          "arguments": "{\"point_a\":\"XP:P23\",\"point_b\":\"TS:EN\"}",
+          "result": {
+            "step": 7,
+            "point_a": "XP:P23",
+            "point_b": "TS:EN",
+            "volts": 0.0
+          }
+        },
+        {
+          "name": "measure_voltage",
+          "arguments": "{\"point_a\":\"XP:J23\",\"point_b\":\"TS:EN\"}",
+          "result": {
+            "step": 8,
+            "point_a": "XP:J23",
+            "point_b": "TS:EN",
+            "volts": 0.0
+          }
+        },
+        {
+          "name": "measure_voltage",
+          "arguments": "{\"point_a\":\"XP:P18\",\"point_b\":\"XP:J23\"}",
+          "result": {
+            "step": 9,
+            "point_a": "XP:P18",
+            "point_b": "XP:J23",
+            "volts": 120.1
+          }
+        }
+      ]
+    },
+    {
+      "turn": 5,
+      "latency_s": 4.85,
+      "prompt_tokens": 10595,
+      "cached_tokens": 9841,
+      "completion_tokens": 667,
+      "reasoning_tokens": 436,
+      "text": "Signal is live at the plug but dead at the jack — I'll update the hypotheses and submit.",
+      "tool_calls": [
+        {
+          "name": "update_hypotheses",
+          "arguments": "{\"hypotheses\":[{\"component\":\"XP\",\"failure_mode\":\"open\",\"part\":\"P18-J18\",\"probability\":0.95,\"reason\":\"P18 live 120V, J18 0V to same neutral; wire and generator proven good\"},{\"component\":\"CP\",\"failure_mode\":\"open\",\"part\":\"J18\",\"probability\":0.03,\"reason\":\"Would leave J18 terminal live, but J18 measures 0V\"},{\"component\":\"H1\",\"failure_mode\":\"open\",\"part\":\"W25_TS19-W25_P18\",\"probability\":0.02,\"reason\":\"P18 live proves wire continuous\"}]}",
+          "result": {
+            "step": 10,
+            "stored": 3,
+            "probability_sum": 1.0
+          }
+        }
+      ]
+    },
+    {
+      "turn": 6,
+      "latency_s": 1.64,
+      "prompt_tokens": 11308,
+      "cached_tokens": 10481,
+      "completion_tokens": 267,
+      "reasoning_tokens": 2,
+      "text": "",
+      "tool_calls": [
+        {
+          "name": "submit_diagnosis",
+          "arguments": "{\"component\":\"XP\",\"confidence\":0.95,\"evidence\":[{\"observation\":\"Metering Emergency [0,0,208] with Waiting for Emergency Acceptable, generator running\",\"step\":0,\"type\":\"functional_test\"},{\"observation\":\"TS:19 to EN 120V, generator EB phase present\",\"step\":2,\"type\":\"instrument_reading\"},{\"observation\":\"XP:P18 to neutral 120V, EB signal reaches plug\",\"step\":9,\"type\":\"instrument_reading\"},{\"observation\":\"XP:J18 to neutral 0V, EB signal missing at controller side\",\"step\":5,\"type\":\"instrument_reading\"}],\"failure_mode\":\"open\",\"outcome\":\"diagnosed\",\"part\":\"P18-J18\"}",
+          "result": {
+            "step": 11,
+            "accepted": true
+          }
+        }
+      ]
+    }
+  ],
+  "tokens": {
+    "prompt": 59008,
+    "cached": 45990,
+    "completion": 4480
+  },
+  "cost_usd": 0.0422,
+  "seconds": 28.31,
+  "transport": "responses"
+}

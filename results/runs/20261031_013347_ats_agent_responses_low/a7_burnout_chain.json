@@ -1,0 +1,919 @@
+{
+  "case": "a7_burnout_chain",
+  "runner": "ats_agent",
+  "model": "muse-spark-1.3",
+  "effort": "low",
+  "outcome": "diagnosed",
+  "diagnosis": {
+    "component": "TS",
+    "confidence": 0.9,
+    "evidence": [
+      {
+        "observation": "Transfer Failure, switch on Normal, Emergency accepted 208V",
+        "step": 0,
+        "type": "functional_test"
+      },
+      {
+        "observation": "position indicator Normal",
+        "step": 1,
+        "type": "functional_test"
+      },
+      {
+        "observation": "208V across solenoid A-B while commanded to Emergency",
+        "step": 2,
+        "type": "instrument_reading"
+      },
+      {
+        "observation": "solenoid resistance open (nominal 30 ohm)",
+        "step": 6,
+        "type": "instrument_reading"
+      },
+      {
+        "observation": "manual operation moves freely to other position and back, so not jammed",
+        "step": 7,
+        "type": "functional_test"
+      }
+    ],
+    "failure_mode": "burnt",
+    "outcome": "diagnosed",
+    "part": "A-B"
+  },
+  "turns": 10,
+  "error": null,
+  "log": [
+    {
+      "step": 0,
+      "tool": "read_panel",
+      "args": {},
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 0,
+        "lights": {
+          "Normal accepted": false,
+          "Emergency accepted": true,
+          "Load on Normal": true,
+          "Load on Emergency": false,
+          "Alert": true,
+          "Not in automatic": false
+        },
+        "display": "Transfer Failure",
+        "alarms": [
+          "Transfer Failure"
+        ],
+        "normal_source": "lost",
+        "generator": "running",
+        "load_powered": false,
+        "ups": {
+          "autonomy_s": 600.0,
+          "left_s": 540.0,
+          "draining": true,
+          "depleted": false
+        },
+        "sources_isolated": false,
+        "time_s": 60.0,
+        "events": [
+          {
+            "t": 3.0,
+            "event": "N Source Not Accepted",
+            "cause": "N Under Voltage"
+          },
+          {
+            "t": 3.0,
+            "event": "Engine Start",
+            "cause": ""
+          },
+          {
+            "t": 12.3,
+            "event": "E Source Accepted",
+            "cause": ""
+          },
+          {
+            "t": 18.4,
+            "event": "Transfer Failure",
+            "cause": "Switch on Normal"
+          }
+        ],
+        "metering": {
+          "Normal": [
+            0,
+            0,
+            0
+          ],
+          "Emergency": [
+            208,
+            208,
+            208
+          ]
+        }
+      },
+      "sim_time_s": 60.0
+    },
+    {
+      "step": 1,
+      "tool": "read_position_indicator",
+      "args": {},
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 1,
+        "position_indicator": "Normal",
+        "time_s": 60.0
+      },
+      "sim_time_s": 90.0
+    },
+    {
+      "step": 2,
+      "tool": "measure_voltage",
+      "args": {
+        "point_a": "TS:A",
+        "point_b": "TS:B"
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 2,
+        "point_a": "TS:A",
+        "point_b": "TS:B",
+        "volts": 208.0
+      },
+      "sim_time_s": 120.0
+    },
+    {
+      "step": 3,
+      "tool": "measure_voltage",
+      "args": {
+        "point_a": "EA",
+        "point_b": "EC"
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 3,
+        "point_a": "EA",
+        "point_b": "EC",
+        "volts": 208.0
+      },
+      "sim_time_s": 150.0
+    },
+    {
+      "step": 4,
+      "tool": "update_hypotheses",
+      "args": {
+        "hypotheses": [
+          {
+            "component": "TS",
+            "failure_mode": "jammed",
+            "part": "",
+            "probability": 0.5,
+            "reason": "208V across A-B with switch on Normal proves drive power reaches coil but no motion"
+          },
+          {
+            "component": "TS",
+            "failure_mode": "burnt",
+            "part": "A-B",
+            "probability": 0.4,
+            "reason": "Open coil also gives 208V across A-B via upstream paths; prolonged stall could burn it"
+          },
+          {
+            "component": "TS",
+            "failure_mode": "open",
+            "part": "A-B",
+            "probability": 0.05,
+            "reason": "Same as burnt but less likely"
+          },
+          {
+            "component": "SE",
+            "failure_mode": "stuck_open",
+            "part": "",
+            "probability": 0.025,
+            "reason": "Would break drive but then A-B would read 0, contrary to 208V"
+          },
+          {
+            "component": "ER",
+            "failure_mode": "stuck_open",
+            "part": "",
+            "probability": 0.025,
+            "reason": "Same, ruled out by 208V across coil"
+          }
+        ]
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 4,
+        "stored": 5,
+        "probability_sum": 1.0
+      },
+      "sim_time_s": 150.0
+    },
+    {
+      "step": 5,
+      "tool": "isolate_sources",
+      "args": {
+        "reason": "Need to measure solenoid resistance and check mechanism for jam; coil has 208V but no transfer."
+      },
+      "verdict": "needs_approval",
+      "tier": "approval",
+      "policy_reason": "isolating both sources (lockout / tagout) needs human approval",
+      "executed": true,
+      "result": {
+        "step": 5,
+        "lights": {
+          "Normal accepted": false,
+          "Emergency accepted": true,
+          "Load on Normal": true,
+          "Load on Emergency": false,
+          "Alert": true,
+          "Not in automatic": false
+        },
+        "display": "Transfer Failure",
+        "alarms": [
+          "Transfer Failure"
+        ],
+        "normal_source": "lost",
+        "generator": "stopped",
+        "load_powered": false,
+        "ups": {
+          "autonomy_s": 600.0,
+          "left_s": 450.0,
+          "draining": true,
+          "depleted": false
+        },
+        "sources_isolated": true,
+        "time_s": 150.0,
+        "approved_by_human": "approval"
+      },
+      "sim_time_s": 180.0
+    },
+    {
+      "step": 6,
+      "tool": "measure_resistance",
+      "args": {
+        "point_a": "TS:A",
+        "point_b": "TS:B"
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 6,
+        "point_a": "TS:A",
+        "point_b": "TS:B",
+        "ohms": "open"
+      },
+      "sim_time_s": 210.0
+    },
+    {
+      "step": 7,
+      "tool": "manual_operation_check",
+      "args": {
+        "reason": "Coil open with 208V present; check if mechanism jammed (burnt coil could be consequence of jam).",
+        "readings": [
+          {
+            "point_a": "TS:A",
+            "point_b": "TS:B"
+          },
+          {
+            "point_a": "TS:8",
+            "point_b": "TS:9"
+          },
+          {
+            "point_a": "TS:6",
+            "point_b": "TS:7"
+          }
+        ]
+      },
+      "verdict": "needs_approval",
+      "tier": "approval",
+      "policy_reason": "manual operation of the transfer switch needs human approval",
+      "executed": true,
+      "result": {
+        "step": 7,
+        "moved_to_other_position": true,
+        "readings_at_other_position": [
+          {
+            "point_a": "TS:A",
+            "point_b": "TS:B",
+            "ohms": "open"
+          },
+          {
+            "point_a": "TS:8",
+            "point_b": "TS:9",
+            "ohms": 0.0
+          },
+          {
+            "point_a": "TS:6",
+            "point_b": "TS:7",
+            "ohms": 0.0
+          }
+        ],
+        "returned_to_original_position": true,
+        "approved_by_human": "approval"
+      },
+      "sim_time_s": 240.0
+    },
+    {
+      "step": 8,
+      "tool": "measure_resistance",
+      "args": {
+        "point_a": "TS:6",
+        "point_b": "TS:7"
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 8,
+        "point_a": "TS:6",
+        "point_b": "TS:7",
+        "ohms": "open"
+      },
+      "sim_time_s": 270.0
+    },
+    {
+      "step": 9,
+      "tool": "measure_resistance",
+      "args": {
+        "point_a": "TS:8",
+        "point_b": "TS:9"
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 9,
+        "point_a": "TS:8",
+        "point_b": "TS:9",
+        "ohms": 0.0
+      },
+      "sim_time_s": 300.0
+    },
+    {
+      "step": 10,
+      "tool": "measure_resistance",
+      "args": {
+        "point_a": "TS:69",
+        "point_b": "TS:70"
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 10,
+        "point_a": "TS:69",
+        "point_b": "TS:70",
+        "ohms": "open"
+      },
+      "sim_time_s": 330.0
+    },
+    {
+      "step": 11,
+      "tool": "measure_resistance",
+      "args": {
+        "point_a": "TS:71",
+        "point_b": "TS:72"
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 11,
+        "point_a": "TS:71",
+        "point_b": "TS:72",
+        "ohms": 0.0
+      },
+      "sim_time_s": 360.0
+    },
+    {
+      "step": 12,
+      "tool": "manual_operation_check",
+      "args": {
+        "reason": "Verify cutoff contacts at Emergency position; previous reading showed 8-9 still closed which could cause coil burnout.",
+        "readings": [
+          {
+            "point_a": "TS:8",
+            "point_b": "TS:9"
+          },
+          {
+            "point_a": "TS:71",
+            "point_b": "TS:72"
+          },
+          {
+            "point_a": "TS:69",
+            "point_b": "TS:70"
+          }
+        ]
+      },
+      "verdict": "needs_approval",
+      "tier": "approval",
+      "policy_reason": "manual operation of the transfer switch needs human approval",
+      "executed": true,
+      "result": {
+        "step": 12,
+        "moved_to_other_position": true,
+        "readings_at_other_position": [
+          {
+            "point_a": "TS:8",
+            "point_b": "TS:9",
+            "ohms": 0.0
+          },
+          {
+            "point_a": "TS:71",
+            "point_b": "TS:72",
+            "ohms": 0.0
+          },
+          {
+            "point_a": "TS:69",
+            "point_b": "TS:70",
+            "ohms": 0.0
+          }
+        ],
+        "returned_to_original_position": true,
+        "approved_by_human": "approval"
+      },
+      "sim_time_s": 390.0
+    },
+    {
+      "step": 13,
+      "tool": "update_hypotheses",
+      "args": {
+        "hypotheses": [
+          {
+            "component": "TS",
+            "failure_mode": "burnt",
+            "part": "A-B",
+            "probability": 0.9,
+            "reason": "208V across A-B but no motion, resistance open, mechanism moves freely so primary coil failure"
+          },
+          {
+            "component": "TS",
+            "failure_mode": "stuck_closed",
+            "part": "8-9",
+            "probability": 0.05,
+            "reason": "8-9 still closed on Emergency but single stuck cannot explain failure to move"
+          },
+          {
+            "component": "TS",
+            "failure_mode": "stuck_closed",
+            "part": "71-72",
+            "probability": 0.05,
+            "reason": "Same, 71-72 still closed on Emergency but would still allow transfer"
+          }
+        ]
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 13,
+        "stored": 3,
+        "probability_sum": 1.0
+      },
+      "sim_time_s": 390.0
+    },
+    {
+      "step": 14,
+      "tool": "submit_diagnosis",
+      "args": {
+        "component": "TS",
+        "confidence": 0.9,
+        "evidence": [
+          {
+            "observation": "Transfer Failure, switch on Normal, Emergency accepted 208V",
+            "step": 0,
+            "type": "functional_test"
+          },
+          {
+            "observation": "position indicator Normal",
+            "step": 1,
+            "type": "functional_test"
+          },
+          {
+            "observation": "208V across solenoid A-B while commanded to Emergency",
+            "step": 2,
+            "type": "instrument_reading"
+          },
+          {
+            "observation": "solenoid resistance open (nominal 30 ohm)",
+            "step": 6,
+            "type": "instrument_reading"
+          },
+          {
+            "observation": "manual operation moves freely to other position and back, so not jammed",
+            "step": 7,
+            "type": "functional_test"
+          }
+        ],
+        "failure_mode": "burnt",
+        "outcome": "diagnosed",
+        "part": "A-B"
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 14,
+        "accepted": true
+      },
+      "sim_time_s": 390.0
+    }
+  ],
+  "hypotheses": [
+    {
+      "step": 4,
+      "sim_time_s": 150.0,
+      "hypotheses": [
+        {
+          "component": "TS",
+          "failure_mode": "jammed",
+          "part": "",
+          "probability": 0.5,
+          "reason": "208V across A-B with switch on Normal proves drive power reaches coil but no motion"
+        },
+        {
+          "component": "TS",
+          "failure_mode": "burnt",
+          "part": "A-B",
+          "probability": 0.4,
+          "reason": "Open coil also gives 208V across A-B via upstream paths; prolonged stall could burn it"
+        },
+        {
+          "component": "TS",
+          "failure_mode": "open",
+          "part": "A-B",
+          "probability": 0.05,
+          "reason": "Same as burnt but less likely"
+        },
+        {
+          "component": "SE",
+          "failure_mode": "stuck_open",
+          "part": "",
+          "probability": 0.025,
+          "reason": "Would break drive but then A-B would read 0, contrary to 208V"
+        },
+        {
+          "component": "ER",
+          "failure_mode": "stuck_open",
+          "part": "",
+          "probability": 0.025,
+          "reason": "Same, ruled out by 208V across coil"
+        }
+      ]
+    },
+    {
+      "step": 13,
+      "sim_time_s": 390.0,
+      "hypotheses": [
+        {
+          "component": "TS",
+          "failure_mode": "burnt",
+          "part": "A-B",
+          "probability": 0.9,
+          "reason": "208V across A-B but no motion, resistance open, mechanism moves freely so primary coil failure"
+        },
+        {
+          "component": "TS",
+          "failure_mode": "stuck_closed",
+          "part": "8-9",
+          "probability": 0.05,
+          "reason": "8-9 still closed on Emergency but single stuck cannot explain failure to move"
+        },
+        {
+          "component": "TS",
+          "failure_mode": "stuck_closed",
+          "part": "71-72",
+          "probability": 0.05,
+          "reason": "Same, 71-72 still closed on Emergency but would still allow transfer"
+        }
+      ]
+    }
+  ],
+  "turn_log": [
+    {
+      "turn": 1,
+      "latency_s": 10.07,
+      "prompt_tokens": 10070,
+      "cached_tokens": 9969,
+      "completion_tokens": 1934,
+      "reasoning_tokens": 1741,
+      "text": "Transfer to Emergency failed — I'll probe the operator circuit to isolate the break.",
+      "tool_calls": [
+        {
+          "name": "read_position_indicator",
+          "arguments": "{}",
+          "result": {
+            "step": 1,
+            "position_indicator": "Normal",
+            "time_s": 60.0
+          }
+        },
+        {
+          "name": "measure_voltage",
+          "arguments": "{\"point_a\":\"TS:A\",\"point_b\":\"TS:B\"}",
+          "result": {
+            "step": 2,
+            "point_a": "TS:A",
+            "point_b": "TS:B",
+            "volts": 208.0
+          }
+        },
+        {
+          "name": "measure_voltage",
+          "arguments": "{\"point_a\":\"EA\",\"point_b\":\"EC\"}",
+          "result": {
+            "step": 3,
+            "point_a": "EA",
+            "point_b": "EC",
+            "volts": 208.0
+          }
+        }
+      ]
+    },
+    {
+      "turn": 2,
+      "latency_s": 6.78,
+      "prompt_tokens": 8689,
+      "cached_tokens": 6513,
+      "completion_tokens": 1162,
+      "reasoning_tokens": 848,
+      "text": "Solenoid has full voltage but the switch never moved — I'll isolate to check coil versus mechanism.",
+      "tool_calls": [
+        {
+          "name": "update_hypotheses",
+          "arguments": "{\"hypotheses\":[{\"component\":\"TS\",\"failure_mode\":\"jammed\",\"part\":\"\",\"probability\":0.5,\"reason\":\"208V across A-B with switch on Normal proves drive power reaches coil but no motion\"},{\"component\":\"TS\",\"failure_mode\":\"burnt\",\"part\":\"A-B\",\"probability\":0.4,\"reason\":\"Open coil also gives 208V across A-B via upstream paths; prolonged stall could burn it\"},{\"component\":\"TS\",\"failure_mode\":\"open\",\"part\":\"A-B\",\"probability\":0.05,\"reason\":\"Same as burnt but less likely\"},{\"component\":\"SE\",\"failure_mode\":\"stuck_open\",\"part\":\"\",\"probability\":0.025,\"reason\":\"Would break drive but then A-B would read 0, contrary to 208V\"},{\"component\":\"ER\",\"failure_mode\":\"stuck_open\",\"part\":\"\",\"probability\":0.025,\"reason\":\"Same, ruled out by 208V across coil\"}]}",
+          "result": {
+            "step": 4,
+            "stored": 5,
+            "probability_sum": 1.0
+          }
+        }
+      ]
+    },
+    {
+      "turn": 3,
+      "latency_s": 0.92,
+      "prompt_tokens": 9897,
+      "cached_tokens": 8689,
+      "completion_tokens": 103,
+      "reasoning_tokens": 4,
+      "text": "Full drive voltage is present without motion, so I'm isolating the sources to test the coil and mechanism.",
+      "tool_calls": [
+        {
+          "name": "isolate_sources",
+          "arguments": "{\"reason\":\"Need to measure solenoid resistance and check mechanism for jam; coil has 208V but no transfer.\"}",
+          "result": {
+            "step": 5,
+            "lights": {
+              "Normal accepted": false,
+              "Emergency accepted": true,
+              "Load on Normal": true,
+              "Load on Emergency": false,
+              "Alert": true,
+              "Not in automatic": false
+            },
+            "display": "Transfer Failure",
+            "alarms": [
+              "Transfer Failure"
+            ],
+            "normal_source": "lost",
+            "generator": "stopped",
+            "load_powered": false,
+            "ups": {
+              "autonomy_s": 600.0,
+              "left_s": 450.0,
+              "draining": true,
+              "depleted": false
+            },
+            "sources_isolated": true,
+            "time_s": 150.0,
+            "approved_by_human": "approval"
+          }
+        }
+      ]
+    },
+    {
+      "turn": 4,
+      "latency_s": 1.03,
+      "prompt_tokens": 10165,
+      "cached_tokens": 9841,
+      "completion_tokens": 120,
+      "reasoning_tokens": 50,
+      "text": "",
+      "tool_calls": [
+        {
+          "name": "measure_resistance",
+          "arguments": "{\"point_a\":\"TS:A\",\"point_b\":\"TS:B\"}",
+          "result": {
+            "step": 6,
+            "point_a": "TS:A",
+            "point_b": "TS:B",
+            "ohms": "open"
+          }
+        }
+      ]
+    },
+    {
+      "turn": 5,
+      "latency_s": 2.16,
+      "prompt_tokens": 10338,
+      "cached_tokens": 10097,
+      "completion_tokens": 260,
+      "reasoning_tokens": 93,
+      "text": "The coil reads open, so I'll manually operate the switch to see if a jam caused it.",
+      "tool_calls": [
+        {
+          "name": "manual_operation_check",
+          "arguments": "{\"reason\":\"Coil open with 208V present; check if mechanism jammed (burnt coil could be consequence of jam).\",\"readings\":[{\"point_a\":\"TS:A\",\"point_b\":\"TS:B\"},{\"point_a\":\"TS:8\",\"point_b\":\"TS:9\"},{\"point_a\":\"TS:6\",\"point_b\":\"TS:7\"}]}",
+          "result": {
+            "step": 7,
+            "moved_to_other_position": true,
+            "readings_at_other_position": [
+              {
+                "point_a": "TS:A",
+                "point_b": "TS:B",
+                "ohms": "open"
+              },
+              {
+                "point_a": "TS:8",
+                "point_b": "TS:9",
+                "ohms": 0.0
+              },
+              {
+                "point_a": "TS:6",
+                "point_b": "TS:7",
+                "ohms": 0.0
+              }
+            ],
+            "returned_to_original_position": true,
+            "approved_by_human": "approval"
+          }
+        }
+      ]
+    },
+    {
+      "turn": 6,
+      "latency_s": 10.85,
+      "prompt_tokens": 10733,
+      "cached_tokens": 10225,
+      "completion_tokens": 2021,
+      "reasoning_tokens": 1811,
+      "text": "",
+      "tool_calls": [
+        {
+          "name": "measure_resistance",
+          "arguments": "{\"point_a\":\"TS:6\",\"point_b\":\"TS:7\"}",
+          "result": {
+            "step": 8,
+            "point_a": "TS:6",
+            "point_b": "TS:7",
+            "ohms": "open"
+          }
+        },
+        {
+          "name": "measure_resistance",
+          "arguments": "{\"point_a\":\"TS:8\",\"point_b\":\"TS:9\"}",
+          "result": {
+            "step": 9,
+            "point_a": "TS:8",
+            "point_b": "TS:9",
+            "ohms": 0.0
+          }
+        },
+        {
+          "name": "measure_resistance",
+          "arguments": "{\"point_a\":\"TS:69\",\"point_b\":\"TS:70\"}",
+          "result": {
+            "step": 10,
+            "point_a": "TS:69",
+            "point_b": "TS:70",
+            "ohms": "open"
+          }
+        }
+      ]
+    },
+    {
+      "turn": 7,
+      "latency_s": 2.74,
+      "prompt_tokens": 12915,
+      "cached_tokens": 10609,
+      "completion_tokens": 303,
+      "reasoning_tokens": 231,
+      "text": "",
+      "tool_calls": [
+        {
+          "name": "measure_resistance",
+          "arguments": "{\"point_a\":\"TS:71\",\"point_b\":\"TS:72\"}",
+          "result": {
+            "step": 11,
+            "point_a": "TS:71",
+            "point_b": "TS:72",
+            "ohms": 0.0
+          }
+        }
+      ]
+    },
+    {
+      "turn": 8,
+      "latency_s": 5.43,
+      "prompt_tokens": 13275,
+      "cached_tokens": 12913,
+      "completion_tokens": 1082,
+      "reasoning_tokens": 906,
+      "text": "Mechanism moves freely and Normal-side cutoffs test normal — I'll re-check the Emergency-side cutoffs to rule out a cause for the coil failure.",
+      "tool_calls": [
+        {
+          "name": "manual_operation_check",
+          "arguments": "{\"reason\":\"Verify cutoff contacts at Emergency position; previous reading showed 8-9 still closed which could cause coil burnout.\",\"readings\":[{\"point_a\":\"TS:8\",\"point_b\":\"TS:9\"},{\"point_a\":\"TS:71\",\"point_b\":\"TS:72\"},{\"point_a\":\"TS:69\",\"point_b\":\"TS:70\"}]}",
+          "result": {
+            "step": 12,
+            "moved_to_other_position": true,
+            "readings_at_other_position": [
+              {
+                "point_a": "TS:8",
+                "point_b": "TS:9",
+                "ohms": 0.0
+              },
+              {
+                "point_a": "TS:71",
+                "point_b": "TS:72",
+                "ohms": 0.0
+              },
+              {
+                "point_a": "TS:69",
+                "point_b": "TS:70",
+                "ohms": 0.0
+              }
+            ],
+            "returned_to_original_position": true,
+            "approved_by_human": "approval"
+          }
+        }
+      ]
+    },
+    {
+      "turn": 9,
+      "latency_s": 23.98,
+      "prompt_tokens": 14498,
+      "cached_tokens": 13169,
+      "completion_tokens": 4460,
+      "reasoning_tokens": 4250,
+      "text": "",
+      "tool_calls": [
+        {
+          "name": "update_hypotheses",
+          "arguments": "{\"hypotheses\":[{\"component\":\"TS\",\"failure_mode\":\"burnt\",\"part\":\"A-B\",\"probability\":0.9,\"reason\":\"208V across A-B but no motion, resistance open, mechanism moves freely so primary coil failure\"},{\"component\":\"TS\",\"failure_mode\":\"stuck_closed\",\"part\":\"8-9\",\"probability\":0.05,\"reason\":\"8-9 still closed on Emergency but single stuck cannot explain failure to move\"},{\"component\":\"TS\",\"failure_mode\":\"stuck_closed\",\"part\":\"71-72\",\"probability\":0.05,\"reason\":\"Same, 71-72 still closed on Emergency but would still allow transfer\"}]}",
+          "result": {
+            "step": 13,
+            "stored": 3,
+            "probability_sum": 1.0
+          }
+        }
+      ]
+    },
+    {
+      "turn": 10,
+      "latency_s": 2.36,
+      "prompt_tokens": 19006,
+      "cached_tokens": 14449,
+      "completion_tokens": 273,
+      "reasoning_tokens": 3,
+      "text": "",
+      "tool_calls": [
+        {
+          "name": "submit_diagnosis",
+          "arguments": "{\"component\":\"TS\",\"confidence\":0.9,\"evidence\":[{\"observation\":\"Transfer Failure, switch on Normal, Emergency accepted 208V\",\"step\":0,\"type\":\"functional_test\"},{\"observation\":\"position indicator Normal\",\"step\":1,\"type\":\"functional_test\"},{\"observation\":\"208V across solenoid A-B while commanded to Emergency\",\"step\":2,\"type\":\"instrument_reading\"},{\"observation\":\"solenoid resistance open (nominal 30 ohm)\",\"step\":6,\"type\":\"instrument_reading\"},{\"observation\":\"manual operation moves freely to other position and back, so not jammed\",\"step\":7,\"type\":\"functional_test\"}],\"failure_mode\":\"burnt\",\"outcome\":\"diagnosed\",\"part\":\"A-B\"}",
+          "result": {
+            "step": 14,
+            "accepted": true
+          }
+        }
+      ]
+    }
+  ],
+  "tokens": {
+    "prompt": 119586,
+    "cached": 106474,
+    "completion": 11718
+  },
+  "cost_usd": 0.0822,
+  "seconds": 66.56,
+  "transport": "responses"
+}

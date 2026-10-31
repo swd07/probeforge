@@ -1,0 +1,1760 @@
+{
+  "case": "h18",
+  "runner": "ats_agent",
+  "model": "muse-spark-1.3",
+  "effort": "low",
+  "outcome": "diagnosed",
+  "diagnosis": {
+    "component": "TS",
+    "confidence": 0.95,
+    "evidence": [
+      {
+        "observation": "mechanism position flag on Emergency, controller transferred N to E",
+        "step": 1,
+        "type": "functional_test"
+      },
+      {
+        "observation": "Emergency source C phase present 120V EC-EN",
+        "step": 8,
+        "type": "instrument_reading"
+      },
+      {
+        "observation": "Load C leg 0V LC-LN while LA,LB 120V",
+        "step": 5,
+        "type": "instrument_reading"
+      },
+      {
+        "observation": "TS C Emergency terminal TS:22 0V while TS:5 120V",
+        "step": 21,
+        "type": "instrument_reading"
+      },
+      {
+        "observation": "Ohmmeter isolated TS:5-TS:22 open",
+        "step": 37,
+        "type": "instrument_reading"
+      },
+      {
+        "observation": "Ohmmeter isolated TS:4-TS:20 0 ohm and TS:19-TS:21 0 ohm proving only C pole open",
+        "step": 38,
+        "type": "instrument_reading"
+      }
+    ],
+    "failure_mode": "stuck_open",
+    "outcome": "diagnosed",
+    "part": "5-22"
+  },
+  "turns": 19,
+  "error": null,
+  "log": [
+    {
+      "step": 0,
+      "tool": "read_panel",
+      "args": {},
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 0,
+        "lights": {
+          "Normal accepted": false,
+          "Emergency accepted": true,
+          "Load on Normal": false,
+          "Load on Emergency": true,
+          "Alert": false,
+          "Not in automatic": false
+        },
+        "display": "Load on Emergency",
+        "alarms": [],
+        "normal_source": "lost",
+        "generator": "running",
+        "load_powered": false,
+        "load_lost": false,
+        "ups": {
+          "autonomy_s": 600.0,
+          "left_s": 540.0,
+          "draining": true,
+          "depleted": false,
+          "depleted_at_s": null,
+          "depleted_after_outage_s": null
+        },
+        "sources_isolated": false,
+        "time_s": 60.0,
+        "events": [
+          {
+            "t": 3.0,
+            "event": "N Source Not Accepted",
+            "cause": "N Under Voltage"
+          },
+          {
+            "t": 3.0,
+            "event": "Engine Start",
+            "cause": ""
+          },
+          {
+            "t": 12.3,
+            "event": "E Source Accepted",
+            "cause": ""
+          },
+          {
+            "t": 12.4,
+            "event": "Transfer N to E",
+            "cause": "N Not Accepted"
+          }
+        ],
+        "metering": {
+          "Normal": [
+            0,
+            0,
+            0
+          ],
+          "Emergency": [
+            208,
+            208,
+            208
+          ]
+        }
+      },
+      "sim_time_s": 60.0
+    },
+    {
+      "step": 1,
+      "tool": "read_position_indicator",
+      "args": {},
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 1,
+        "position_indicator": "Emergency",
+        "time_s": 60.0
+      },
+      "sim_time_s": 90.0
+    },
+    {
+      "step": 2,
+      "tool": "measure_voltage",
+      "args": {
+        "point_a": "LA",
+        "point_b": "LN"
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 2,
+        "point_a": "LA",
+        "point_b": "LN",
+        "volts": 120.1
+      },
+      "sim_time_s": 120.0
+    },
+    {
+      "step": 3,
+      "tool": "measure_voltage",
+      "args": {
+        "point_a": "EA",
+        "point_b": "EN"
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 3,
+        "point_a": "EA",
+        "point_b": "EN",
+        "volts": 120.1
+      },
+      "sim_time_s": 150.0
+    },
+    {
+      "step": 4,
+      "tool": "measure_voltage",
+      "args": {
+        "point_a": "LB",
+        "point_b": "LN"
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 4,
+        "point_a": "LB",
+        "point_b": "LN",
+        "volts": 120.1
+      },
+      "sim_time_s": 180.0
+    },
+    {
+      "step": 5,
+      "tool": "measure_voltage",
+      "args": {
+        "point_a": "LC",
+        "point_b": "LN"
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 5,
+        "point_a": "LC",
+        "point_b": "LN",
+        "volts": 0.0
+      },
+      "sim_time_s": 210.0
+    },
+    {
+      "step": 6,
+      "tool": "measure_voltage",
+      "args": {
+        "point_a": "LA",
+        "point_b": "LB"
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 6,
+        "point_a": "LA",
+        "point_b": "LB",
+        "volts": 208.0
+      },
+      "sim_time_s": 240.0
+    },
+    {
+      "step": 7,
+      "tool": "measure_voltage",
+      "args": {
+        "point_a": "LB",
+        "point_b": "LC"
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 7,
+        "point_a": "LB",
+        "point_b": "LC",
+        "volts": 0.0
+      },
+      "sim_time_s": 270.0
+    },
+    {
+      "step": 8,
+      "tool": "measure_voltage",
+      "args": {
+        "point_a": "EC",
+        "point_b": "EN"
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 8,
+        "point_a": "EC",
+        "point_b": "EN",
+        "volts": 120.1
+      },
+      "sim_time_s": 300.0
+    },
+    {
+      "step": 9,
+      "tool": "measure_voltage",
+      "args": {
+        "point_a": "EB",
+        "point_b": "EN"
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 9,
+        "point_a": "EB",
+        "point_b": "EN",
+        "volts": 120.1
+      },
+      "sim_time_s": 330.0
+    },
+    {
+      "step": 10,
+      "tool": "measure_voltage",
+      "args": {
+        "point_a": "LA",
+        "point_b": "LC"
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 10,
+        "point_a": "LA",
+        "point_b": "LC",
+        "volts": 0.0
+      },
+      "sim_time_s": 360.0
+    },
+    {
+      "step": 11,
+      "tool": "measure_voltage",
+      "args": {
+        "point_a": "TS:5",
+        "point_b": "TS:22"
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 11,
+        "point_a": "TS:5",
+        "point_b": "TS:22",
+        "volts": 0.0
+      },
+      "sim_time_s": 390.0
+    },
+    {
+      "step": 12,
+      "tool": "measure_voltage",
+      "args": {
+        "point_a": "TS:4",
+        "point_b": "TS:20"
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 12,
+        "point_a": "TS:4",
+        "point_b": "TS:20",
+        "volts": 0.0
+      },
+      "sim_time_s": 420.0
+    },
+    {
+      "step": 13,
+      "tool": "measure_voltage",
+      "args": {
+        "point_a": "TS:19",
+        "point_b": "TS:21"
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 13,
+        "point_a": "TS:19",
+        "point_b": "TS:21",
+        "volts": 0.0
+      },
+      "sim_time_s": 450.0
+    },
+    {
+      "step": 14,
+      "tool": "measure_voltage",
+      "args": {
+        "point_a": "LC",
+        "point_b": "EN"
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 14,
+        "point_a": "LC",
+        "point_b": "EN",
+        "volts": 0.0
+      },
+      "sim_time_s": 480.0
+    },
+    {
+      "step": 15,
+      "tool": "measure_voltage",
+      "args": {
+        "point_a": "LA",
+        "point_b": "EN"
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 15,
+        "point_a": "LA",
+        "point_b": "EN",
+        "volts": 120.1
+      },
+      "sim_time_s": 510.0
+    },
+    {
+      "step": 16,
+      "tool": "measure_voltage",
+      "args": {
+        "point_a": "EC",
+        "point_b": "LC"
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 16,
+        "point_a": "EC",
+        "point_b": "LC",
+        "volts": 0.0
+      },
+      "sim_time_s": 540.0
+    },
+    {
+      "step": 17,
+      "tool": "measure_voltage",
+      "args": {
+        "point_a": "EN",
+        "point_b": "LN"
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 17,
+        "point_a": "EN",
+        "point_b": "LN",
+        "volts": 0.0
+      },
+      "sim_time_s": 570.0
+    },
+    {
+      "step": 18,
+      "tool": "measure_voltage",
+      "args": {
+        "point_a": "EC",
+        "point_b": "LN"
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 18,
+        "point_a": "EC",
+        "point_b": "LN",
+        "volts": 120.1
+      },
+      "sim_time_s": 600.0
+    },
+    {
+      "step": 19,
+      "tool": "measure_voltage",
+      "args": {
+        "point_a": "LC",
+        "point_b": "LN"
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 19,
+        "point_a": "LC",
+        "point_b": "LN",
+        "volts": 0.0
+      },
+      "sim_time_s": 630.0
+    },
+    {
+      "step": 20,
+      "tool": "measure_voltage",
+      "args": {
+        "point_a": "TS:5",
+        "point_b": "LN"
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 20,
+        "point_a": "TS:5",
+        "point_b": "LN",
+        "volts": 120.1
+      },
+      "sim_time_s": 660.0
+    },
+    {
+      "step": 21,
+      "tool": "measure_voltage",
+      "args": {
+        "point_a": "TS:22",
+        "point_b": "LN"
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 21,
+        "point_a": "TS:22",
+        "point_b": "LN",
+        "volts": 0.0
+      },
+      "sim_time_s": 690.0
+    },
+    {
+      "step": 22,
+      "tool": "measure_voltage",
+      "args": {
+        "point_a": "TS:22",
+        "point_b": "EN"
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 22,
+        "point_a": "TS:22",
+        "point_b": "EN",
+        "volts": 0.0
+      },
+      "sim_time_s": 720.0
+    },
+    {
+      "step": 23,
+      "tool": "measure_voltage",
+      "args": {
+        "point_a": "TS:5",
+        "point_b": "TS:22"
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 23,
+        "point_a": "TS:5",
+        "point_b": "TS:22",
+        "volts": 0.0
+      },
+      "sim_time_s": 750.0
+    },
+    {
+      "step": 24,
+      "tool": "read_metering",
+      "args": {},
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 24,
+        "metering": {
+          "Normal": [
+            0,
+            0,
+            0
+          ],
+          "Emergency": [
+            208,
+            208,
+            208
+          ]
+        },
+        "time_s": 750.0
+      },
+      "sim_time_s": 780.0
+    },
+    {
+      "step": 25,
+      "tool": "read_event_log",
+      "args": {},
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 25,
+        "events": [
+          {
+            "t": 3.0,
+            "event": "N Source Not Accepted",
+            "cause": "N Under Voltage"
+          },
+          {
+            "t": 3.0,
+            "event": "Engine Start",
+            "cause": ""
+          },
+          {
+            "t": 12.3,
+            "event": "E Source Accepted",
+            "cause": ""
+          },
+          {
+            "t": 12.4,
+            "event": "Transfer N to E",
+            "cause": "N Not Accepted"
+          }
+        ],
+        "time_s": 780.0
+      },
+      "sim_time_s": 810.0
+    },
+    {
+      "step": 26,
+      "tool": "update_hypotheses",
+      "args": {
+        "hypotheses": [
+          {
+            "component": "TS",
+            "failure_mode": "stuck_open",
+            "part": "5-22",
+            "probability": 0.6,
+            "reason": "EC has 120V but load C leg 0V suggests Emergency C main contact open despite mechanism on Emergency"
+          },
+          {
+            "component": "H1",
+            "failure_mode": "open",
+            "part": "W28_TS22-W28_P21",
+            "probability": 0.15,
+            "reason": "open load wire could isolate LC, but TS22 0V still needs explanation"
+          },
+          {
+            "component": "H1",
+            "failure_mode": "open",
+            "part": "W6_TS5-W6_P6",
+            "probability": 0.1,
+            "reason": "possible sensing vs power confusion, but EC measured good"
+          },
+          {
+            "component": "CP",
+            "failure_mode": "open",
+            "part": "J21",
+            "probability": 0.15,
+            "reason": "metering shows Emergency accepted so sensing likely ok; inconsistent across-contact 0V readings need recheck"
+          }
+        ]
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 26,
+        "stored": 4,
+        "probability_sum": 1.0
+      },
+      "sim_time_s": 810.0
+    },
+    {
+      "step": 27,
+      "tool": "measure_voltage",
+      "args": {
+        "point_a": "LC",
+        "point_b": "LA"
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 27,
+        "point_a": "LC",
+        "point_b": "LA",
+        "volts": 0.0
+      },
+      "sim_time_s": 840.0
+    },
+    {
+      "step": 28,
+      "tool": "measure_voltage",
+      "args": {
+        "point_a": "LC",
+        "point_b": "LB"
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 28,
+        "point_a": "LC",
+        "point_b": "LB",
+        "volts": 0.0
+      },
+      "sim_time_s": 870.0
+    },
+    {
+      "step": 29,
+      "tool": "measure_voltage",
+      "args": {
+        "point_a": "LA",
+        "point_b": "LB"
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 29,
+        "point_a": "LA",
+        "point_b": "LB",
+        "volts": 208.0
+      },
+      "sim_time_s": 900.0
+    },
+    {
+      "step": 30,
+      "tool": "measure_voltage",
+      "args": {
+        "point_a": "TS:4",
+        "point_b": "LN"
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 30,
+        "point_a": "TS:4",
+        "point_b": "LN",
+        "volts": 120.1
+      },
+      "sim_time_s": 930.0
+    },
+    {
+      "step": 31,
+      "tool": "measure_voltage",
+      "args": {
+        "point_a": "TS:20",
+        "point_b": "LN"
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 31,
+        "point_a": "TS:20",
+        "point_b": "LN",
+        "volts": 120.1
+      },
+      "sim_time_s": 960.0
+    },
+    {
+      "step": 32,
+      "tool": "measure_voltage",
+      "args": {
+        "point_a": "EC",
+        "point_b": "EA"
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 32,
+        "point_a": "EC",
+        "point_b": "EA",
+        "volts": 208.0
+      },
+      "sim_time_s": 990.0
+    },
+    {
+      "step": 33,
+      "tool": "measure_voltage",
+      "args": {
+        "point_a": "TS:19",
+        "point_b": "LN"
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 33,
+        "point_a": "TS:19",
+        "point_b": "LN",
+        "volts": 120.1
+      },
+      "sim_time_s": 1020.0
+    },
+    {
+      "step": 34,
+      "tool": "measure_voltage",
+      "args": {
+        "point_a": "TS:21",
+        "point_b": "LN"
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 34,
+        "point_a": "TS:21",
+        "point_b": "LN",
+        "volts": 120.1
+      },
+      "sim_time_s": 1050.0
+    },
+    {
+      "step": 35,
+      "tool": "measure_voltage",
+      "args": {
+        "point_a": "TS:20",
+        "point_b": "EN"
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 35,
+        "point_a": "TS:20",
+        "point_b": "EN",
+        "volts": 120.1
+      },
+      "sim_time_s": 1080.0
+    },
+    {
+      "step": 36,
+      "tool": "isolate_sources",
+      "args": {
+        "reason": "Need ohmmeter to confirm suspected open Emergency C main contact 5-22; load on UPS, sources must be isolated for resistance measurement"
+      },
+      "verdict": "needs_approval",
+      "tier": "approval",
+      "policy_reason": "isolating both sources (lockout / tagout) needs human approval",
+      "executed": true,
+      "result": {
+        "step": 36,
+        "lights": {
+          "Normal accepted": false,
+          "Emergency accepted": true,
+          "Load on Normal": false,
+          "Load on Emergency": true,
+          "Alert": false,
+          "Not in automatic": false
+        },
+        "display": "Load on Emergency",
+        "alarms": [],
+        "normal_source": "lost",
+        "generator": "stopped",
+        "load_powered": false,
+        "load_lost": true,
+        "ups": {
+          "autonomy_s": 600.0,
+          "left_s": 0.0,
+          "draining": true,
+          "depleted": true,
+          "depleted_at_s": 600.0,
+          "depleted_after_outage_s": 600.0
+        },
+        "sources_isolated": true,
+        "time_s": 1080.0,
+        "approved_by_human": "approval"
+      },
+      "sim_time_s": 1110.0
+    },
+    {
+      "step": 37,
+      "tool": "measure_resistance",
+      "args": {
+        "point_a": "TS:5",
+        "point_b": "TS:22"
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 37,
+        "point_a": "TS:5",
+        "point_b": "TS:22",
+        "ohms": "open"
+      },
+      "sim_time_s": 1140.0
+    },
+    {
+      "step": 38,
+      "tool": "measure_resistance",
+      "args": {
+        "point_a": "TS:4",
+        "point_b": "TS:20"
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 38,
+        "point_a": "TS:4",
+        "point_b": "TS:20",
+        "ohms": 0.0
+      },
+      "sim_time_s": 1170.0
+    },
+    {
+      "step": 39,
+      "tool": "measure_resistance",
+      "args": {
+        "point_a": "TS:19",
+        "point_b": "TS:21"
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 39,
+        "point_a": "TS:19",
+        "point_b": "TS:21",
+        "ohms": 0.0
+      },
+      "sim_time_s": 1200.0
+    },
+    {
+      "step": 40,
+      "tool": "update_hypotheses",
+      "args": {
+        "hypotheses": [
+          {
+            "component": "TS",
+            "failure_mode": "stuck_open",
+            "part": "5-22",
+            "probability": 0.98,
+            "reason": "Direct resistance TS:5-TS:22 open in Emergency position while 4-20 and 19-21 are 0 ohm; load C leg dead while A,B live"
+          },
+          {
+            "component": "TS",
+            "failure_mode": "stuck_open",
+            "part": "4-20",
+            "probability": 0.01,
+            "reason": "Ruled out by 0 ohm continuity"
+          },
+          {
+            "component": "TS",
+            "failure_mode": "stuck_open",
+            "part": "19-21",
+            "probability": 0.01,
+            "reason": "Ruled out by 0 ohm continuity"
+          }
+        ]
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 40,
+        "stored": 3,
+        "probability_sum": 1.0
+      },
+      "sim_time_s": 1200.0
+    },
+    {
+      "step": 41,
+      "tool": "submit_diagnosis",
+      "args": {
+        "component": "TS",
+        "confidence": 0.95,
+        "evidence": [
+          {
+            "observation": "mechanism position flag on Emergency, controller transferred N to E",
+            "step": 1,
+            "type": "functional_test"
+          },
+          {
+            "observation": "Emergency source C phase present 120V EC-EN",
+            "step": 8,
+            "type": "instrument_reading"
+          },
+          {
+            "observation": "Load C leg 0V LC-LN while LA,LB 120V",
+            "step": 5,
+            "type": "instrument_reading"
+          },
+          {
+            "observation": "TS C Emergency terminal TS:22 0V while TS:5 120V",
+            "step": 21,
+            "type": "instrument_reading"
+          },
+          {
+            "observation": "Ohmmeter isolated TS:5-TS:22 open",
+            "step": 37,
+            "type": "instrument_reading"
+          },
+          {
+            "observation": "Ohmmeter isolated TS:4-TS:20 0 ohm and TS:19-TS:21 0 ohm proving only C pole open",
+            "step": 38,
+            "type": "instrument_reading"
+          }
+        ],
+        "failure_mode": "stuck_open",
+        "outcome": "diagnosed",
+        "part": "5-22"
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 41,
+        "accepted": true
+      },
+      "sim_time_s": 1200.0
+    }
+  ],
+  "hypotheses": [
+    {
+      "step": 26,
+      "sim_time_s": 810.0,
+      "hypotheses": [
+        {
+          "component": "TS",
+          "failure_mode": "stuck_open",
+          "part": "5-22",
+          "probability": 0.6,
+          "reason": "EC has 120V but load C leg 0V suggests Emergency C main contact open despite mechanism on Emergency"
+        },
+        {
+          "component": "H1",
+          "failure_mode": "open",
+          "part": "W28_TS22-W28_P21",
+          "probability": 0.15,
+          "reason": "open load wire could isolate LC, but TS22 0V still needs explanation"
+        },
+        {
+          "component": "H1",
+          "failure_mode": "open",
+          "part": "W6_TS5-W6_P6",
+          "probability": 0.1,
+          "reason": "possible sensing vs power confusion, but EC measured good"
+        },
+        {
+          "component": "CP",
+          "failure_mode": "open",
+          "part": "J21",
+          "probability": 0.15,
+          "reason": "metering shows Emergency accepted so sensing likely ok; inconsistent across-contact 0V readings need recheck"
+        }
+      ]
+    },
+    {
+      "step": 40,
+      "sim_time_s": 1200.0,
+      "hypotheses": [
+        {
+          "component": "TS",
+          "failure_mode": "stuck_open",
+          "part": "5-22",
+          "probability": 0.98,
+          "reason": "Direct resistance TS:5-TS:22 open in Emergency position while 4-20 and 19-21 are 0 ohm; load C leg dead while A,B live"
+        },
+        {
+          "component": "TS",
+          "failure_mode": "stuck_open",
+          "part": "4-20",
+          "probability": 0.01,
+          "reason": "Ruled out by 0 ohm continuity"
+        },
+        {
+          "component": "TS",
+          "failure_mode": "stuck_open",
+          "part": "19-21",
+          "probability": 0.01,
+          "reason": "Ruled out by 0 ohm continuity"
+        }
+      ]
+    }
+  ],
+  "turn_log": [
+    {
+      "turn": 1,
+      "latency_s": 8.28,
+      "prompt_tokens": 10095,
+      "cached_tokens": 4209,
+      "completion_tokens": 1670,
+      "reasoning_tokens": 1606,
+      "text": "Investigating the failed Normal-to-Emergency transfer — checking switch position and controller state.",
+      "tool_calls": [
+        {
+          "name": "read_position_indicator",
+          "arguments": "{}",
+          "result": {
+            "step": 1,
+            "position_indicator": "Emergency",
+            "time_s": 60.0
+          }
+        }
+      ]
+    },
+    {
+      "turn": 2,
+      "latency_s": 7.53,
+      "prompt_tokens": 6736,
+      "cached_tokens": 4209,
+      "completion_tokens": 1267,
+      "reasoning_tokens": 1038,
+      "text": "The switch shows Emergency but the load remains unpowered, so I'll measure load and source voltages to isolate the break.",
+      "tool_calls": [
+        {
+          "name": "measure_voltage",
+          "arguments": "{\"point_a\":\"LA\",\"point_b\":\"LN\"}",
+          "result": {
+            "step": 2,
+            "point_a": "LA",
+            "point_b": "LN",
+            "volts": 120.1
+          }
+        },
+        {
+          "name": "measure_voltage",
+          "arguments": "{\"point_a\":\"EA\",\"point_b\":\"EN\"}",
+          "result": {
+            "step": 3,
+            "point_a": "EA",
+            "point_b": "EN",
+            "volts": 120.1
+          }
+        },
+        {
+          "name": "measure_voltage",
+          "arguments": "{\"point_a\":\"LB\",\"point_b\":\"LN\"}",
+          "result": {
+            "step": 4,
+            "point_a": "LB",
+            "point_b": "LN",
+            "volts": 120.1
+          }
+        }
+      ]
+    },
+    {
+      "turn": 3,
+      "latency_s": 1.69,
+      "prompt_tokens": 7115,
+      "cached_tokens": 6641,
+      "completion_tokens": 397,
+      "reasoning_tokens": 199,
+      "text": "",
+      "tool_calls": [
+        {
+          "name": "measure_voltage",
+          "arguments": "{\"point_a\":\"LC\",\"point_b\":\"LN\"}",
+          "result": {
+            "step": 5,
+            "point_a": "LC",
+            "point_b": "LN",
+            "volts": 0.0
+          }
+        },
+        {
+          "name": "measure_voltage",
+          "arguments": "{\"point_a\":\"LA\",\"point_b\":\"LB\"}",
+          "result": {
+            "step": 6,
+            "point_a": "LA",
+            "point_b": "LB",
+            "volts": 208.0
+          }
+        },
+        {
+          "name": "measure_voltage",
+          "arguments": "{\"point_a\":\"LB\",\"point_b\":\"LC\"}",
+          "result": {
+            "step": 7,
+            "point_a": "LB",
+            "point_b": "LC",
+            "volts": 0.0
+          }
+        }
+      ]
+    },
+    {
+      "turn": 4,
+      "latency_s": 2.38,
+      "prompt_tokens": 7463,
+      "cached_tokens": 6641,
+      "completion_tokens": 458,
+      "reasoning_tokens": 229,
+      "text": "Two load phases are live but C-phase is missing — probing the Emergency source and switch contacts to find the open.",
+      "tool_calls": [
+        {
+          "name": "measure_voltage",
+          "arguments": "{\"point_a\":\"EC\",\"point_b\":\"EN\"}",
+          "result": {
+            "step": 8,
+            "point_a": "EC",
+            "point_b": "EN",
+            "volts": 120.1
+          }
+        },
+        {
+          "name": "measure_voltage",
+          "arguments": "{\"point_a\":\"EB\",\"point_b\":\"EN\"}",
+          "result": {
+            "step": 9,
+            "point_a": "EB",
+            "point_b": "EN",
+            "volts": 120.1
+          }
+        },
+        {
+          "name": "measure_voltage",
+          "arguments": "{\"point_a\":\"LA\",\"point_b\":\"LC\"}",
+          "result": {
+            "step": 10,
+            "point_a": "LA",
+            "point_b": "LC",
+            "volts": 0.0
+          }
+        }
+      ]
+    },
+    {
+      "turn": 5,
+      "latency_s": 4.73,
+      "prompt_tokens": 7842,
+      "cached_tokens": 4209,
+      "completion_tokens": 905,
+      "reasoning_tokens": 663,
+      "text": "Emergency source voltage is good on all phases, pointing to an open Emergency main contact — verifying the drop across each pole.",
+      "tool_calls": [
+        {
+          "name": "measure_voltage",
+          "arguments": "{\"point_a\":\"TS:5\",\"point_b\":\"TS:22\"}",
+          "result": {
+            "step": 11,
+            "point_a": "TS:5",
+            "point_b": "TS:22",
+            "volts": 0.0
+          }
+        },
+        {
+          "name": "measure_voltage",
+          "arguments": "{\"point_a\":\"TS:4\",\"point_b\":\"TS:20\"}",
+          "result": {
+            "step": 12,
+            "point_a": "TS:4",
+            "point_b": "TS:20",
+            "volts": 0.0
+          }
+        },
+        {
+          "name": "measure_voltage",
+          "arguments": "{\"point_a\":\"TS:19\",\"point_b\":\"TS:21\"}",
+          "result": {
+            "step": 13,
+            "point_a": "TS:19",
+            "point_b": "TS:21",
+            "volts": 0.0
+          }
+        }
+      ]
+    },
+    {
+      "turn": 6,
+      "latency_s": 4.65,
+      "prompt_tokens": 8246,
+      "cached_tokens": 7025,
+      "completion_tokens": 838,
+      "reasoning_tokens": 613,
+      "text": "Those contact readings look inconsistent — cross-checking neutral references and phase-to-phase voltages to clarify.",
+      "tool_calls": [
+        {
+          "name": "measure_voltage",
+          "arguments": "{\"point_a\":\"LC\",\"point_b\":\"EN\"}",
+          "result": {
+            "step": 14,
+            "point_a": "LC",
+            "point_b": "EN",
+            "volts": 0.0
+          }
+        },
+        {
+          "name": "measure_voltage",
+          "arguments": "{\"point_a\":\"LA\",\"point_b\":\"EN\"}",
+          "result": {
+            "step": 15,
+            "point_a": "LA",
+            "point_b": "EN",
+            "volts": 120.1
+          }
+        },
+        {
+          "name": "measure_voltage",
+          "arguments": "{\"point_a\":\"EC\",\"point_b\":\"LC\"}",
+          "result": {
+            "step": 16,
+            "point_a": "EC",
+            "point_b": "LC",
+            "volts": 0.0
+          }
+        }
+      ]
+    },
+    {
+      "turn": 7,
+      "latency_s": 4.38,
+      "prompt_tokens": 8621,
+      "cached_tokens": 7793,
+      "completion_tokens": 889,
+      "reasoning_tokens": 661,
+      "text": "Those C-phase measurements don't line up — checking neutral continuity and re-measuring to rule out a reference issue.",
+      "tool_calls": [
+        {
+          "name": "measure_voltage",
+          "arguments": "{\"point_a\":\"EN\",\"point_b\":\"LN\"}",
+          "result": {
+            "step": 17,
+            "point_a": "EN",
+            "point_b": "LN",
+            "volts": 0.0
+          }
+        },
+        {
+          "name": "measure_voltage",
+          "arguments": "{\"point_a\":\"EC\",\"point_b\":\"LN\"}",
+          "result": {
+            "step": 18,
+            "point_a": "EC",
+            "point_b": "LN",
+            "volts": 120.1
+          }
+        },
+        {
+          "name": "measure_voltage",
+          "arguments": "{\"point_a\":\"LC\",\"point_b\":\"LN\"}",
+          "result": {
+            "step": 19,
+            "point_a": "LC",
+            "point_b": "LN",
+            "volts": 0.0
+          }
+        }
+      ]
+    },
+    {
+      "turn": 8,
+      "latency_s": 2.45,
+      "prompt_tokens": 8999,
+      "cached_tokens": 0,
+      "completion_tokens": 452,
+      "reasoning_tokens": 221,
+      "text": "The Emergency C-phase readings conflict, so I'm re-measuring that path carefully to resolve it.",
+      "tool_calls": [
+        {
+          "name": "measure_voltage",
+          "arguments": "{\"point_a\":\"TS:5\",\"point_b\":\"LN\"}",
+          "result": {
+            "step": 20,
+            "point_a": "TS:5",
+            "point_b": "LN",
+            "volts": 120.1
+          }
+        },
+        {
+          "name": "measure_voltage",
+          "arguments": "{\"point_a\":\"TS:22\",\"point_b\":\"LN\"}",
+          "result": {
+            "step": 21,
+            "point_a": "TS:22",
+            "point_b": "LN",
+            "volts": 0.0
+          }
+        },
+        {
+          "name": "measure_voltage",
+          "arguments": "{\"point_a\":\"TS:22\",\"point_b\":\"EN\"}",
+          "result": {
+            "step": 22,
+            "point_a": "TS:22",
+            "point_b": "EN",
+            "volts": 0.0
+          }
+        }
+      ]
+    },
+    {
+      "turn": 9,
+      "latency_s": 9.73,
+      "prompt_tokens": 9386,
+      "cached_tokens": 8177,
+      "completion_tokens": 1785,
+      "reasoning_tokens": 1641,
+      "text": "",
+      "tool_calls": [
+        {
+          "name": "measure_voltage",
+          "arguments": "{\"point_a\":\"TS:5\",\"point_b\":\"TS:22\"}",
+          "result": {
+            "step": 23,
+            "point_a": "TS:5",
+            "point_b": "TS:22",
+            "volts": 0.0
+          }
+        },
+        {
+          "name": "read_metering",
+          "arguments": "{}",
+          "result": {
+            "step": 24,
+            "metering": {
+              "Normal": [
+                0,
+                0,
+                0
+              ],
+              "Emergency": [
+                208,
+                208,
+                208
+              ]
+            },
+            "time_s": 750.0
+          }
+        },
+        {
+          "name": "read_event_log",
+          "arguments": "{}",
+          "result": {
+            "step": 25,
+            "events": [
+              {
+                "t": 3.0,
+                "event": "N Source Not Accepted",
+                "cause": "N Under Voltage"
+              },
+              {
+                "t": 3.0,
+                "event": "Engine Start",
+                "cause": ""
+              },
+              {
+                "t": 12.3,
+                "event": "E Source Accepted",
+                "cause": ""
+              },
+              {
+                "t": 12.4,
+                "event": "Transfer N to E",
+                "cause": "N Not Accepted"
+              }
+            ],
+            "time_s": 780.0
+          }
+        }
+      ]
+    },
+    {
+      "turn": 10,
+      "latency_s": 9.3,
+      "prompt_tokens": 9780,
+      "cached_tokens": 9329,
+      "completion_tokens": 1916,
+      "reasoning_tokens": 1615,
+      "text": "I've found conflicting voltage readings on C-phase that need clarification, so I'll update my hypotheses and re-check.",
+      "tool_calls": [
+        {
+          "name": "update_hypotheses",
+          "arguments": "{\"hypotheses\":[{\"component\":\"TS\",\"failure_mode\":\"stuck_open\",\"part\":\"5-22\",\"probability\":0.6,\"reason\":\"EC has 120V but load C leg 0V suggests Emergency C main contact open despite mechanism on Emergency\"},{\"component\":\"H1\",\"failure_mode\":\"open\",\"part\":\"W28_TS22-W28_P21\",\"probability\":0.15,\"reason\":\"open load wire could isolate LC, but TS22 0V still needs explanation\"},{\"component\":\"H1\",\"failure_mode\":\"open\",\"part\":\"W6_TS5-W6_P6\",\"probability\":0.1,\"reason\":\"possible sensing vs power confusion, but EC measured good\"},{\"component\":\"CP\",\"failure_mode\":\"open\",\"part\":\"J21\",\"probability\":0.15,\"reason\":\"metering shows Emergency accepted so sensing likely ok; inconsistent across-contact 0V readings need recheck\"}]}",
+          "result": {
+            "step": 26,
+            "stored": 4,
+            "probability_sum": 1.0
+          }
+        }
+      ]
+    },
+    {
+      "turn": 11,
+      "latency_s": 4.22,
+      "prompt_tokens": 10123,
+      "cached_tokens": 8561,
+      "completion_tokens": 726,
+      "reasoning_tokens": 503,
+      "text": "My load voltage readings are inconsistent, so I'm taking fresh measurements to narrow the fault.",
+      "tool_calls": [
+        {
+          "name": "measure_voltage",
+          "arguments": "{\"point_a\":\"LC\",\"point_b\":\"LA\"}",
+          "result": {
+            "step": 27,
+            "point_a": "LC",
+            "point_b": "LA",
+            "volts": 0.0
+          }
+        },
+        {
+          "name": "measure_voltage",
+          "arguments": "{\"point_a\":\"LC\",\"point_b\":\"LB\"}",
+          "result": {
+            "step": 28,
+            "point_a": "LC",
+            "point_b": "LB",
+            "volts": 0.0
+          }
+        },
+        {
+          "name": "measure_voltage",
+          "arguments": "{\"point_a\":\"LA\",\"point_b\":\"LB\"}",
+          "result": {
+            "step": 29,
+            "point_a": "LA",
+            "point_b": "LB",
+            "volts": 208.0
+          }
+        }
+      ]
+    },
+    {
+      "turn": 12,
+      "latency_s": 7.32,
+      "prompt_tokens": 10496,
+      "cached_tokens": 8945,
+      "completion_tokens": 1283,
+      "reasoning_tokens": 1053,
+      "text": "My line-to-neutral and across-contact readings conflict, so I'm measuring alternate references to sort it out.",
+      "tool_calls": [
+        {
+          "name": "measure_voltage",
+          "arguments": "{\"point_a\":\"TS:4\",\"point_b\":\"LN\"}",
+          "result": {
+            "step": 30,
+            "point_a": "TS:4",
+            "point_b": "LN",
+            "volts": 120.1
+          }
+        },
+        {
+          "name": "measure_voltage",
+          "arguments": "{\"point_a\":\"TS:20\",\"point_b\":\"LN\"}",
+          "result": {
+            "step": 31,
+            "point_a": "TS:20",
+            "point_b": "LN",
+            "volts": 120.1
+          }
+        },
+        {
+          "name": "measure_voltage",
+          "arguments": "{\"point_a\":\"EC\",\"point_b\":\"EA\"}",
+          "result": {
+            "step": 32,
+            "point_a": "EC",
+            "point_b": "EA",
+            "volts": 208.0
+          }
+        }
+      ]
+    },
+    {
+      "turn": 13,
+      "latency_s": 9.32,
+      "prompt_tokens": 10880,
+      "cached_tokens": 9713,
+      "completion_tokens": 1762,
+      "reasoning_tokens": 1528,
+      "text": "The floating C-phase pattern suggests an open Emergency contact — confirming the other phases are closed to complete the picture.",
+      "tool_calls": [
+        {
+          "name": "measure_voltage",
+          "arguments": "{\"point_a\":\"TS:19\",\"point_b\":\"LN\"}",
+          "result": {
+            "step": 33,
+            "point_a": "TS:19",
+            "point_b": "LN",
+            "volts": 120.1
+          }
+        },
+        {
+          "name": "measure_voltage",
+          "arguments": "{\"point_a\":\"TS:21\",\"point_b\":\"LN\"}",
+          "result": {
+            "step": 34,
+            "point_a": "TS:21",
+            "point_b": "LN",
+            "volts": 120.1
+          }
+        },
+        {
+          "name": "measure_voltage",
+          "arguments": "{\"point_a\":\"TS:20\",\"point_b\":\"EN\"}",
+          "result": {
+            "step": 35,
+            "point_a": "TS:20",
+            "point_b": "EN",
+            "volts": 120.1
+          }
+        }
+      ]
+    },
+    {
+      "turn": 14,
+      "latency_s": 3.46,
+      "prompt_tokens": 11270,
+      "cached_tokens": 10865,
+      "completion_tokens": 664,
+      "reasoning_tokens": 556,
+      "text": "Resistance testing will prove whether the C-phase contact is open, so I'm isolating the sources to measure safely.",
+      "tool_calls": [
+        {
+          "name": "isolate_sources",
+          "arguments": "{\"reason\":\"Need ohmmeter to confirm suspected open Emergency C main contact 5-22; load on UPS, sources must be isolated for resistance measurement\"}",
+          "result": {
+            "step": 36,
+            "lights": {
+              "Normal accepted": false,
+              "Emergency accepted": true,
+              "Load on Normal": false,
+              "Load on Emergency": true,
+              "Alert": false,
+              "Not in automatic": false
+            },
+            "display": "Load on Emergency",
+            "alarms": [],
+            "normal_source": "lost",
+            "generator": "stopped",
+            "load_powered": false,
+            "load_lost": true,
+            "ups": {
+              "autonomy_s": 600.0,
+              "left_s": 0.0,
+              "draining": true,
+              "depleted": true,
+              "depleted_at_s": 600.0,
+              "depleted_after_outage_s": 600.0
+            },
+            "sources_isolated": true,
+            "time_s": 1080.0,
+            "approved_by_human": "approval"
+          }
+        }
+      ]
+    },
+    {
+      "turn": 15,
+      "latency_s": 1.17,
+      "prompt_tokens": 11569,
+      "cached_tokens": 10097,
+      "completion_tokens": 128,
+      "reasoning_tokens": 33,
+      "text": "Sources are isolated — now taking resistance readings to confirm which contact is open.",
+      "tool_calls": [
+        {
+          "name": "measure_resistance",
+          "arguments": "{\"point_a\":\"TS:5\",\"point_b\":\"TS:22\"}",
+          "result": {
+            "step": 37,
+            "point_a": "TS:5",
+            "point_b": "TS:22",
+            "ohms": "open"
+          }
+        }
+      ]
+    },
+    {
+      "turn": 16,
+      "latency_s": 1.33,
+      "prompt_tokens": 11713,
+      "cached_tokens": 11505,
+      "completion_tokens": 163,
+      "reasoning_tokens": 61,
+      "text": "That Emergency pole reads open, so checking the other two poles to confirm they're closed and isolate the single fault.",
+      "tool_calls": [
+        {
+          "name": "measure_resistance",
+          "arguments": "{\"point_a\":\"TS:4\",\"point_b\":\"TS:20\"}",
+          "result": {
+            "step": 38,
+            "point_a": "TS:4",
+            "point_b": "TS:20",
+            "ohms": 0.0
+          }
+        }
+      ]
+    },
+    {
+      "turn": 17,
+      "latency_s": 0.85,
+      "prompt_tokens": 11866,
+      "cached_tokens": 10481,
+      "completion_tokens": 86,
+      "reasoning_tokens": 0,
+      "text": "One more closed-pole check, then I'll finalize the diagnosis.",
+      "tool_calls": [
+        {
+          "name": "measure_resistance",
+          "arguments": "{\"point_a\":\"TS:19\",\"point_b\":\"TS:21\"}",
+          "result": {
+            "step": 39,
+            "point_a": "TS:19",
+            "point_b": "TS:21",
+            "ohms": 0.0
+          }
+        }
+      ]
+    },
+    {
+      "turn": 18,
+      "latency_s": 1.83,
+      "prompt_tokens": 12009,
+      "cached_tokens": 11249,
+      "completion_tokens": 375,
+      "reasoning_tokens": 135,
+      "text": "Resistance confirms the open C-phase pole, so I'm updating hypotheses and submitting the diagnosis.",
+      "tool_calls": [
+        {
+          "name": "update_hypotheses",
+          "arguments": "{\"hypotheses\":[{\"component\":\"TS\",\"failure_mode\":\"stuck_open\",\"part\":\"5-22\",\"probability\":0.98,\"reason\":\"Direct resistance TS:5-TS:22 open in Emergency position while 4-20 and 19-21 are 0 ohm; load C leg dead while A,B live\"},{\"component\":\"TS\",\"failure_mode\":\"stuck_open\",\"part\":\"4-20\",\"probability\":0.01,\"reason\":\"Ruled out by 0 ohm continuity\"},{\"component\":\"TS\",\"failure_mode\":\"stuck_open\",\"part\":\"19-21\",\"probability\":0.01,\"reason\":\"Ruled out by 0 ohm continuity\"}]}",
+          "result": {
+            "step": 40,
+            "stored": 3,
+            "probability_sum": 1.0
+          }
+        }
+      ]
+    },
+    {
+      "turn": 19,
+      "latency_s": 1.9,
+      "prompt_tokens": 12291,
+      "cached_tokens": 7409,
+      "completion_tokens": 417,
+      "reasoning_tokens": 75,
+      "text": "",
+      "tool_calls": [
+        {
+          "name": "submit_diagnosis",
+          "arguments": "{\"component\":\"TS\",\"confidence\":0.95,\"evidence\":[{\"observation\":\"mechanism position flag on Emergency, controller transferred N to E\",\"step\":1,\"type\":\"functional_test\"},{\"observation\":\"Emergency source C phase present 120V EC-EN\",\"step\":8,\"type\":\"instrument_reading\"},{\"observation\":\"Load C leg 0V LC-LN while LA,LB 120V\",\"step\":5,\"type\":\"instrument_reading\"},{\"observation\":\"TS C Emergency terminal TS:22 0V while TS:5 120V\",\"step\":21,\"type\":\"instrument_reading\"},{\"observation\":\"Ohmmeter isolated TS:5-TS:22 open\",\"step\":37,\"type\":\"instrument_reading\"},{\"observation\":\"Ohmmeter isolated TS:4-TS:20 0 ohm and TS:19-TS:21 0 ohm proving only C pole open\",\"step\":38,\"type\":\"instrument_reading\"}],\"failure_mode\":\"stuck_open\",\"outcome\":\"diagnosed\",\"part\":\"5-22\"}",
+          "result": {
+            "step": 41,
+            "accepted": true
+          }
+        }
+      ]
+    }
+  ],
+  "tokens": {
+    "prompt": 186500,
+    "cached": 147058,
+    "completion": 16181
+  },
+  "cost_usd": 0.1401,
+  "seconds": 86.84,
+  "transport": "chat"
+}

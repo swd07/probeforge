@@ -118,7 +118,7 @@ approved the approval tier and denied every strong approval.
 ## Results
 
 One holdout run on 28 faults nobody picked by hand, against the 12 dev cases
-([full results](docs/results/ats_results.md)):
+([full results](docs/results/ats_results.md); every cited run with its per-case traces: [results/runs/](results/runs/README.md)):
 
 | | Agent dev | Agent holdout | Hybrid v2 dev | Hybrid v2 holdout | Baseline holdout |
 |---|---|---|---|---|---|

@@ -1,0 +1,366 @@
+{
+  "case": "h13",
+  "runner": "ats_infogain",
+  "model": null,
+  "effort": null,
+  "outcome": "diagnosed",
+  "diagnosis": {
+    "outcome": "diagnosed",
+    "component": "TS",
+    "part": "19-21",
+    "failure_mode": "stuck_open",
+    "confidence": 1.0,
+    "evidence": [
+      {
+        "step": 0,
+        "type": "functional_test",
+        "observation": "controller panel, event log and metering"
+      },
+      {
+        "step": 2,
+        "type": "instrument_reading",
+        "observation": "measure_voltage TS:20 NN: 120.1"
+      },
+      {
+        "step": 4,
+        "type": "instrument_reading",
+        "observation": "measure_voltage TS:21 NN: 0.0"
+      }
+    ]
+  },
+  "turns": 0,
+  "protocol_errors": 0,
+  "recovered_text_calls": 0,
+  "missing_hypothesis_updates": 0,
+  "measurements": 2,
+  "redundant_measurements": 0,
+  "tool_calls": 6,
+  "policy": {
+    "blocked": 0,
+    "approval_requests": 0,
+    "approvals_denied": 0,
+    "blocked_actions": []
+  },
+  "tokens": {
+    "prompt": 0,
+    "cached": 0,
+    "completion": 0
+  },
+  "cost_usd": 0.0,
+  "seconds": 0.3,
+  "error": null,
+  "notes": [],
+  "turn_log": [],
+  "tool_log": [
+    {
+      "step": 0,
+      "tool": "read_panel",
+      "args": {},
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 0,
+        "lights": {
+          "Normal accepted": false,
+          "Emergency accepted": true,
+          "Load on Normal": false,
+          "Load on Emergency": true,
+          "Alert": false,
+          "Not in automatic": false
+        },
+        "display": "Load on Emergency",
+        "alarms": [],
+        "normal_source": "lost",
+        "generator": "running",
+        "load_powered": false,
+        "load_lost": false,
+        "ups": {
+          "autonomy_s": 600.0,
+          "left_s": 540.0,
+          "draining": true,
+          "depleted": false,
+          "depleted_at_s": null,
+          "depleted_after_outage_s": null
+        },
+        "sources_isolated": false,
+        "time_s": 60.0,
+        "events": [
+          {
+            "t": 3.0,
+            "event": "N Source Not Accepted",
+            "cause": "N Under Voltage"
+          },
+          {
+            "t": 3.0,
+            "event": "Engine Start",
+            "cause": ""
+          },
+          {
+            "t": 12.3,
+            "event": "E Source Accepted",
+            "cause": ""
+          },
+          {
+            "t": 12.4,
+            "event": "Transfer N to E",
+            "cause": "N Not Accepted"
+          }
+        ],
+        "metering": {
+          "Normal": [
+            0,
+            0,
+            0
+          ],
+          "Emergency": [
+            208,
+            208,
+            208
+          ]
+        }
+      },
+      "sim_time_s": 60.0
+    },
+    {
+      "step": 1,
+      "tool": "update_hypotheses",
+      "args": {
+        "hypotheses": [
+          {
+            "component": "TS",
+            "part": "4-20",
+            "failure_mode": "stuck_open",
+            "probability": 0.333,
+            "reason": "3 root causes consistent with every reading"
+          },
+          {
+            "component": "TS",
+            "part": "19-21",
+            "failure_mode": "stuck_open",
+            "probability": 0.333,
+            "reason": "3 root causes consistent with every reading"
+          },
+          {
+            "component": "TS",
+            "part": "5-22",
+            "failure_mode": "stuck_open",
+            "probability": 0.333,
+            "reason": "3 root causes consistent with every reading"
+          }
+        ]
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 1,
+        "stored": 3,
+        "probability_sum": 0.999
+      },
+      "sim_time_s": 60.0
+    },
+    {
+      "step": 2,
+      "tool": "measure_voltage",
+      "args": {
+        "point_a": "TS:20",
+        "point_b": "NN"
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 2,
+        "point_a": "TS:20",
+        "point_b": "NN",
+        "volts": 120.1
+      },
+      "sim_time_s": 90.0
+    },
+    {
+      "step": 3,
+      "tool": "update_hypotheses",
+      "args": {
+        "hypotheses": [
+          {
+            "component": "TS",
+            "part": "19-21",
+            "failure_mode": "stuck_open",
+            "probability": 0.5,
+            "reason": "2 root causes consistent with every reading"
+          },
+          {
+            "component": "TS",
+            "part": "5-22",
+            "failure_mode": "stuck_open",
+            "probability": 0.5,
+            "reason": "2 root causes consistent with every reading"
+          }
+        ]
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 3,
+        "stored": 2,
+        "probability_sum": 1.0
+      },
+      "sim_time_s": 90.0
+    },
+    {
+      "step": 4,
+      "tool": "measure_voltage",
+      "args": {
+        "point_a": "TS:21",
+        "point_b": "NN"
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 4,
+        "point_a": "TS:21",
+        "point_b": "NN",
+        "volts": 0.0
+      },
+      "sim_time_s": 120.0
+    },
+    {
+      "step": 5,
+      "tool": "update_hypotheses",
+      "args": {
+        "hypotheses": [
+          {
+            "component": "TS",
+            "part": "19-21",
+            "failure_mode": "stuck_open",
+            "probability": 1.0,
+            "reason": "1 root causes consistent with every reading"
+          }
+        ]
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 5,
+        "stored": 1,
+        "probability_sum": 1.0
+      },
+      "sim_time_s": 120.0
+    },
+    {
+      "step": 6,
+      "tool": "submit_diagnosis",
+      "args": {
+        "outcome": "diagnosed",
+        "component": "TS",
+        "part": "19-21",
+        "failure_mode": "stuck_open",
+        "confidence": 1.0,
+        "evidence": [
+          {
+            "step": 0,
+            "type": "functional_test",
+            "observation": "controller panel, event log and metering"
+          },
+          {
+            "step": 2,
+            "type": "instrument_reading",
+            "observation": "measure_voltage TS:20 NN: 120.1"
+          },
+          {
+            "step": 4,
+            "type": "instrument_reading",
+            "observation": "measure_voltage TS:21 NN: 0.0"
+          }
+        ]
+      },
+      "verdict": "allow",
+      "tier": "allowed",
+      "policy_reason": "",
+      "executed": true,
+      "result": {
+        "step": 6,
+        "accepted": true
+      },
+      "sim_time_s": 120.0
+    }
+  ],
+  "hypotheses_history": [
+    {
+      "step": 1,
+      "sim_time_s": 60.0,
+      "hypotheses": [
+        {
+          "component": "TS",
+          "part": "4-20",
+          "failure_mode": "stuck_open",
+          "probability": 0.333,
+          "reason": "3 root causes consistent with every reading"
+        },
+        {
+          "component": "TS",
+          "part": "19-21",
+          "failure_mode": "stuck_open",
+          "probability": 0.333,
+          "reason": "3 root causes consistent with every reading"
+        },
+        {
+          "component": "TS",
+          "part": "5-22",
+          "failure_mode": "stuck_open",
+          "probability": 0.333,
+          "reason": "3 root causes consistent with every reading"
+        }
+      ]
+    },
+    {
+      "step": 3,
+      "sim_time_s": 90.0,
+      "hypotheses": [
+        {
+          "component": "TS",
+          "part": "19-21",
+          "failure_mode": "stuck_open",
+          "probability": 0.5,
+          "reason": "2 root causes consistent with every reading"
+        },
+        {
+          "component": "TS",
+          "part": "5-22",
+          "failure_mode": "stuck_open",
+          "probability": 0.5,
+          "reason": "2 root causes consistent with every reading"
+        }
+      ]
+    },
+    {
+      "step": 5,
+      "sim_time_s": 120.0,
+      "hypotheses": [
+        {
+          "component": "TS",
+          "part": "19-21",
+          "failure_mode": "stuck_open",
+          "probability": 1.0,
+          "reason": "1 root causes consistent with every reading"
+        }
+      ]
+    }
+  ],
+  "ups_at_diagnosis": {
+    "ups_left_s": 480.0,
+    "load_lost": false,
+    "depleted_after_outage_s": null,
+    "time_s": 120.0
+  }
+}

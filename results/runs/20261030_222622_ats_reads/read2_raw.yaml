@@ -1,0 +1,204 @@
+title: Automatic Transfer Switch
+normal_source:
+  A: TS:1
+  B: TS:2
+  C: TS:3
+emergency_source:
+  A: TS:4
+  B: TS:19
+  C: TS:5
+neutrals:
+  normal: TS:NN
+  emergency: TS:EN
+  load: TS:LN
+load:
+  A: TS:20
+  B: TS:21
+  C: TS:22
+transfer_switch:
+  main_normal:
+  - 1-20
+  - 2-21
+  - 3-22
+  main_emergency:
+  - 4-20
+  - 19-21
+  - 5-22
+  control_closed_normal:
+  - 8-9
+  - 71-72
+  control_closed_emergency:
+  - 6-7
+  - 69-70
+  aux_closed_normal:
+  - 17-18
+  aux_closed_emergency:
+  - 14-15
+  - 17-16
+  solenoid: A-B
+relays:
+  SE:
+    false:
+    - J3-J2
+    - J15-J5
+    nc:
+    - X1-J2
+    - X2-J5
+  ER:
+    false:
+    - J1-X1
+    - J16-X2
+    nc: []
+  NR:
+    false:
+    - J8-J17
+    nc:
+    - J9-J17
+controller_inputs:
+- J4
+- J6
+- J7
+- J10
+- J11
+- J12
+- J13
+- J14
+- J18
+- J19
+- J20
+- J21
+- J22
+- J23
+- J24
+terminal_block:
+  id: TB/TS
+  label: Engine starting signals
+  points:
+  - 14
+  - 15
+  - 16
+wires:
+- - 1
+  - TS-8
+  - P-1
+- - 2
+  - TS-A
+  - P-2
+- - 3
+  - TS-6
+  - P-3
+- - 4
+  - TS-3
+  - P-4
+- - 5
+  - TS-B
+  - P-5
+- - 6
+  - TS-5
+  - P-6
+- - 7
+  - TS-4
+  - P-7
+- - 8
+  - TB/TS-14
+  - P-8
+- - 9
+  - TB/TS-15
+  - P-9
+- - 10
+  - TS-17
+  - P-10
+- - 11
+  - TS-2
+  - P-11
+- - 12
+  - TS-1
+  - P-12
+- - 13
+  - TS-16
+  - P-13
+- - 14
+  - TS-18
+  - P-14
+- - 15
+  - TS-70
+  - P-15
+- - 16
+  - TS-72
+  - P-16
+- - 17
+  - TS-4
+  - TS-9
+- - 18
+  - TS-7
+  - TS-1
+- - 19
+  - TS-3
+  - TS-69
+- - 20
+  - TS-3
+  - TS-69
+- - 21
+  - TS-5
+  - TS-71
+- - 8
+  - TS-14
+  - TB/TS-14
+- - 9
+  - TS-15
+  - TB/TS-15
+- - 24
+  - TB/TS-16
+  - P-17
+- - 25
+  - TS-19
+  - P-18
+- - 26
+  - TS-20
+  - P-19
+- - 27
+  - TS-21
+  - P-20
+- - 28
+  - TS-22
+  - P-21
+- - 29
+  - TS-NN
+  - P-22
+- - 30
+  - TS-EN
+  - P-23
+- - 31
+  - TS-LN
+  - P-24
+joints: []
+uncertain:
+- terminals:
+  - J1
+  - J2
+  - J3
+  - J5
+  - J15
+  - J16
+  reason: CP relay contact jack numbers very small, inferred from wire list
+- terminals:
+  - J8
+  - J9
+  - J17
+  reason: NR contact arrangement hard to read, common assumed J17
+- terminals:
+  - TS:3
+  - TS:69
+  reason: wire 20 ends hard to read, appears duplicate of wire 19
+- terminals:
+  - TS:14
+  - TS:15
+  - TB/TS:16
+  - P:8
+  - P:17
+  reason: TB-16 join to upper TS-14/P-8 node unclear
+- terminals:
+  - TS:NN
+  - TS:EN
+  - TS:LN
+  reason: optional switching/overlapping neutral poles dashed, neutrals inferred

@@ -1,0 +1,587 @@
+{
+  "tag": "d42_after2",
+  "offline": false,
+  "frozen": {
+    "ats_hybrid_read": "08b4676a5c4b",
+    "ats_hybrid_pipeline": "8a9c95c16c71",
+    "ats_hybrid_explain": "65fb997fbc54",
+    "ats_infogain": "2eff9c8764c1",
+    "ats_sheet_crops": "5687e25c8ce3"
+  },
+  "rows": [
+    {
+      "case": "a1_coil_open",
+      "tool_log": "f022a6bac7e781ff",
+      "diagnosis": {
+        "outcome": "diagnosed",
+        "component": "TS",
+        "part": "A-B",
+        "failure_mode": "open",
+        "confidence": 0.5,
+        "evidence": [
+          {
+            "step": 0,
+            "type": "functional_test",
+            "observation": "controller panel, event log and metering"
+          },
+          {
+            "step": 2,
+            "type": "instrument_reading",
+            "observation": "measure_voltage TS:A TS:B: 208.0"
+          },
+          {
+            "step": 6,
+            "type": "instrument_reading",
+            "observation": "manual_operation_check  : (True, ('open',))"
+          },
+          {
+            "step": 8,
+            "type": "instrument_reading",
+            "observation": "measure_resistance TS:6 TS:7: open"
+          }
+        ],
+        "note": "no reading separates: TS:A-B open, TS:A-B burnt"
+      },
+      "diagnosis_hash": "e86ade604895f469",
+      "seconds": 40.8,
+      "cost_usd": 0.00945,
+      "explanation": "The operating coil TS A-B has failed open and cannot transfer the load. Step 2: Voltage across the coil measured 208.0 V where a healthy coil at that moment would show 0.0 V, showing the coil is energized but not drawing current due to an open. Step 6: Manual check showed the mechanism can move freely when isolated, confirming the failure is electrical in the coil and not a mechanical jam. With both sources isolated and locked out, an authorized person should test the operating coil TS A-B for an open and replace it if defective.",
+      "consequences": [],
+      "damaged": [],
+      "problems": [],
+      "problems_lenient": [],
+      "record": {
+        "attempts": [
+          {
+            "text": "The operating coil TS A-B has failed open and cannot transfer the load. Step 2: Voltage across the coil measured 208.0 V where a healthy coil at that moment would show 0.0 V, showing the coil is energized but not drawing current due to an open. Step 6: Manual check showed the mechanism can move freely when isolated, confirming the failure is electrical in the coil and not a mechanical jam. With both sources isolated and locked out, an authorized person should test the operating coil TS A-B for an open and replace it if defective.",
+            "problems": []
+          }
+        ],
+        "template": false
+      },
+      "explain_calls": 1,
+      "transcription": "run_20261031_003748"
+    },
+    {
+      "case": "a2_wire2_open",
+      "tool_log": "b71ef94e4d14f203",
+      "diagnosis": {
+        "outcome": "diagnosed",
+        "component": "H1",
+        "part": "W2_TSA-W2_P2",
+        "failure_mode": "open",
+        "confidence": 1.0,
+        "evidence": [
+          {
+            "step": 0,
+            "type": "functional_test",
+            "observation": "controller panel, event log and metering"
+          },
+          {
+            "step": 4,
+            "type": "instrument_reading",
+            "observation": "measure_voltage TS:8 TS:9: 0.0"
+          },
+          {
+            "step": 6,
+            "type": "instrument_reading",
+            "observation": "measure_voltage TS:71 TS:72: 0.0"
+          },
+          {
+            "step": 8,
+            "type": "instrument_reading",
+            "observation": "measure_voltage H1:W1_TS8 H1:W1_P1: 0.0"
+          },
+          {
+            "step": 10,
+            "type": "instrument_reading",
+            "observation": "measure_voltage H1:W2_TSA H1:W2_P2: 208.0"
+          }
+        ]
+      },
+      "diagnosis_hash": "54f7a1a898de8d8e",
+      "seconds": 47.0,
+      "cost_usd": 0.01025,
+      "explanation": "The harness wire W2 is open and has prevented transfer to Emergency. Step 10: The 208 volt reading across harness wire W2 shows an open where a good wire would read near zero volts. Step 2: The zero volt reading is expected while the switch remains on Normal and does not show a fault by itself. Step 8: The zero volt reading is expected while the switch remains on Normal and does not show a fault by itself. With both sources isolated and locked out, inspect harness wire W2 for looseness or damage and service it as authorized. Do not bypass interlocks or parallel sources or operate manually under load.",
+      "consequences": [],
+      "damaged": [],
+      "problems": [],
+      "problems_lenient": [],
+      "record": {
+        "attempts": [
+          {
+            "text": "The harness wire W2 is open and has prevented transfer to Emergency. Step 10: The 208 volt reading across harness wire W2 shows an open where a good wire would read near zero volts. Step 2: The zero volt reading is expected while the switch remains on Normal and does not show a fault by itself. Step 8: The zero volt reading is expected while the switch remains on Normal and does not show a fault by itself. With both sources isolated and locked out, inspect harness wire W2 for looseness or damage and service it as authorized. Do not bypass interlocks or parallel sources or operate manually under load.",
+            "problems": []
+          }
+        ],
+        "template": false
+      },
+      "explain_calls": 1,
+      "transcription": "run_20261031_003748"
+    },
+    {
+      "case": "a3_er_output",
+      "tool_log": "975a411d6b6f1bfd",
+      "diagnosis": {
+        "outcome": "insufficient_information",
+        "confidence": 0.0,
+        "evidence": [
+          {
+            "step": 0,
+            "type": "functional_test",
+            "observation": "controller panel, event log and metering"
+          }
+        ],
+        "note": "still possible: SE:X1-J2 stuck_open, SE:X2-J5 stuck_open, ER:J1-X1 stuck_open, ER:J16-X2 stuck_open"
+      },
+      "diagnosis_hash": "02b188e860901db0",
+      "seconds": 67.9,
+      "cost_usd": 0.0,
+      "explanation": "No single cause can be named from the readings the policy allows. Still possible: SE relay contact X1-J2 (inside the controller), SE relay contact X2-J5 (inside the controller), ER relay contact J1-X1 (inside the controller), ER relay contact J16-X2 (inside the controller). Evidence: step 22, voltage XP:P2 to XP:J2: 0.0 V (normal for the present position); step 24, voltage XP:P5 to XP:J5: 0.0 V (normal for the present position); step 26, voltage XP:P16 to XP:J16: 0.0 V (normal for the present position). Next, an authorized person, with both sources isolated and locked out, tests each of these parts in turn; a relay contact inside the controller cannot be probed, so for those the controller is the repair.",
+      "consequences": [],
+      "damaged": [],
+      "problems": [],
+      "problems_lenient": [],
+      "record": {
+        "attempts": [],
+        "template": true,
+        "reason": "insufficient information"
+      },
+      "explain_calls": 0,
+      "transcription": "run_20261031_003748"
+    },
+    {
+      "case": "a4_cutoff_8_9",
+      "tool_log": "9548979b03e0daf3",
+      "diagnosis": {
+        "outcome": "diagnosed",
+        "component": "TS",
+        "part": "8-9",
+        "failure_mode": "stuck_open",
+        "confidence": 1.0,
+        "evidence": [
+          {
+            "step": 0,
+            "type": "functional_test",
+            "observation": "controller panel, event log and metering"
+          },
+          {
+            "step": 2,
+            "type": "instrument_reading",
+            "observation": "measure_voltage TS:A TS:B: 0.0"
+          },
+          {
+            "step": 4,
+            "type": "instrument_reading",
+            "observation": "measure_voltage TS:8 TS:9: 208.0"
+          }
+        ]
+      },
+      "diagnosis_hash": "75b1ed2c661eb3be",
+      "seconds": 41.6,
+      "cost_usd": 0.00985,
+      "explanation": "The cut-off contact TS 8-9 failed stuck open which blocked transfer to Emergency. Step 2: Step 2 measured zero volts across the coil which is expected while the switch remains on Normal and does not by itself indicate a fault. Step 4: Step 4 measured 208 volts across the contact where a fault free switch would show zero volts which proves the contact is open when it should be closed. With both sources isolated and locked out, have an authorized person inspect and service the cut-off contact TS 8-9 for proper closing and continuity. Keep all interlocks active and do not parallel sources or operate under load.",
+      "consequences": [],
+      "damaged": [],
+      "problems": [],
+      "problems_lenient": [],
+      "record": {
+        "attempts": [
+          {
+            "text": "The cut-off contact TS 8-9 failed stuck open which blocked transfer to Emergency. Step 2: Step 2 measured zero volts across the coil which is expected while the switch remains on Normal and does not by itself indicate a fault. Step 4: Step 4 measured 208 volts across the contact where a fault free switch would show zero volts which proves the contact is open when it should be closed. With both sources isolated and locked out, have an authorized person inspect and service the cut-off contact TS 8-9 for proper closing and continuity. Keep all interlocks active and do not parallel sources or operate under load.",
+            "problems": []
+          }
+        ],
+        "template": false
+      },
+      "explain_calls": 1,
+      "transcription": "run_20261031_003748"
+    },
+    {
+      "case": "a5_jammed",
+      "tool_log": "4716386335de19e0",
+      "diagnosis": {
+        "outcome": "diagnosed",
+        "component": "TS",
+        "part": "",
+        "failure_mode": "jammed",
+        "confidence": 1.0,
+        "evidence": [
+          {
+            "step": 0,
+            "type": "functional_test",
+            "observation": "controller panel, event log and metering"
+          },
+          {
+            "step": 2,
+            "type": "instrument_reading",
+            "observation": "measure_voltage TS:A TS:B: 208.0"
+          },
+          {
+            "step": 6,
+            "type": "instrument_reading",
+            "observation": "manual_operation_check  : (False, (0.0,))"
+          }
+        ]
+      },
+      "diagnosis_hash": "45811d6303159990",
+      "seconds": 31.7,
+      "cost_usd": 0.00947,
+      "explanation": "The TS transfer mechanism jammed and prevented transfer to Emergency. Step 2: The voltage reading is expected while the switch remains on Normal and does not show a separate fault. Step 6: The mechanism would not move by hand with power isolated which shows it is jammed while the resistance matches the stuck position. With both sources isolated and locked out, have an authorized person inspect the TS transfer mechanism for obstruction or damage and restore free movement without forcing operation under load.",
+      "consequences": [],
+      "damaged": [],
+      "problems": [],
+      "problems_lenient": [],
+      "record": {
+        "attempts": [
+          {
+            "text": "The TS transfer mechanism jammed and prevented transfer to Emergency. Step 2: The voltage reading is expected while the switch remains on Normal and does not show a separate fault. Step 6: The mechanism would not move by hand with power isolated which shows it is jammed while the resistance matches the stuck position. With both sources isolated and locked out, have an authorized person inspect the TS transfer mechanism for obstruction or damage and restore free movement without forcing operation under load.",
+            "problems": []
+          }
+        ],
+        "template": false
+      },
+      "explain_calls": 1,
+      "transcription": "run_20261031_003748"
+    },
+    {
+      "case": "a6_pin1_open",
+      "tool_log": "1d54c856c32476a1",
+      "diagnosis": {
+        "outcome": "diagnosed",
+        "component": "XP",
+        "part": "P1-J1",
+        "failure_mode": "open",
+        "confidence": 1.0,
+        "evidence": [
+          {
+            "step": 0,
+            "type": "functional_test",
+            "observation": "controller panel, event log and metering"
+          },
+          {
+            "step": 14,
+            "type": "instrument_reading",
+            "observation": "measure_voltage H1:W16_TS72 H1:W16_P16: 0.0"
+          },
+          {
+            "step": 16,
+            "type": "instrument_reading",
+            "observation": "measure_voltage H1:W17_TS4 H1:W17_TS9: 0.0"
+          },
+          {
+            "step": 18,
+            "type": "instrument_reading",
+            "observation": "measure_voltage H1:W21_TS5 H1:W21_TS71: 0.0"
+          },
+          {
+            "step": 20,
+            "type": "instrument_reading",
+            "observation": "measure_voltage XP:P1 XP:J1: 208.0"
+          }
+        ]
+      },
+      "diagnosis_hash": "493dcd32a24c86f2",
+      "seconds": 54.1,
+      "cost_usd": 0.00934,
+      "explanation": "The failure is plug and jack pin P1-J1 remaining open which prevented transfer to Emergency. Step 20: The 208 volt reading shows the pin is open because a fault free switch at that moment would read zero volts. Step 2: The zero volt reading is expected while the switch remains on Normal and shows no additional fault. Step 8: The zero volt reading is expected while the switch remains on Normal and shows no additional fault. With both sources isolated and locked out, an authorized person should inspect plug and jack pin P1-J1 for damage or looseness and restore a firm connection.",
+      "consequences": [],
+      "damaged": [],
+      "problems": [],
+      "problems_lenient": [],
+      "record": {
+        "attempts": [
+          {
+            "text": "The failure is plug and jack pin P1-J1 remaining open which prevented transfer to Emergency. Step 20: The 208 volt reading shows the pin is open because a fault free switch at that moment would read zero volts. Step 2: The zero volt reading is expected while the switch remains on Normal and shows no additional fault. Step 8: The zero volt reading is expected while the switch remains on Normal and shows no additional fault. With both sources isolated and locked out, an authorized person should inspect plug and jack pin P1-J1 for damage or looseness and restore a firm connection.",
+            "problems": []
+          }
+        ],
+        "template": false
+      },
+      "explain_calls": 1,
+      "transcription": "run_20261031_003748"
+    },
+    {
+      "case": "a7_burnout_chain",
+      "tool_log": "0eb82ef53b478df6",
+      "diagnosis": {
+        "outcome": "diagnosed",
+        "component": "TS",
+        "part": "8-9",
+        "failure_mode": "stuck_closed",
+        "confidence": 1.0,
+        "evidence": [
+          {
+            "step": 0,
+            "type": "functional_test",
+            "observation": "controller panel, event log and metering"
+          },
+          {
+            "step": 2,
+            "type": "instrument_reading",
+            "observation": "measure_voltage TS:A TS:B: 208.0"
+          },
+          {
+            "step": 6,
+            "type": "instrument_reading",
+            "observation": "manual_operation_check  : (True, (0.0,))"
+          }
+        ]
+      },
+      "diagnosis_hash": "b37cc5d25baa07e2",
+      "seconds": 44.9,
+      "cost_usd": 0.02705,
+      "explanation": "The failure was caused by cut-off contact TS 8-9 remaining closed when it should have opened. Step 2: Voltage of 208 volts across the operating coil shows the coil circuit stayed energized because the contact stayed closed. Step 6: Successful manual move with zero ohm reading at the other position shows the mechanism moves freely and closure there is normal. Repair cut-off contact TS 8-9 and cut-off contact TS 71-72 to clear the common misadjustment. Then test operating coil TS A-B and replace it if it is burnt, with both sources isolated and locked out and with no bypassing interlocks and no paralleling sources and no manual operation under load. A new operating coil TS A-B alone burns again at the next transfer while the root cause remains.",
+      "consequences": [
+        "TS:71-72",
+        "TS:A-B"
+      ],
+      "damaged": [
+        "TS:A-B"
+      ],
+      "problems": [],
+      "problems_lenient": [],
+      "record": {
+        "attempts": [
+          {
+            "text": "The cut-off contact TS 8-9 failed stuck closed. Step 2: Step 2 voltage of 208.0 V across operating coil TS A-B shows the coil remained energized when a fault free switch would show 0.0 V. Step 6: Step 6 manual move to the other position with 0.0 ohm at cut-off contact TS 8-9 shows the mechanism is free to move and the contact is closed there as expected. First repair the root cause at cut-off contact TS 8-9 and cut-off contact TS 71-72. Then test operating coil TS A-B and replace it if it is burnt. A new operating coil TS A-B alone burns again at the next transfer while the root cause remains with both sources isolated and locked out and with no bypassing interlocks and no paralleling sources and no manual operation under load.",
+            "problems": [
+              "the action names the damaged part TS:A-B before the root cause: fix the root cause first"
+            ]
+          },
+          {
+            "text": "The failure was caused by cut-off contact TS 8-9 remaining closed when it should have opened. Step 2: Voltage of 208 volts across the operating coil shows the coil circuit stayed energized because the contact stayed closed. Step 6: Successful manual move with zero ohm reading at the other position shows the mechanism moves freely and closure there is normal. Repair cut-off contact TS 8-9 and cut-off contact TS 71-72 to clear the common misadjustment. Then test operating coil TS A-B and replace it if it is burnt, with both sources isolated and locked out and with no bypassing interlocks and no paralleling sources and no manual operation under load. A new operating coil TS A-B alone burns again at the next transfer while the root cause remains.",
+            "problems": []
+          }
+        ],
+        "template": false
+      },
+      "explain_calls": 2,
+      "transcription": "run_20261031_003748"
+    },
+    {
+      "case": "b1_wire7_open",
+      "tool_log": "02cc9a28ec0959d8",
+      "diagnosis": {
+        "outcome": "diagnosed",
+        "component": "H1",
+        "part": "W7_TS4-W7_P7",
+        "failure_mode": "open",
+        "confidence": 1.0,
+        "evidence": [
+          {
+            "step": 0,
+            "type": "functional_test",
+            "observation": "controller panel, event log and metering"
+          },
+          {
+            "step": 2,
+            "type": "instrument_reading",
+            "observation": "measure_voltage CP:J7 NN: 0.0"
+          },
+          {
+            "step": 4,
+            "type": "instrument_reading",
+            "observation": "measure_voltage H1:W7_P7 NN: 0.0"
+          }
+        ]
+      },
+      "diagnosis_hash": "5a3ed09729a1c421",
+      "seconds": 10.3,
+      "cost_usd": 0.00773,
+      "explanation": "The harness wire W7 has failed open so voltage cannot pass through it. Step 2: The 0.0 V reading is normal for the present position with the switch remaining on Normal and does not itself indicate a fault. Step 4: The 0.0 V reading where 120.1 V was expected shows that harness wire W7 is not passing voltage through to its load side. With both sources isolated and locked out, an authorized person should inspect harness wire W7 and repair the open connection. Proceed without bypassing interlocks and without paralleling sources and without manual operation under load.",
+      "consequences": [],
+      "damaged": [],
+      "problems": [],
+      "problems_lenient": [],
+      "record": {
+        "attempts": [
+          {
+            "text": "The harness wire W7 has failed open so voltage cannot pass through it. Step 2: The 0.0 V reading is normal for the present position with the switch remaining on Normal and does not itself indicate a fault. Step 4: The 0.0 V reading where 120.1 V was expected shows that harness wire W7 is not passing voltage through to its load side. With both sources isolated and locked out, an authorized person should inspect harness wire W7 and repair the open connection. Proceed without bypassing interlocks and without paralleling sources and without manual operation under load.",
+            "problems": []
+          }
+        ],
+        "template": false
+      },
+      "explain_calls": 1,
+      "transcription": "run_20261031_003748"
+    },
+    {
+      "case": "b2_pin18_open",
+      "tool_log": "1684a0c5f4fdd65e",
+      "diagnosis": {
+        "outcome": "diagnosed",
+        "component": "XP",
+        "part": "P18-J18",
+        "failure_mode": "open",
+        "confidence": 1.0,
+        "evidence": [
+          {
+            "step": 0,
+            "type": "functional_test",
+            "observation": "controller panel, event log and metering"
+          },
+          {
+            "step": 2,
+            "type": "instrument_reading",
+            "observation": "measure_voltage CP:J18 NN: 0.0"
+          },
+          {
+            "step": 4,
+            "type": "instrument_reading",
+            "observation": "measure_voltage H1:W25_P18 NN: 120.1"
+          }
+        ]
+      },
+      "diagnosis_hash": "d1a372b8c37186a3",
+      "seconds": 8.6,
+      "cost_usd": 0.00755,
+      "explanation": "The plug and jack pin P18-J18 failed open. Step 2: Step 2 reading of 0.0 volts is expected while the switch remains on Normal and reflects loss of continuity from the open. Step 4: Step 4 reading of 120.1 volts shows control power is present on the Normal side while the switch remains on Normal. With both sources isolated and locked out, have an authorized person inspect and repair the plug and jack pin P18-J18. Do not bypass interlocks and do not parallel sources and do not operate manually under load.",
+      "consequences": [],
+      "damaged": [],
+      "problems": [],
+      "problems_lenient": [],
+      "record": {
+        "attempts": [
+          {
+            "text": "The plug and jack pin P18-J18 failed open. Step 2: Step 2 reading of 0.0 volts is expected while the switch remains on Normal and reflects loss of continuity from the open. Step 4: Step 4 reading of 120.1 volts shows control power is present on the Normal side while the switch remains on Normal. With both sources isolated and locked out, have an authorized person inspect and repair the plug and jack pin P18-J18. Do not bypass interlocks and do not parallel sources and do not operate manually under load.",
+            "problems": []
+          }
+        ],
+        "template": false
+      },
+      "explain_calls": 1,
+      "transcription": "run_20261031_003748"
+    },
+    {
+      "case": "b3_wire6_open",
+      "tool_log": "f83e3e2b05f559a8",
+      "diagnosis": {
+        "outcome": "diagnosed",
+        "component": "H1",
+        "part": "W6_TS5-W6_P6",
+        "failure_mode": "open",
+        "confidence": 1.0,
+        "evidence": [
+          {
+            "step": 0,
+            "type": "functional_test",
+            "observation": "controller panel, event log and metering"
+          },
+          {
+            "step": 2,
+            "type": "instrument_reading",
+            "observation": "measure_voltage CP:J6 NN: 0.0"
+          },
+          {
+            "step": 4,
+            "type": "instrument_reading",
+            "observation": "measure_voltage H1:W6_P6 NN: 0.0"
+          }
+        ]
+      },
+      "diagnosis_hash": "e0555b7bdd6b5ac9",
+      "seconds": 12.0,
+      "cost_usd": 0.00971,
+      "explanation": "The harness wire W6 has failed open. Step 2: The 0.0 V reading is normal for the present position with the switch staying on Normal and is not itself a fault. Step 4: The 0.0 V reading is missing the 120.1 V expected in a fault free switch and shows loss of continuity through the open path. With both sources isolated and locked out, an authorized person should inspect harness wire W6 for damage and test for continuity and make a secure repair as needed. All work should stay within safety limits with no bypassing of interlocks and no paralleling of sources and no manual operation under load.",
+      "consequences": [],
+      "damaged": [],
+      "problems": [],
+      "problems_lenient": [],
+      "record": {
+        "attempts": [
+          {
+            "text": "The harness wire W6 has failed open. Step 2: The 0.0 V reading is normal for the present position with the switch staying on Normal and is not itself a fault. Step 4: The 0.0 V reading is missing the 120.1 V expected in a fault free switch and shows loss of continuity through the open path. With both sources isolated and locked out, an authorized person should inspect harness wire W6 for damage and test for continuity and make a secure repair as needed. All work should stay within safety limits with no bypassing of interlocks and no paralleling of sources and no manual operation under load.",
+            "problems": []
+          }
+        ],
+        "template": false
+      },
+      "explain_calls": 1,
+      "transcription": "run_20261031_003748"
+    },
+    {
+      "case": "x1_aux14b_open",
+      "tool_log": "12183fd7be7542a6",
+      "diagnosis": {
+        "outcome": "insufficient_information",
+        "confidence": 0.0,
+        "evidence": [
+          {
+            "step": 0,
+            "type": "functional_test",
+            "observation": "controller panel, event log and metering"
+          }
+        ],
+        "note": "still possible: TS:17-16 stuck_open, CP:J13 open, H1:W13_TS16-W13_P13 open, XP:P13-J13 open"
+      },
+      "diagnosis_hash": "e094ee3ca216911c",
+      "seconds": 1.0,
+      "cost_usd": 0.0,
+      "explanation": "No single cause can be named from the readings the policy allows. Still possible: auxiliary contact TS 17-16, controller input J13, harness wire W13, plug and jack pin P13-J13. Evidence: the controller panel. Next, an authorized person, with both sources isolated and locked out, tests each of these parts in turn; a relay contact inside the controller cannot be probed, so for those the controller is the repair.",
+      "consequences": [],
+      "damaged": [],
+      "problems": [],
+      "problems_lenient": [],
+      "record": {
+        "attempts": [],
+        "template": true,
+        "reason": "insufficient information"
+      },
+      "explain_calls": 0,
+      "transcription": "run_20261031_003748"
+    },
+    {
+      "case": "x2_engine_start_open",
+      "tool_log": "da8955912479078c",
+      "diagnosis": {
+        "outcome": "diagnosed",
+        "component": "H1",
+        "part": "W9A_TB15-W9A_P9",
+        "failure_mode": "open",
+        "confidence": 1.0,
+        "evidence": [
+          {
+            "step": 0,
+            "type": "functional_test",
+            "observation": "controller panel, event log and metering"
+          },
+          {
+            "step": 4,
+            "type": "instrument_reading",
+            "observation": "measure_resistance NR:J9 NR:J8: 0.0"
+          },
+          {
+            "step": 6,
+            "type": "instrument_reading",
+            "observation": "measure_resistance H1:W8A_TB14 H1:W8A_P8: 0.0"
+          },
+          {
+            "step": 8,
+            "type": "instrument_reading",
+            "observation": "measure_resistance H1:W9A_TB15 H1:W9A_P9: open"
+          }
+        ]
+      },
+      "diagnosis_hash": "e2f53b7be2cfb895",
+      "seconds": 15.0,
+      "cost_usd": 0.01117,
+      "explanation": "The open in harness wire W9A prevented the load from transferring to Emergency. Step 2: Both sources were isolated to allow safe testing while the controller showed it was waiting for acceptable emergency power. Step 4: Zero ohms there is normal for the switch staying on Normal and is explained by the diagnosed open rather than showing a separate fault. Step 6: Zero ohms there is normal for the switch staying on Normal and is explained by the diagnosed open rather than showing a separate fault. Step 8: An open on harness wire W9A shows loss of continuity in the wire probed at that step. With both sources still isolated and locked out, inspect harness wire W9A for damage and verify continuity, then repair or replace it as authorized. Do not bypass safety functions and do not operate under load.",
+      "consequences": [],
+      "damaged": [],
+      "problems": [],
+      "problems_lenient": [],
+      "record": {
+        "attempts": [
+          {
+            "text": "The open in harness wire W9A prevented the load from transferring to Emergency. Step 2: Both sources were isolated to allow safe testing while the controller showed it was waiting for acceptable emergency power. Step 4: Zero ohms there is normal for the switch staying on Normal and is explained by the diagnosed open rather than showing a separate fault. Step 6: Zero ohms there is normal for the switch staying on Normal and is explained by the diagnosed open rather than showing a separate fault. Step 8: An open on harness wire W9A shows loss of continuity in the wire probed at that step. With both sources still isolated and locked out, inspect harness wire W9A for damage and verify continuity, then repair or replace it as authorized. Do not bypass safety functions and do not operate under load.",
+            "problems": []
+          }
+        ],
+        "template": false
+      },
+      "explain_calls": 1,
+      "transcription": "run_20261031_003748"
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+holdout 9f570d3c1641, 28 cases, frozen {'ats_hybrid_read': '08b4676a5c4b', 'ats_hybrid_pipeline': '8a9c95c16c71', 'ats_hybrid_explain': '65fb997fbc54', 'ats_infogain': '2eff9c8764c1', 'ats_sheet_crops': '5687e25c8ce3', 'ats_agent': 'b3e681a84e0d', 'ats_agent_loop': 'efe23395808d', 'ats_tools': '9700f0488e24', 'ats_policy': '2e45800cdaff', 'ats_bench': '1897f5e2aa3e', 'ats_faults': '2f3ffeba22da', 'ats_scoring': '6eb679a9fe4f', 'ats_transcription_default': '7d269af0a274'}
+h02: agent H1:W8A_TB14-W8A_P8 open | hybrid H1:W8A_TB14-W8A_P8 open | baseline H1:W8A_TB14-W8A_P8 open | spent $0.22
+h05: agent H1:W21_TS5-W21_TS71 open | hybrid H1:W21_TS5-W21_TS71 open | baseline H1:W21_TS5-W21_TS71 open | spent $0.23
+h03: agent insufficient_information | hybrid insufficient_information | baseline insufficient_information | spent $0.36
+h04: agent insufficient_information | hybrid insufficient_information | baseline insufficient_information | spent $0.53
+h01: agent insufficient_information | hybrid insufficient_information | baseline insufficient_information | spent $0.71
+smoke test: no technical failures; the other cases follow
+h07: agent NR:J8-J9 stuck_open | hybrid NR:J9-J8 stuck_open | baseline NR:J8-J9 stuck_open | spent $0.80
+h10: agent TS:17-18 stuck_closed | hybrid insufficient_information | baseline insufficient_information | spent $0.91
+h08: agent insufficient_information | hybrid insufficient_information | baseline insufficient_information | spent $1.01
+h09: agent insufficient_information | hybrid insufficient_information | baseline insufficient_information | spent $1.20
+h06: agent H1:W10_TS17-W10_P10 open | hybrid insufficient_information | baseline insufficient_information | spent $1.40
+h12: agent XP:P6-J6 open | hybrid XP:P6-J6 open | baseline XP:P6-J6 open | spent $1.41
+h11: agent XP:P8-J8 open | hybrid XP:P8-J8 open | baseline XP:P8-J8 open | spent $1.42
+h14: agent CP:J7 open | hybrid CP:J7 open | baseline CP:J7 open | spent $1.59
+h15: agent CP:J18 open | hybrid CP:J18 open | baseline CP:J18 open | spent $1.60
+h13: agent TS:19-21 stuck_open | hybrid TS:19-21 stuck_open | baseline TS:19-21 stuck_open | spent $1.75
+h17: agent insufficient_information | hybrid insufficient_information | baseline insufficient_information | spent $1.83
+h16: agent insufficient_information | hybrid insufficient_information | baseline insufficient_information | spent $1.95
+h19: agent insufficient_information | hybrid insufficient_information | baseline insufficient_information | spent $2.29
+h18: agent TS:5-22 stuck_open | hybrid TS:5-22 stuck_open | baseline TS:5-22 stuck_open | spent $2.30
+h20: agent TS:17-18 stuck_closed | hybrid TS:17-18 stuck_closed | baseline TS:17-18 stuck_closed | spent $2.32
+h21: agent H1:W16_TS72-W16_P16 open | hybrid H1:W16_TS72-W16_P16 open | baseline H1:W16_TS72-W16_P16 open | spent $2.53
+h24: agent XP:P7-J7 open | hybrid XP:P7-J7 open | baseline XP:P7-J7 open | spent $2.54
+h22: agent TS:71-72 stuck_open | hybrid TS:71-72 stuck_open | baseline TS:71-72 stuck_open | spent $2.55
+h25: agent TS:A-B burnt | hybrid TS:6-7 stuck_closed | baseline TS:6-7 stuck_closed | spent $2.74
+h23: agent XP:P2-J2 open | hybrid XP:P2-J2 open | baseline XP:P2-J2 open | spent $2.75
+h28: agent insufficient_information | hybrid insufficient_information | baseline insufficient_information | spent $3.54
+h26: agent insufficient_information | hybrid insufficient_information | baseline insufficient_information | spent $3.54
+h27: agent insufficient_information | hybrid insufficient_information | baseline insufficient_information | spent $3.54
+done: 28 cases, not run [], spent $3.540; written to runs\20261031_123544_ats_holdout

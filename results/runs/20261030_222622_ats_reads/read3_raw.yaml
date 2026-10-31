@@ -1,0 +1,237 @@
+title: Automatic transfer switch
+normal_source:
+  A: TS:1
+  B: TS:2
+  C: TS:3
+emergency_source:
+  A: TS:4
+  B: TS:19
+  C: TS:5
+neutrals:
+  normal: TS:NN
+  emergency: TS:EN
+  load: TS:LN
+load:
+  A: TS:20
+  B: TS:21
+  C: TS:22
+transfer_switch:
+  main_normal:
+  - 1-20
+  - 2-21
+  - 3-22
+  main_emergency:
+  - 4-20
+  - 19-21
+  - 5-22
+  control_closed_normal:
+  - 8-9
+  - 71-72
+  control_closed_emergency:
+  - 6-7
+  - 69-70
+  aux_closed_normal:
+  - 17-18
+  aux_closed_emergency:
+  - 14-15
+  - 17-16
+  solenoid: A-B
+relays:
+  SE:
+    false:
+    - J2-J3
+    - X2-J5
+    nc:
+    - X1-J2
+  ER:
+    false:
+    - J1-X1
+    - J5-J15
+    nc:
+    - J16-X2
+  NR:
+    false:
+    - J8-J17
+    nc:
+    - J9-J17
+controller_inputs:
+- J4
+- J6
+- J7
+- J10
+- J11
+- J12
+- J13
+- J14
+- J18
+- J19
+- J20
+- J21
+- J22
+- J23
+- J24
+terminal_block:
+  id: TB/TS
+  label: Engine starting signals
+  points:
+  - 14
+  - 15
+  - 16
+wires:
+- - 1
+  - TS-8
+  - P-1
+- - 2
+  - TS-A
+  - P-2
+- - 3
+  - TS-6
+  - P-3
+- - 4
+  - TS-3
+  - P-4
+- - 5
+  - TS-B
+  - P-5
+- - 6
+  - TS-5
+  - P-6
+- - 7
+  - TS-4
+  - P-7
+- - 8
+  - TB/TS-14
+  - P-8
+- - 9
+  - TB/TS-15
+  - P-9
+- - 10
+  - TS-17
+  - P-10
+- - 11
+  - TS-2
+  - P-11
+- - 12
+  - TS-1
+  - P-12
+- - 13
+  - TS-16
+  - P-13
+- - 14
+  - TS-18
+  - P-14
+- - 15
+  - TS-70
+  - P-15
+- - 16
+  - TS-72
+  - P-16
+- - 17
+  - TS-4
+  - TS-9
+- - 18
+  - TS-7
+  - TS-1
+- - 20
+  - TS-3
+  - TS-69
+- - 21
+  - TS-5
+  - TS-71
+- - 8
+  - TS-14
+  - TB/TS-14
+- - 9
+  - TS-15
+  - TB/TS-15
+- - 24
+  - TB/TS-16
+  - P-17
+- - 25
+  - TS-19
+  - P-18
+- - 26
+  - TS-20
+  - P-19
+- - 27
+  - TS-21
+  - P-20
+- - 28
+  - TS-22
+  - P-21
+- - 29
+  - TS-NN
+  - P-22
+- - 30
+  - TS-EN
+  - P-23
+- - 31
+  - TS-LN
+  - P-24
+joints: []
+uncertain:
+- terminals:
+  - TS:4
+  - TS:19
+  - TS:5
+  reason: emergency main terminal numbers small, EB 19 hard to read
+- terminals:
+  - TS:20
+  - TS:21
+  - TS:22
+  reason: load terminal numbers small
+- terminals:
+  - TS:NN
+  - TS:EN
+  - TS:LN
+  reason: neutral poles dashed optional, terminal assignment inferred
+- terminals:
+  - TS:6
+  - TS:7
+  - TS:69
+  - TS:70
+  - TS:8
+  - TS:9
+  - TS:71
+  - TS:72
+  reason: control contact numbers from table and operator circuit, table X marks low resolution
+- terminals:
+  - TS:14
+  - TS:15
+  - TS:16
+  - TS:17
+  - TS:18
+  reason: aux contact common inferred as 17, order 17-16 vs 16-17 uncertain
+- terminals:
+  - CP:J2
+  - CP:J3
+  - CP:J1
+  - CP:J5
+  - CP:J15
+  - CP:J16
+  reason: CP jack numbers for operator circuit very small, J5 vs J6 and J15 vs J16 uncertain
+- terminals:
+  - CP:J8
+  - CP:J17
+  - CP:J9
+  reason: NR contact wiring inferred, J17 common assumed
+- terminals:
+  - CP:J4
+  - CP:J6
+  - CP:J7
+  - CP:J11
+  - CP:J12
+  - CP:J18
+  reason: source sensing jack numbers inferred from wires and blurry CP boxes
+- terminals:
+  - CP:J19
+  - CP:J20
+  - CP:J21
+  - CP:J22
+  - CP:J23
+  - CP:J24
+  reason: load and neutral sensing shown only as P/Jx/Px with no CP J box, inclusion inferred from harness
+- terminals:
+  - TS:4
+  - TS:3
+  reason: wire numbers 19/20/21 sequence skips 19, 20 read as TS-3,TS-69 may be 19

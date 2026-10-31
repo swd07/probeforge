@@ -13,7 +13,7 @@ node_modules/
 dist/
 
 # eval outputs
-runs/
+/runs/
 *.log
 
 # typescript build cache
