@@ -464,3 +464,26 @@ decisions at the end (see CLAUDE.md). Architecture: [ARCHITECTURE.md](ARCHITECTU
 - **Privacy of the saved transcriptions:** model outputs only; the export refuses to write if any word of the submittal
   cover page text (the only page with a text layer), not already public in this repo, occurs in the file (0 found for
   both); the free-text words were also reviewed by hand (generic technical words only).
+
+### D40. ATS UI before S5: hybrid session, Compare, troubleshooting sheet, engineer suggestion (2026-10-31)
+- **What:** (1) the ATS hybrid session runs the frozen `run_ats_hybrid` on a saved transcription (default: run
+  20261031_003748, two accepted repairs) with human approvals; candidates are simulated in the background when the ATS
+  bench is chosen (about 80 s); a live re-read is offered only where the drawing crops exist locally, with cost and time
+  shown first. (2) The planner's next step is shown before it is taken, with a 1 s display pause per plan (UI pace
+  only: no reading, decision or virtual time changes). (3) Compare after any ATS diagnosis: the session's own column
+  keeps its live approvals; re-runs (agent, Hybrid v2 on the default saved transcription without the explanation call,
+  info-gain baseline) use the batch approval rules; the agent re-run passes the demo spend guard. Engineer column: the
+  human's session, else a recorded engineer trace for exactly this fault, else "no engineer trace recorded". (4) The
+  troubleshooting sheet (families A and B, one sheet per distinct symptom, so B splits into B1 to B3 by the open
+  sensing phase) is generated from the simulator by joint information gain in a safe order, labelled "not reviewed by
+  an engineer". (5) Engineer mode can ask for a suggestion: the planner on our redrawing replays the engineer's own
+  executed steps (it reads the step log and the isolated flag, never the bench's fault); suggestions are shown only on
+  request and the saved trace is marked assisted (Compare shows it). (6) `PROBEFORGE_OFFLINE` makes the server refuse
+  model calls (walkthroughs without spend).
+- **Why:** engineer points 7 and 8, the S6 Compare and zoom items, the user's ordering and conditions (2026-10-31).
+- **Alternatives:** recompute plans in the frozen planner (fingerprint change); show the plan without a pause (it is on
+  screen for milliseconds, because replaying a reading on every candidate happens before the plan); an adaptive decision
+  tree as the sheet (harder to print and check by hand than a fixed checklist with an expected-reading table).
+- **Evidence:** tests (hybrid session over the WebSocket with plans checked against the steps taken, Compare columns,
+  the suggestion equal to the baseline plan after the same steps and unchanged with a swapped bench fault, the sheet
+  regenerated equal to the committed one and safe-ordered); browser walkthroughs with screenshots in runs/ui_check/.

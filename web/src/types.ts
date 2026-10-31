@@ -243,6 +243,7 @@ export interface ComponentInfo {
 export interface CompareColumn {
   runner: string;
   missing?: string; // ATS: no engineer trace recorded
+  assisted?: boolean; // ATS engineer trace: planner suggestions were shown
   strong_approvals?: number;
   approvals_denied?: number;
   approvals_by?: string;

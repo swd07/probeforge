@@ -188,3 +188,48 @@ def test_ats_meta_lists_saved_transcriptions_and_the_live_read_estimate(monkeypa
     ids = [t["id"] for t in meta["transcriptions"]]
     assert meta["default_transcription"] in ids and all(t["run_id"] and t["recorded"] for t in meta["transcriptions"])
     assert "$" in meta["live_read"]["estimate"] and "minutes" in meta["live_read"]["estimate"]
+
+
+def test_engineer_suggestion_replays_the_engineers_steps_and_never_reads_the_fault(tmp_path):
+    """The suggestion is the info-gain planner on our redrawing after the engineer's own steps: the same plan the
+    baseline makes after the same steps, unchanged when the bench's injected fault is swapped; the saved trace is
+    marked assisted."""
+    from types import SimpleNamespace
+
+    from probeforge.ats.infogain import AtsInfoGain
+    from probeforge.ats.nextstep import planned_next
+    from probeforge.faults.model import Fault
+
+    fault = Fault("TS", "open", "A-B")
+    plans: list = []
+    base = AtsInfoGain(ats._outage([fault]), ats.NETLIST, model_key="true",
+                       on_update=lambda pl, step: plans.append((len(pl.steps), planned_next(pl))))
+    base.run()
+    tb = ats.AtsToolBox(ats._outage([fault]))
+    tb.initial_observation()
+    for s in base.steps:
+        k = len([e for e in tb.log[1:] if e["executed"] and e["tool"] not in ats.SKIP_IN_REPLAY])
+        want = next(p for n, p in plans if n == k)
+        got = ats.suggest_next(tb)
+        assert (got["tool"], got["args"]) == (want["tool"], want["args"])
+        # the bench's fault is never read: the same log on a bench with another fault gives the same suggestion
+        swapped = SimpleNamespace(log=tb.log, action_s=tb.action_s, step=tb.step,
+                                  bench=SimpleNamespace(isolated=tb.bench.isolated, faults=[Fault("TS", "jammed")]))
+        assert ats.suggest_next(swapped) == got
+        tb.call(s.tool, s.args)
+
+    http = TestClient(server.app)
+    events: list = []
+    with http.websocket_connect("/ws") as ws:
+        ws.send_json({"action": "start_manual", "bench": "ats", "source": "scenario", "scenario": "a1_coil_open",
+                      "engineer": "test"})
+        until(ws, "session", events)
+        ws.send_json({"action": "suggest"})
+        sug = until(ws, "suggestion", events)
+        assert sug["tool"] == "measure_voltage" and sug["terminals"] and len(sug["outcomes"]) >= 2
+        ws.send_json({"action": "tool", "name": "submit_diagnosis", "args": {
+            "outcome": "insufficient_information", "confidence": 0.0,
+            "evidence": [{"step": 0, "type": "functional_test", "observation": "panel"}]}})
+        until(ws, "saved", events)
+    saved = json.loads(next((tmp_path / "engineer_traces" / "ats").glob("*.json")).read_text(encoding="utf-8"))
+    assert saved["assisted"] is True and saved["suggestions"][0]["tool"] == "measure_voltage"

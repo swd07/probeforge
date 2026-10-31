@@ -21,6 +21,7 @@ function Column({ title, col, pending }: { title: string; col?: CompareColumn; p
     <div className="cmp-col">
       <h3>{title}</h3>
       {col.engineer && <div className="muted">{col.engineer}, recorded {col.recorded}</div>}
+      {col.assisted && <div className="muted">assisted: planner suggestions were shown</div>}
       {col.transcription && <div className="muted">{col.transcription}</div>}
       <span className={`verdict small v-${(col.verdict ?? "").replace(" ", "-")}`}>{col.verdict}</span>
       <div className="cmp-diag">{col.diagnosis}</div>

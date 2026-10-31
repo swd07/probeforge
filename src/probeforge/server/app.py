@@ -612,6 +612,8 @@ async def ws(websocket: WebSocket) -> None:
                 background(session.compare)
             elif action == "compare" and isinstance(session, ats.AtsSession):
                 background(session.compare, client)
+            elif action == "suggest" and isinstance(session, ats.AtsManualSession):
+                background(session.suggest)
             elif action in ("approval", "flags") and session:
                 session.answer(int(msg["id"]), bool(msg.get("approve")))
             elif action == "wiring" and isinstance(session, HybridSession):

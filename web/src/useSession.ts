@@ -27,6 +27,8 @@ export interface State {
   stage: string;
   done: Done | null;
   nextStep: NextStep | null; // ATS hybrid: the planner's next step
+  suggestion: NextStep | null; // ATS engineer mode: the planner's suggestion, only when asked for
+  suggestions: number;
   atsTranscription: AtsTranscription | null;
   modelCheck: ModelCheck | null;
   tokens: number;
@@ -61,6 +63,8 @@ const initial: State = {
   stage: "",
   done: null,
   nextStep: null,
+  suggestion: null,
+  suggestions: 0,
   atsTranscription: null,
   modelCheck: null,
   tokens: 0,
@@ -135,6 +139,7 @@ function reducer(s: State, a: Action): State {
         flash: t.verdict === "block" ? Date.now() : s.flash,
         measurements: s.measurements + t.probes.length,
         nextStep: null, // the planned step was just taken; the planner sends the next one
+        suggestion: null, // a suggestion holds only until the engineer's next step
       };
     }
     case "hypotheses": {
@@ -182,6 +187,13 @@ function reducer(s: State, a: Action): State {
       };
     case "next_step":
       return { ...s, nextStep: ev };
+    case "suggestion":
+      return {
+        ...s,
+        suggestion: ev,
+        suggestions: s.suggestions + 1,
+        feed: [...s.feed, { kind: "info", id: `sug${s.feed.length}`, text: `Planner suggestion shown after step ${ev.step} (shadow mode: this trace is marked assisted)` }],
+      };
     case "transcription":
       return {
         ...s,
@@ -362,6 +374,7 @@ export function useSession(neutral: string) {
   }, []);
 
   const stop = useCallback(() => ws.current?.send(JSON.stringify({ action: "stop" })), []);
+  const suggest = useCallback(() => ws.current?.send(JSON.stringify({ action: "suggest" })), []);
 
-  return { state, start, answer, stop, tool, compare, confirmFlags, chooseWiring };
+  return { state, start, answer, stop, tool, compare, confirmFlags, chooseWiring, suggest };
 }

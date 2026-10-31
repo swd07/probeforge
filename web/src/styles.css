@@ -412,3 +412,5 @@ table.quality tr.worse td { color: var(--warn); }
 .sheet-table th, .sheet-table td { white-space: nowrap; font-family: ui-monospace, Consolas, monospace; font-size: 11px; }
 .sheet-table td:first-child, .sheet-table th:first-child { font-family: inherit; font-size: 12px; position: sticky; left: 0; background: var(--panel); }
 @media (max-width: 900px) { .sheet-cols { grid-template-columns: 1fr; } }
+.suggest-btn { width: 100%; flex-shrink: 0; }
+.next-use { margin-top: 8px; }

@@ -20,6 +20,7 @@ import threading
 import time
 from datetime import datetime
 from pathlib import Path
+from types import SimpleNamespace
 
 import yaml
 
@@ -31,7 +32,7 @@ from probeforge.ats.bench import INTERNAL_NETS, REPAIR_KINDS, AtsBench
 from probeforge.ats.faults import COMPONENT_MODES, PART_MODES, all_faults, validate
 from probeforge.ats.hybrid.pipeline import HEALTHY_EVENTS, healthy_sequence, prepare_model, run_ats_hybrid, warm
 from probeforge.ats.hybrid.read import SHEET_DIR, SHEETS, read_consensus, sheet_images, to_netlist
-from probeforge.ats.infogain import AtsInfoGain
+from probeforge.ats.infogain import AtsInfoGain, Step, _value
 from probeforge.ats.nextstep import planned_next
 from probeforge.ats.policy import RULES
 from probeforge.ats.tools import AtsApprovalRequest, AtsToolBox, approve_standard_only
@@ -249,7 +250,8 @@ def column(trace: dict, judged: dict, strong: int, live_approvals: bool) -> dict
             "approvals": trace["policy"]["approval_requests"], "strong_approvals": strong,
             "approvals_denied": trace["policy"]["approvals_denied"], "seconds": trace["seconds"],
             "cost_usd": trace["cost_usd"], "sequence": sequence(trace["tool_log"]),
-            "approvals_by": "answered live in this session" if live_approvals else "batch rules"}
+            "approvals_by": "answered live in this session" if live_approvals else "batch rules",
+            "assisted": bool(trace.get("assisted"))}
 
 
 def engineer_trace(faults: list[Fault]) -> dict | None:
@@ -535,6 +537,27 @@ class AtsAgentSession(AtsSession):
         self.intervene(name, args)
 
 
+SKIP_IN_REPLAY = ("update_hypotheses", "submit_diagnosis", "get_schematic")
+
+
+def suggest_next(tb: AtsToolBox) -> dict:
+    """Engineer mode, shadow mode: the info-gain planner on our redrawing (the drawing the engineer sees) replays the
+    engineer's own executed steps and proposes the next one. It reads only what the engineer observed (the step log and
+    whether the switch is isolated), never the bench's injected fault."""
+    view = SimpleNamespace(log=tb.log[:1], action_s=tb.action_s, bench=SimpleNamespace(isolated=tb.bench.isolated))
+    planner = AtsInfoGain(_outage([]), NETLIST, model_key="true")  # a fault-free bench only to construct the planner
+    planner.tb = view
+    planner.max_actions = 10**6  # the engineer decides when to stop
+    planner.steps = [Step(e["tool"], e["args"], _value(e["tool"], e["result"]), e["step"], 0, 0)
+                     for e in tb.log[1:] if e["executed"] and e["tool"] not in SKIP_IN_REPLAY]
+    planner._build()
+    planner.cands = [c for c in planner.cands if c.faults]  # a fault is present: the switch did not transfer
+    plan = planned_next(planner)
+    if not planner.cands:
+        plan["why"] = "no single fault of our redrawing explains every reading so far"
+    return plan
+
+
 class AtsManualSession(AtsSession):
     """A human engineer drives the same ATS toolbox (same tools, same policy, same step log)."""
 
@@ -545,6 +568,17 @@ class AtsManualSession(AtsSession):
         self.engineer = engineer.strip() or "engineer"
         self.tb = AtsToolBox(self.bench, approver=self.approver, on_event=self.on_event)
         self.started = time.perf_counter()
+        self.suggestions: list[dict] = []  # shown only when asked for; the saved trace is then marked assisted
+
+    def suggest(self) -> None:
+        with self._lock:
+            if self.done or self.cancelled or self.closed:
+                self.emit({"type": "error", "message": "Suggestions are for the diagnosis, before you submit it."})
+                return
+            plan = suggest_next(self.tb)
+            terms = [x for x in (terminal_of(p) for p in plan["points"]) if x]
+            self.suggestions.append({"after_step": self.tb.step, "tool": plan["tool"], "args": plan["args"]})
+            self.emit({"type": "suggestion", "step": self.tb.step, **plan, "terminals": terms})
 
     def start(self) -> None:
         self.tb.initial_observation()
@@ -573,7 +607,8 @@ class AtsManualSession(AtsSession):
         diagnosis = self.tb.diagnosis
         trace = make_trace(case="manual_ats", runner="human", tb=self.tb, diagnosis=diagnosis,
                            outcome=diagnosis.get("outcome", "diagnosed"), seconds=time.perf_counter() - self.started,
-                           extra={"engineer": self.engineer, "bench": "ats"})
+                           extra={"engineer": self.engineer, "bench": "ats", "assisted": bool(self.suggestions),
+                                  "suggestions": self.suggestions})
         self.finish(trace)
         record = {**trace, "faults": [f.to_dict() for f in self.faults], "source": self.source,
                   "recorded": datetime.now().isoformat(timespec="seconds"), "bench": "ats"}

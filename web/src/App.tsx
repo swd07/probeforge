@@ -29,10 +29,11 @@ export function App() {
   const [diagnosing, setDiagnosing] = useState(false);
   const [comparing, setComparing] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [suggesting, setSuggesting] = useState(false);
   const [meter, setMeter] = useState<MeterState>({ kind: "V", a: null, b: null, hold: 0.2, wait: 6, reason: "manual check" });
   const [chosenMode, setChosenMode] = useState<Mode>("agent");
   const ats = bench === "ats";
-  const { state, start, answer, stop, tool, compare, confirmFlags, chooseWiring } = useSession(ats ? "NN" : meta?.neutral ?? "N");
+  const { state, start, answer, stop, tool, compare, confirmFlags, chooseWiring, suggest } = useSession(ats ? "NN" : meta?.neutral ?? "N");
 
   useEffect(() => {
     fetch("/api/meta").then((r) => r.json()).then(setMeta);
@@ -57,6 +58,8 @@ export function App() {
       setDiagnosing(false);
     }
   }, [state.status]);
+
+  useEffect(() => setSuggesting(false), [state.suggestions, state.error, state.status]);
 
   const [flashing, setFlashing] = useState(false);
   useEffect(() => {
@@ -147,7 +150,7 @@ export function App() {
               onPick={manualActive || atsIntervention ? pick : undefined}
               selected={manualActive || atsIntervention ? [meter.a, meter.b] : flagged}
               suspects={suspects}
-              planned={ats && cur && state.nextStep && busy ? state.nextStep.terminals : []}
+              planned={ats && cur && busy ? (state.nextStep ?? state.suggestion)?.terminals ?? [] : []}
               followDefault={state.mode !== "manual"}
               fitKey={state.done ? "reveal" : state.feed.length === 0 ? "start" : "run"}
               home={ats ? ATS_HOME : undefined}
@@ -217,6 +220,27 @@ export function App() {
                                  : "updated after each measurement"}
               />
             </>
+          )}
+          {atsDiagnosing && (
+            state.suggestion ? (
+              <NextStepCard
+                next={state.suggestion}
+                title="Suggestion (planner on our redrawing)"
+                note="Shadow mode: take it or ignore it. Computed from your own readings, never from the fault; this trace is marked assisted."
+                onUse={
+                  state.suggestion.tool === "measure_voltage" || state.suggestion.tool === "measure_resistance"
+                    ? () => setMeter((m) => ({ ...m, kind: state.suggestion!.tool === "measure_voltage" ? "V" : "R", a: state.suggestion!.points[0], b: state.suggestion!.points[1] }))
+                    : undefined
+                }
+              />
+            ) : (
+              <button className="btn ghost suggest-btn" disabled={suggesting}
+                      onClick={() => { setSuggesting(true); suggest(); }}
+                      title="The info-gain planner replays your readings on our redrawing and proposes the next one">
+                {suggesting ? "Computing the suggestion (simulating every candidate fault)..."
+                            : `Suggest the next reading (planner, shadow mode${state.suggestions > 0 ? `, ${state.suggestions} shown` : ""})`}
+              </button>
+            )
           )}
           {ats && !manual && atsIntervention && hybrid && state.atsTranscription && (
             <AtsTranscriptionCard t={state.atsTranscription} check={state.modelCheck} />

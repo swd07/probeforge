@@ -120,7 +120,7 @@ const TOOL_TEXT: Record<string, (s: NextStep) => string> = {
 
 /** The planner's next step before it is taken: the probe points are outlined on the drawing, and each possible result
  * lists the causes it would keep. */
-export function NextStepCard({ next, title = "Next step (planner)", note }: { next: NextStep; title?: string; note?: string }) {
+export function NextStepCard({ next, title = "Next step (planner)", note, onUse }: { next: NextStep; title?: string; note?: string; onUse?: () => void }) {
   const text = (TOOL_TEXT[next.tool] ?? ((s: NextStep) => s.tool))(next);
   return (
     <section className="hyp-card next-step-card">
@@ -144,6 +144,11 @@ export function NextStepCard({ next, title = "Next step (planner)", note }: { ne
         </ul>
       )}
       {note && <div className="muted next-note">{note}</div>}
+      {onUse && (
+        <button className="btn ghost next-use" onClick={onUse}>
+          Use suggestion (fill the meter)
+        </button>
+      )}
     </section>
   );
 }
