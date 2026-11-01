@@ -41,8 +41,11 @@ reachable as the tag [`holdout-2026-10-31`](https://github.com/swd07/probeforge/
    manual check or repeat transfer only when their result holds readings.
 3. **The explanation check accepted repair wording without isolation first.** Code now puts one fixed sentence before
    every action ("Before any work: open 52U, lock out and tag the generator, and prove both sources dead at the work
-   point with a voltmeter."), and the check rejects a repair instruction before it, energized-work or bypass wording
-   after it, and evidence citing steps that did not run.
+   point with a voltmeter."), and the check rejects a repair instruction before it, evidence citing steps that did not
+   run, and a fixed list of unsafe wordings. An audit then passed that list with synonyms and with text placed before
+   the sentence; D50 widened it (bypassing, jumpers, paralleling sources, skipping the lockout or isolation anywhere in
+   the text; energized work in the action; re-energizing before a repair) and narrowed negation to its own clause. It
+   is a word list, not a safety review.
 
 With them, the toolbox rejects arguments outside each tool's schema (`submit_diagnosis` gained an optional `note`,
 which the planner already sent).

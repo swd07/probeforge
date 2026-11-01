@@ -103,7 +103,10 @@ All model calls go to `muse-spark-1.3` through the Meta Model API (Chat Completi
   [D42](DECISIONS.md#d42-explanation-rule-for-consequential-faults-the-root-cause-first-then-the-damaged-part-2026-10-31)).
   Holdout: 28/28 passed (15 model texts, 13 templates for insufficient information). Since
   [D47](DECISIONS.md#d47-post-holdout-fixes-to-frozen-ats-code-2026-11-01) code also puts a fixed isolation sentence
-  before every repair instruction.
+  before every repair instruction, and the check rejects a fixed list of unsafe wordings (bypassing, paralleling
+  sources, skipping the lockout, energized work, re-energizing before a repair;
+  [D50](DECISIONS.md#d50-explanation-check-a-wider-unsafe-wording-list-over-the-whole-text-2026-11-01)). It narrows what
+  the model can say; it is not a safety review of the text.
 - **Chat Completions vs Responses.** On the 12 dev cases Chat got 10/12 part-level correct and 0 confidently wrong,
   Responses 8/12 and 1, with 32 % fewer readings and 13 % lower uncached cost. We kept Chat: it found the root cause
   of the burnout chain where Responses stopped at the burnt coil

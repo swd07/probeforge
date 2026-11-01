@@ -3,6 +3,8 @@ mismatch and the template fallback, the fixed isolation sentence and the safety 
 model (no API calls)."""
 
 import json
+
+import pytest
 from types import SimpleNamespace
 
 from probeforge.ats import AtsBench
@@ -144,3 +146,30 @@ def test_the_isolation_sentence_comes_from_code_before_the_action():
     assert text.index(SAFETY) < text.index("Replace the operating coil") and text.count(SAFETY) == 1
     p, d = coil_planner()
     assert SAFETY in template(d, p, N) and SAFETY in template({"outcome": "insufficient_information", "note": ""}, p, N)
+
+
+@pytest.mark.parametrize("text", [
+    S + "Re-energize the switch, then replace the operating coil TS A-B.",
+    S + "Restore both sources, then replace the operating coil TS A-B.",
+    S + "Close 52U and start the generator, then replace the operating coil TS A-B.",
+    S + "With power on, replace the operating coil TS A-B.",
+    S + "Replace the operating coil TS A-B hot.",
+    S + "Replace the operating coil TS A-B without isolating the sources.",
+    S + "Skip the lockout and replace the operating coil TS A-B.",
+    "Bypass the interlock. " + S + "Replace the operating coil TS A-B.",
+    "Jumper the cut-off contacts to test. " + S + "Replace the operating coil TS A-B.",
+    S + "There is no reason to delay and bypass the interlock when you replace the operating coil TS A-B.",
+])
+def test_the_audits_unsafe_wordings_fail_the_check(text):
+    """D50: every wording the external audit passed through the D47 check is now rejected."""
+    assert any("unsafe work" in p for p in check_text(text, COIL, N)), text
+
+
+@pytest.mark.parametrize("text", [
+    S + "Replace the operating coil TS A-B. After the repair, restore the sources and verify the transfer.",
+    S + "Replace the operating coil TS A-B. Do not bypass interlocks or parallel sources or operate manually under load.",
+    S + "Replace the operating coil TS A-B without bypassing interlocks and without paralleling sources.",
+    "Step 2: The paralleled readings agree and the coil stayed energized. " + S + "Replace the operating coil TS A-B.",
+])
+def test_safe_wording_still_passes(text):
+    assert check_text(text, COIL, N) == [], text

@@ -65,9 +65,18 @@ ACTION_VERBS = re.compile(r"\b(check|inspect|repair|replace|tighten|test|look|ve
 SAFETY = ("Before any work: open 52U, lock out and tag the generator, and prove both sources dead at the work point "
           "with a voltmeter.")
 REPAIR_WORDS = re.compile(r"\b(repair|replace|tighten|reseat|fix|swap|adjust|lubricate|rewire|install)\w*\b", re.I)
-UNSAFE_WORDS = re.compile(r"\b(energi[sz]ed|energi[sz]ing|while live|live (?:circuit|conductor|terminal|part)s?|under load|"
-                          r"bypass\w*|jumper\w*|parallel\w*|defeat\w*)\b", re.I)
-NEGATION = re.compile(r"\b(no|not|without|never|nor|avoid|do not|don't)\b[^.;,]{0,80}$", re.I)  # same clause
+# D50: unsafe wording in three kinds (an external audit passed the D47 list with synonyms and with text placed before
+# the isolation sentence). Always unsafe, anywhere in the text:
+ALWAYS_UNSAFE = re.compile(r"\b(bypass\w*|jumper\w*|defeat\w*|parallel\w*\s+(?:the\s+|both\s+)?(?:sources?|generator|utility|"
+                           r"supplies)|skip\w*\s+(?:the\s+)?(?:lock-?out|isolation|tag-?out)|without\s+(?:isolat|lock)\w*)", re.I)
+# unsafe in the action part (in the evidence these words describe a reading, "the coil stayed energized"):
+STATE_UNSAFE = re.compile(r"\b(energi[sz]ed|energi[sz]ing|while live|live (?:circuit|conductor|terminal|part)s?|under load|"
+                          r"(?:with\s+(?:the\s+)?)?power(?:ed)?\s+on|hot)\b", re.I)
+# re-energizing is unsafe when a repair instruction follows it ("restore the sources and verify" after a repair is not):
+REENERGIZE = re.compile(r"\b(re-?energi[sz]\w*|restor\w*\s+(?:the\s+|both\s+)?(?:power|sources?|supply|supplies|utility)|"
+                        r"close\s+(?:the\s+)?52U|start\s+(?:the\s+)?generator|turn\s+(?:the\s+)?power\s+(?:back\s+)?on)", re.I)
+# a negation covers its own clause only: it stops at punctuation and at "and", "then", "but"
+NEGATION = re.compile(r"\b(no|not|without|never|nor|avoid|do not|don't)\b(?:(?!\b(?:and|then|but)\b)[^.;,]){0,80}$", re.I)
 TWIN_NOTE = "no reading separates: "
 STILL_NOTE = "still possible: "
 
@@ -225,8 +234,11 @@ def check_text(text: str, diagnosis: dict, n: Netlist, strict: bool = True, cons
 
 
 def safety_problems(text: str) -> list[str]:
-    """D47: the fixed isolation sentence is present, no repair instruction comes before it, and the action part after
-    it has no energized-work or bypass instruction (negated mentions such as "without paralleling sources" pass)."""
+    """D47, extended by D50: the fixed isolation sentence is present and no repair instruction comes before it; no
+    bypass, jumper, paralleling of sources, skipped lockout or work without isolation anywhere in the text; no
+    energized-work wording in the action part after the sentence; no re-energizing followed by a repair. Mentions
+    negated in their own clause ("without paralleling sources", "do not bypass interlocks") pass. A fixed list:
+    it narrows what the model can say, it is not a safety review of the text."""
     at = text.find(SAFETY)
     if at < 0:
         return ["the isolation sentence is missing"]
@@ -234,9 +246,14 @@ def safety_problems(text: str) -> list[str]:
     if REPAIR_WORDS.search(text[:at]):
         problems.append("a repair instruction comes before the isolation sentence")
     after = text[at + len(SAFETY):]
-    bad = [m.group(0) for m in UNSAFE_WORDS.finditer(after) if not NEGATION.search(after[:m.start()])]
+
+    def unnegated(pattern: re.Pattern, scope: str) -> list[re.Match]:
+        return [m for m in pattern.finditer(scope) if not NEGATION.search(scope[:m.start()])]
+
+    bad = [m.group(0) for m in unnegated(ALWAYS_UNSAFE, text) + unnegated(STATE_UNSAFE, after)]
+    bad += [m.group(0) for m in unnegated(REENERGIZE, text) if REPAIR_WORDS.search(text[m.end():])]
     if bad:
-        problems.append(f"the action asks for unsafe work: {', '.join(dict.fromkeys(bad))}")
+        problems.append(f"the text asks for unsafe work: {', '.join(dict.fromkeys(bad))}")
     return problems
 
 

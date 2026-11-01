@@ -130,7 +130,7 @@ hypotheses and the step log; Compare runs the other diagnosticians on the same f
    | ats_transcription_default | the default saved transcription | 7d269af0a274 |
    | ats_hybrid_read | read step and its prompt | 08b4676a5c4b |
    | ats_hybrid_pipeline | sequence check, repair, acceptance | 8a9c95c16c71 |
-   | ats_hybrid_explain | explanation step and its check | e327e1021001 |
+   | ats_hybrid_explain | explanation step and its check | 9850f995df8b |
    | ats_infogain | planner and baseline | 2eff9c8764c1 |
    | ats_sheet_crops | crop coordinates | 5687e25c8ce3 |
 

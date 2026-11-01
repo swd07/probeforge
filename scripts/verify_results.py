@@ -10,13 +10,16 @@ Checks:
 3. The dev agent rows equal the committed dev run; the dev Hybrid v2 diagnoses equal the committed D42 run.
 4. Every metric is recomputed from those rows and compared with docs/results/ats_results.json and with the numbers in
    the published tables: the main table of docs/results/ats_results.md and the results table of README.md.
+5. The identity record of the post-holdout fixes (results/identity/after.json) was made by the current code (its
+   fingerprints equal ats_frozen_hashes()), matches the holdout run's traces, and equals the record from before the
+   fixes. Checks 1 and the JSON comparison in 4 are consistency checks of copied values; 2, 3, the tables and 5 are
+   independent recomputations.
 Exit code 1 on any mismatch, with the list of mismatches.
 """
 
 import hashlib
 import json
 import re
-import statistics
 import sys
 from pathlib import Path
 
@@ -155,7 +158,20 @@ def compare_table(path: Path, heading: str, cols: list[tuple[str, dict, int | No
     return rows
 
 
+def identity() -> None:
+    from probeforge.ats.freeze import ats_frozen_hashes
+
+    folder = ROOT / "results" / "identity"
+    before = json.loads((folder / "before.json").read_text(encoding="utf-8"))
+    after = json.loads((folder / "after.json").read_text(encoding="utf-8"))
+    check(after["frozen"] == ats_frozen_hashes(), "results/identity/after.json was not made by the current code (rerun ats_identity.py)")
+    check(after.get("vs_holdout_run", {}).get("identical") is True, "the identity record does not match the holdout run's traces")
+    check(after["rows"] == before["rows"], "the identity record differs from the record before the fixes")
+
+
 def main() -> None:
+    sys.path.insert(0, str(ROOT / "src"))
+    identity()
     published = json.loads(PUBLISHED.read_text(encoding="utf-8"))
     hold = holdout()
     devr = dev(published)
@@ -181,6 +197,7 @@ def main() -> None:
     readme_cols = [cols[0], cols[1], cols[2], cols[3], cols[5]]
     n2 = compare_table(README, "## Results", readme_cols)
     print(f"holdout: list hash, fingerprints, 28 cases x 3 runners checked against their traces")
+    print("identity: the post-holdout record matches the current fingerprints, the holdout traces and the record before")
     print(f"published: ats_results.json stats, {n1} rows of the results doc table, {n2} rows of the README table")
     if problems:
         print(f"{len(problems)} MISMATCHES:")

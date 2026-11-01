@@ -689,3 +689,29 @@ decisions at the end (see CLAUDE.md). Architecture: [ARCHITECTURE.md](ARCHITECTU
   Engineer-mode run on a dev scenario was not blinded and invariant 1 was narrower than stated. The model prompts never
   carried them.
 - **Alternatives:** labelling dev-scenario runs as unblinded demonstrations (keeps a leak the UI does not need).
+
+### D50. Explanation check: a wider unsafe-wording list over the whole text (2026-11-01)
+
+- **What:** a post-holdout fix to frozen code (ats_hybrid_explain 9850f995df8b, was e327e1021001). The D47 list
+  applied only after the isolation sentence; it is replaced by three kinds of wording:
+  - unsafe anywhere in the text: bypassing, jumpers, defeating, paralleling the sources, skipping the lockout or
+    isolation, working without isolating or locking out;
+  - unsafe in the action part after the sentence: energized or live work, under load, power on, "hot" (in the
+    evidence these words describe readings);
+  - re-energizing (restore the sources or power, close 52U, start the generator) when a repair instruction follows;
+    "after the repair, restore the sources and verify" passes.
+  Paralleling now needs a source as its object ("paralleled readings" passes). A negation covers only its own
+  clause: it stops at punctuation and at "and", "then", "but". README and the results doc now say it is a fixed word
+  list that narrows what the model can say, not a safety review of the text.
+- **Why:** an independent audit passed the D47 check with "Re-energize the switch, then replace...", "Restore both
+  sources, then...", "With power on, replace...", "...without isolating the sources", "Skip the lockout and...", text
+  placed before the sentence ("Bypass the interlock. "), and a negation 80 characters away ("no reason to delay and
+  bypass..."); and flagged "paralleled readings" falsely.
+- **Alternatives:** an allow-list for the action field (a fixed opening phrase only; less natural text, and the model
+  ignored such constraints in D41); narrowing the claim only (the gaps would stay in the live demo).
+- **Evidence:** all ten audit wordings fail the check, four safe wordings pass (tests). The 12 committed D47
+  explanation texts all pass the new check, and none of the 28 holdout texts has the new unsafe wordings (they fail
+  only for the D47 sentence they predate), so no paid re-run was needed. Offline identity: tool logs and diagnoses
+  identical before and after (120 of 120) and identical to the holdout run's traces (56 of 56); the regenerated
+  results/identity/after.json carries the current fingerprints, and scripts/verify_results.py now checks that (the
+  audit's D2: the committed record had been made before D47's last edit).
