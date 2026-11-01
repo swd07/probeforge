@@ -120,6 +120,8 @@ def test_agent_session_then_intervention_with_policy_fact():
                     # the policy contradicts the agent's reason on the card: the generator feeds the load
                     assert ev["strong"] and ev["agent_reason"] == "load on UPS"
                     assert ev["facts"] == ["Load is currently powered from the Emergency source; isolation will de-energize it."]
+                    # the cited reading is on the card while the agent runs (its toolbox is bound only afterwards)
+                    assert [e["step"] for e in ev["evidence"]] == [1] and "TS:20 to TS:21" in ev["evidence"][0]["text"]
                     ws.send_json({"action": "approval", "id": ev["id"], "approve": False})
                 if ev["type"] == "done":
                     break

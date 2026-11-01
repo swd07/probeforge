@@ -299,6 +299,7 @@ class AtsSession:
         self.cancelled = False
         self.done = False  # the diagnosis is in (the session stays open for the intervention)
         self.closed = False
+        self.seen: dict[int, dict] = {}  # every tool step of this session, for the citations on approval cards
         self.trace: dict | None = None
         self._ids = itertools.count(1)
         self._pending: dict[int, tuple[threading.Event, list]] = {}
@@ -321,7 +322,8 @@ class AtsSession:
         rid = next(self._ids)
         event, answer = threading.Event(), [False]
         self._pending[rid] = (event, answer)
-        log = {e["step"]: e for e in (self.tb.log if self.tb else [])}
+        # citations come from the steps seen so far: the agent session gets its toolbox only after the run
+        log = {**self.seen, **{e["step"]: e for e in (self.tb.log if self.tb else [])}}
         cited = [{"step": s, "text": describe(log[s])} for s in req.args.get("evidence_steps") or [] if s in log]
         self.emit({"type": "approval_request", "id": rid, "step": req.step, "tool": req.tool,
                    "args": {k: v for k, v in req.args.items() if k not in ("readings", "target_id")},
@@ -338,6 +340,7 @@ class AtsSession:
         if self.cancelled:
             raise Cancelled()
         if ev["type"] == "tool":
+            self.seen[ev["step"]] = ev
             self._advance_flow(ev)
             ev = {**ev, "probes": self._probes(ev), "panel": snapshot(self.bench, self.flow)}
         self.emit(ev)
