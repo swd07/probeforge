@@ -15,6 +15,7 @@ from probeforge.ats.hybrid.pipeline import healthy_sequence, warm
 from probeforge.ats.hybrid.read import SHEET_DIR, SHEETS, to_netlist
 from probeforge.eval.spend import SpendLedger  # noqa: F401 - read as common.SpendLedger (tests replace it)
 from probeforge.faults.model import Fault
+from probeforge.server import settings
 from probeforge.sim.schematic import render_svg
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -26,7 +27,7 @@ NETLIST = BENCH.n
 SVG = render_svg(NETLIST)
 OUTAGE_S = 60.0  # every session starts 60 s after the Normal source failed (as the batch runs)
 LIVE_V = 20.0
-APPROVAL_TIMEOUT_S = 600
+APPROVAL_TIMEOUT_S = settings.APPROVAL_TIMEOUT_S  # 120 s in public mode
 FLOW = ["Fault detected", "Diagnosis in progress", "Root cause identified", "Awaiting authorized intervention",
         "Power restored", "Transfer verified"]
 MANUAL_TOOLS = {"read_panel", "read_event_log", "read_metering", "read_position_indicator", "wait", "measure_voltage", "measure_resistance",

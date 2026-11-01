@@ -24,16 +24,28 @@ Protocol (JSON over /ws):
 """
 
 import asyncio
+import threading
+from concurrent.futures import ThreadPoolExecutor
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import Response
 from fastapi.staticfiles import StaticFiles
 
-from probeforge.server import ats, level1, ui_runs
+from probeforge.server import ats, level1, settings, ui_runs
 from probeforge.server.level1 import (  # noqa: F401 - re-exported (tests and scripts use app.<name>)
     ROOT, AgentSession, HybridSession, ManualSession, Session, pick_fault)
 
 app = FastAPI(title="ProbeForge")
+
+# Blocking work runs in two bounded pools (audit S1): tool calls, one in flight per connection, and runs (agent,
+# hybrid, Compare), refused when all are busy. A connection holds two tool workers at most (a pending approval and one
+# queued call), and
+# connections are capped overall and per IP, so one visitor cannot starve the others.
+TOOL_POOL = ThreadPoolExecutor(max_workers=settings.TOOL_WORKERS, thread_name_prefix="tool")
+JOB_POOL = ThreadPoolExecutor(max_workers=settings.JOB_WORKERS, thread_name_prefix="job")
+_jobs = {"running": 0}
+_jobs_lock = threading.Lock()
+_connections: dict[str, int] = {}
 
 
 @app.get("/api/meta")
@@ -67,6 +79,11 @@ def ats_schematic() -> Response:
 
 @app.websocket("/ws")
 async def ws(websocket: WebSocket) -> None:
+    ip = websocket.client.host if websocket.client else "?"
+    if sum(_connections.values()) >= settings.MAX_CONNECTIONS or _connections.get(ip, 0) >= settings.MAX_PER_IP:
+        await websocket.close(code=1013)  # try again later
+        return
+    _connections[ip] = _connections.get(ip, 0) + 1
     await websocket.accept()
     loop = asyncio.get_running_loop()
     queue: asyncio.Queue = asyncio.Queue()
@@ -80,20 +97,52 @@ async def ws(websocket: WebSocket) -> None:
         while True:
             await websocket.send_json(await queue.get())
 
-    def background(fn, *args) -> None:
-        """Run a blocking job in a worker thread; a crash reaches the browser as an error event."""
+    pending = {"tool": 0}  # tool calls of this connection: one running plus one queued at most
+
+    def background(fn, *args, run: bool = False) -> bool:
+        """Run a blocking call in a worker thread; a crash reaches the browser as an error event. A tool call while
+        two are pending (one waiting for an approval, say, and one queued) is refused; a run is refused when every
+        run worker is busy. Returns whether it started."""
+        if run:
+            with _jobs_lock:
+                if _jobs["running"] >= settings.JOB_WORKERS:
+                    emit({"type": "error", "message": "The server is busy with other runs; try again in a minute."})
+                    return False
+                _jobs["running"] += 1
+        elif pending["tool"] >= 2:
+            emit({"type": "error", "message": "A step is still pending (an approval may be waiting): answer it or wait."})
+            return False
+        else:
+            pending["tool"] += 1
+
         def job():
             try:
                 fn(*args)
             except Exception as e:  # noqa: BLE001 - report anything, the session must not hang silently
                 emit({"type": "error", "message": f"{type(e).__name__}: {e}"})
-        loop.run_in_executor(None, job)
+            finally:
+                if run:
+                    with _jobs_lock:
+                        _jobs["running"] -= 1
+                else:
+                    pending["tool"] -= 1
+        loop.run_in_executor(JOB_POOL if run else TOOL_POOL, job)
+        return True
 
     sender_task = asyncio.create_task(sender())
     session: Session | ats.AtsSession | None = None
     try:
         while True:
-            msg = await websocket.receive_json()
+            try:
+                msg = await asyncio.wait_for(websocket.receive_json(), timeout=settings.IDLE_TIMEOUT_S)
+            except asyncio.TimeoutError:
+                emit({"type": "error", "message": f"Session closed after {settings.IDLE_TIMEOUT_S // 60} minutes without activity."})
+                if session:
+                    ui_runs.record(session, "idle timeout")
+                    session.cancel(notify=False)
+                await asyncio.sleep(0.2)  # let the message go out
+                await websocket.close()
+                break
             action = msg.get("action")
             if action in ("start", "start_manual", "start_hybrid"):
                 ui_runs.record(session, "replaced by a new run")
@@ -109,7 +158,8 @@ async def ws(websocket: WebSocket) -> None:
                         session = None
                         continue
                     if isinstance(session, (ats.AtsAgentSession, ats.AtsHybridSession)):
-                        background(session.run)
+                        if not background(session.run, run=True):
+                            session = None
                     else:
                         session.start()
                     continue
@@ -120,10 +170,12 @@ async def ws(websocket: WebSocket) -> None:
                     continue
                 if action == "start":
                     session = AgentSession(fault, source, msg.get("effort") or "low", emit)
-                    background(session.run)
+                    if not background(session.run, run=True):
+                        session = None
                 elif action == "start_hybrid":
                     session = HybridSession(fault, source, str(msg.get("schematic") or "saved"), emit)
-                    background(session.run)
+                    if not background(session.run, run=True):
+                        session = None
                 else:
                     session = ManualSession(fault, source, str(msg.get("engineer") or ""), emit)
                     session.start()
@@ -133,9 +185,9 @@ async def ws(websocket: WebSocket) -> None:
             elif action == "tool":
                 emit({"type": "error", "message": "No engineer session is running: choose Engineer, pick a fault and press Start."})
             elif action == "compare" and isinstance(session, ManualSession):
-                background(session.compare)
+                background(session.compare, run=True)
             elif action == "compare" and isinstance(session, ats.AtsSession):
-                background(session.compare, level1.client)
+                background(session.compare, level1.client, run=True)
             elif action == "suggest" and isinstance(session, ats.AtsManualSession):
                 background(session.suggest)
             elif action in ("approval", "flags") and session:
@@ -153,6 +205,9 @@ async def ws(websocket: WebSocket) -> None:
             session.cancel(notify=False)
     finally:
         sender_task.cancel()
+        _connections[ip] -= 1
+        if not _connections[ip]:
+            del _connections[ip]
 
 
 DIST = ROOT / "web" / "dist"

@@ -25,6 +25,7 @@ from probeforge.faults.model import COMPONENT_MODES, PART_MODES
 from probeforge.hybrid import read_consensus, run_hybrid
 from probeforge.hybrid.llm import Usage
 from probeforge.hybrid.netlist_io import flags_of, wrong_nets
+from probeforge.server import settings
 from probeforge.sim import Circuit, Netlist
 from probeforge.sim.schematic import render_png, render_svg
 from probeforge.tools import ApprovalRequest, ToolBox, deny_all
@@ -37,7 +38,7 @@ NETLIST = Netlist.load(CIRCUIT_PATH)
 SVG = render_svg(NETLIST)
 SCENARIOS = {s.id: s for s in load_scenarios()}
 LIVE_V = 20.0
-APPROVAL_TIMEOUT_S = 600
+APPROVAL_TIMEOUT_S = settings.APPROVAL_TIMEOUT_S  # 120 s in public mode
 MANUAL_TOOLS = {"read_indicators", "press_button", "wait", "set_power", "measure_voltage", "measure_resistance",
                 "perform_action", "submit_diagnosis"}
 
