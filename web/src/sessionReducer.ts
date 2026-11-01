@@ -12,6 +12,7 @@ export interface State {
   saved: string;
   compare: CompareResult | null;
   compareProgress: { baseline: boolean; agentTurn: number; hybrid?: boolean } | null;
+  run: number | null; // the run number of the current session (from Start)
   source: string;
   model: string;
   effort: string;
@@ -48,6 +49,7 @@ export const initial: State = {
   saved: "",
   compare: null,
   compareProgress: null,
+  run: null,
   source: "",
   model: "",
   effort: "",
@@ -89,15 +91,18 @@ export interface StartOptions {
 
 export const hypKey = (h: Hypothesis) => `${h.component}${h.part ? ":" + h.part : ""} ${h.failure_mode}`;
 
-type Action = { type: "reset"; mode: Mode; bench: Bench } | { type: "event"; ev: any; neutral: string };
+type Action = { type: "reset"; mode: Mode; bench: Bench; run?: number } | { type: "event"; ev: any; neutral: string };
 
 export function reducer(s: State, a: Action): State {
-  if (a.type === "reset") return { ...initial, status: "running", mode: a.mode, bench: a.bench };
+  if (a.type === "reset") return { ...initial, status: "running", mode: a.mode, bench: a.bench, run: a.run ?? null };
   const ev = a.ev;
+  // events carry the run number this page gave at Start: a late event of a replaced run is dropped (audit C2)
+  if (typeof ev.run === "number" && ev.run !== s.run) return s;
   switch (ev.type) {
     case "session":
       return {
         ...initial,
+        run: s.run,
         status: "running",
         mode: ev.mode ?? "agent",
         bench: ev.bench ?? "star_delta",

@@ -36,3 +36,20 @@ def test_a_closed_connection_cancels_its_session_and_records_the_run():
     rows = ui_runs.faults_run("ats")
     assert [r["ended"] for r in rows] == ["connection closed"]
     assert json.dumps(rows).count("dev-02") == 1
+
+
+def test_events_carry_the_run_number_and_compare_runs_once():
+    """Audit C2: every event of a run carries the page's run number (a replaced run's late events are dropped by the
+    page), and a second Compare on the same result is refused instead of starting a second paid agent run."""
+    with TestClient(server.app).websocket_connect("/ws") as ws:
+        ws.send_json({"action": "start_manual", "bench": "ats", "source": "scenario", "scenario": "dev-03",
+                      "engineer": "x", "token": access.issue(), "client_run": 7})
+        ev = ws.receive_json()
+        assert ev["type"] == "session" and ev["run"] == 7
+    from probeforge.server.ats_session import AtsSession
+
+    sent = []
+    s = AtsSession([], "test", None, sent.append)
+    s.done, s.trace, s.comparing = True, {"diagnosis": None, "outcome": "insufficient_information"}, True
+    s.compare(lambda: None)
+    assert sent == [{"type": "error", "message": "Compare is already running for this result."}]

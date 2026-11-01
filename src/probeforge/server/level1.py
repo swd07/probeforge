@@ -376,6 +376,7 @@ class ManualSession(Session):
         self.tb = ToolBox(self.circuit, approver=self.approver, on_event=self.on_event)
         self.started = time.perf_counter()
         self.saved_path: Path | None = None
+        self.comparing = False
         self._lock = threading.Lock()
 
     def start(self) -> None:
@@ -428,6 +429,16 @@ class ManualSession(Session):
         if not self.done or self.trace is None:
             self.emit({"type": "error", "message": "finish the manual diagnosis first"})
             return
+        if self.comparing:  # audit C2: one Compare at a time
+            self.emit({"type": "error", "message": "Compare is already running for this result."})
+            return
+        self.comparing = True
+        try:
+            self._compare()
+        finally:
+            self.comparing = False
+
+    def _compare(self) -> None:
         columns = {"human": summary(self.trace, self.judged)}
 
         c = Circuit(NETLIST)
@@ -466,7 +477,8 @@ class ManualSession(Session):
         stem = self.saved_path.stem if self.saved_path else f"{slug(str(self.fault))}_{datetime.now():%H%M%S}"
         (COMPARE_DIR / f"{stem}.json").write_text(json.dumps(result, indent=2), encoding="utf-8")
         prune(COMPARE_DIR)
-        self.emit(result)
+        if not self.cancelled:  # a replaced session's Compare must not land on the next run
+            self.emit(result)
 
 
 def parse_fault(text: str) -> Fault:

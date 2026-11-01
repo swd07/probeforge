@@ -29,3 +29,19 @@ describe("connection lost (audit C1)", () => {
     expect(event(initial, { type: "connection_lost" })).toBe(initial);
   });
 });
+
+describe("events of an older run (audit C2)", () => {
+  it("are dropped once a new run started", () => {
+    const run2 = reducer(initial, { type: "reset", mode: "agent", bench: "ats", run: 2 });
+    const late = event(run2, { type: "compare", run: 1, fault: "TS:A-B open", columns: {}, note: "" });
+    expect(late).toBe(run2);
+    expect(late.compare).toBeNull();
+  });
+
+  it("of the current run are applied, and the run survives the session event", () => {
+    const run2 = reducer(initial, { type: "reset", mode: "agent", bench: "ats", run: 2 });
+    const s = event(run2, { type: "session", run: 2, mode: "agent", bench: "ats", source: "x", panel: null });
+    expect(s.run).toBe(2);
+    expect(event(s, { type: "compare", run: 2, fault: "f", columns: {}, note: "" }).compare).not.toBeNull();
+  });
+});

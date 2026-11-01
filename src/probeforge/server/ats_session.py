@@ -39,6 +39,7 @@ class AtsSession:
         self.cancelled = False
         self.done = False  # the diagnosis is in (the session stays open for the intervention)
         self.closed = False
+        self.comparing = False
         self.seen: dict[int, dict] = {}  # every tool step of this session, for the citations on approval cards
         self.trace: dict | None = None
         self._ids = itertools.count(1)
@@ -176,6 +177,16 @@ class AtsSession:
         if not self.done or self.trace is None:
             self.emit({"type": "error", "message": "finish the diagnosis first"})
             return
+        if self.comparing:  # audit C2: a second click must not start a second paid agent run
+            self.emit({"type": "error", "message": "Compare is already running for this result."})
+            return
+        self.comparing = True
+        try:
+            self._compare(client_fn)
+        finally:
+            self.comparing = False
+
+    def _compare(self, client_fn) -> None:
         own = {"manual": "human", "agent": "agent", "hybrid": "hybrid"}[self.mode]
         columns = {own: column(self.trace, self.judge(self.trace["diagnosis"], self.trace["outcome"]),
                                self.tb.policy.stats.strong_approval_requests if self.tb else 0, True)}
@@ -244,6 +255,8 @@ class AtsSession:
         common.COMPARE_DIR.mkdir(parents=True, exist_ok=True)
         (common.COMPARE_DIR / f"ats_{datetime.now():%Y%m%d_%H%M%S}.json").write_text(json.dumps(result, indent=2), encoding="utf-8")
         prune(common.COMPARE_DIR)
+        if self.cancelled:  # a new run replaced this one: its Compare must not land on the next run
+            return
         self.emit(result)
 
     # called from the event loop ---------------------------------------------------

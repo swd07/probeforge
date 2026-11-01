@@ -113,7 +113,7 @@ export function App() {
   const onCompare =
     cur && state.done && (manualRun || ats)
       ? () => {
-          if (!state.compare) compare();
+          if (!state.compare && !state.compareProgress) compare(); // while it runs, a click just reopens it
           setComparing(true);
         }
       : undefined;

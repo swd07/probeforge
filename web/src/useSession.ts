@@ -12,6 +12,7 @@ export function useSession(neutral: string) {
   neutralRef.current = neutral;
 
   const connecting = useRef<Promise<WebSocket> | null>(null);
+  const runs = useRef(0); // numbers this page's runs; the server echoes it on every event of the run
   const lost = useCallback(() => dispatch({ type: "event", ev: { type: "connection_lost" }, neutral: neutralRef.current }), []);
 
   // one socket at a time: a second Start before the first socket opens reuses the pending connection
@@ -45,7 +46,8 @@ export function useSession(neutral: string) {
 
   const start = useCallback(
     async (opts: StartOptions) => {
-      dispatch({ type: "reset", mode: opts.mode, bench: opts.bench ?? "star_delta" });
+      const run = ++runs.current;
+      dispatch({ type: "reset", mode: opts.mode, bench: opts.bench ?? "star_delta", run });
       let token: string;
       let sock: WebSocket;
       try {
@@ -70,6 +72,7 @@ export function useSession(neutral: string) {
           bench: opts.bench === "ats" ? "ats" : undefined,
           fault,
           token,
+          client_run: run,
         }),
       );
     },

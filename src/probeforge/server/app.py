@@ -24,6 +24,7 @@ Protocol (JSON over /ws):
 """
 
 import asyncio
+import itertools
 import json
 import threading
 from concurrent.futures import ThreadPoolExecutor
@@ -64,6 +65,8 @@ def message_problem(msg) -> str | None:
     action = msg.get("action")
     if action not in ACTIONS:
         return "unknown action"
+    if "client_run" in msg and (not isinstance(msg["client_run"], int) or isinstance(msg["client_run"], bool)):
+        return "client_run must be an integer"
     if action in ("approval", "flags", "wiring") and (not isinstance(msg.get("id"), int) or isinstance(msg.get("id"), bool)):
         return "id must be an integer"
     if action in ("approval", "flags") and not isinstance(msg.get("approve", False), bool):
@@ -121,9 +124,17 @@ async def ws(websocket: WebSocket) -> None:
     queue: asyncio.Queue = asyncio.Queue()
 
     def emit(ev: dict) -> None:
-        if ev.get("type") == "done":
-            ui_runs.record(session, "diagnosis")  # the local UI run list (D44), never sent to the agent
         loop.call_soon_threadsafe(queue.put_nowait, ev)
+
+    def run_emit(run_no: int, owner: dict):
+        """The emitter of one run: its events carry the run number the page gave (a late event from a replaced
+        run is dropped by the page, audit C2), and its result goes into the local UI run list (D44) for that run's
+        session, not for whichever session is current."""
+        def send(ev: dict) -> None:
+            if ev.get("type") == "done":
+                ui_runs.record(owner.get("session"), "diagnosis")
+            emit({**ev, "run": run_no})
+        return send
 
     async def sender() -> None:
         while True:
@@ -162,6 +173,7 @@ async def ws(websocket: WebSocket) -> None:
         return True
 
     sender_task = asyncio.create_task(sender())
+    run_numbers = itertools.count(1)
     session: Session | ats.AtsSession | None = None
     try:
         while True:
@@ -190,13 +202,16 @@ async def ws(websocket: WebSocket) -> None:
                         emit({"type": "error", "message": "The session token is missing or expired: reload the page."})
                         continue
                     ui_runs.record(session, "replaced by a new run")
+                    run_no = msg["client_run"] if isinstance(msg.get("client_run"), int) else next(run_numbers)
+                    owner: dict = {}
+                    out = run_emit(run_no, owner)
                     if session and not session.done:
                         session.cancel(notify=False)
                     elif isinstance(session, ats.AtsSession):
                         session.cancel(notify=False)  # close a finished ATS session's intervention
                     if msg.get("bench") == "ats":
                         try:
-                            session = ats.start_session(action, msg, emit, level1.client)
+                            session = owner["session"] = ats.start_session(action, msg, out, level1.client)
                         except (ValueError, KeyError) as e:
                             emit({"type": "error", "message": str(e)})
                             session = None
@@ -213,15 +228,15 @@ async def ws(websocket: WebSocket) -> None:
                         emit({"type": "error", "message": str(e)})
                         continue
                     if action == "start":
-                        session = AgentSession(fault, source, settings.agent_effort(msg.get("effort")), emit)
+                        session = owner["session"] = AgentSession(fault, source, settings.agent_effort(msg.get("effort")), out)
                         if not background(session.run, run=True):
                             session = None
                     elif action == "start_hybrid":
-                        session = HybridSession(fault, source, str(msg.get("schematic") or "saved"), emit)
+                        session = owner["session"] = HybridSession(fault, source, str(msg.get("schematic") or "saved"), out)
                         if not background(session.run, run=True):
                             session = None
                     else:
-                        session = ManualSession(fault, source, str(msg.get("engineer") or ""), emit)
+                        session = owner["session"] = ManualSession(fault, source, str(msg.get("engineer") or ""), out)
                         session.start()
                 elif action == "tool" and isinstance(session, (ManualSession, ats.AtsSession)):
                     args = msg.get("args") if isinstance(msg.get("args"), dict) else {}
