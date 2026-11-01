@@ -21,6 +21,7 @@ build-backend = "uv_build"
 
 [dependency-groups]
 dev = [
+    "jsonschema>=4.26.0",
     "pillow>=13.0.0",
     "playwright>=1.64.1",
     "pytest>=9.1.1",

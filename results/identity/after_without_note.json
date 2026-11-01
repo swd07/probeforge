@@ -1,0 +1,530 @@
+{
+ "frozen": {
+  "ats_agent": "b3e681a84e0d",
+  "ats_agent_loop": "efe23395808d",
+  "ats_bench": "1897f5e2aa3e",
+  "ats_faults": "2f3ffeba22da",
+  "ats_hybrid_explain": "a110c0b04c04",
+  "ats_hybrid_pipeline": "8a9c95c16c71",
+  "ats_hybrid_read": "08b4676a5c4b",
+  "ats_infogain": "2eff9c8764c1",
+  "ats_policy": "832a926080c6",
+  "ats_scoring": "6eb679a9fe4f",
+  "ats_sheet_crops": "5687e25c8ce3",
+  "ats_tools": "b16518821e9a",
+  "ats_transcription_default": "7d269af0a274"
+ },
+ "rows": {
+  "baseline/a1_coil_open": {
+   "diagnosis": "e86ade604895f469",
+   "tool_log": "7ef785a1848c3c0b"
+  },
+  "baseline/a2_wire2_open": {
+   "diagnosis": "5e23657589651f18",
+   "tool_log": "ea78e40450617231"
+  },
+  "baseline/a3_er_output": {
+   "diagnosis": "87970fea2daf1acb",
+   "tool_log": "2e6cffe3af4210d5"
+  },
+  "baseline/a4_cutoff_8_9": {
+   "diagnosis": "75b1ed2c661eb3be",
+   "tool_log": "006baa2f7b1d39b6"
+  },
+  "baseline/a5_jammed": {
+   "diagnosis": "45811d6303159990",
+   "tool_log": "c705e2eb591b07f4"
+  },
+  "baseline/a6_pin1_open": {
+   "diagnosis": "bb4dd8489de8fdd7",
+   "tool_log": "8235d8ed67b8afd1"
+  },
+  "baseline/a7_burnout_chain": {
+   "diagnosis": "b37cc5d25baa07e2",
+   "tool_log": "28a9388a58a8f051"
+  },
+  "baseline/b1_wire7_open": {
+   "diagnosis": "35e99167f563ac7a",
+   "tool_log": "45b2294136137348"
+  },
+  "baseline/b2_pin18_open": {
+   "diagnosis": "2c0ddba7d96916e5",
+   "tool_log": "376bebf52b18bebc"
+  },
+  "baseline/b3_wire6_open": {
+   "diagnosis": "d5544c90796e608e",
+   "tool_log": "4a96f7f2fdbf3211"
+  },
+  "baseline/h01": {
+   "diagnosis": "daa0cc750c82a5f5",
+   "tool_log": "cbf673d3e0158b20"
+  },
+  "baseline/h02": {
+   "diagnosis": "84d0cc77cce1998a",
+   "tool_log": "007ee82c81b13ec6"
+  },
+  "baseline/h03": {
+   "diagnosis": "837b75655ac9259e",
+   "tool_log": "82d8d55181d74380"
+  },
+  "baseline/h04": {
+   "diagnosis": "7e300e6fa0fa9d20",
+   "tool_log": "47cc64a8058a26ae"
+  },
+  "baseline/h05": {
+   "diagnosis": "2e555a6e1c13c57e",
+   "tool_log": "70404199df1f2e68"
+  },
+  "baseline/h06": {
+   "diagnosis": "daa0cc750c82a5f5",
+   "tool_log": "cbf673d3e0158b20"
+  },
+  "baseline/h07": {
+   "diagnosis": "1d391991e318ece9",
+   "tool_log": "a0b3991ced15206e"
+  },
+  "baseline/h08": {
+   "diagnosis": "837b75655ac9259e",
+   "tool_log": "82d8d55181d74380"
+  },
+  "baseline/h09": {
+   "diagnosis": "7e300e6fa0fa9d20",
+   "tool_log": "47cc64a8058a26ae"
+  },
+  "baseline/h10": {
+   "diagnosis": "837b75655ac9259e",
+   "tool_log": "82d8d55181d74380"
+  },
+  "baseline/h11": {
+   "diagnosis": "8d3308c375196cb8",
+   "tool_log": "1e816bf468a9c489"
+  },
+  "baseline/h12": {
+   "diagnosis": "876910059d5dcae5",
+   "tool_log": "938598c9d6d7e85d"
+  },
+  "baseline/h13": {
+   "diagnosis": "38c59f889e1f9661",
+   "tool_log": "fc5e67934d76bbf2"
+  },
+  "baseline/h14": {
+   "diagnosis": "a7a1dfbd5a9e7b9c",
+   "tool_log": "500fa2702721f075"
+  },
+  "baseline/h15": {
+   "diagnosis": "e8047f12f216ee58",
+   "tool_log": "8e56ca1b0db2e6cf"
+  },
+  "baseline/h16": {
+   "diagnosis": "daa0cc750c82a5f5",
+   "tool_log": "cbf673d3e0158b20"
+  },
+  "baseline/h17": {
+   "diagnosis": "daa0cc750c82a5f5",
+   "tool_log": "cbf673d3e0158b20"
+  },
+  "baseline/h18": {
+   "diagnosis": "1aeb8263dc807fd6",
+   "tool_log": "6ff6f4a1e9cadbce"
+  },
+  "baseline/h19": {
+   "diagnosis": "daa0cc750c82a5f5",
+   "tool_log": "cbf673d3e0158b20"
+  },
+  "baseline/h20": {
+   "diagnosis": "bf2b6d363d056bb9",
+   "tool_log": "80aa29ea99022af1"
+  },
+  "baseline/h21": {
+   "diagnosis": "6a039c4ede8e35fa",
+   "tool_log": "a241c5d84219fa1b"
+  },
+  "baseline/h22": {
+   "diagnosis": "dae1000a8b5b12b5",
+   "tool_log": "0d192eee10e7ca9f"
+  },
+  "baseline/h23": {
+   "diagnosis": "bf4b73ce9617aa64",
+   "tool_log": "31915d8f87685bc4"
+  },
+  "baseline/h24": {
+   "diagnosis": "047b395e69726c84",
+   "tool_log": "2a9ca9e25aceb1a6"
+  },
+  "baseline/h25": {
+   "diagnosis": "dd04a27d0bb8e671",
+   "tool_log": "7d8172fac4d9b0ab"
+  },
+  "baseline/h26": {
+   "diagnosis": "38bdd7cd827a33ef",
+   "tool_log": "b633a853ef1d5325"
+  },
+  "baseline/h27": {
+   "diagnosis": "38bdd7cd827a33ef",
+   "tool_log": "b633a853ef1d5325"
+  },
+  "baseline/h28": {
+   "diagnosis": "38bdd7cd827a33ef",
+   "tool_log": "b633a853ef1d5325"
+  },
+  "baseline/x1_aux14b_open": {
+   "diagnosis": "837b75655ac9259e",
+   "tool_log": "82d8d55181d74380"
+  },
+  "baseline/x2_engine_start_open": {
+   "diagnosis": "410f705e129c1db4",
+   "tool_log": "639b33a904710e40"
+  },
+  "hybrid/run_20261031_003748/a1_coil_open": {
+   "diagnosis": "e86ade604895f469",
+   "tool_log": "151183f6c5ef17a3"
+  },
+  "hybrid/run_20261031_003748/a2_wire2_open": {
+   "diagnosis": "54f7a1a898de8d8e",
+   "tool_log": "bdb4e8d20281d6a0"
+  },
+  "hybrid/run_20261031_003748/a3_er_output": {
+   "diagnosis": "02b188e860901db0",
+   "tool_log": "6b38d9553b6dc7a3"
+  },
+  "hybrid/run_20261031_003748/a4_cutoff_8_9": {
+   "diagnosis": "75b1ed2c661eb3be",
+   "tool_log": "22acefc5351ae32f"
+  },
+  "hybrid/run_20261031_003748/a5_jammed": {
+   "diagnosis": "45811d6303159990",
+   "tool_log": "9757f2a00b619e60"
+  },
+  "hybrid/run_20261031_003748/a6_pin1_open": {
+   "diagnosis": "493dcd32a24c86f2",
+   "tool_log": "6d9be1ea91b2b71e"
+  },
+  "hybrid/run_20261031_003748/a7_burnout_chain": {
+   "diagnosis": "b37cc5d25baa07e2",
+   "tool_log": "70ce86014b693260"
+  },
+  "hybrid/run_20261031_003748/b1_wire7_open": {
+   "diagnosis": "5a3ed09729a1c421",
+   "tool_log": "484115be0f202ed0"
+  },
+  "hybrid/run_20261031_003748/b2_pin18_open": {
+   "diagnosis": "d1a372b8c37186a3",
+   "tool_log": "0152ea4986f8009c"
+  },
+  "hybrid/run_20261031_003748/b3_wire6_open": {
+   "diagnosis": "e0555b7bdd6b5ac9",
+   "tool_log": "af9e3ce5861cce95"
+  },
+  "hybrid/run_20261031_003748/h01": {
+   "diagnosis": "4171224e781cb48b",
+   "tool_log": "d91a3f582762842e"
+  },
+  "hybrid/run_20261031_003748/h02": {
+   "diagnosis": "e51f5c02364f4a61",
+   "tool_log": "a6ae88ab8eec0a64"
+  },
+  "hybrid/run_20261031_003748/h03": {
+   "diagnosis": "e094ee3ca216911c",
+   "tool_log": "e456b0f8e899ba16"
+  },
+  "hybrid/run_20261031_003748/h04": {
+   "diagnosis": "27fff39f36c62cab",
+   "tool_log": "3490d2686368b2b5"
+  },
+  "hybrid/run_20261031_003748/h05": {
+   "diagnosis": "d538243a29dbba87",
+   "tool_log": "d7f08f964795771e"
+  },
+  "hybrid/run_20261031_003748/h06": {
+   "diagnosis": "4171224e781cb48b",
+   "tool_log": "d91a3f582762842e"
+  },
+  "hybrid/run_20261031_003748/h07": {
+   "diagnosis": "89ca827fc9a87ccc",
+   "tool_log": "c711e8437fd25f81"
+  },
+  "hybrid/run_20261031_003748/h08": {
+   "diagnosis": "e094ee3ca216911c",
+   "tool_log": "e456b0f8e899ba16"
+  },
+  "hybrid/run_20261031_003748/h09": {
+   "diagnosis": "27fff39f36c62cab",
+   "tool_log": "3490d2686368b2b5"
+  },
+  "hybrid/run_20261031_003748/h10": {
+   "diagnosis": "e094ee3ca216911c",
+   "tool_log": "e456b0f8e899ba16"
+  },
+  "hybrid/run_20261031_003748/h11": {
+   "diagnosis": "ea43880fde9b7668",
+   "tool_log": "d1ae27a2efdfbfcf"
+  },
+  "hybrid/run_20261031_003748/h12": {
+   "diagnosis": "e98a373088ea6c15",
+   "tool_log": "5f6f692342012a7f"
+  },
+  "hybrid/run_20261031_003748/h13": {
+   "diagnosis": "aaf37cc1017cfa69",
+   "tool_log": "acfb10c886e76cbb"
+  },
+  "hybrid/run_20261031_003748/h14": {
+   "diagnosis": "1b5b3104c5f16631",
+   "tool_log": "d32d2275b50f846b"
+  },
+  "hybrid/run_20261031_003748/h15": {
+   "diagnosis": "460f5b0c97097547",
+   "tool_log": "c0e8561747512e64"
+  },
+  "hybrid/run_20261031_003748/h16": {
+   "diagnosis": "4171224e781cb48b",
+   "tool_log": "d91a3f582762842e"
+  },
+  "hybrid/run_20261031_003748/h17": {
+   "diagnosis": "4171224e781cb48b",
+   "tool_log": "d91a3f582762842e"
+  },
+  "hybrid/run_20261031_003748/h18": {
+   "diagnosis": "07e099c115099381",
+   "tool_log": "e7cdf4e186721c96"
+  },
+  "hybrid/run_20261031_003748/h19": {
+   "diagnosis": "4171224e781cb48b",
+   "tool_log": "d91a3f582762842e"
+  },
+  "hybrid/run_20261031_003748/h20": {
+   "diagnosis": "bf2b6d363d056bb9",
+   "tool_log": "80aa29ea99022af1"
+  },
+  "hybrid/run_20261031_003748/h21": {
+   "diagnosis": "21faf93c939697eb",
+   "tool_log": "6311f5b603b09628"
+  },
+  "hybrid/run_20261031_003748/h22": {
+   "diagnosis": "dae1000a8b5b12b5",
+   "tool_log": "75d70241a5d96236"
+  },
+  "hybrid/run_20261031_003748/h23": {
+   "diagnosis": "090d7969d6a9ae09",
+   "tool_log": "61ec9531fb9839d6"
+  },
+  "hybrid/run_20261031_003748/h24": {
+   "diagnosis": "2d80c9c30a6e0a26",
+   "tool_log": "64b808f2e6d38514"
+  },
+  "hybrid/run_20261031_003748/h25": {
+   "diagnosis": "dd04a27d0bb8e671",
+   "tool_log": "6242513ecb2af233"
+  },
+  "hybrid/run_20261031_003748/h26": {
+   "diagnosis": "d531036df3c010df",
+   "tool_log": "25146612e3f5be63"
+  },
+  "hybrid/run_20261031_003748/h27": {
+   "diagnosis": "d531036df3c010df",
+   "tool_log": "25146612e3f5be63"
+  },
+  "hybrid/run_20261031_003748/h28": {
+   "diagnosis": "d531036df3c010df",
+   "tool_log": "25146612e3f5be63"
+  },
+  "hybrid/run_20261031_003748/x1_aux14b_open": {
+   "diagnosis": "e094ee3ca216911c",
+   "tool_log": "e456b0f8e899ba16"
+  },
+  "hybrid/run_20261031_003748/x2_engine_start_open": {
+   "diagnosis": "e2f53b7be2cfb895",
+   "tool_log": "cf4edb3734f39533"
+  },
+  "hybrid/run_20261031_004956/a1_coil_open": {
+   "diagnosis": "e86ade604895f469",
+   "tool_log": "2774236c89bc50db"
+  },
+  "hybrid/run_20261031_004956/a2_wire2_open": {
+   "diagnosis": "54f7a1a898de8d8e",
+   "tool_log": "d6f96a2bc0774779"
+  },
+  "hybrid/run_20261031_004956/a3_er_output": {
+   "diagnosis": "d965c81b9928a00d",
+   "tool_log": "ab3258e88b2c3b56"
+  },
+  "hybrid/run_20261031_004956/a4_cutoff_8_9": {
+   "diagnosis": "75b1ed2c661eb3be",
+   "tool_log": "63ff4d14b9cedfac"
+  },
+  "hybrid/run_20261031_004956/a5_jammed": {
+   "diagnosis": "45811d6303159990",
+   "tool_log": "fe8331ff59a136ab"
+  },
+  "hybrid/run_20261031_004956/a6_pin1_open": {
+   "diagnosis": "493dcd32a24c86f2",
+   "tool_log": "efe264441d18b51c"
+  },
+  "hybrid/run_20261031_004956/a7_burnout_chain": {
+   "diagnosis": "b37cc5d25baa07e2",
+   "tool_log": "b7038c1b14f37b27"
+  },
+  "hybrid/run_20261031_004956/b1_wire7_open": {
+   "diagnosis": "5a3ed09729a1c421",
+   "tool_log": "484115be0f202ed0"
+  },
+  "hybrid/run_20261031_004956/b2_pin18_open": {
+   "diagnosis": "d1a372b8c37186a3",
+   "tool_log": "0152ea4986f8009c"
+  },
+  "hybrid/run_20261031_004956/b3_wire6_open": {
+   "diagnosis": "e0555b7bdd6b5ac9",
+   "tool_log": "af9e3ce5861cce95"
+  },
+  "hybrid/run_20261031_004956/h01": {
+   "diagnosis": "47a8a807eb322ca9",
+   "tool_log": "8b24f9eab84ce764"
+  },
+  "hybrid/run_20261031_004956/h02": {
+   "diagnosis": "9f0b057c71c6bcb3",
+   "tool_log": "325890238a058420"
+  },
+  "hybrid/run_20261031_004956/h03": {
+   "diagnosis": "03f044d653febc7f",
+   "tool_log": "bc8cfb716f10fe10"
+  },
+  "hybrid/run_20261031_004956/h04": {
+   "diagnosis": "27fff39f36c62cab",
+   "tool_log": "3490d2686368b2b5"
+  },
+  "hybrid/run_20261031_004956/h05": {
+   "diagnosis": "d538243a29dbba87",
+   "tool_log": "55f435151b293e7f"
+  },
+  "hybrid/run_20261031_004956/h06": {
+   "diagnosis": "47a8a807eb322ca9",
+   "tool_log": "8b24f9eab84ce764"
+  },
+  "hybrid/run_20261031_004956/h07": {
+   "diagnosis": "1d391991e318ece9",
+   "tool_log": "4f197fc21151c680"
+  },
+  "hybrid/run_20261031_004956/h08": {
+   "diagnosis": "03f044d653febc7f",
+   "tool_log": "bc8cfb716f10fe10"
+  },
+  "hybrid/run_20261031_004956/h09": {
+   "diagnosis": "27fff39f36c62cab",
+   "tool_log": "3490d2686368b2b5"
+  },
+  "hybrid/run_20261031_004956/h10": {
+   "diagnosis": "03f044d653febc7f",
+   "tool_log": "bc8cfb716f10fe10"
+  },
+  "hybrid/run_20261031_004956/h11": {
+   "diagnosis": "e66259cafa89bc2a",
+   "tool_log": "c347fd5f6869ddd9"
+  },
+  "hybrid/run_20261031_004956/h12": {
+   "diagnosis": "e98a373088ea6c15",
+   "tool_log": "5f6f692342012a7f"
+  },
+  "hybrid/run_20261031_004956/h13": {
+   "diagnosis": "ca5e1ea6f9df4ecd",
+   "tool_log": "ae0ad5612f3a53d4"
+  },
+  "hybrid/run_20261031_004956/h14": {
+   "diagnosis": "1b5b3104c5f16631",
+   "tool_log": "d32d2275b50f846b"
+  },
+  "hybrid/run_20261031_004956/h15": {
+   "diagnosis": "460f5b0c97097547",
+   "tool_log": "c0e8561747512e64"
+  },
+  "hybrid/run_20261031_004956/h16": {
+   "diagnosis": "47a8a807eb322ca9",
+   "tool_log": "8b24f9eab84ce764"
+  },
+  "hybrid/run_20261031_004956/h17": {
+   "diagnosis": "47a8a807eb322ca9",
+   "tool_log": "8b24f9eab84ce764"
+  },
+  "hybrid/run_20261031_004956/h18": {
+   "diagnosis": "2d6cb21352a6f2dd",
+   "tool_log": "f7f82c9efbdb9bfc"
+  },
+  "hybrid/run_20261031_004956/h19": {
+   "diagnosis": "47a8a807eb322ca9",
+   "tool_log": "8b24f9eab84ce764"
+  },
+  "hybrid/run_20261031_004956/h20": {
+   "diagnosis": "bf2b6d363d056bb9",
+   "tool_log": "80aa29ea99022af1"
+  },
+  "hybrid/run_20261031_004956/h21": {
+   "diagnosis": "21faf93c939697eb",
+   "tool_log": "aef12e7f9e4dd6dd"
+  },
+  "hybrid/run_20261031_004956/h22": {
+   "diagnosis": "dae1000a8b5b12b5",
+   "tool_log": "dc02e730f42dded5"
+  },
+  "hybrid/run_20261031_004956/h23": {
+   "diagnosis": "090d7969d6a9ae09",
+   "tool_log": "56787eee85718525"
+  },
+  "hybrid/run_20261031_004956/h24": {
+   "diagnosis": "2d80c9c30a6e0a26",
+   "tool_log": "64b808f2e6d38514"
+  },
+  "hybrid/run_20261031_004956/h25": {
+   "diagnosis": "dd04a27d0bb8e671",
+   "tool_log": "13d0a8a0cd0dda0e"
+  },
+  "hybrid/run_20261031_004956/h26": {
+   "diagnosis": "d531036df3c010df",
+   "tool_log": "25146612e3f5be63"
+  },
+  "hybrid/run_20261031_004956/h27": {
+   "diagnosis": "d531036df3c010df",
+   "tool_log": "25146612e3f5be63"
+  },
+  "hybrid/run_20261031_004956/h28": {
+   "diagnosis": "d531036df3c010df",
+   "tool_log": "25146612e3f5be63"
+  },
+  "hybrid/run_20261031_004956/x1_aux14b_open": {
+   "diagnosis": "03f044d653febc7f",
+   "tool_log": "bc8cfb716f10fe10"
+  },
+  "hybrid/run_20261031_004956/x2_engine_start_open": {
+   "diagnosis": "08770ed89bcb8856",
+   "tool_log": "13943431113a958d"
+  }
+ },
+ "vs_holdout_run": {
+  "different": [
+   "hybrid/run_20261031_003748/h01",
+   "hybrid/run_20261031_003748/h03",
+   "hybrid/run_20261031_003748/h04",
+   "hybrid/run_20261031_003748/h06",
+   "hybrid/run_20261031_003748/h08",
+   "hybrid/run_20261031_003748/h09",
+   "hybrid/run_20261031_003748/h10",
+   "hybrid/run_20261031_003748/h16",
+   "hybrid/run_20261031_003748/h17",
+   "hybrid/run_20261031_003748/h19",
+   "hybrid/run_20261031_003748/h26",
+   "hybrid/run_20261031_003748/h27",
+   "hybrid/run_20261031_003748/h28",
+   "baseline/h01",
+   "baseline/h03",
+   "baseline/h04",
+   "baseline/h06",
+   "baseline/h08",
+   "baseline/h09",
+   "baseline/h10",
+   "baseline/h16",
+   "baseline/h17",
+   "baseline/h19",
+   "baseline/h26",
+   "baseline/h27",
+   "baseline/h28"
+  ],
+  "identical": false
+ }
+}

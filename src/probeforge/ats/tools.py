@@ -69,7 +69,8 @@ TOOL_SPECS = [
     _fn("measure_resistance", "Ohmmeter between two points. Both sources must be isolated. Returns ohms or 'open'.",
         {"point_a": POINT, "point_b": POINT}, ["point_a", "point_b"]),
     _fn("isolate_sources", "Open the Normal disconnect 52U and lock out the generator (both sources isolated). The "
-        "controller relays drop out. Needs approval if the load is powered.", {"reason": REASON}, []),
+        "controller relays drop out. Needs approval; strong approval if the load is powered (cite readings in "
+        "evidence_steps).", {"reason": REASON, "evidence_steps": EVIDENCE_STEPS}, []),
     _fn("restore_sources", "Remove the isolation and lock-out. The controller powers up and restarts its automatic "
         "sequence; after a Transfer Failure or Position Error this is a repeat transfer attempt (strong approval).",
         {"reason": REASON, "evidence_steps": EVIDENCE_STEPS}, []),
@@ -113,6 +114,7 @@ TOOL_SPECS = [
          "part": {"type": "string"},
          "failure_mode": {"type": "string", "enum": FAILURE_MODES},
          "confidence": {"type": "number", "description": "0 to 1."},
+         "note": {"type": "string", "description": "Optional: causes no reading separates, or the causes still possible."},
          "evidence": {"type": "array", "items": {
              "type": "object",
              "properties": {"step": {"type": "integer"},
@@ -123,6 +125,40 @@ TOOL_SPECS = [
         ["outcome", "confidence", "evidence"]),
 ]
 TOOL_NAMES = {t["function"]["name"] for t in TOOL_SPECS}
+PARAMS = {t["function"]["name"]: t["function"]["parameters"] for t in TOOL_SPECS}
+_TYPES = {"string": lambda v: isinstance(v, str), "integer": lambda v: isinstance(v, int) and not isinstance(v, bool),
+          "number": lambda v: isinstance(v, (int, float)) and not isinstance(v, bool), "boolean": lambda v: isinstance(v, bool),
+          "array": lambda v: isinstance(v, list), "object": lambda v: isinstance(v, dict)}
+
+
+def schema_errors(schema: dict, value, path: str) -> list[str]:
+    """Where the arguments break the advertised JSON schema (type, enum, required, no extra fields, nested items)
+    (decision D47: arguments outside the schema are rejected before the policy or the tool sees them)."""
+    t = schema.get("type")
+    if t in _TYPES and not _TYPES[t](value):
+        return [f"{path} must be {t}"]
+    out = [f"{path} must be one of {schema['enum']}"] if "enum" in schema and value not in schema["enum"] else []
+    if t == "object":
+        props = schema.get("properties", {})
+        out += [f"{path}.{k} is required" for k in schema.get("required", []) if k not in value]
+        for k, v in value.items():
+            if k in props:
+                out += schema_errors(props[k], v, f"{path}.{k}")
+            elif schema.get("additionalProperties") is False:
+                out.append(f"{path}.{k} is not a parameter of this tool")
+    elif t == "array" and "items" in schema:
+        for i, v in enumerate(value):
+            out += schema_errors(schema["items"], v, f"{path}[{i}]")
+    return out
+
+
+def readings_taken(name: str, result: dict) -> int:
+    """Instrument readings a composite tool actually returned (manual check, repeat transfer)."""
+    if name == "manual_operation_check":
+        return len(result.get("readings_at_other_position") or result.get("readings") or [])
+    if name == "repeat_transfer_attempt":
+        return len(result.get("readings_during_command") or [])
+    return 0
 
 
 class AtsToolBox:
@@ -163,6 +199,9 @@ class AtsToolBox:
         try:
             if name not in TOOL_NAMES:
                 raise ToolError(f"unknown tool {name!r}")
+            problems = schema_errors(PARAMS[name], raw_args, name)
+            if problems:
+                raise ToolError("arguments do not match the tool's schema: " + "; ".join(problems))
             args = self._normalize(name, raw_args)
             decision = self.policy.check(name, args, panel)
             if decision.verdict == Verdict.BLOCK:
@@ -194,7 +233,8 @@ class AtsToolBox:
             executed = False
 
         if decision is not None:
-            self.policy.record(name, args, decision, executed, step, panel)
+            self.policy.record(name, args, decision, executed, step, panel,
+                               readings=readings_taken(name, result) if executed else 0)
         if executed and name not in UNTIMED:
             self._state_version += 1
             self.bench.step(self.action_s)  # every reading or action takes virtual time
@@ -248,7 +288,7 @@ class AtsToolBox:
             args["readings"] = self._readings(args.get("readings"))
         elif name == "repeat_transfer_attempt":
             args["measure_during"] = self._readings(args.get("measure_during"))
-            args["readings"] = args["measure_during"]  # instrument readings for the evidence check
+            args["readings"] = args["measure_during"]  # for the evidence check of the result (readings_taken)
         elif name == "perform_action":
             action = args.get("action")
             if action in REPAIR_KINDS:

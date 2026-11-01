@@ -261,9 +261,9 @@ def test_no_repair_attempt_when_the_check_cannot_name_a_circuit(monkeypatch):
     assert not rec["ok"] and rec["attempts"] == [] and "cannot name a circuit" in rec["stopped"]
 
 
-FROZEN_ATS = {"ats_hybrid_read": "08b4676a5c4b", "ats_hybrid_pipeline": "8a9c95c16c71", "ats_hybrid_explain": "65fb997fbc54",
+FROZEN_ATS = {"ats_hybrid_read": "08b4676a5c4b", "ats_hybrid_pipeline": "8a9c95c16c71", "ats_hybrid_explain": "e327e1021001",
             "ats_infogain": "2eff9c8764c1", "ats_sheet_crops": "5687e25c8ce3", "ats_agent": "b3e681a84e0d",
-            "ats_agent_loop": "efe23395808d", "ats_tools": "9700f0488e24", "ats_policy": "2e45800cdaff",
+            "ats_agent_loop": "efe23395808d", "ats_tools": "8a43235111f3", "ats_policy": "832a926080c6",
             "ats_bench": "1897f5e2aa3e", "ats_faults": "2f3ffeba22da", "ats_scoring": "6eb679a9fe4f",
             "ats_transcription_default": "7d269af0a274"}
 

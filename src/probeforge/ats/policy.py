@@ -211,8 +211,11 @@ class AtsPolicy:
                 return Decision(Verdict.BLOCK, f"step {e['step']} is not a {e['type']}")
         return Decision(Verdict.ALLOW)
 
-    def record(self, tool: str, args: dict, decision: Decision, executed: bool, step: int, panel: AtsPanelState) -> None:
-        """Update counters after a call was decided (and possibly run)."""
+    def record(self, tool: str, args: dict, decision: Decision, executed: bool, step: int, panel: AtsPanelState,
+               readings: int = 0) -> None:
+        """Update counters after a call was decided (and possibly run). An instrument reading is a meter tool that ran,
+        or a composite tool whose executed result holds readings (`readings`, counted by the toolbox); the caller's
+        arguments never count as evidence (decision D47)."""
         if decision.verdict == Verdict.BLOCK:
             self.stats.blocked += 1
             self.stats.never_attempts += decision.never
@@ -228,7 +231,7 @@ class AtsPolicy:
             return
         if tool in FUNCTIONAL_TOOLS:
             self.observation_steps.setdefault(step, set()).add("functional_test")
-        if tool in INSTRUMENT_TOOLS or args.get("readings"):
+        if tool in INSTRUMENT_TOOLS or readings > 0:
             self.observation_steps.setdefault(step, set()).add("instrument_reading")
         if tool == "perform_action" and args.get("action") in REPAIR_ACTIONS:
             self.repairs[self._repair_key(args)] = panel.failures

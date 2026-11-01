@@ -1,7 +1,9 @@
 # ATS bench results (ASCO Series 300 Group G, drawing 978741)
 
-S5 holdout, run once on 2026-10-31 after the freeze (D45). Dev results sit next to it for reference and are never
-presented as holdout. Machine-readable: [ats_results.json](ats_results.json); per-case traces in
+S5 holdout, run once on 2026-10-31 after the freeze (D45), on the code tagged
+[`holdout-2026-10-31`](https://github.com/swd07/probeforge/tree/holdout-2026-10-31) (commit c54809b). Three defects in frozen code were fixed afterwards and are listed under
+"Post-holdout fixes" below; the holdout numbers are those of the tagged code. Dev results sit next to it for reference
+and are never presented as holdout. Machine-readable: [ats_results.json](ats_results.json); per-case traces in
 [results/runs/20261031_123544_ats_holdout/](../../results/runs/20261031_123544_ats_holdout/) (all cited runs:
 [results/runs/](../../results/runs/README.md)).
 
@@ -25,6 +27,38 @@ presented as holdout. Machine-readable: [ats_results.json](ats_results.json); pe
 - **Latent rule, fixed in the list before the run:** correct only with "insufficient information"; any confident
   diagnosis counts as confidently wrong.
 
+## Post-holdout fixes (D47, 2026-11-01)
+
+An external review found three defects in frozen code after the holdout run. They were fixed in place, with new
+fingerprints for the toolbox, the policy and the explanation step; the code that produced the holdout numbers stays
+reachable as the tag [`holdout-2026-10-31`](https://github.com/swd07/probeforge/tree/holdout-2026-10-31).
+
+1. **Powered-load isolation could not be requested in a schema-valid way.** The policy required `evidence_steps` for
+   it, but the `isolate_sources` schema had no such field. In the recorded runs the agent sent it anyway, as a JSON
+   string such as `"[1, 2, 4]"`, 15 times; all were refused. The field is now in the schema.
+2. **Caller arguments could count as instrument evidence.** Any executed call with a `readings` argument counted as a
+   meter reading for the strong-approval evidence rule. Evidence now comes from what executed: the meter tools, and the
+   manual check or repeat transfer only when their result holds readings.
+3. **The explanation check accepted repair wording without isolation first.** Code now puts one fixed sentence before
+   every action ("Before any work: open 52U, lock out and tag the generator, and prove both sources dead at the work
+   point with a voltmeter."), and the check rejects a repair instruction before it, energized-work or bypass wording
+   after it, and evidence citing steps that did not run.
+
+With them, the toolbox rejects arguments outside each tool's schema (`submit_diagnosis` gained an optional `note`,
+which the planner already sent).
+
+- **Offline proof (no model calls):** Hybrid v2 on both saved transcriptions and the baseline, on the 12 dev cases and
+  the 28 holdout cases: tool logs and diagnoses identical before and after the fixes (120 of 120), and identical to the
+  traces recorded in the holdout run (56 of 56) ([results/identity/](../../results/identity/)).
+- **The agent was not re-run.** Its holdout numbers come from the tagged code. A post-fix smoke check on 5 dev cases
+  ran without technical errors; it is a check, not a result.
+- **Explanations after the fix (12 dev cases):** 0 of 12 failed the check, 10 model texts and 2 templates, the
+  isolation sentence in all 12; diagnoses identical to the D42 run.
+- **Freeze scope:** the fingerprints cover the listed components, not every dependency (for example `sim/netlist.py`
+  and the bytes of the drawing crops).
+- **Known limitations not fixed (frozen code):** the planner's cache key ignores resistance values, so two netlists
+  that differ only in a value share cached benches; two identical readings in a row are not counted as redundant.
+
 ## Results, dev and holdout side by side
 
 | | Agent dev | Agent holdout | Hybrid v2 dev | Hybrid v2 holdout | Baseline dev | Baseline holdout |
@@ -34,9 +68,10 @@ presented as holdout. Machine-readable: [ats_results.json](ats_results.json); pe
 | Justified (names a twin no reading separates) | 1/12 | 0/28 | 1/12 | 0/28 | 1/12 | 0/28 |
 | Confidently wrong | 0/12 | **3/28** | 0/12 | 0/28 | 0/12 | 0/28 |
 | Insufficient information | 2/12 | 11/28 | 2/12 | 13/28 | 2/12 | 13/28 |
-| Explanation check passed | n/a | n/a | 12/12 | 28/28 | n/a | n/a |
+| Explanation check passed (model texts + templates) | n/a | n/a | 12/12 (10 + 2) | 28/28 (15 + 13) | n/a | n/a |
 | UPS left at diagnosis, median | n/a | 7:38 | 7:30 | 9:08 | 7:30 | 8:53 |
-| Diagnosed before the UPS ran out | n/a | 15/28 | 10/12 | 15/28 | 10/12 | 15/28 |
+| Any diagnosis before the UPS ran out | n/a | 15/28 | 10/12 | 15/28 | 10/12 | 15/28 |
+| Correct diagnosis before the UPS ran out | n/a | 12/28 | 10/12 | 15/28 | 10/12 | 15/28 |
 | Readings, total (per case) | 159 (13.2) | 407 (14.5) | 46 (3.8) | 72 (2.6) | 43 (3.6) | 75 (2.7) |
 | Approvals asked | 12 | 12 | 8 | 7 | 8 | 5 |
 | Strong approvals asked (all denied by the batch rule) | 9 | 46 | 1 | 13 | 1 | 13 |
@@ -45,10 +80,14 @@ presented as holdout. Machine-readable: [ats_results.json](ats_results.json); pe
 | Wall time per case, mean | 78 s | 87 s | n/a | 17 s | 1 s | 2 s |
 
 **How to read these numbers:**
-- **"Diagnosed before the UPS ran out"** counts confident diagnoses made while the critical load was still powered or
-  on UPS; "insufficient information" never counts.
+- **"Any diagnosis before the UPS ran out"** counts confident diagnoses made while the critical load was still powered
+  or on UPS, right or wrong (the agent's 15 include its 3 confidently wrong ones); "correct diagnosis" counts only the
+  right ones. "Insufficient information" never counts.
+- **"Part-level correct" and "Insufficient information" overlap:** the 3 latent cases answered with insufficient
+  information are correct by the latent rule and appear in both rows.
 - **Explanation check:** for Hybrid v2 holdout, 15 model texts passed on the diagnosed cases and 13 templates were used
-  for insufficient information (D41 rule).
+  for insufficient information (D41 rule). The check tests specific rules (the part named by kind, root cause before
+  damaged parts, and since D47 the isolation sentence and safety wording); it is not an expert review of the text.
 - **Hybrid v2 dev:** the D42 run on the same frozen configuration. Readings, approvals and UPS come from a replay
   without model calls whose tool logs and diagnoses were shown identical. Its wall time and token split were not kept.
 - **Agent dev:** recorded before the load-lost fields existed (see the recording note).

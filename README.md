@@ -94,7 +94,9 @@ All model calls go to `muse-spark-1.3` through the Meta Model API (Chat Completi
   part ids, rendered and checked in code, with one retry and a template fallback
   ([D41](DECISIONS.md#d41-new-explanation-step-for-hybrid-v2-on-the-ats-structured-input-checked-output-2026-10-31),
   [D42](DECISIONS.md#d42-explanation-rule-for-consequential-faults-the-root-cause-first-then-the-damaged-part-2026-10-31)).
-  Holdout: 28/28 explanations passed the check.
+  Holdout: 28/28 passed (15 model texts, 13 templates for insufficient information). Since
+  [D47](DECISIONS.md#d47-post-holdout-fixes-to-frozen-ats-code-2026-11-01) code also puts a fixed isolation sentence
+  before every repair instruction.
 - **Chat Completions vs Responses.** On the 12 dev cases Chat got 10/12 part-level correct and 0 confidently wrong,
   Responses 8/12 and 1, with 32 % fewer readings and 13 % lower uncached cost. We kept Chat: it found the root cause
   of the burnout chain where Responses stopped at the burnt coil
@@ -126,7 +128,7 @@ One holdout run on 28 faults nobody picked by hand, against the 12 dev cases
 | Confidently wrong | 0/12 | 3/28 | 0/12 | 0/28 | 0/28 |
 | Insufficient information | 2/12 | 11/28 | 2/12 | 13/28 | 13/28 |
 | Latent faults (correct = insufficient information) | | 3/3 | | 3/3 | 3/3 |
-| Diagnosed before the UPS ran out | n/a | 15/28 | 10/12 | 15/28 | 15/28 |
+| Correct diagnosis before the UPS ran out | n/a | 12/28 | 10/12 | 15/28 | 15/28 |
 | Readings per case | 13.2 | 14.5 | 3.8 | 2.6 | 2.7 |
 | Cost per case (actual) | $0.095 | $0.12 | $0.009 | $0.006 | free |
 
@@ -139,7 +141,15 @@ The 28 cases were then sampled by a fixed seed from the fault catalog, excluding
 fault already run in the UI, and committed with their sha256 before any run
 ([holdout.yaml](scenarios/ats_holdout/holdout.yaml)). The run refused to start unless the file, its hash, the commit and
 the fingerprints matched. One run; the first 5 cases were a smoke test for technical failures only; no changes, no
-reruns; $3.54 of a $6 cap ([D46](DECISIONS.md#d46-s5-holdout-run-and-results-2026-10-31)).
+reruns; $3.54 of a $6 cap ([D46](DECISIONS.md#d46-s5-holdout-run-and-results-2026-10-31)). The fingerprints cover the
+listed components, not every dependency. The exact code of that run is the tag
+[`holdout-2026-10-31`](https://github.com/swd07/probeforge/tree/holdout-2026-10-31).
+
+**After the holdout,** an external review found three defects in frozen code: the agent could not request
+powered-load isolation in a schema-valid way, caller arguments could count as meter evidence, and the explanation check
+accepted repair wording without isolation first. They are fixed with new fingerprints; offline, the hybrid's and the
+baseline's tool logs and diagnoses are identical before and after (120 of 120); the agent was not re-run
+([D47](DECISIONS.md#d47-post-holdout-fixes-to-frozen-ats-code-2026-11-01), [results](docs/results/ats_results.md#post-holdout-fixes-d47-2026-11-01)).
 
 **What it shows:**
 

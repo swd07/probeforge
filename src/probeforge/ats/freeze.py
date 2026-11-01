@@ -6,7 +6,10 @@ the information-gain planner (also the ceiling baseline) and the drawing crops. 
 unchanged. S5 freeze (2026-10-31, D45) adds everything else the holdout run depends on: the agent (its module, prompts,
 the shared loop it imports, tools, policy), the bench and its circuit, the fault catalog and twin check, the scoring,
 and the default saved transcription the hybrid runs on. A test pins these values; changing a fingerprinted component
-needs the user's approval first. The relay-panel fingerprints stay in scripts/run_scenarios.py.
+needs the user's approval first. Post-holdout fixes (2026-11-01, D47): the toolbox, the policy and the explanation
+step changed after the holdout run (the code of that run is the tag holdout-2026-10-31); the offline proof showed the
+hybrid's and the baseline's tool logs and diagnoses unchanged. The relay-panel fingerprints stay in
+scripts/run_scenarios.py.
 """
 
 import hashlib

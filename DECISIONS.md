@@ -622,3 +622,48 @@ decisions at the end (see CLAUDE.md). Architecture: [ARCHITECTURE.md](ARCHITECTU
   isolating a powered load needs strong approval and the batch rule denies it; agent 2 correct diagnoses after the
   UPS ran out (h13, h18); explanation check 28/28 (15 model texts, 13 templates); cost $3.54 of the $6 cap.
 - **Why recorded:** the results doc is the reference for the README and the demo; the holdout is the only unseen test.
+
+### D47. Post-holdout fixes to frozen ATS code (2026-11-01)
+
+- **What:** three defects an external review found in frozen code after the holdout run, fixed in place (instead of a
+  versioned successor), with the run's code kept as the tag `holdout-2026-10-31` (c54809b; its 13 fingerprints were
+  checked equal to those in the holdout list before tagging).
+  1. `isolate_sources` had no `evidence_steps` in its schema, while the policy requires them for isolating a powered
+     load: a schema-obeying agent could not make that request. In the recorded runs (1,154 agent tool calls) the agent
+     sent the field anyway, as a JSON string such as `"[1, 2, 4]"`, 15 times, all refused; where the field was in the
+     schema (restore_sources, repeat_transfer_attempt) it always sent a list. The field is added.
+  2. `AtsPolicy.record` counted any executed call with a `readings` argument as an instrument reading (a fabricated
+     `readings` on `read_panel` could satisfy the strong-approval evidence rule). Evidence now comes from what executed:
+     the meter tools, and the manual check or repeat transfer only when their result holds readings.
+  3. The explanation check accepted repair wording without isolation first. Code now puts one fixed sentence before
+     every action, in model texts and templates ("Before any work: open 52U, lock out and tag the generator, and prove
+     both sources dead at the work point with a voltmeter."); the check rejects a repair instruction before it,
+     energized-work or bypass wording after it unless negated in the same clause, and evidence citing steps that did
+     not run. The template's twin sentence and the prompt now say "the same action" (not "the same repair").
+  With them the toolbox rejects arguments outside each tool's advertised schema before the policy or the tool sees
+  them. The first offline proof differed (72 of 120): the planner's own `submit_diagnosis` carries a `note` (twins or
+  causes still possible) that was not in the schema, so that logged call became an error (the diagnosis itself was
+  unchanged); with `note` added to the schema as an optional string the proof is identical. Fingerprints: ats_tools
+  8a43235111f3 (was 9700f0488e24), ats_policy 832a926080c6 (was 2e45800cdaff), ats_hybrid_explain e327e1021001 (was
+  65fb997fbc54); the other ten unchanged.
+- **Why:** the review reproduced each defect; the user checked the three in frozen code and chose fixing in place with
+  a tag, a decision entry and an offline proof over a successor version.
+- **Alternatives:** a versioned successor (the review's recommendation; keeps the frozen modules byte-identical but
+  duplicates them); documenting the defects only (leaves the live demo with them).
+- **Evidence:**
+  - Offline (scripts/ats_identity.py, results/identity/): Hybrid v2 on both saved transcriptions and the baseline, 12
+    dev and 28 holdout cases: tool logs and diagnoses identical before and after (120 of 120, after.json), and identical
+    to the holdout run's recorded traces (56 of 56). after_without_note.json is the first, differing record.
+  - Explanations (12 dev cases, results/runs/20261101_105210_ats_explain_d47_after, $0.114): 0 of 12 failed the check,
+    10 model texts on the first try apart from a7 (one retry, the D42 order rule), 2 templates, the isolation sentence in
+    12 of 12, diagnoses identical to the D42 run. Before: no D42 text had the sentence; scanned whole, 3 of 12 had
+    energized or under-load wording, all outside the action (two in evidence, one negated "do not ... under load", which
+    the first version of the rule wrongly flagged: the negation scope was widened to the clause and a test added).
+  - Agent, not re-run on the holdout. Post-fix smoke on the 5 S3 dev cases (results/runs/20261101_105449_ats_agent_chat_low,
+    $0.598): no technical errors, 0 protocol errors; the schema-valid isolation request reached the strong approver (x1,
+    4 requests with list evidence); one call rejected by the schema (a7: manual check without its required reason; the
+    agent repeated it with a reason, the step the policy would also have demanded). Outcomes 2/5 correct, 1 confidently
+    wrong (a7 named the coil, the consequence, the pattern of holdout h25), a1 named the observational twin "burnt": a
+    check, not a result; the S3 smoke had 4/5 and the dev run 10/12 on the old tools, one run each.
+- **Not fixed (frozen, documented):** the planner's cache key ignores resistance values; repeated identical readings are
+  not counted as redundant. The freeze covers the listed components, not every dependency.

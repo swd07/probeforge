@@ -17,6 +17,11 @@ Consequential faults (decision D42): when the remaining candidates carry the dia
 documented burnout chain: both cut-off contacts of one side stuck closed, and the coil they burnt), the action must
 name all of them: the root part and its co-root (the same misadjustment) first, then the damaged part (test and
 replace), because a repaired coil alone burns again at the next transfer.
+
+Safety wording (decision D47): the isolation instruction is not left to the model. Code puts one fixed sentence
+(SAFETY) before every action, in model texts and templates; the check requires it before any repair instruction,
+rejects energized-work and bypass wording in the action part (unless negated: "without paralleling sources" is fine),
+and the evidence may cite only steps that were executed.
 """
 
 import json
@@ -57,6 +62,12 @@ KIND_WORDS = {
 }
 ACTION_VERBS = re.compile(r"\b(check|inspect|repair|replace|tighten|test|look|verify|reseat|fix|swap|clean|adjust|free|"
                           r"lubricate|retest|examine|trace)\w*\b|\bcorrect(?=\s+(?:the|a|an|this|that|its)\b)", re.I)
+SAFETY = ("Before any work: open 52U, lock out and tag the generator, and prove both sources dead at the work point "
+          "with a voltmeter.")
+REPAIR_WORDS = re.compile(r"\b(repair|replace|tighten|reseat|fix|swap|adjust|lubricate|rewire|install)\w*\b", re.I)
+UNSAFE_WORDS = re.compile(r"\b(energi[sz]ed|energi[sz]ing|while live|live (?:circuit|conductor|terminal|part)s?|under load|"
+                          r"bypass\w*|jumper\w*|parallel\w*|defeat\w*)\b", re.I)
+NEGATION = re.compile(r"\b(no|not|without|never|nor|avoid|do not|don't)\b[^.;,]{0,80}$", re.I)  # same clause
 TWIN_NOTE = "no reading separates: "
 STILL_NOTE = "still possible: "
 
@@ -210,6 +221,22 @@ def check_text(text: str, diagnosis: dict, n: Netlist, strict: bool = True, cons
         elif not any(any(w in act.lower() for w in KIND_WORDS.get(_kind(n, a), ())) for a in hit):
             problems.append(f"the action does not call {hit[0]} by its kind ({' or '.join(KIND_WORDS.get(_kind(n, hit[0]), ()))})")
         problems += _chain_problems(act, n, allowed, consequences or [], damaged or [])
+    return problems + safety_problems(text)
+
+
+def safety_problems(text: str) -> list[str]:
+    """D47: the fixed isolation sentence is present, no repair instruction comes before it, and the action part after
+    it has no energized-work or bypass instruction (negated mentions such as "without paralleling sources" pass)."""
+    at = text.find(SAFETY)
+    if at < 0:
+        return ["the isolation sentence is missing"]
+    problems = []
+    if REPAIR_WORDS.search(text[:at]):
+        problems.append("a repair instruction comes before the isolation sentence")
+    after = text[at + len(SAFETY):]
+    bad = [m.group(0) for m in UNSAFE_WORDS.finditer(after) if not NEGATION.search(after[:m.start()])]
+    if bad:
+        problems.append(f"the action asks for unsafe work: {', '.join(dict.fromkeys(bad))}")
     return problems
 
 
@@ -360,8 +387,10 @@ def _cap(s: str) -> str:
 
 
 def render(x: dict) -> str:
+    """What failed, the evidence, the fixed isolation sentence (code, not the model), then the model's action."""
     ev = " ".join(f"Step {e['step']}: {_cap(e['meaning']).rstrip('.')}." for e in x.get("evidence", []))
-    return " ".join(p for p in (_cap(x["what_failed"]).rstrip(".") + ".", ev, _cap(x["action"])) if p).replace(EM_DASH, ", ")
+    parts = (_cap(x["what_failed"]).rstrip(".") + ".", ev, SAFETY, _cap(x["action"]))
+    return " ".join(p for p in parts if p).replace(EM_DASH, ", ")
 
 
 REPAIR_VERB = {"solenoid": "replace the", "wire": "repair or replace", "pin": "reseat or replace", "input": "replace the "
@@ -398,13 +427,13 @@ def template(diagnosis: dict, planner, n: Netlist) -> str:
     if diagnosis.get("outcome") != "diagnosed":
         still = [display_name(n, x) for x in allowed_targets(diagnosis)]
         return (f"No single cause can be named from the readings the policy allows. Still possible: "
-                f"{', '.join(still) or 'see the hypotheses'}. Evidence: {cites or 'the controller panel'}. Next, an "
-                "authorized person, with both sources isolated and locked out, tests each of these parts in turn; a relay "
-                "contact inside the controller cannot be probed, so for those the controller is the repair.")
+                f"{', '.join(still) or 'see the hypotheses'}. Evidence: {cites or 'the controller panel'}. {SAFETY} "
+                "Then an authorized person tests each of these parts in turn; a relay contact inside the controller "
+                "cannot be probed, so for those the controller is the repair.")
     first = allowed_targets(diagnosis)[0]
     kind = _kind(n, first)
     name = display_name(n, first)
-    twins = f" No reading separates {' and '.join(diagnosis['note'][len(TWIN_NOTE):].split(', '))}; the repair is the same." \
+    twins = f" No reading separates {' and '.join(diagnosis['note'][len(TWIN_NOTE):].split(', '))}; it is the same part, so the action is the same." \
         if str(diagnosis.get("note", "")).startswith(TWIN_NOTE) else ""
     mode = diagnosis["failure_mode"].replace("_", " ")
     if co or dmg:  # D42: the root cause first, then the damaged part
@@ -414,9 +443,9 @@ def template(diagnosis: dict, planner, n: Netlist) -> str:
                 "replacement alone burns again at the next transfer while the root cause remains."
                 if dmg else "")
         return (f"The {name} is {mode}{f', with the {damaged} damaged by it' if dmg else ''}.{twins} Evidence: "
-                f"{cites or 'the panel'}. With both sources isolated and locked out, an authorized person should first "
+                f"{cites or 'the panel'}. {SAFETY} Then an authorized person should first "
                 f"{REPAIR_VERB.get(kind, 'repair')} {roots}.{then}")
-    return (f"The {name} is {mode}.{twins} Evidence: {cites or 'the panel'}. With both sources isolated and locked out, "
+    return (f"The {name} is {mode}.{twins} Evidence: {cites or 'the panel'}. {SAFETY} Then "
             f"an authorized person should {REPAIR_VERB.get(kind, 'repair')} {name if kind != 'mechanism' else ''}".rstrip() + ".")
 
 
@@ -432,7 +461,7 @@ def explain(client, usage: Usage, planner, diagnosis: dict, effort: str = "low")
     d = diagnosis
     res = (f"{d['component']} {d.get('part', '')} {d['failure_mode']}" if d.get("outcome") == "diagnosed"
            else f"insufficient information: {d.get('note', '')}")
-    twins = (f"No reading separates these causes: {d['note'][len(TWIN_NOTE):]} (the same part: the same repair)."
+    twins = (f"No reading separates these causes: {d['note'][len(TWIN_NOTE):]} (the same part: the same action)."
              if str(d.get("note", "")).startswith(TWIN_NOTE) else "")
     ids = sorted(set(n.parts) | set(n.components) | {"none"})
     part = "; ".join(part_text(n, t) for t in targets) or "(no single part: insufficient information)"
@@ -449,12 +478,16 @@ def explain(client, usage: Usage, planner, diagnosis: dict, effort: str = "low")
     base = PROMPT.format(result=res, name=name, part=part, twins=twins, consequences=cons, action_rule=rule,
                          steps=steps_text(planner, targets + consequences), allowed_text=allowed_text)
     record = {"attempts": [], "template": False}
+    executed = {0} | {s.step for s in planner.steps}  # step 0: the first panel look
     retry = ""
     for _ in range(2):
         try:
             x = _call(client, usage, base.replace("<<RETRY>>", retry), ids, effort)
             text = render(x)
             problems = check_text(text, d, n, consequences=consequences, damaged=damaged)
+            cited = {e["step"] for e in x.get("evidence", [])} - executed
+            if cited:
+                problems.append(f"the evidence cites steps that were not executed: {sorted(cited)}")
             if targets and x["action_part"] not in targets + consequences and d.get("outcome") == "diagnosed":
                 problems.insert(0, f"action_part {x['action_part']} is not the diagnosed part ({', '.join(targets)})")
         except Exception as e:  # noqa: BLE001 - a failed call falls through to the template

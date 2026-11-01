@@ -1,0 +1,595 @@
+{
+  "tag": "d47_after",
+  "offline": false,
+  "frozen": {
+    "ats_hybrid_read": "08b4676a5c4b",
+    "ats_hybrid_pipeline": "8a9c95c16c71",
+    "ats_hybrid_explain": "e327e1021001",
+    "ats_infogain": "2eff9c8764c1",
+    "ats_sheet_crops": "5687e25c8ce3",
+    "ats_agent": "b3e681a84e0d",
+    "ats_agent_loop": "efe23395808d",
+    "ats_tools": "8a43235111f3",
+    "ats_policy": "832a926080c6",
+    "ats_bench": "1897f5e2aa3e",
+    "ats_faults": "2f3ffeba22da",
+    "ats_scoring": "6eb679a9fe4f",
+    "ats_transcription_default": "7d269af0a274"
+  },
+  "rows": [
+    {
+      "case": "a1_coil_open",
+      "tool_log": "49775e35d647cc31",
+      "diagnosis": {
+        "outcome": "diagnosed",
+        "component": "TS",
+        "part": "A-B",
+        "failure_mode": "open",
+        "confidence": 0.5,
+        "evidence": [
+          {
+            "step": 0,
+            "type": "functional_test",
+            "observation": "controller panel, event log and metering"
+          },
+          {
+            "step": 2,
+            "type": "instrument_reading",
+            "observation": "measure_voltage TS:A TS:B: 208.0"
+          },
+          {
+            "step": 6,
+            "type": "instrument_reading",
+            "observation": "manual_operation_check  : (True, ('open',))"
+          },
+          {
+            "step": 8,
+            "type": "instrument_reading",
+            "observation": "measure_resistance TS:6 TS:7: open"
+          }
+        ],
+        "note": "no reading separates: TS:A-B open, TS:A-B burnt"
+      },
+      "diagnosis_hash": "e86ade604895f469",
+      "seconds": 22.0,
+      "cost_usd": 0.00927,
+      "explanation": "The operating coil TS A-B has failed open and is preventing transfer. Step 2: Voltage of 208.0 V across the coil shows operating coil TS A-B is energized but failed to operate, consistent with an open. Step 6: Successful manual movement shows the mechanism itself can move, while the open reading there is normal for the present position and not a fault. Step 8: The open reading is normal for the present position and not a fault, leaving operating coil TS A-B as the remaining cause. Before any work: open 52U, lock out and tag the generator, and prove both sources dead at the work point with a voltmeter. With both sources isolated and locked out, have an authorized person inspect operating coil TS A-B for an open and verify continuity, then repair or replace operating coil TS A-B as needed without bypassing interlocks or paralleling sources and without manual operation under load.",
+      "consequences": [],
+      "damaged": [],
+      "problems": [],
+      "problems_lenient": [],
+      "record": {
+        "attempts": [
+          {
+            "text": "The operating coil TS A-B has failed open and is preventing transfer. Step 2: Voltage of 208.0 V across the coil shows operating coil TS A-B is energized but failed to operate, consistent with an open. Step 6: Successful manual movement shows the mechanism itself can move, while the open reading there is normal for the present position and not a fault. Step 8: The open reading is normal for the present position and not a fault, leaving operating coil TS A-B as the remaining cause. Before any work: open 52U, lock out and tag the generator, and prove both sources dead at the work point with a voltmeter. With both sources isolated and locked out, have an authorized person inspect operating coil TS A-B for an open and verify continuity, then repair or replace operating coil TS A-B as needed without bypassing interlocks or paralleling sources and without manual operation under load.",
+            "problems": []
+          }
+        ],
+        "template": false
+      },
+      "explain_calls": 1,
+      "transcription": "run_20261031_003748"
+    },
+    {
+      "case": "a2_wire2_open",
+      "tool_log": "bdb4e8d20281d6a0",
+      "diagnosis": {
+        "outcome": "diagnosed",
+        "component": "H1",
+        "part": "W2_TSA-W2_P2",
+        "failure_mode": "open",
+        "confidence": 1.0,
+        "evidence": [
+          {
+            "step": 0,
+            "type": "functional_test",
+            "observation": "controller panel, event log and metering"
+          },
+          {
+            "step": 4,
+            "type": "instrument_reading",
+            "observation": "measure_voltage TS:8 TS:9: 0.0"
+          },
+          {
+            "step": 6,
+            "type": "instrument_reading",
+            "observation": "measure_voltage TS:71 TS:72: 0.0"
+          },
+          {
+            "step": 8,
+            "type": "instrument_reading",
+            "observation": "measure_voltage H1:W1_TS8 H1:W1_P1: 0.0"
+          },
+          {
+            "step": 10,
+            "type": "instrument_reading",
+            "observation": "measure_voltage H1:W2_TSA H1:W2_P2: 208.0"
+          }
+        ]
+      },
+      "diagnosis_hash": "54f7a1a898de8d8e",
+      "seconds": 24.5,
+      "cost_usd": 0.00865,
+      "explanation": "The harness wire W2 failed open so the switch stayed on Normal instead of transferring. Step 2: The 0.0 V reading is expected with the switch staying on Normal and indicates normal behavior at that test point. Step 8: The 0.0 V reading is expected with the switch staying on Normal and indicates normal behavior at that test point. Step 10: The 208.0 V reading where a healthy switch would read 0.0 V proves the wire is open. Before any work: open 52U, lock out and tag the generator, and prove both sources dead at the work point with a voltmeter. With both sources isolated and locked out, inspect harness wire W2 and repair or replace it using approved methods.",
+      "consequences": [],
+      "damaged": [],
+      "problems": [],
+      "problems_lenient": [],
+      "record": {
+        "attempts": [
+          {
+            "text": "The harness wire W2 failed open so the switch stayed on Normal instead of transferring. Step 2: The 0.0 V reading is expected with the switch staying on Normal and indicates normal behavior at that test point. Step 8: The 0.0 V reading is expected with the switch staying on Normal and indicates normal behavior at that test point. Step 10: The 208.0 V reading where a healthy switch would read 0.0 V proves the wire is open. Before any work: open 52U, lock out and tag the generator, and prove both sources dead at the work point with a voltmeter. With both sources isolated and locked out, inspect harness wire W2 and repair or replace it using approved methods.",
+            "problems": []
+          }
+        ],
+        "template": false
+      },
+      "explain_calls": 1,
+      "transcription": "run_20261031_003748"
+    },
+    {
+      "case": "a3_er_output",
+      "tool_log": "e1648a560cbe3525",
+      "diagnosis": {
+        "outcome": "insufficient_information",
+        "confidence": 0.0,
+        "evidence": [
+          {
+            "step": 0,
+            "type": "functional_test",
+            "observation": "controller panel, event log and metering"
+          }
+        ],
+        "note": "still possible: SE:X1-J2 stuck_open, SE:X2-J5 stuck_open, ER:J1-X1 stuck_open, ER:J16-X2 stuck_open"
+      },
+      "diagnosis_hash": "02b188e860901db0",
+      "seconds": 21.6,
+      "cost_usd": 0.0,
+      "explanation": "No single cause can be named from the readings the policy allows. Still possible: SE relay contact X1-J2 (inside the controller), SE relay contact X2-J5 (inside the controller), ER relay contact J1-X1 (inside the controller), ER relay contact J16-X2 (inside the controller). Evidence: step 22, voltage XP:P2 to XP:J2: 0.0 V (normal for the present position); step 24, voltage XP:P5 to XP:J5: 0.0 V (normal for the present position); step 26, voltage XP:P16 to XP:J16: 0.0 V (normal for the present position). Before any work: open 52U, lock out and tag the generator, and prove both sources dead at the work point with a voltmeter. Then an authorized person tests each of these parts in turn; a relay contact inside the controller cannot be probed, so for those the controller is the repair.",
+      "consequences": [],
+      "damaged": [],
+      "problems": [],
+      "problems_lenient": [],
+      "record": {
+        "attempts": [],
+        "template": true,
+        "reason": "insufficient information"
+      },
+      "explain_calls": 0,
+      "transcription": "run_20261031_003748"
+    },
+    {
+      "case": "a4_cutoff_8_9",
+      "tool_log": "22acefc5351ae32f",
+      "diagnosis": {
+        "outcome": "diagnosed",
+        "component": "TS",
+        "part": "8-9",
+        "failure_mode": "stuck_open",
+        "confidence": 1.0,
+        "evidence": [
+          {
+            "step": 0,
+            "type": "functional_test",
+            "observation": "controller panel, event log and metering"
+          },
+          {
+            "step": 2,
+            "type": "instrument_reading",
+            "observation": "measure_voltage TS:A TS:B: 0.0"
+          },
+          {
+            "step": 4,
+            "type": "instrument_reading",
+            "observation": "measure_voltage TS:8 TS:9: 208.0"
+          }
+        ]
+      },
+      "diagnosis_hash": "75b1ed2c661eb3be",
+      "seconds": 24.5,
+      "cost_usd": 0.01178,
+      "explanation": "The cut-off contact TS 8-9 is stuck open which prevented transfer to Emergency. Step 2: The zero volt reading is normal for the present position with the switch remaining on Normal and does not indicate a separate fault. Step 4: The 208 V reading across the contact where a fault free switch would read 0 V shows the contact is open when it should be closed. Before any work: open 52U, lock out and tag the generator, and prove both sources dead at the work point with a voltmeter. With both sources isolated and locked out, inspect and repair the cut-off contact TS 8-9 in accordance with approved procedures.",
+      "consequences": [],
+      "damaged": [],
+      "problems": [],
+      "problems_lenient": [],
+      "record": {
+        "attempts": [
+          {
+            "text": "The cut-off contact TS 8-9 is stuck open which prevented transfer to Emergency. Step 2: The zero volt reading is normal for the present position with the switch remaining on Normal and does not indicate a separate fault. Step 4: The 208 V reading across the contact where a fault free switch would read 0 V shows the contact is open when it should be closed. Before any work: open 52U, lock out and tag the generator, and prove both sources dead at the work point with a voltmeter. With both sources isolated and locked out, inspect and repair the cut-off contact TS 8-9 in accordance with approved procedures.",
+            "problems": []
+          }
+        ],
+        "template": false
+      },
+      "explain_calls": 1,
+      "transcription": "run_20261031_003748"
+    },
+    {
+      "case": "a5_jammed",
+      "tool_log": "9757f2a00b619e60",
+      "diagnosis": {
+        "outcome": "diagnosed",
+        "component": "TS",
+        "part": "",
+        "failure_mode": "jammed",
+        "confidence": 1.0,
+        "evidence": [
+          {
+            "step": 0,
+            "type": "functional_test",
+            "observation": "controller panel, event log and metering"
+          },
+          {
+            "step": 2,
+            "type": "instrument_reading",
+            "observation": "measure_voltage TS:A TS:B: 208.0"
+          },
+          {
+            "step": 6,
+            "type": "instrument_reading",
+            "observation": "manual_operation_check  : (False, (0.0,))"
+          }
+        ]
+      },
+      "diagnosis_hash": "45811d6303159990",
+      "seconds": 14.4,
+      "cost_usd": 0.01086,
+      "explanation": "The TS transfer mechanism jammed and left the switch on Normal. Step 2: Voltage reading was consistent with the switch remaining on Normal and helped narrow the candidates. Step 6: Manual check with power isolated showed the mechanism would not move while the resistance reading matched the present position. Before any work: open 52U, lock out and tag the generator, and prove both sources dead at the work point with a voltmeter. With isolation and lockout in place, inspect the TS transfer mechanism for obstruction or damage and repair it without forcing operation under load.",
+      "consequences": [],
+      "damaged": [],
+      "problems": [],
+      "problems_lenient": [],
+      "record": {
+        "attempts": [
+          {
+            "text": "The TS transfer mechanism jammed and left the switch on Normal. Step 2: Voltage reading was consistent with the switch remaining on Normal and helped narrow the candidates. Step 6: Manual check with power isolated showed the mechanism would not move while the resistance reading matched the present position. Before any work: open 52U, lock out and tag the generator, and prove both sources dead at the work point with a voltmeter. With isolation and lockout in place, inspect the TS transfer mechanism for obstruction or damage and repair it without forcing operation under load.",
+            "problems": []
+          }
+        ],
+        "template": false
+      },
+      "explain_calls": 1,
+      "transcription": "run_20261031_003748"
+    },
+    {
+      "case": "a6_pin1_open",
+      "tool_log": "6d9be1ea91b2b71e",
+      "diagnosis": {
+        "outcome": "diagnosed",
+        "component": "XP",
+        "part": "P1-J1",
+        "failure_mode": "open",
+        "confidence": 1.0,
+        "evidence": [
+          {
+            "step": 0,
+            "type": "functional_test",
+            "observation": "controller panel, event log and metering"
+          },
+          {
+            "step": 14,
+            "type": "instrument_reading",
+            "observation": "measure_voltage H1:W16_TS72 H1:W16_P16: 0.0"
+          },
+          {
+            "step": 16,
+            "type": "instrument_reading",
+            "observation": "measure_voltage H1:W17_TS4 H1:W17_TS9: 0.0"
+          },
+          {
+            "step": 18,
+            "type": "instrument_reading",
+            "observation": "measure_voltage H1:W21_TS5 H1:W21_TS71: 0.0"
+          },
+          {
+            "step": 20,
+            "type": "instrument_reading",
+            "observation": "measure_voltage XP:P1 XP:J1: 208.0"
+          }
+        ]
+      },
+      "diagnosis_hash": "493dcd32a24c86f2",
+      "seconds": 21.1,
+      "cost_usd": 0.00949,
+      "explanation": "The plug and jack pin P1-J1 failed open which kept the switch on Normal during the outage. Step 20: The 208.0 V reading shows an open where a fault free switch would show 0.0 V. Step 8: The 0.0 V reading is normal for the present position and does not show a fault by itself. Step 2: The 0.0 V reading is normal for the present position and is explained by the switch staying on Normal. Before any work: open 52U, lock out and tag the generator, and prove both sources dead at the work point with a voltmeter. With both sources isolated and locked out have an authorized person inspect and repair the plug and jack pin P1-J1. Keep all interlocks in place and do not parallel sources or operate manually under load.",
+      "consequences": [],
+      "damaged": [],
+      "problems": [],
+      "problems_lenient": [],
+      "record": {
+        "attempts": [
+          {
+            "text": "The plug and jack pin P1-J1 failed open which kept the switch on Normal during the outage. Step 20: The 208.0 V reading shows an open where a fault free switch would show 0.0 V. Step 8: The 0.0 V reading is normal for the present position and does not show a fault by itself. Step 2: The 0.0 V reading is normal for the present position and is explained by the switch staying on Normal. Before any work: open 52U, lock out and tag the generator, and prove both sources dead at the work point with a voltmeter. With both sources isolated and locked out have an authorized person inspect and repair the plug and jack pin P1-J1. Keep all interlocks in place and do not parallel sources or operate manually under load.",
+            "problems": []
+          }
+        ],
+        "template": false
+      },
+      "explain_calls": 1,
+      "transcription": "run_20261031_003748"
+    },
+    {
+      "case": "a7_burnout_chain",
+      "tool_log": "70ce86014b693260",
+      "diagnosis": {
+        "outcome": "diagnosed",
+        "component": "TS",
+        "part": "8-9",
+        "failure_mode": "stuck_closed",
+        "confidence": 1.0,
+        "evidence": [
+          {
+            "step": 0,
+            "type": "functional_test",
+            "observation": "controller panel, event log and metering"
+          },
+          {
+            "step": 2,
+            "type": "instrument_reading",
+            "observation": "measure_voltage TS:A TS:B: 208.0"
+          },
+          {
+            "step": 6,
+            "type": "instrument_reading",
+            "observation": "manual_operation_check  : (True, (0.0,))"
+          }
+        ]
+      },
+      "diagnosis_hash": "b37cc5d25baa07e2",
+      "seconds": 25.5,
+      "cost_usd": 0.02665,
+      "explanation": "The failure was the cut-off contact TS 8-9 staying closed when it should have opened. Step 2: Voltage remained at 208 volts across the coil when it should have been zero, showing the cutoff contact stayed closed and kept the coil energized. Step 6: The mechanism moved manually to the other position with zero ohms there, showing the mechanics are free and the failure is electrical sticking in service. Before any work: open 52U, lock out and tag the generator, and prove both sources dead at the work point with a voltmeter. Repair and adjust cut-off contact TS 8-9 and cut-off contact TS 71-72 to clear the shared misadjustment with both sources isolated and locked out and with no bypassing of interlocks and no paralleling of sources and no manual operation under load. Then test operating coil TS A-B and replace it if it is burnt since a new operating coil TS A-B alone burns again at the next transfer while the root cause remains.",
+      "consequences": [
+        "TS:71-72",
+        "TS:A-B"
+      ],
+      "damaged": [
+        "TS:A-B"
+      ],
+      "problems": [],
+      "problems_lenient": [],
+      "record": {
+        "attempts": [
+          {
+            "text": "The cut-off contact TS 8-9 failed stuck closed and prevented transfer. Step 2: Step 2 voltage of 208.0 V across the coil circuit when a fault free switch would read 0.0 V shows the cut-off contact failed to open. Step 6: Step 6 manual operation with 0.0 ohm at the other position matches the fault free expectation and narrows the fault to the shared misadjustment. Before any work: open 52U, lock out and tag the generator, and prove both sources dead at the work point with a voltmeter. First repair cut-off contact TS 8-9 and cut-off contact TS 71-72 to correct the shared misadjustment. Then test operating coil TS A-B and replace it if it is burnt. A new operating coil TS A-B alone burns again at the next transfer while the root cause remains, so complete this work with both sources isolated and locked out and with no bypassing of interlocks and no paralleling of sources and no manual operation under load.",
+            "problems": [
+              "the action names the damaged part TS:A-B before the root cause: fix the root cause first"
+            ]
+          },
+          {
+            "text": "The failure was the cut-off contact TS 8-9 staying closed when it should have opened. Step 2: Voltage remained at 208 volts across the coil when it should have been zero, showing the cutoff contact stayed closed and kept the coil energized. Step 6: The mechanism moved manually to the other position with zero ohms there, showing the mechanics are free and the failure is electrical sticking in service. Before any work: open 52U, lock out and tag the generator, and prove both sources dead at the work point with a voltmeter. Repair and adjust cut-off contact TS 8-9 and cut-off contact TS 71-72 to clear the shared misadjustment with both sources isolated and locked out and with no bypassing of interlocks and no paralleling of sources and no manual operation under load. Then test operating coil TS A-B and replace it if it is burnt since a new operating coil TS A-B alone burns again at the next transfer while the root cause remains.",
+            "problems": []
+          }
+        ],
+        "template": false
+      },
+      "explain_calls": 2,
+      "transcription": "run_20261031_003748"
+    },
+    {
+      "case": "b1_wire7_open",
+      "tool_log": "484115be0f202ed0",
+      "diagnosis": {
+        "outcome": "diagnosed",
+        "component": "H1",
+        "part": "W7_TS4-W7_P7",
+        "failure_mode": "open",
+        "confidence": 1.0,
+        "evidence": [
+          {
+            "step": 0,
+            "type": "functional_test",
+            "observation": "controller panel, event log and metering"
+          },
+          {
+            "step": 2,
+            "type": "instrument_reading",
+            "observation": "measure_voltage CP:J7 NN: 0.0"
+          },
+          {
+            "step": 4,
+            "type": "instrument_reading",
+            "observation": "measure_voltage H1:W7_P7 NN: 0.0"
+          }
+        ]
+      },
+      "diagnosis_hash": "5a3ed09729a1c421",
+      "seconds": 9.5,
+      "cost_usd": 0.00802,
+      "explanation": "The failure is an open in harness wire W7 that prevented transfer to Emergency. Step 2: Step 2 reading of 0.0 V is normal for the present switch position and reflects loss of drive caused by the open in harness wire W7. Step 4: Step 4 reading of 0.0 V where a fault free switch would read 120.1 V shows harness wire W7 is open. Before any work: open 52U, lock out and tag the generator, and prove both sources dead at the work point with a voltmeter. With both sources isolated and locked out, have an authorized person inspect harness wire W7 for damage or loose termination and restore continuity.",
+      "consequences": [],
+      "damaged": [],
+      "problems": [],
+      "problems_lenient": [],
+      "record": {
+        "attempts": [
+          {
+            "text": "The failure is an open in harness wire W7 that prevented transfer to Emergency. Step 2: Step 2 reading of 0.0 V is normal for the present switch position and reflects loss of drive caused by the open in harness wire W7. Step 4: Step 4 reading of 0.0 V where a fault free switch would read 120.1 V shows harness wire W7 is open. Before any work: open 52U, lock out and tag the generator, and prove both sources dead at the work point with a voltmeter. With both sources isolated and locked out, have an authorized person inspect harness wire W7 for damage or loose termination and restore continuity.",
+            "problems": []
+          }
+        ],
+        "template": false
+      },
+      "explain_calls": 1,
+      "transcription": "run_20261031_003748"
+    },
+    {
+      "case": "b2_pin18_open",
+      "tool_log": "0152ea4986f8009c",
+      "diagnosis": {
+        "outcome": "diagnosed",
+        "component": "XP",
+        "part": "P18-J18",
+        "failure_mode": "open",
+        "confidence": 1.0,
+        "evidence": [
+          {
+            "step": 0,
+            "type": "functional_test",
+            "observation": "controller panel, event log and metering"
+          },
+          {
+            "step": 2,
+            "type": "instrument_reading",
+            "observation": "measure_voltage CP:J18 NN: 0.0"
+          },
+          {
+            "step": 4,
+            "type": "instrument_reading",
+            "observation": "measure_voltage H1:W25_P18 NN: 120.1"
+          }
+        ]
+      },
+      "diagnosis_hash": "d1a372b8c37186a3",
+      "seconds": 8.5,
+      "cost_usd": 0.00875,
+      "explanation": "The plug and jack pin P18-J18 has failed open so the transfer signal cannot pass. Step 4: Step 4 showed 120.1 V on the plug side confirming that transfer voltage was present up to the open. Step 2: Step 2 showed 0.0 V on the jack side while the plug side remained energized which is consistent with an open between them. Before any work: open 52U, lock out and tag the generator, and prove both sources dead at the work point with a voltmeter. With both sources isolated and locked out, have an authorized person inspect and restore the plug and jack pin P18-J18 for reliable continuity without bypassing interlocks and without paralleling sources and without manual operation under load.",
+      "consequences": [],
+      "damaged": [],
+      "problems": [],
+      "problems_lenient": [],
+      "record": {
+        "attempts": [
+          {
+            "text": "The plug and jack pin P18-J18 has failed open so the transfer signal cannot pass. Step 4: Step 4 showed 120.1 V on the plug side confirming that transfer voltage was present up to the open. Step 2: Step 2 showed 0.0 V on the jack side while the plug side remained energized which is consistent with an open between them. Before any work: open 52U, lock out and tag the generator, and prove both sources dead at the work point with a voltmeter. With both sources isolated and locked out, have an authorized person inspect and restore the plug and jack pin P18-J18 for reliable continuity without bypassing interlocks and without paralleling sources and without manual operation under load.",
+            "problems": []
+          }
+        ],
+        "template": false
+      },
+      "explain_calls": 1,
+      "transcription": "run_20261031_003748"
+    },
+    {
+      "case": "b3_wire6_open",
+      "tool_log": "af9e3ce5861cce95",
+      "diagnosis": {
+        "outcome": "diagnosed",
+        "component": "H1",
+        "part": "W6_TS5-W6_P6",
+        "failure_mode": "open",
+        "confidence": 1.0,
+        "evidence": [
+          {
+            "step": 0,
+            "type": "functional_test",
+            "observation": "controller panel, event log and metering"
+          },
+          {
+            "step": 2,
+            "type": "instrument_reading",
+            "observation": "measure_voltage CP:J6 NN: 0.0"
+          },
+          {
+            "step": 4,
+            "type": "instrument_reading",
+            "observation": "measure_voltage H1:W6_P6 NN: 0.0"
+          }
+        ]
+      },
+      "diagnosis_hash": "e0555b7bdd6b5ac9",
+      "seconds": 8.6,
+      "cost_usd": 0.00938,
+      "explanation": "The harness wire W6 is open and is preventing transfer to Emergency. Step 2: The 0.0 V reading at step 2 is the expected value while the switch remains on Normal so it shows no additional fault. Step 4: The 0.0 V reading at step 4 where 120.1 V is expected in a fault free switch shows loss of continuity through the probed wire. Before any work: open 52U, lock out and tag the generator, and prove both sources dead at the work point with a voltmeter. With both sources isolated and locked out, an authorized person should visually and mechanically inspect harness wire W6 for looseness breakage or damage and then repair or replace it as needed.",
+      "consequences": [],
+      "damaged": [],
+      "problems": [],
+      "problems_lenient": [],
+      "record": {
+        "attempts": [
+          {
+            "text": "The harness wire W6 is open and is preventing transfer to Emergency. Step 2: The 0.0 V reading at step 2 is the expected value while the switch remains on Normal so it shows no additional fault. Step 4: The 0.0 V reading at step 4 where 120.1 V is expected in a fault free switch shows loss of continuity through the probed wire. Before any work: open 52U, lock out and tag the generator, and prove both sources dead at the work point with a voltmeter. With both sources isolated and locked out, an authorized person should visually and mechanically inspect harness wire W6 for looseness breakage or damage and then repair or replace it as needed.",
+            "problems": []
+          }
+        ],
+        "template": false
+      },
+      "explain_calls": 1,
+      "transcription": "run_20261031_003748"
+    },
+    {
+      "case": "x1_aux14b_open",
+      "tool_log": "686320cd8c5d8397",
+      "diagnosis": {
+        "outcome": "insufficient_information",
+        "confidence": 0.0,
+        "evidence": [
+          {
+            "step": 0,
+            "type": "functional_test",
+            "observation": "controller panel, event log and metering"
+          }
+        ],
+        "note": "still possible: TS:17-16 stuck_open, CP:J13 open, H1:W13_TS16-W13_P13 open, XP:P13-J13 open"
+      },
+      "diagnosis_hash": "e094ee3ca216911c",
+      "seconds": 0.2,
+      "cost_usd": 0.0,
+      "explanation": "No single cause can be named from the readings the policy allows. Still possible: auxiliary contact TS 17-16, controller input J13, harness wire W13, plug and jack pin P13-J13. Evidence: the controller panel. Before any work: open 52U, lock out and tag the generator, and prove both sources dead at the work point with a voltmeter. Then an authorized person tests each of these parts in turn; a relay contact inside the controller cannot be probed, so for those the controller is the repair.",
+      "consequences": [],
+      "damaged": [],
+      "problems": [],
+      "problems_lenient": [],
+      "record": {
+        "attempts": [],
+        "template": true,
+        "reason": "insufficient information"
+      },
+      "explain_calls": 0,
+      "transcription": "run_20261031_003748"
+    },
+    {
+      "case": "x2_engine_start_open",
+      "tool_log": "cf4edb3734f39533",
+      "diagnosis": {
+        "outcome": "diagnosed",
+        "component": "H1",
+        "part": "W9A_TB15-W9A_P9",
+        "failure_mode": "open",
+        "confidence": 1.0,
+        "evidence": [
+          {
+            "step": 0,
+            "type": "functional_test",
+            "observation": "controller panel, event log and metering"
+          },
+          {
+            "step": 4,
+            "type": "instrument_reading",
+            "observation": "measure_resistance NR:J9 NR:J8: 0.0"
+          },
+          {
+            "step": 6,
+            "type": "instrument_reading",
+            "observation": "measure_resistance H1:W8A_TB14 H1:W8A_P8: 0.0"
+          },
+          {
+            "step": 8,
+            "type": "instrument_reading",
+            "observation": "measure_resistance H1:W9A_TB15 H1:W9A_P9: open"
+          }
+        ]
+      },
+      "diagnosis_hash": "e2f53b7be2cfb895",
+      "seconds": 8.9,
+      "cost_usd": 0.01099,
+      "explanation": "The harness wire W9A failed open so the switch could not transfer to Emergency. Step 4: The zero ohm reading here is expected while the switch remains on Normal and does not indicate an additional fault. Step 6: The zero ohm reading here is expected while the switch remains on Normal and does not indicate an additional fault. Step 8: The open reading on harness wire W9A shows loss of continuity that explains why the switch stayed on Normal. Before any work: open 52U, lock out and tag the generator, and prove both sources dead at the work point with a voltmeter. Keep both sources isolated and locked out while you inspect harness wire W9A and restore continuity using approved methods.",
+      "consequences": [],
+      "damaged": [],
+      "problems": [],
+      "problems_lenient": [],
+      "record": {
+        "attempts": [
+          {
+            "text": "The harness wire W9A failed open so the switch could not transfer to Emergency. Step 4: The zero ohm reading here is expected while the switch remains on Normal and does not indicate an additional fault. Step 6: The zero ohm reading here is expected while the switch remains on Normal and does not indicate an additional fault. Step 8: The open reading on harness wire W9A shows loss of continuity that explains why the switch stayed on Normal. Before any work: open 52U, lock out and tag the generator, and prove both sources dead at the work point with a voltmeter. Keep both sources isolated and locked out while you inspect harness wire W9A and restore continuity using approved methods.",
+            "problems": []
+          }
+        ],
+        "template": false
+      },
+      "explain_calls": 1,
+      "transcription": "run_20261031_003748"
+    }
+  ]
+}

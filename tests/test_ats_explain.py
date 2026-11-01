@@ -1,11 +1,13 @@
-"""Explanation step of Hybrid v2 on the ATS bench (D41): the text check, the structured input, one retry on a mismatch
-and the template fallback, with a scripted fake model (no API calls)."""
+"""Explanation step of Hybrid v2 on the ATS bench (D41, D42, D47): the text check, the structured input, one retry on a
+mismatch and the template fallback, the fixed isolation sentence and the safety and citation rules, with a scripted fake
+model (no API calls)."""
 
 import json
 from types import SimpleNamespace
 
 from probeforge.ats import AtsBench
-from probeforge.ats.hybrid.explain import allowed_targets, check_text, consequence_split, explain, steps_text, template
+from probeforge.ats.hybrid.explain import (SAFETY, allowed_targets, check_text, consequence_split, explain, render,
+                                           steps_text, template)
 from probeforge.ats.hybrid.read import build, to_netlist
 from probeforge.ats.infogain import AtsInfoGain
 from probeforge.faults.model import Fault
@@ -13,6 +15,7 @@ from probeforge.hybrid.llm import Usage
 from tests.test_ats_hybrid import perfect_transcription
 
 N = to_netlist(build(perfect_transcription()))
+S = SAFETY + " "  # code puts it before every action (D47)
 COIL = {"outcome": "diagnosed", "component": "TS", "part": "A-B", "failure_mode": "open", "confidence": 0.5,
         "note": "no reading separates: TS:A-B open, TS:A-B burnt"}
 
@@ -46,12 +49,12 @@ def coil_planner():
 
 
 def test_check_text_rules():
-    assert check_text("Replace the operating coil TS A-B with both sources isolated.", COIL, N) == []
-    assert "TS:6-7" in check_text("Inspect the coil connections at TS 6 to TS 7.", COIL, N)[0]
-    assert "by its kind" in check_text("Inspect and repair the A to B contacts.", COIL, N)[0]
+    assert check_text(S + "Replace the operating coil TS A-B.", COIL, N) == []
+    assert "TS:6-7" in check_text(S + "Inspect the coil connections at TS 6 to TS 7.", COIL, N)[0]
+    assert "by its kind" in check_text(S + "Inspect and repair the A to B contacts.", COIL, N)[0]
     wire = {"outcome": "diagnosed", "component": "H1", "part": "W7_TS4-W7_P7", "failure_mode": "open"}
-    assert check_text("Inspect wire 7 from TS 4 to P7 and repair it.", wire, N) == []
-    assert check_text("Readings at steps 1 and 2 agree. Replace wire 7.", wire, N) == []  # not breaker pole 1-2
+    assert check_text(S + "Inspect wire 7 from TS 4 to P7 and repair it.", wire, N) == []
+    assert check_text("Readings at steps 1 and 2 agree. " + S + "Replace wire 7.", wire, N) == []  # not breaker pole 1-2
     assert allowed_targets(COIL) == ["TS:A-B"]
 
 
@@ -104,14 +107,40 @@ def test_consequential_faults_root_first_then_the_damaged_part():
     assert dmg == ["TS:A-B"] and len(co) == 1
     root, other = f"cut-off contact TS {d['part']}", f"cut-off contact {co[0].replace(':', ' ')}"
     kw = {"consequences": co + dmg, "damaged": dmg}
-    good = f"Adjust or replace the {root} and the {other}. Then test the operating coil TS A-B and replace it if burnt."
+    good = f"{S}Adjust or replace the {root} and the {other}. Then test the operating coil TS A-B and replace it if burnt."
     assert check_text(good, d, N, **kw) == []
-    assert "consequential" in check_text(f"Adjust or replace the {root}.", d, N, **kw)[0]
-    assert "before the root" in " ".join(check_text(f"Replace the operating coil TS A-B, then adjust the {root} and the {other}.", d, N, **kw))
+    assert "consequential" in check_text(f"{S}Adjust or replace the {root}.", d, N, **kw)[0]
+    assert "before the root" in " ".join(check_text(f"{S}Replace the operating coil TS A-B, then adjust the {root} and the {other}.", d, N, **kw))
     tpl = template(d, p, N)
     assert check_text(tpl, d, N, **kw) == [] and "burns again at the next transfer" in tpl
-    assert check_text("Correct the misadjustment of the " + root + " and the " + other + ". Then test the operating coil TS A-B.", d, N, **kw) == []
-    fake = Fake([reply(d["component"] + ":" + d["part"], good, what=f"The {root} did not open.")])
+    assert check_text(S + "Correct the misadjustment of the " + root + " and the " + other + ". Then test the operating coil TS A-B.", d, N, **kw) == []
+    fake = Fake([reply(d["component"] + ":" + d["part"], good[len(S):], what=f"The {root} did not open.")])
     out, rec = explain(fake, Usage(), p, d)
     assert "first fix the root cause" in fake.prompts[0] and "burnt" in fake.prompts[0]
     assert not rec["template"] and check_text(out, d, N, **kw) == []
+
+
+def test_unsafe_actions_and_invented_citations_are_rejected():
+    """D47 (from the external review): energized work, a bypass, a repair before the isolation sentence or a missing
+    isolation sentence fail the check; negated safety limits pass; evidence may cite only executed steps."""
+    assert check_text("Replace the operating coil TS A-B while both sources are energized.", COIL, N) == ["the isolation sentence is missing"]
+    assert "unsafe work: energized" in check_text(S + "Replace the operating coil TS A-B while both sources are energized.", COIL, N)[0]
+    assert "unsafe work: bypass" in " ".join(check_text(S + "Bypass the interlock and replace the operating coil TS A-B.", COIL, N)).lower()
+    assert "before the isolation" in " ".join(check_text("Replace the operating coil TS A-B. " + S, COIL, N))
+    assert check_text(S + "Replace the operating coil TS A-B without bypassing interlocks, without paralleling sources and "
+                      "without manual operation under load.", COIL, N) == []
+    assert check_text(S + "Replace the operating coil TS A-B. Do not bypass interlocks or parallel sources or operate "
+                      "manually under load.", COIL, N) == []  # one negation covers the clause
+    assert "unsafe work" in " ".join(check_text(S + "Without delay, replace the operating coil TS A-B under load.", COIL, N))
+    p, d = coil_planner()
+    invented = reply("TS:A-B", "Replace the operating coil TS A-B.")
+    invented["evidence"] = [{"step": 99, "meaning": "a reading that never happened"}]
+    out, rec = explain(Fake([invented, invented]), Usage(), p, d)
+    assert rec["template"] and "not executed: [99]" in rec["attempts"][0]["problems"][-1] and check_text(out, d, N) == []
+
+
+def test_the_isolation_sentence_comes_from_code_before_the_action():
+    text = render(reply("TS:A-B", "Replace the operating coil TS A-B."))
+    assert text.index(SAFETY) < text.index("Replace the operating coil") and text.count(SAFETY) == 1
+    p, d = coil_planner()
+    assert SAFETY in template(d, p, N) and SAFETY in template({"outcome": "insufficient_information", "note": ""}, p, N)
