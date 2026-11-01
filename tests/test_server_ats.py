@@ -12,16 +12,17 @@ from probeforge.eval.spend import SpendLedger
 from probeforge.server import ui_runs
 from probeforge.server import app as server
 from probeforge.server import ats
+from probeforge.server import ats_common  # the settings the session modules read at call time
 from tests.test_agent_loop import FakeClient, FakeMessage
 
 
 @pytest.fixture(autouse=True)
 def isolated(monkeypatch, tmp_path):
     ledger = SpendLedger(tmp_path / "spend.json")
-    monkeypatch.setattr(ats, "SpendLedger", lambda: ledger)
-    monkeypatch.setattr(ats, "ENGINEER_DIR", tmp_path / "engineer_traces" / "ats")
-    monkeypatch.setattr(ats, "warm_signatures", lambda: None)
-    monkeypatch.setattr(ats, "catalog_signatures", lambda: {})  # twins: not needed here (15 s to compute)
+    monkeypatch.setattr(ats_common, "SpendLedger", lambda: ledger)
+    monkeypatch.setattr(ats_common, "ENGINEER_DIR", tmp_path / "engineer_traces" / "ats")
+    monkeypatch.setattr(ats_common, "warm_signatures", lambda: None)
+    monkeypatch.setattr(ats_common, "catalog_signatures", lambda: {})  # twins: not needed here (15 s to compute)
     monkeypatch.setattr(ats_agent, "render_png", lambda n: b"png")
     return tmp_path
 
@@ -153,10 +154,10 @@ def test_hybrid_session_on_a_saved_transcription(monkeypatch, tmp_path):
     monkeypatch.setattr(ats.transcriptions, "load", lambda tid: record)
     ready = threading.Event()
     ready.set()
-    monkeypatch.setattr(ats, "warm_transcription", lambda tid: ready)
-    monkeypatch.setattr(ats, "PLAN_PAUSE_S", 0.01)  # the display pause is counted and excluded from reported times
+    monkeypatch.setattr(ats_common, "warm_transcription", lambda tid: ready)
+    monkeypatch.setattr(ats_common, "PLAN_PAUSE_S", 0.01)  # the display pause is counted and excluded from reported times
     monkeypatch.setenv("PROBEFORGE_OFFLINE", "1")
-    monkeypatch.setattr(ats, "COMPARE_DIR", tmp_path / "compare")
+    monkeypatch.setattr(ats_common, "COMPARE_DIR", tmp_path / "compare")
     monkeypatch.setattr(server, "client", lambda: (_ for _ in ()).throw(RuntimeError("no key")))  # no explanation call
     http = TestClient(server.app)
     events: list = []
@@ -200,7 +201,7 @@ def test_hybrid_session_on_a_saved_transcription(monkeypatch, tmp_path):
 
 
 def test_ats_meta_lists_saved_transcriptions_and_the_live_read_estimate(monkeypatch):
-    monkeypatch.setattr(ats, "warm_transcription", lambda tid: None)
+    monkeypatch.setattr(ats_common, "warm_transcription", lambda tid: None)
     meta = TestClient(server.app).get("/api/ats/meta").json()
     ids = [t["id"] for t in meta["transcriptions"]]
     assert meta["default_transcription"] in ids and all(t["run_id"] and t["recorded"] for t in meta["transcriptions"])
