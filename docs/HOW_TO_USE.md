@@ -69,7 +69,9 @@ diagnosis made after the UPS ran out is shown as such: critical load lost.
 ## 4. Hybrid mode
 
 1. **Hybrid**, choose a fault and the drawing read: one of the two **saved reads** (real earlier Muse Spark reads of
-   the drawing, labelled with their date). A live re-read is offered only on a machine that has the drawing crops.
+   the drawing, labelled by kind, repairs and date, for example "Saved read, 2 repairs (Oct 31)"; the full description
+   is the tooltip and is on the drawing-read card). A live re-read is offered only on a machine that has the drawing
+   crops (its cost is the tooltip and the confirmation on Start).
 2. **Start**. The drawing-read card shows the read and the model check: the transcription must reproduce the
    documented ASCO transfer sequence before any planning.
 3. The planner shows each next reading on the drawing (**next**), then takes it. Candidate faults shrink after each

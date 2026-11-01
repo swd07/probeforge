@@ -33,6 +33,17 @@ export function shortSymptom(symptom: string): string {
   return /event ([^,]+)/.exec(symptom)?.[1] ?? symptom;
 }
 
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+/** ATS hybrid: a short label for a saved drawing read, "Saved read, 2 repairs (Oct 31)" (the full description is the
+ * option's tooltip and is on the drawing-read card). */
+export function shortRead(t: { label: string; recorded: string; repairs: number }): string {
+  const kind = t.label.split(/[ ,]/)[0] || "Saved";
+  const repairs = t.repairs ? `${t.repairs} repair${t.repairs === 1 ? "" : "s"}` : "no repair";
+  const [, m, d] = /^\d{4}-(\d{2})-(\d{2})/.exec(t.recorded) ?? [];
+  return `${kind} read, ${repairs}${m ? ` (${MONTHS[Number(m) - 1]} ${Number(d)})` : ""}`;
+}
+
 export function TopBar({ meta, state, mode, setMode, bench, setBench, onStart, onStop, onCompare, onSheet }: Props) {
   const ats = bench === "ats";
   const [choice, setChoice] = useState("random");
@@ -132,14 +143,16 @@ export function TopBar({ meta, state, mode, setMode, bench, setBench, onStart, o
           </optgroup>
         </select>
         {mode === "hybrid" && ats ? (
-          <select value={atsReadChoice} onChange={(e) => setAtsRead(e.target.value)} disabled={busy} aria-label="Drawing read">
+          <select className="read" value={atsReadChoice} onChange={(e) => setAtsRead(e.target.value)} disabled={busy} aria-label="Drawing read"
+                  title={atsMeta?.transcriptions.find((t) => t.id === atsReadChoice)?.label}>
             {atsMeta?.transcriptions.map((t) => (
-              <option key={t.id} value={t.id}>
-                saved read: {t.label} ({t.recorded})
+              <option key={t.id} value={t.id} title={`${t.label} (recorded ${t.recorded})`}>
+                {shortRead(t)}
               </option>
             ))}
-            <option value="live" disabled={!atsMeta?.live_read.available}>
-              live re-read ({atsMeta?.live_read.available ? atsMeta.live_read.estimate.split(" (")[0] : "needs the drawing crops on this machine"})
+            <option value="live" disabled={!atsMeta?.live_read.available}
+                    title={atsMeta?.live_read.available ? atsMeta.live_read.estimate : "Needs the drawing crops on this machine"}>
+              Live re-read{atsMeta?.live_read.available ? "" : " (unavailable)"}
             </option>
           </select>
         ) : mode === "hybrid" ? (
