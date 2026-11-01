@@ -14,7 +14,7 @@ interface Props {
   selected?: (string | null)[];
   suspects?: { component: string; part: string }[]; // ATS: the leading hypotheses, outlined on the drawing
   planned?: string[]; // ATS: terminals of the next planned reading (dashed rings, "next")
-  followDefault: boolean; // agent mode: zoom to each new measurement
+  runKey: number | null; // changes at every new run: "follow probes" turns back on (a manual zoom turns it off)
   fitKey: string; // changes at session start and at the reveal: zoom out to the home view
   home?: View; // the default view (drawing units); without it the home view is the whole drawing
   focus?: { component: string; part: string } | null; // ATS: after the diagnosis, zoom to this part and outline it
@@ -23,11 +23,11 @@ interface Props {
 /** The schematic is the server-rendered SVG. Every wire carries data-net and every terminal data-terminal,
  * so probes and what was learned about each net are painted straight onto it (schematic/overlays.ts). Zoom and pan
  * work on the viewBox (schematic/viewBox.ts), so labels stay sharp at any zoom. */
-export function Schematic({ svg, nets, probes, truthLive, onPick, selected = [], suspects = [], planned = [], followDefault, fitKey, home, focus = null }: Props) {
+export function Schematic({ svg, nets, probes, truthLive, onPick, selected = [], suspects = [], planned = [], runKey, fitKey, home, focus = null }: Props) {
   const host = useRef<HTMLDivElement>(null);
-  const [follow, setFollow] = useState(followDefault);
+  const [follow, setFollow] = useState(true);
 
-  useEffect(() => setFollow(followDefault), [followDefault]);
+  useEffect(() => setFollow(true), [runKey]);
 
   const { root, full, normalize, animateTo, fit, goHome, zoomBy, panned, pointer } = useViewBox(host, svg, home, () => setFollow(false));
 
