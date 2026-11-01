@@ -10,17 +10,18 @@ from probeforge.eval.engineer import engineer_reference, load_engineer_traces
 from probeforge.eval.spend import SpendLedger, SpendLimitError
 from probeforge.faults import Fault
 from probeforge.server import app as server
+from probeforge.server import level1  # the motor-starter sessions, the model client and the ledger
 from tests.test_agent_loop import FakeClient, FakeMessage
 
 
 @pytest.fixture
 def env(monkeypatch, tmp_path):
     ledger = SpendLedger(tmp_path / "spend.json")
-    monkeypatch.setattr(server, "ledger", lambda: ledger)
-    monkeypatch.setattr(server, "ENGINEER_DIR", tmp_path / "engineer_traces")
-    monkeypatch.setattr(server, "COMPARE_DIR", tmp_path / "compare")
+    monkeypatch.setattr(level1, "ledger", lambda: ledger)
+    monkeypatch.setattr(level1, "ENGINEER_DIR", tmp_path / "engineer_traces")
+    monkeypatch.setattr(level1, "COMPARE_DIR", tmp_path / "compare")
     monkeypatch.setattr(loop, "render_png", lambda n: b"png")
-    monkeypatch.setattr(server, "client", lambda: FakeClient([
+    monkeypatch.setattr(level1, "client", lambda: FakeClient([
         FakeMessage(calls=[("measure_voltage", {"point_a": "FU1:2", "point_b": "N"})]),
         FakeMessage(calls=[("submit_diagnosis", {"outcome": "diagnosed", "component": "FU1", "part": "1-2",
                                                  "failure_mode": "open", "confidence": 0.9,
@@ -166,7 +167,7 @@ def test_cancel_tells_the_browser_once_for_every_session_type(env, monkeypatch):
     assert quiet == []
 
     # a worker thread that sees the cancel afterwards does not send an error (it could land in the next session)
-    monkeypatch.setattr(server, "client", lambda: HybridFake(None))
+    monkeypatch.setattr(level1, "client", lambda: HybridFake(None))
     for s in (server.AgentSession(fault, "test", "low", None), server.HybridSession(fault, "test", "saved", None)):
         events = []
         s.emit = events.append
