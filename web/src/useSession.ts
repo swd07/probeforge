@@ -29,6 +29,8 @@ export function useSession(neutral: string) {
   const start = useCallback(
     async (opts: StartOptions) => {
       dispatch({ type: "reset", mode: opts.mode, bench: opts.bench ?? "star_delta" });
+      // a fresh session token for every start (valid 10 minutes; server/access.py)
+      const { token } = await fetch("/api/session-token").then((r) => r.json());
       const sock = await connect();
       // ?fault=QF1:5-6%20open picks a specific fault for reproducible demos and tests; the UI never offers it
       const fault = new URLSearchParams(location.search).get("fault") ?? undefined;
@@ -43,6 +45,7 @@ export function useSession(neutral: string) {
           schematic: opts.schematic,
           bench: opts.bench === "ats" ? "ats" : undefined,
           fault,
+          token,
         }),
       );
     },

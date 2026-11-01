@@ -215,15 +215,15 @@ class AtsSession:
             columns["agent"] = {"runner": "ats_agent", "missing": "agent not run (offline mode)"}
         if "agent" not in columns:
             try:
-                common.SpendLedger().check(EST_PER_AGENT_RUN_USD, what="an ATS agent run (compare)", demo=True)
+                common.ledger().check(EST_PER_AGENT_RUN_USD, what="an ATS agent run (compare)", demo=True)
 
                 def progress(ev: dict) -> None:
                     if ev["type"] == "turn":
                         self.emit({"type": "compare_progress", "runner": "agent", "turn": ev["turn"]})
 
-                run, tb = run_ats_agent(_outage(self.faults), client_fn(), effort="low", approver=approve_standard_only,
+                run, tb = run_ats_agent(_outage(self.faults), common.metered(client_fn(), "ui ATS compare agent run"),
+                                        effort="low", approver=approve_standard_only,
                                         on_event=progress)
-                common.SpendLedger().record(run.cost_usd, "ui ATS compare agent run", demo=True)
                 tr = make_trace(case="compare_ats", runner="ats_agent", tb=tb, diagnosis=run.diagnosis,
                                 outcome=run.outcome, seconds=run.seconds, run=run)
                 columns["agent"] = column(tr, judged(tr), tb.policy.stats.strong_approval_requests, False)

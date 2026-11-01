@@ -32,6 +32,7 @@ from probeforge.ats.hybrid.pipeline import prepare_model, run_ats_hybrid  # noqa
 from probeforge.ats.hybrid.read import build, parse_reply, read_consensus, sheet_images  # noqa: E402
 from probeforge.ats.infogain import AtsInfoGain  # noqa: E402
 from probeforge.eval.scoring import grade  # noqa: E402
+from probeforge.eval.metered import MeteredClient  # noqa: E402
 from probeforge.eval.spend import SpendLedger, SpendLimitError  # noqa: E402
 from probeforge.eval.trace import make_trace  # noqa: E402
 from probeforge.hybrid.consensus import consensus  # noqa: E402
@@ -145,7 +146,8 @@ def main() -> None:
             ledger.check(est, what=f"ATS hybrid run of {len(args.cases)} cases")
         except SpendLimitError as e:
             sys.exit(str(e))
-        client, images, prep_usage = make_client(), sheet_images(), Usage(effort="medium")
+        # every call reserves and settles in the ledger (also the calls of a case that fails midway)
+        client, images, prep_usage = MeteredClient(make_client(), ledger, out.name, max_run_usd=None), sheet_images(), Usage(effort="medium")
         try:
             if args.reads:
                 data, flags, summary, raws = read_consensus(client, prep_usage, images, reads=args.reads)
@@ -157,7 +159,6 @@ def main() -> None:
                                                                     "disagreement_regions": len(extra), "from": args.reads_from}
             data, raw, flags, healthy = prepare_model(client, prep_usage, data, raw, flags, images)
         finally:
-            ledger.record(prep_usage.cost_usd, f"{out.name}/model")
             (out / "model_turns.json").write_text(json.dumps(prep_usage.turn_log, indent=2), encoding="utf-8")
         quality = read_quality(healthy["versions"], AtsBench().n)  # evaluation only: never sent to the model
         (out / "versions").mkdir()
@@ -177,11 +178,8 @@ def main() -> None:
         for cid in args.cases:
             usage = Usage(effort="medium")
             t0 = time.perf_counter()
-            try:
-                r = run_ats_hybrid(scenario_bench(cases[cid]), client, data, raw, images, usage=usage, flags=flags,
-                                   repair=not args.no_repair, do_explain=not args.no_explain, healthy=healthy)
-            finally:
-                ledger.record(usage.cost_usd, f"{out.name}/{cid}")
+            r = run_ats_hybrid(scenario_bench(cases[cid]), client, data, raw, images, usage=usage, flags=flags,
+                               repair=not args.no_repair, do_explain=not args.no_explain, healthy=healthy)
             p = r.planner
             rows.append(row(cid, cases[cid], r.diagnosis, r.outcome, p.tb, usage, time.perf_counter() - t0,
                             {"corrections": len([c for c in r.corrections if not c.get("rejected")]),

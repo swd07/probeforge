@@ -106,10 +106,11 @@ def test_connections_over_the_per_ip_cap_are_refused(monkeypatch):
 def test_a_run_is_refused_when_every_run_worker_is_busy(monkeypatch):
     from fastapi.testclient import TestClient
 
+    from probeforge.server import access
     from probeforge.server import app as server
 
     monkeypatch.setitem(server._jobs, "running", server.settings.JOB_WORKERS)
     with TestClient(server.app).websocket_connect("/ws") as ws:
-        ws.send_json({"action": "start", "bench": "ats", "source": "random", "effort": "low"})
+        ws.send_json({"action": "start", "bench": "ats", "source": "random", "effort": "low", "token": access.issue()})
         ev = ws.receive_json()
         assert ev["type"] == "error" and "busy" in ev["message"]

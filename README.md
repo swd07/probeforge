@@ -211,6 +211,11 @@ textbook circuit is too easy, so the work moved to real equipment. That stage, i
 
 ## Cost and spend guard
 
-Every model call records its cost in a local ledger; batches stop at $110 of the $130 total, the rest is reserved for
-the public demo with a daily cap ([src/probeforge/eval/spend.py](src/probeforge/eval/spend.py)). Total recorded spend
-for the whole project: about $55.
+Live UI runs and the maintained paid scripts go through a metered client that reserves an upper bound in a local
+ledger before every model call and settles it with the actual cost afterwards, so concurrent runs cannot pass on the
+same balance and a run that fails midway still records what it spent ([eval/spend.py](src/probeforge/eval/spend.py),
+[eval/metered.py](src/probeforge/eval/metered.py)). Batches stop at $110 of the $130 total; the rest is for the public
+demo, with a daily cap. In public mode a separate ledger starts at $0 on the server, runs are capped at $0.75 and calls
+at 10,000 completion tokens (2.1x the largest call in the recorded runs). The ledger is per machine and not
+committed; the provider-side spend limit on the key is the real cap. The author's ledger recorded about $56 for the
+whole project.

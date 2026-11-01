@@ -11,6 +11,7 @@ from probeforge.ats import agent as ats_agent
 from probeforge.eval.spend import SpendLedger
 from probeforge.server import ui_runs
 from probeforge.server import app as server
+from probeforge.server import access  # the session token every start carries
 from probeforge.server import ats
 from probeforge.server import ats_common  # the settings the session modules read at call time
 from probeforge.server import level1  # the model client
@@ -20,7 +21,7 @@ from tests.test_agent_loop import FakeClient, FakeMessage
 @pytest.fixture(autouse=True)
 def isolated(monkeypatch, tmp_path):
     ledger = SpendLedger(tmp_path / "spend.json")
-    monkeypatch.setattr(ats_common, "SpendLedger", lambda: ledger)
+    monkeypatch.setattr(ats_common, "ledger", lambda: ledger)
     monkeypatch.setattr(ats_common, "ENGINEER_DIR", tmp_path / "engineer_traces" / "ats")
     monkeypatch.setattr(ats_common, "warm_signatures", lambda: None)
     monkeypatch.setattr(ats_common, "catalog_signatures", lambda: {})  # twins: not needed here (15 s to compute)
@@ -60,7 +61,7 @@ def test_engineer_session_through_the_intervention_to_transfer_verified():
     http = TestClient(server.app)
     events: list = []
     with http.websocket_connect("/ws") as ws:
-        ws.send_json({"action": "start_manual", "bench": "ats", "source": "scenario", "scenario": ats.PUBLIC_OF["a1_coil_open"],
+        ws.send_json({"token": access.issue(), "action": "start_manual", "bench": "ats", "source": "scenario", "scenario": ats.PUBLIC_OF["a1_coil_open"],
                       "engineer": "test"})
         s = until(ws, "session", events)
         assert s["bench"] == "ats" and s["panel"]["display"] == "Transfer Failure" and s["panel"]["flow"] == 0
@@ -115,7 +116,7 @@ def test_agent_session_then_intervention_with_policy_fact():
         http = TestClient(server.app)
         events: list = []
         with http.websocket_connect("/ws") as ws:
-            ws.send_json({"action": "start", "bench": "ats", "source": "scenario", "scenario": ats.PUBLIC_OF["x1_aux14b_open"], "effort": "low"})
+            ws.send_json({"token": access.issue(), "action": "start", "bench": "ats", "source": "scenario", "scenario": ats.PUBLIC_OF["x1_aux14b_open"], "effort": "low"})
             while True:
                 ev = ws.receive_json()
                 events.append(ev)
@@ -161,7 +162,7 @@ def test_hybrid_session_on_a_saved_transcription(monkeypatch, tmp_path):
     http = TestClient(server.app)
     events: list = []
     with http.websocket_connect("/ws") as ws:
-        ws.send_json({"action": "start_hybrid", "bench": "ats", "source": "scenario", "scenario": ats.PUBLIC_OF["a1_coil_open"],
+        ws.send_json({"token": access.issue(), "action": "start_hybrid", "bench": "ats", "source": "scenario", "scenario": ats.PUBLIC_OF["a1_coil_open"],
                       "schematic": "test_read"})
         s = until(ws, "session", events)
         assert s["mode"] == "hybrid" and s["bench"] == "ats"
@@ -238,7 +239,7 @@ def test_engineer_suggestion_replays_the_engineers_steps_and_never_reads_the_fau
     http = TestClient(server.app)
     events: list = []
     with http.websocket_connect("/ws") as ws:
-        ws.send_json({"action": "start_manual", "bench": "ats", "source": "scenario", "scenario": ats.PUBLIC_OF["a1_coil_open"],
+        ws.send_json({"token": access.issue(), "action": "start_manual", "bench": "ats", "source": "scenario", "scenario": ats.PUBLIC_OF["a1_coil_open"],
                       "engineer": "test"})
         until(ws, "session", events)
         ws.send_json({"action": "suggest"})

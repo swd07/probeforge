@@ -18,6 +18,7 @@ from probeforge.eval.spend import EST_PER_AGENT_RUN_USD, SpendLimitError
 from probeforge.eval.trace import make_trace
 from probeforge.hybrid.llm import Usage
 from probeforge.server import ats_common as common
+from probeforge.server import settings
 from probeforge.server.ats_common import (EST_HYBRID_LIVE_USD, EST_HYBRID_SAVED_USD, LIVE_READ_TEXT, MANUAL_TOOLS, NETLIST,
                                           ROOT, _outage, live_read_available)
 from probeforge.server.ats_session import AtsSession, Cancelled
@@ -33,7 +34,7 @@ class AtsAgentSession(AtsSession):
 
     def run(self) -> None:
         try:
-            common.SpendLedger().check(EST_PER_AGENT_RUN_USD, what="an ATS agent run", demo=True)
+            common.ledger().check(EST_PER_AGENT_RUN_USD, what="an ATS agent run", demo=True)
         except SpendLimitError as e:
             self.emit({"type": "error", "message": str(e)})
             self.closed = True
@@ -41,15 +42,14 @@ class AtsAgentSession(AtsSession):
         self.emit({"type": "session", "mode": "agent", "bench": "ats", "source": self.source, "effort": self.effort,
                    "model": MUSE_SPARK, "panel": snapshot(self.bench, self.flow)})
         try:
-            run, tb = run_ats_agent(self.bench, self.client_fn(), effort=self.effort, approver=self.approver,
-                                    on_event=self.on_event)
+            run, tb = run_ats_agent(self.bench, common.metered(self.client_fn(), f"ui ATS agent run ({self.source})"),
+                                    effort=self.effort, approver=self.approver, on_event=self.on_event)
         except Exception as e:  # missing key, API down
             if not self.cancelled:
                 self.emit({"type": "error", "message": f"{type(e).__name__}: {e}"})
             self.closed = True
             return
         self.tb = tb
-        common.SpendLedger().record(run.cost_usd, f"ui ATS agent run ({self.source})", demo=True)
         if self.cancelled or (run.error and "Cancelled" in run.error):
             self.closed = True
             return
@@ -168,7 +168,7 @@ class AtsHybridSession(AtsSession):
 
     def _client(self):
         try:
-            return self.client_fn()
+            return common.metered(self.client_fn(), f"ui ATS hybrid run ({self.source})")
         except Exception:  # noqa: BLE001 - no key: the saved model still runs, only the explanation is skipped
             return None
 
@@ -206,13 +206,13 @@ class AtsHybridSession(AtsSession):
 
     def run(self) -> None:
         live = self.transcription == "live"
-        if live and not live_read_available():
+        if live and (settings.PUBLIC or not live_read_available()):
             self.emit({"type": "error", "message": "A live re-read needs the drawing crops on this machine "
                                                    "(scripts/render_ats_sheets.py); use a saved transcription."})
             self.closed = True
             return
         try:
-            common.SpendLedger().check(EST_HYBRID_LIVE_USD if live else EST_HYBRID_SAVED_USD, what="an ATS hybrid run", demo=True)
+            common.ledger().check(EST_HYBRID_LIVE_USD if live else EST_HYBRID_SAVED_USD, what="an ATS hybrid run", demo=True)
             t = None if live else transcriptions.load(self.transcription)
         except (SpendLimitError, KeyError) as e:
             self.emit({"type": "error", "message": str(e)})
@@ -246,21 +246,19 @@ class AtsHybridSession(AtsSession):
                             if self.cancelled:
                                 raise Cancelled()
             self.emit({"type": "stage_done"})
-            images = sheet_images() if live_read_available() else []
+            # repairs need the drawing crops; a public host has none, and the per-call token cap would cut them
+            images = sheet_images() if live_read_available() and not settings.PUBLIC else []
             result = run_ats_hybrid(self.bench, client, t["data"], t["raw"], images, usage=usage, flags=t["flags"],
                                     approver=self.approver, repair=bool(client and images), do_explain=client is not None,
                                     on_event=self.on_event, on_update=self.on_update, healthy={"ok": ok, "events": events})
         except Cancelled:
-            common.SpendLedger().record(usage.cost_usd, f"ui ATS hybrid run ({self.source}, ended)", demo=True)
             self.closed = True
             return
         except Exception as e:  # noqa: BLE001 - API down, unusable transcription
-            common.SpendLedger().record(usage.cost_usd, f"ui ATS hybrid run ({self.source}, failed)", demo=True)
             if not self.cancelled:
                 self.emit({"type": "error", "message": f"{type(e).__name__}: {e}"})
             self.closed = True
             return
-        common.SpendLedger().record(usage.cost_usd, f"ui ATS hybrid run ({self.source})", demo=True)
         self.tb = result.planner.tb
         if self.cancelled:
             self.closed = True

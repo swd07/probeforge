@@ -17,7 +17,8 @@ import yaml
 from probeforge.agent.client import MUSE_SPARK, make_client
 from probeforge.agent.loop import run_agent
 from probeforge.baseline import HalfSplitBaseline
-from probeforge.eval.spend import EST_PER_AGENT_RUN_USD, SpendLedger, SpendLimitError
+from probeforge.eval.metered import PUBLIC_MAX_COMPLETION_TOKENS, MeteredClient
+from probeforge.eval.spend import EST_PER_AGENT_RUN_USD, SpendLedger, SpendLimitError, server_ledger
 from probeforge.eval.trace import decisive_measurement, make_trace, summary, verdict
 from probeforge.faults import Fault
 from probeforge.faults.catalog import SCENARIOS_DIR, all_faults, load_scenarios
@@ -55,7 +56,13 @@ def client():
 
 
 def ledger() -> SpendLedger:
-    return SpendLedger()
+    return server_ledger()
+
+
+def metered(c, what: str) -> MeteredClient:
+    """Every call of a live UI run reserves and settles in the server ledger (public mode: with the token cap)."""
+    return MeteredClient(c, ledger(), what, demo=True,
+                         max_completion_tokens=PUBLIC_MAX_COMPLETION_TOKENS if settings.PUBLIC else None)
 
 
 class Cancelled(Exception):
@@ -219,14 +226,14 @@ class AgentSession(Session):
         self.emit({"type": "session", "mode": "agent", "source": self.source, "effort": self.effort,
                    "model": MUSE_SPARK, "panel": panel_snapshot(self.circuit)})
         try:
-            run, tb = run_agent(self.circuit, client(), effort=self.effort, approver=self.approver,
+            run, tb = run_agent(self.circuit, metered(client(), f"ui agent run ({self.source})"), effort=self.effort,
+                                approver=self.approver,
                                 on_event=self.on_event)
         except Exception as e:  # missing key, API down
             if not self.cancelled:
                 self.emit({"type": "error", "message": f"{type(e).__name__}: {e}"})
             self.done = True
             return
-        ledger().record(run.cost_usd, f"ui agent run ({self.source})", demo=True)
         if self.cancelled or (run.error and "Cancelled" in run.error):
             self.done = True  # the browser already got "stopped" (or a new session replaced this one)
             return
@@ -297,7 +304,7 @@ class HybridSession(Session):
             if "data" not in _live_read:
                 self.emit({"type": "stage", "stage": "read",
                            "text": "Muse Spark is reading the schematic image 3 times (disagreements become uncertain regions)..."})
-                data, flags, info = read_consensus(client(), usage, png)
+                data, flags, info = read_consensus(metered(client(), f"ui hybrid read ({self.source})"), usage, png)
                 how = (f"live Muse Spark transcription, {info['reads']} reads, model from read {info['model_read']}, "
                        f"{info['disagreement_regions']} regions where the reads disagree")
                 _live_read.update(data=data, flags=flags, how=how, at=datetime.now().strftime("%H:%M"))
@@ -334,19 +341,16 @@ class HybridSession(Session):
                 self.emit({"type": "error", "message": "transcription not confirmed: correct the flagged regions first"})
                 self.done = True
                 return
-            result = run_hybrid(self.circuit, client(), data, png, usage=usage, flags=flags,
+            result = run_hybrid(self.circuit, metered(client(), f"ui hybrid run ({self.source})"), data, png, usage=usage, flags=flags,
                                 on_event=self.on_event, on_update=self.on_update, confirm_wiring=self.confirm_wiring)
         except Cancelled:
-            ledger().record(usage.cost_usd, f"ui hybrid run ({self.source}, ended)", demo=True)
             self.done = True  # the browser already got "stopped" (or a new session replaced this one)
             return
         except Exception as e:  # missing key, API down, unusable transcription
-            ledger().record(usage.cost_usd, f"ui hybrid run ({self.source}, failed)", demo=True)
             if not self.cancelled:
                 self.emit({"type": "error", "message": f"{type(e).__name__}: {e}"})
             self.done = True
             return
-        ledger().record(usage.cost_usd, f"ui hybrid run ({self.source})", demo=True)
         trace = make_trace(case="ui", runner="hybrid", tb=result.planner.tb, diagnosis=result.diagnosis,
                            outcome=result.outcome, seconds=result.seconds, run=usage, notes=result.planner.notes,
                            extra=result.trace_extra())
@@ -444,8 +448,7 @@ class ManualSession(Session):
                 if ev["type"] == "turn":
                     self.emit({"type": "compare_progress", "runner": "agent", "turn": ev["turn"]})
 
-            run, tb = run_agent(c, client(), effort="low", approver=deny_all, on_event=progress)
-            ledger().record(run.cost_usd, "ui compare agent run", demo=True)
+            run, tb = run_agent(c, metered(client(), "ui compare agent run"), effort="low", approver=deny_all, on_event=progress)
             a_trace = make_trace(case="compare", runner="agent", tb=tb, diagnosis=run.diagnosis, outcome=run.outcome,
                                  seconds=run.seconds, run=run)
             columns["agent"] = summary(a_trace, verdict(NETLIST, str(CIRCUIT_PATH), self.fault, run.diagnosis, run.outcome))

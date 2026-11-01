@@ -13,7 +13,8 @@ from probeforge.ats.bench import AtsBench
 from probeforge.ats.faults import all_faults
 from probeforge.ats.hybrid.pipeline import healthy_sequence, warm
 from probeforge.ats.hybrid.read import SHEET_DIR, SHEETS, to_netlist
-from probeforge.eval.spend import SpendLedger  # noqa: F401 - read as common.SpendLedger (tests replace it)
+from probeforge.eval.metered import PUBLIC_MAX_COMPLETION_TOKENS, MeteredClient
+from probeforge.eval.spend import server_ledger as ledger  # read as common.ledger() (tests replace it)
 from probeforge.faults.model import Fault
 from probeforge.server import settings
 from probeforge.sim.schematic import render_svg
@@ -132,3 +133,10 @@ def warm_transcription(tid: str) -> threading.Event:
 
 def live_read_available() -> bool:
     return all((SHEET_DIR / s).exists() for s in SHEETS)
+
+
+def metered(client, what: str) -> MeteredClient:
+    """The model client of a live UI run: every call reserves and settles in the server ledger; in public mode with
+    the per-call token cap (eval/metered.py has the values and their basis)."""
+    return MeteredClient(client, ledger(), what, demo=True,
+                         max_completion_tokens=PUBLIC_MAX_COMPLETION_TOKENS if settings.PUBLIC else None)

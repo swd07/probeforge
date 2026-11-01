@@ -31,7 +31,7 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import Response
 from fastapi.staticfiles import StaticFiles
 
-from probeforge.server import ats, level1, settings, ui_runs
+from probeforge.server import access, ats, level1, settings, ui_runs
 from probeforge.server.level1 import (  # noqa: F401 - re-exported (tests and scripts use app.<name>)
     ROOT, AgentSession, HybridSession, ManualSession, Session, pick_fault)
 
@@ -51,6 +51,12 @@ _connections: dict[str, int] = {}
 @app.get("/api/meta")
 def meta() -> dict:
     return level1.meta()
+
+
+@app.get("/api/session-token")
+def session_token() -> dict:
+    """A short-lived token the page sends with every start (server/access.py)."""
+    return {"token": access.issue(), "ttl_s": access.TOKEN_TTL_S}
 
 
 @app.get("/api/schematic")
@@ -80,6 +86,9 @@ def ats_schematic() -> Response:
 @app.websocket("/ws")
 async def ws(websocket: WebSocket) -> None:
     ip = websocket.client.host if websocket.client else "?"
+    if not access.origin_allowed(websocket.headers.get("origin"), websocket.headers.get("host")):
+        await websocket.close(code=1008)  # policy violation: a page from another site
+        return
     if sum(_connections.values()) >= settings.MAX_CONNECTIONS or _connections.get(ip, 0) >= settings.MAX_PER_IP:
         await websocket.close(code=1013)  # try again later
         return
@@ -145,6 +154,9 @@ async def ws(websocket: WebSocket) -> None:
                 break
             action = msg.get("action")
             if action in ("start", "start_manual", "start_hybrid"):
+                if not access.valid(msg.get("token")):
+                    emit({"type": "error", "message": "The session token is missing or expired: reload the page."})
+                    continue
                 ui_runs.record(session, "replaced by a new run")
                 if session and not session.done:
                     session.cancel(notify=False)

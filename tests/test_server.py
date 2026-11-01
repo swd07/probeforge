@@ -10,6 +10,7 @@ from probeforge.agent import loop
 from probeforge.eval.spend import SpendLedger
 from probeforge.faults import Fault
 from probeforge.server import app as server
+from probeforge.server import access  # the session token every start carries
 from probeforge.server import level1  # the motor-starter sessions, the model client and the ledger
 from tests.test_agent_loop import FakeClient, FakeMessage
 
@@ -53,7 +54,7 @@ def test_live_session_with_approval(monkeypatch):
 
     events = []
     with http.websocket_connect("/ws") as ws:
-        ws.send_json({"action": "start", "source": "scenario", "scenario": "s08", "effort": "low"})
+        ws.send_json({"token": access.issue(), "action": "start", "source": "scenario", "scenario": "s08", "effort": "low"})
         while True:
             ev = ws.receive_json()
             events.append(ev)
@@ -90,7 +91,7 @@ def test_random_fault_is_hidden_until_done(monkeypatch):
     ]))
     monkeypatch.setattr(loop, "render_png", lambda n: b"png")
     with TestClient(server.app).websocket_connect("/ws") as ws:
-        ws.send_json({"action": "start", "source": "random", "effort": "low"})
+        ws.send_json({"token": access.issue(), "action": "start", "source": "random", "effort": "low"})
         events = []
         while not events or events[-1]["type"] not in ("done", "error"):
             events.append(ws.receive_json())
@@ -111,7 +112,7 @@ def test_clean_pool_fault_comes_from_holdout_clean(monkeypatch):
     clean = yaml.safe_load((SCENARIOS_DIR / "holdout_clean.yaml").read_text(encoding="utf-8"))["cases"]
     pool = {str(Fault.from_dict(c)) for c in clean}
     with TestClient(server.app).websocket_connect("/ws") as ws:
-        ws.send_json({"action": "start", "source": "clean", "effort": "low"})
+        ws.send_json({"token": access.issue(), "action": "start", "source": "clean", "effort": "low"})
         events = []
         while not events or events[-1]["type"] not in ("done", "error"):
             events.append(ws.receive_json())
@@ -128,7 +129,7 @@ def test_hybrid_session_saved_transcription(monkeypatch):
     http = TestClient(server.app)
     events = []
     with http.websocket_connect("/ws") as ws:
-        ws.send_json({"action": "start_hybrid", "source": "random", "schematic": "saved",
+        ws.send_json({"token": access.issue(), "action": "start_hybrid", "source": "random", "schematic": "saved",
                       "fault": "KM4:3-4 stuck_open"})
         while True:
             ev = ws.receive_json()
@@ -154,7 +155,7 @@ def test_hybrid_flags_need_confirmation(monkeypatch):
     monkeypatch.setattr(server.HybridSession, "read", lambda self, usage: (flagged, [flagged["uncertain"][0]], "test", b"png"))
     http = TestClient(server.app)
     with http.websocket_connect("/ws") as ws:
-        ws.send_json({"action": "start_hybrid", "source": "random", "fault": "FU1:1-2 open"})
+        ws.send_json({"token": access.issue(), "action": "start_hybrid", "source": "random", "fault": "FU1:1-2 open"})
         while True:
             ev = ws.receive_json()
             if ev["type"] == "flags_request":
@@ -175,7 +176,7 @@ def test_hybrid_settles_a_pole_that_depends_on_flagged_wiring(monkeypatch):
     http = TestClient(server.app)
     seen = []
     with http.websocket_connect("/ws") as ws:
-        ws.send_json({"action": "start_hybrid", "source": "random", "fault": "KM3:1-2 stuck_open"})
+        ws.send_json({"token": access.issue(), "action": "start_hybrid", "source": "random", "fault": "KM3:1-2 stuck_open"})
         while True:
             ev = ws.receive_json()
             seen.append(ev["type"])

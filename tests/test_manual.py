@@ -10,6 +10,7 @@ from probeforge.eval.engineer import engineer_reference, load_engineer_traces
 from probeforge.eval.spend import SpendLedger, SpendLimitError
 from probeforge.faults import Fault
 from probeforge.server import app as server
+from probeforge.server import access  # the session token every start carries
 from probeforge.server import level1  # the motor-starter sessions, the model client and the ledger
 from tests.test_agent_loop import FakeClient, FakeMessage
 
@@ -42,7 +43,7 @@ def until(ws, *types):
 def test_manual_session_records_trace_and_compares(env):
     tmp, ledger = env
     with TestClient(server.app).websocket_connect("/ws") as ws:
-        ws.send_json({"action": "start_manual", "source": "scenario", "scenario": "s01", "engineer": "Ivan P."})
+        ws.send_json({"token": access.issue(), "action": "start_manual", "source": "scenario", "scenario": "s01", "engineer": "Ivan P."})
         session = until(ws, "session")[-1]
         assert session["mode"] == "manual" and session["engineer"] == "Ivan P."
 
@@ -98,7 +99,7 @@ def test_manual_session_records_trace_and_compares(env):
 
 def test_manual_approval_flow(env):
     with TestClient(server.app).websocket_connect("/ws") as ws:
-        ws.send_json({"action": "start_manual", "source": "scenario", "scenario": "s03"})
+        ws.send_json({"token": access.issue(), "action": "start_manual", "source": "scenario", "scenario": "s03"})
         until(ws, "session")
         ws.send_json({"action": "tool", "name": "perform_action",
                       "args": {"action": "reset_protection", "target": "KK1", "reason": "check after cooling"}})
@@ -126,7 +127,7 @@ def test_ui_agent_run_refused_over_limit(env):
     tmp, ledger = env
     ledger.record(109.0, "pretend")  # 130 total: even the demo reserve is used up
     with TestClient(server.app).websocket_connect("/ws") as ws:
-        ws.send_json({"action": "start", "source": "scenario", "scenario": "s01"})
+        ws.send_json({"token": access.issue(), "action": "start", "source": "scenario", "scenario": "s01"})
         ev = until(ws, "error", "done")[-1]
     assert ev["type"] == "error" and "demo runs are stopped" in ev["message"]
 
@@ -180,7 +181,7 @@ def test_end_session_then_tool_call_gives_an_error_not_silence(env):
     with TestClient(server.app).websocket_connect("/ws") as ws:
         ws.send_json({"action": "tool", "name": "read_indicators", "args": {}})  # no session yet
         assert "No engineer session" in until(ws, "error")[-1]["message"]
-        ws.send_json({"action": "start_manual", "source": "scenario", "scenario": "s01", "engineer": "T"})
+        ws.send_json({"token": access.issue(), "action": "start_manual", "source": "scenario", "scenario": "s01", "engineer": "T"})
         until(ws, "session")
         ws.send_json({"action": "stop"})
         stopped = until(ws, "stopped", "error")[-1]
@@ -192,7 +193,7 @@ def test_end_session_then_tool_call_gives_an_error_not_silence(env):
 
 def test_tool_call_on_a_finished_session_gives_an_error(env):
     with TestClient(server.app).websocket_connect("/ws") as ws:
-        ws.send_json({"action": "start_manual", "source": "scenario", "scenario": "s01", "engineer": "T"})
+        ws.send_json({"token": access.issue(), "action": "start_manual", "source": "scenario", "scenario": "s01", "engineer": "T"})
         until(ws, "session")
         ws.send_json({"action": "tool", "name": "submit_diagnosis", "args": {
             "outcome": "insufficient_information", "confidence": 0.1,

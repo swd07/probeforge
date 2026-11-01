@@ -31,6 +31,7 @@ from probeforge.ats.hybrid.explain import check_text, consequence_split, templat
 from probeforge.ats.hybrid.pipeline import healthy_sequence, run_ats_hybrid, warm  # noqa: E402
 from probeforge.ats.hybrid.read import sheet_images, to_netlist  # noqa: E402
 from probeforge.ats.transcriptions import DEFAULT, DIR, load  # noqa: E402
+from probeforge.eval.metered import MeteredClient  # noqa: E402
 from probeforge.eval.spend import SpendLedger, SpendLimitError  # noqa: E402
 from probeforge.hybrid.llm import Usage  # noqa: E402
 
@@ -116,7 +117,7 @@ def main() -> None:
             ledger.check(EST_USD, what="ATS explanation check on 12 dev cases")
         except SpendLimitError as e:
             sys.exit(str(e))
-        client, images = make_client(), sheet_images()
+        client, images = MeteredClient(make_client(), ledger, out.name, max_run_usd=None), sheet_images()
     for tid in ids:
         t = load(tid)
         ok, events = healthy_sequence(to_netlist(t["data"]))
@@ -125,8 +126,6 @@ def main() -> None:
             got = list(ex.map(lambda c: run_case(c, cases[c], t, {"ok": ok, "events": events}, client, images), cases))
         for r in got:
             r["transcription"] = tid
-            if client is not None:
-                ledger.record(r["cost_usd"], f"{out.name}/{r['case']}")
         rows += got
     result = {"tag": args.tag, "offline": args.offline, "frozen": ats_frozen_hashes(), "rows": rows}
     (out / "results.json").write_text(json.dumps(result, indent=2, ensure_ascii=False), encoding="utf-8")

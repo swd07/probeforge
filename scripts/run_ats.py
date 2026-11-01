@@ -29,6 +29,7 @@ from probeforge.ats.ambiguity import signature  # noqa: E402
 from probeforge.ats.faults import all_faults  # noqa: E402
 from probeforge.ats.tools import ups_status  # noqa: E402
 from probeforge.eval.scoring import grade  # noqa: E402
+from probeforge.eval.metered import MeteredClient  # noqa: E402
 from probeforge.eval.spend import SpendLedger, SpendLimitError  # noqa: E402
 from probeforge.faults.model import Fault  # noqa: E402
 
@@ -84,7 +85,6 @@ def run_case(cid: str, case: dict, args, client, out_dir: Path, ledger: SpendLed
     t_start, ups_start = bench.t, bench.ups_left
     agent = run_ats_agent_responses if args.transport == "responses" else run_ats_agent
     run, tb = agent(bench, client, model=args.model, effort=args.effort, max_turns=args.max_turns)
-    ledger.record(run.cost_usd, f"{out_dir.name}/{cid}")
     spent.append(run.cost_usd)
     trace = {"case": cid, "runner": "ats_agent", "model": run.model, "effort": run.effort, "outcome": run.outcome,
              "diagnosis": run.diagnosis, "turns": run.turns, "error": run.error, "log": tb.log,
@@ -201,7 +201,8 @@ def main() -> None:
     stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     out_dir = ROOT / "runs" / f"{stamp}_ats_agent_{args.transport}_{args.effort}"
     out_dir.mkdir(parents=True)
-    client = make_client()
+    # every call reserves and settles in the ledger (also the calls of a run that fails midway)
+    client = MeteredClient(make_client(), ledger, out_dir.name, max_run_usd=None)
     t0 = time.perf_counter()
     spent: list[float] = []
     with ThreadPoolExecutor(max_workers=args.workers) as ex:
