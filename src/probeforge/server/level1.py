@@ -6,7 +6,6 @@ import itertools
 import json
 import os
 import random
-import re
 import threading
 import time
 from datetime import datetime
@@ -27,6 +26,7 @@ from probeforge.hybrid import read_consensus, run_hybrid
 from probeforge.hybrid.llm import Usage
 from probeforge.hybrid.netlist_io import flags_of, wrong_nets
 from probeforge.server import settings
+from probeforge.server.names import prune, slug
 from probeforge.sim import Circuit, Netlist
 from probeforge.sim.schematic import render_png, render_svg
 from probeforge.tools import ApprovalRequest, ToolBox, deny_all
@@ -34,6 +34,7 @@ from probeforge.tools import ApprovalRequest, ToolBox, deny_all
 ROOT = Path(__file__).resolve().parents[3]
 CIRCUIT_PATH = SCENARIOS_DIR / "circuits" / "star_delta_reversing.yaml"
 ENGINEER_DIR = SCENARIOS_DIR / "engineer_traces"
+VISITOR_DIR = ROOT / "runs" / "visitor_traces" / "motor_starter"  # public mode: visitors' traces, never reference traces
 COMPARE_DIR = ROOT / "runs" / "compare"
 NETLIST = Netlist.load(CIRCUIT_PATH)
 SVG = render_svg(NETLIST)
@@ -101,8 +102,7 @@ def panel_snapshot(circuit: Circuit) -> dict:
     }
 
 
-def slug(text: str) -> str:
-    return re.sub(r"[^A-Za-z0-9]+", "-", text).strip("-") or "x"
+
 
 
 class Session:
@@ -413,11 +413,14 @@ class ManualSession(Session):
             "verdict": self.judged["verdict"], "recorded": datetime.now().isoformat(timespec="seconds"),
             "circuit": CIRCUIT_PATH.relative_to(SCENARIOS_DIR).as_posix(),
         }
-        ENGINEER_DIR.mkdir(parents=True, exist_ok=True)
-        path = ENGINEER_DIR / f"{slug(str(self.fault))}__{slug(self.engineer)}__{datetime.now():%Y%m%d_%H%M%S}.json"
+        folder = VISITOR_DIR if settings.PUBLIC else ENGINEER_DIR
+        folder.mkdir(parents=True, exist_ok=True)
+        path = folder / f"{slug(str(self.fault))}__{slug(self.engineer)}__{datetime.now():%Y%m%d_%H%M%S}.json"
         path.write_text(json.dumps(record, indent=2, ensure_ascii=False), encoding="utf-8")
         self.saved_path = path
-        shown = path.relative_to(ROOT).as_posix() if path.is_relative_to(ROOT) else str(path)
+        if settings.PUBLIC:
+            prune(folder)
+        shown = path.relative_to(ROOT).as_posix() if path.is_relative_to(ROOT) else path.name
         self.emit({"type": "saved", "path": shown})
 
     def compare(self) -> None:
@@ -462,6 +465,7 @@ class ManualSession(Session):
         COMPARE_DIR.mkdir(parents=True, exist_ok=True)
         stem = self.saved_path.stem if self.saved_path else f"{slug(str(self.fault))}_{datetime.now():%H%M%S}"
         (COMPARE_DIR / f"{stem}.json").write_text(json.dumps(result, indent=2), encoding="utf-8")
+        prune(COMPARE_DIR)
         self.emit(result)
 
 

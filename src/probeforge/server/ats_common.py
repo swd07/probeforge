@@ -23,6 +23,8 @@ ROOT = Path(__file__).resolve().parents[3]
 CASES_DIR = ROOT / "scenarios" / "ats"
 ENGINEER_DIR = ROOT / "scenarios" / "engineer_traces" / "ats"
 COMPARE_DIR = ROOT / "runs" / "compare"
+# public mode: what visitors save in Engineer mode stays out of the recorded engineer traces (and out of Compare)
+VISITOR_DIR = ROOT / "runs" / "visitor_traces" / "ats"
 BENCH = AtsBench()
 NETLIST = BENCH.n
 SVG = render_svg(NETLIST)

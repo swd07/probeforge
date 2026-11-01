@@ -19,6 +19,7 @@ from probeforge.eval.trace import make_trace
 from probeforge.hybrid.llm import Usage
 from probeforge.server import ats_common as common
 from probeforge.server import settings
+from probeforge.server.names import prune, slug
 from probeforge.server.ats_common import (EST_HYBRID_LIVE_USD, EST_HYBRID_SAVED_USD, LIVE_READ_TEXT, MANUAL_TOOLS, NETLIST,
                                           ROOT, _outage, live_read_available)
 from probeforge.server.ats_session import AtsSession, Cancelled
@@ -139,11 +140,14 @@ class AtsManualSession(AtsSession):
         self.finish(trace)
         record = {**trace, "faults": [f.to_dict() for f in self.faults], "source": self.source,
                   "recorded": datetime.now().isoformat(timespec="seconds"), "bench": "ats"}
-        common.ENGINEER_DIR.mkdir(parents=True, exist_ok=True)
+        folder = common.VISITOR_DIR if settings.PUBLIC else common.ENGINEER_DIR
+        folder.mkdir(parents=True, exist_ok=True)
         name = "_".join(str(f).replace(":", "-").replace(" ", "-") for f in self.faults)[:80]
-        path = common.ENGINEER_DIR / f"{name}__{self.engineer}__{datetime.now():%Y%m%d_%H%M%S}.json"
+        path = folder / f"{slug(name, 80)}__{slug(self.engineer)}__{datetime.now():%Y%m%d_%H%M%S}.json"
         path.write_text(json.dumps(record, indent=2, ensure_ascii=False), encoding="utf-8")
-        shown = path.relative_to(ROOT).as_posix() if path.is_relative_to(ROOT) else str(path)
+        if settings.PUBLIC:
+            prune(folder)
+        shown = path.relative_to(ROOT).as_posix() if path.is_relative_to(ROOT) else path.name
         self.emit({"type": "saved", "path": shown})
 
 

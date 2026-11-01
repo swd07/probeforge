@@ -22,6 +22,7 @@ from probeforge.eval.trace import make_trace
 from probeforge.faults.model import Fault
 from probeforge.server import ats_common as common
 from probeforge.server.ats_common import APPROVAL_TIMEOUT_S, INTERVENTION_TOOLS, LIVE_V, NETLIST, _f, _outage
+from probeforge.server.names import prune
 from probeforge.server.ats_views import column, describe, diagnosis_text, engineer_trace, snapshot
 
 class AtsSession:
@@ -242,6 +243,7 @@ class AtsSession:
                              and columns["hybrid"].get("sequence") == columns.get("baseline", {}).get("sequence") else "")}
         common.COMPARE_DIR.mkdir(parents=True, exist_ok=True)
         (common.COMPARE_DIR / f"ats_{datetime.now():%Y%m%d_%H%M%S}.json").write_text(json.dumps(result, indent=2), encoding="utf-8")
+        prune(common.COMPARE_DIR)
         self.emit(result)
 
     # called from the event loop ---------------------------------------------------
