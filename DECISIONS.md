@@ -678,3 +678,14 @@ decisions at the end (see CLAUDE.md). Architecture: [ARCHITECTURE.md](ARCHITECTU
 - **Why:** the external review found results/runs/README.md saying the netlists were transcriptions of our redrawing,
   which contradicted D24 and the code; and the ignore rule D24 promised was missing from the repository.
 - **Alternatives:** committing the crops (copyrighted vendor material; not ours to publish).
+
+### D49. Opaque ATS scenario ids in the browser until the result (2026-11-01)
+
+- **What:** the UI's scenario list and every event before the result use `dev-01` to `dev-12`; the server maps them
+  to the case files. The descriptive case id (for example `a1_coil_open`) appears only in the result, next to the
+  injected fault. The server test now asserts that no case id is in any event before the result (its exception for
+  `a1_coil_open` is removed).
+- **Why:** the external review found the case ids, which name the fault, in the browser before the diagnosis, so an
+  Engineer-mode run on a dev scenario was not blinded and invariant 1 was narrower than stated. The model prompts never
+  carried them.
+- **Alternatives:** labelling dev-scenario runs as unblinded demonstrations (keeps a leak the UI does not need).

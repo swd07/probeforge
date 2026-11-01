@@ -47,6 +47,7 @@ def test_ats_meta_and_drawing():
     meta = http.get("/api/ats/meta").json()
     assert meta["neutral"] == "NN" and len(meta["scenarios"]) == 12
     assert all(set(s) == {"id", "symptom"} for s in meta["scenarios"])  # descriptions would name the fault
+    assert [s["id"] for s in meta["scenarios"]] == [f"dev-{i:02d}" for i in range(1, 13)]  # opaque until the result
     assert meta["flow"][-1] == "Transfer verified" and meta["ups_autonomy_s"] == 600
     assert {"action", "tier", "condition"} == set(meta["limits"][0])
     svg = http.get("/api/ats/schematic").text
@@ -57,7 +58,7 @@ def test_engineer_session_through_the_intervention_to_transfer_verified():
     http = TestClient(server.app)
     events: list = []
     with http.websocket_connect("/ws") as ws:
-        ws.send_json({"action": "start_manual", "bench": "ats", "source": "scenario", "scenario": "a1_coil_open",
+        ws.send_json({"action": "start_manual", "bench": "ats", "source": "scenario", "scenario": ats.PUBLIC_OF["a1_coil_open"],
                       "engineer": "test"})
         s = until(ws, "session", events)
         assert s["bench"] == "ats" and s["panel"]["display"] == "Transfer Failure" and s["panel"]["flow"] == 0
@@ -79,7 +80,9 @@ def test_engineer_session_through_the_intervention_to_transfer_verified():
         u = done["ups_at_diagnosis"]  # UPS time left when the diagnosis was submitted, the load not lost yet
         assert not u["load_lost"] and 0 < u["ups_left_s"] < 600 and not done["panel"]["load_lost"]
         before_done = json.dumps(events[:-1])
-        assert "TS:A-B open" not in before_done and "coil_open" not in before_done.replace("a1_coil_open", "")
+        # nothing before the result names the fault: no fault text, no descriptive case id (the browser sees dev-NN)
+        assert "TS:A-B open" not in before_done and "coil_open" not in before_done
+        assert not any(cid in before_done for cid in ats.CASES) and "(a1_coil_open)" in done["source"]
         until(ws, "saved", events)
         tool(ws, events, "perform_action", {"action": "replace_coil", "target": "TS:A-B", "reason": "coil open"})
         ev = tool(ws, events, "measure_resistance", {"point_a": "TS:A", "point_b": "TS:B"})
@@ -112,7 +115,7 @@ def test_agent_session_then_intervention_with_policy_fact():
         http = TestClient(server.app)
         events: list = []
         with http.websocket_connect("/ws") as ws:
-            ws.send_json({"action": "start", "bench": "ats", "source": "scenario", "scenario": "x1_aux14b_open", "effort": "low"})
+            ws.send_json({"action": "start", "bench": "ats", "source": "scenario", "scenario": ats.PUBLIC_OF["x1_aux14b_open"], "effort": "low"})
             while True:
                 ev = ws.receive_json()
                 events.append(ev)
@@ -158,7 +161,7 @@ def test_hybrid_session_on_a_saved_transcription(monkeypatch, tmp_path):
     http = TestClient(server.app)
     events: list = []
     with http.websocket_connect("/ws") as ws:
-        ws.send_json({"action": "start_hybrid", "bench": "ats", "source": "scenario", "scenario": "a1_coil_open",
+        ws.send_json({"action": "start_hybrid", "bench": "ats", "source": "scenario", "scenario": ats.PUBLIC_OF["a1_coil_open"],
                       "schematic": "test_read"})
         s = until(ws, "session", events)
         assert s["mode"] == "hybrid" and s["bench"] == "ats"
@@ -235,7 +238,7 @@ def test_engineer_suggestion_replays_the_engineers_steps_and_never_reads_the_fau
     http = TestClient(server.app)
     events: list = []
     with http.websocket_connect("/ws") as ws:
-        ws.send_json({"action": "start_manual", "bench": "ats", "source": "scenario", "scenario": "a1_coil_open",
+        ws.send_json({"action": "start_manual", "bench": "ats", "source": "scenario", "scenario": ats.PUBLIC_OF["a1_coil_open"],
                       "engineer": "test"})
         until(ws, "session", events)
         ws.send_json({"action": "suggest"})

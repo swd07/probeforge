@@ -75,6 +75,9 @@ def load_cases() -> dict[str, dict]:
 
 
 CASES = load_cases()
+# the browser sees opaque ids until the result: the case file names describe the fault (a1_coil_open)
+PUBLIC_IDS = {f"dev-{i:02d}": cid for i, cid in enumerate(CASES, 1)}
+PUBLIC_OF = {cid: pub for pub, cid in PUBLIC_IDS.items()}
 
 
 def _outage(faults: list[Fault]) -> AtsBench:
@@ -171,7 +174,7 @@ def meta() -> dict:
         "title": NETLIST.title,
         "neutral": "NN",
         # symptom only: the description would name the fault
-        "scenarios": [{"id": cid, "symptom": c["symptom"]} for cid, c in CASES.items()],
+        "scenarios": [{"id": PUBLIC_OF[cid], "symptom": c["symptom"]} for cid, c in CASES.items()],
         "components": comps,
         "repairs": {a: [p.id for p in NETLIST.parts.values() if p.kind in kinds] or ["CP"] for a, kinds in REPAIR_KINDS.items()},
         "limits": [{"action": a, "tier": t, "condition": c} for a, t, c in RULES],
@@ -193,8 +196,8 @@ def pick(msg: dict) -> tuple[list[Fault], str, dict | None]:
         validate(NETLIST, f)
         return [f], "fault chosen by URL", None
     if msg.get("source") == "scenario":
-        case = CASES[msg["scenario"]]
-        return [_f(x) for x in (case.get("faults") or [case["fault"]])], f"ATS dev scenario {case['id']}", case
+        case = CASES[PUBLIC_IDS.get(msg["scenario"], msg["scenario"])]
+        return [_f(x) for x in (case.get("faults") or [case["fault"]])], f"ATS dev scenario {PUBLIC_OF[case['id']]}", case
     pool = visible_pool()
     return [random.SystemRandom().choice(pool)], f"random ATS fault (any of the {len(pool)} visible on the panel)", None
 
@@ -386,7 +389,8 @@ class AtsSession:
         self._advance_flow()
         b = self.bench
         self.emit({
-            "type": "done", "mode": self.mode, "bench": "ats", "source": self.source, **judged,
+            "type": "done", "mode": self.mode, "bench": "ats", **judged,
+            "source": f"{self.source} ({self.case['id']})" if self.case else self.source,  # the case name with the result
             "outcome": trace["outcome"], "diagnosis": trace["diagnosis"],
             "measurements": trace["measurements"], "redundant": trace["redundant_measurements"],
             "turns": trace["turns"], "tokens": trace["tokens"]["prompt"] + trace["tokens"]["completion"],
