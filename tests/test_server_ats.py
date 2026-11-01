@@ -45,6 +45,23 @@ def tool(ws, events, name, args, kind="tool") -> dict:
     return until(ws, kind, events)
 
 
+def saved_read(monkeypatch) -> None:
+    """A perfect read stands in for the saved transcription, warmed already."""
+    import threading
+
+    from probeforge.ats.hybrid.read import build
+    from tests.test_ats_hybrid import perfect_transcription
+
+    data = build(perfect_transcription())
+    record = {"id": "test_read", "label": "Test read", "run_id": "test_run", "recorded": "2026-10-31 00:00", "reads": 1,
+              "repairs": 0, "cost_usd": 0.0, "seconds": 1.0, "read_quality": [], "disclosure": "test",
+              "healthy": {"ok": True, "attempts": []}, "flags": [], "data": data, "raw": {}}
+    monkeypatch.setattr(ats.transcriptions, "load", lambda tid: record)
+    ready = threading.Event()
+    ready.set()
+    monkeypatch.setattr(ats_common, "warm_transcription", lambda tid: ready)
+
+
 def test_ats_meta_and_drawing():
     http = TestClient(server.app)
     meta = http.get("/api/ats/meta").json()
@@ -100,7 +117,7 @@ def test_engineer_session_through_the_intervention_to_transfer_verified():
         assert last_tool["panel"]["flow"] == 5 and last_tool["panel"]["load_powered"] and last_tool["panel"]["position"] == "Emergency"
 
 
-def test_agent_session_then_intervention_with_policy_fact():
+def test_agent_session_then_intervention_with_policy_fact(monkeypatch, tmp_path):
     hyp = {"hypotheses": [{"component": "TS", "part": "17-16", "failure_mode": "stuck_open", "probability": 0.9, "reason": "r"}]}
     client = FakeClient([
         FakeMessage(calls=[("measure_voltage", {"point_a": "TS:20", "point_b": "TS:21"})]),  # step 1: load powered
@@ -110,8 +127,11 @@ def test_agent_session_then_intervention_with_policy_fact():
             "outcome": "diagnosed", "component": "TS", "part": "17-16", "failure_mode": "stuck_open", "confidence": 0.8,
             "evidence": [{"step": 1, "type": "instrument_reading", "observation": "208 V on the load"}]})]),
     ])
+    clients = []
     orig = level1.client
-    level1.client = lambda: client
+    level1.client = lambda: clients.append(1) or client
+    monkeypatch.setattr(ats_common, "COMPARE_DIR", tmp_path / "compare")
+    saved_read(monkeypatch)  # the hybrid column of Compare
     try:
         http = TestClient(server.app)
         events: list = []
@@ -134,6 +154,11 @@ def test_agent_session_then_intervention_with_policy_fact():
             # the intervention after the agent: the human may act through the same policy
             r = tool(ws, events, "read_panel", {})
             assert r["executed"] and r["result"]["load_powered"]
+            # Compare after an agent session: this session is the agent column, no second (paid) agent run
+            ws.send_json({"action": "compare"})
+            cmp = until(ws, "compare", events)
+        assert cmp["own"] == "agent" and cmp["columns"]["agent"]["approvals_by"] == "answered live in this session"
+        assert len(clients) == 1 and not [e for e in events if e.get("runner") == "agent"]
     finally:
         level1.client = orig
 
@@ -142,19 +167,7 @@ def test_hybrid_session_on_a_saved_transcription(monkeypatch, tmp_path):
     """Hybrid v2 on the ATS bench over the WebSocket: the transcription card data, the model check, the planner's next
     step before every reading (the step then taken), human approvals, and the fault only in "done". A perfect read
     stands in for the saved transcription (same netlist as our redrawing: about 12 s of candidate simulation)."""
-    import threading
-
-    from probeforge.ats.hybrid.read import build
-    from tests.test_ats_hybrid import perfect_transcription
-
-    data = build(perfect_transcription())
-    record = {"id": "test_read", "label": "Test read", "run_id": "test_run", "recorded": "2026-10-31 00:00", "reads": 1,
-              "repairs": 0, "cost_usd": 0.0, "seconds": 1.0, "read_quality": [], "disclosure": "test",
-              "healthy": {"ok": True, "attempts": []}, "flags": [], "data": data, "raw": {}}
-    monkeypatch.setattr(ats.transcriptions, "load", lambda tid: record)
-    ready = threading.Event()
-    ready.set()
-    monkeypatch.setattr(ats_common, "warm_transcription", lambda tid: ready)
+    saved_read(monkeypatch)
     monkeypatch.setattr(ats_common, "PLAN_PAUSE_S", 0.01)  # the display pause is counted and excluded from reported times
     monkeypatch.setenv("PROBEFORGE_OFFLINE", "1")
     monkeypatch.setattr(ats_common, "COMPARE_DIR", tmp_path / "compare")

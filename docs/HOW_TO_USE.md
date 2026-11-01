@@ -102,9 +102,10 @@ the controller; the UPS clock then stops.
 
 ## 7. Compare and the troubleshooting sheet
 
-- **Compare** shows four columns on the same fault: you or the agent (this run), a recorded engineer trace if one
-  exists, Hybrid v2 on the default saved read, and the info-gain baseline. Re-runs use the batch approval rules. The
-  agent column re-runs the agent (about $0.12); the others are free.
+- **Compare** shows four columns on the same fault: this run in its own column (you, the agent or the hybrid), a
+  recorded engineer trace if one exists, Hybrid v2 on the default saved read, the agent and the info-gain baseline.
+  Re-runs use the batch approval rules. After an agent run that run is the agent column and Compare is free; after a
+  Hybrid or Engineer run the agent is re-run (about $0.12); the other re-runs are free.
 - **Troubleshooting sheet**: symptom, causes, checks in a safe order and the separating reading for families A and B,
   generated from the simulator (not reviewed by an electrical engineer).
 
@@ -115,7 +116,7 @@ the controller; the UPS clock then stops.
 | Engineer mode | free |
 | Agent run | about $0.12 (up to $0.30) |
 | Hybrid run on a saved read | about $0.006 |
-| Compare | about $0.12 (the agent column) |
+| Compare | free after an agent run; about $0.12 after a Hybrid or Engineer run (the agent re-run) |
 
 Every model call reserves budget in a local ledger first. Live runs are capped per day (`PROBEFORGE_DEMO_DAILY_USD`,
 default $5) and in total. On a public demo (`PROBEFORGE_PUBLIC=1`): a separate ledger, runs stopped at $0.75, approval

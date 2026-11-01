@@ -42,6 +42,14 @@ interface Props {
   suggest: () => void;
 }
 
+/** Compare reuses this session for its own column (the server does the same): after an agent session the agent is
+ * not re-run, so Compare makes no model call. */
+function atsCompareLabel(mode: string): string {
+  if (mode === "agent") return "Compare on this fault (this run is the agent column; hybrid and baseline re-runs free)";
+  if (mode === "hybrid") return "Compare on this fault (this run is the hybrid column; agent re-run about $0.12, baseline free)";
+  return "Compare on this fault (agent re-run about $0.12; hybrid and baseline free)";
+}
+
 /** The docked right column: the result card and the instruments (each collapsed to one line), the cards of the
  * running mode, the top 3 hypotheses, and the step log, which always keeps at least half of the height. */
 export function RightColumn({ state, cur, ats, hybrid, manual, manualRun, busy, meta, atsMeta, atsPanel, atsDiagnosing, atsIntervention, manualActive, toolSteps, lastProbe, logItems, meter, setMeter, showTruth, setShowTruth, onCompare, tool, setDiagnosing, suggesting, setSuggesting, suggest }: Props) {
@@ -56,7 +64,7 @@ export function RightColumn({ state, cur, ats, hybrid, manual, manualRun, busy, 
             saved={manualRun ? state.saved : undefined}
             atsPanel={ats ? atsPanel : undefined}
             defaultCollapsed
-            compareLabel={ats ? "Compare on this fault (agent re-run about $0.10; hybrid and baseline free)" : undefined}
+            compareLabel={ats ? atsCompareLabel(state.mode) : undefined}
             onCompare={onCompare}
           />
         )}
