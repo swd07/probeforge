@@ -1,11 +1,11 @@
 """ATS results, dev and S5 holdout side by side (docs/results/ats_results.md and .json).
 
-  python -m uv run python scripts/ats_results.py runs/<stamp>_ats_holdout
+  python -m uv run python scripts/ats_results.py results/runs/20261031_123544_ats_holdout   (regenerates docs/results/ats_results.json)
 
 Dev columns (12 dev cases, never presented as holdout):
-- agent: runs/20261031_012952_ats_agent_chat_low (Chat, low; the reported dev run, D38), recorded before the
+- agent: results/runs/20261031_012952_ats_agent_chat_low (Chat, low; the reported dev run, D38), recorded before the
   load-lost fields (D43), so no UPS at diagnosis;
-- Hybrid v2: runs/20261031_114432_ats_explain_d42_after2 (default saved transcription, repair and explanation, the
+- Hybrid v2: results/runs/20261031_114432_ats_explain_d42_after2 (default saved transcription, repair and explanation, the
   frozen code) for diagnoses, explanation checks and cost; readings, approvals, UPS and virtual time from a free
   replay of the same cases without model calls, whose tool logs and diagnoses were shown identical to the paid runs
   (D41, D43); wall time is not available for that run;
@@ -32,9 +32,10 @@ from probeforge.ats.hybrid.read import to_netlist  # noqa: E402
 from probeforge.ats.infogain import AtsInfoGain  # noqa: E402
 from probeforge.ats.transcriptions import DEFAULT, load  # noqa: E402
 
-DEV_AGENT = ROOT / "runs" / "20261031_012952_ats_agent_chat_low"
-DEV_HYBRID = ROOT / "runs" / "20261031_114432_ats_explain_d42_after2"
-OUT_MD, OUT_JSON = ROOT / "docs" / "results" / "ats_results.md", ROOT / "docs" / "results" / "ats_results.json"
+RUNS = ROOT / "results" / "runs"  # the committed copies of the cited runs
+DEV_AGENT = RUNS / "20261031_012952_ats_agent_chat_low"
+DEV_HYBRID = RUNS / "20261031_114432_ats_explain_d42_after2"
+OUT_JSON = ROOT / "docs" / "results" / "ats_results.json"
 
 
 def dev_rows() -> dict[str, list[dict]]:
@@ -99,6 +100,8 @@ def stats(rows: list[dict]) -> dict:
         "denied": sum(r["approvals_denied"] for r in rows),
         "cost": round(sum(cost), 4), "uncached": round(sum(u for u in unc if u is not None), 4) if all(u is not None for u in unc) else None,
         "wall_mean_s": _mean([r.get("seconds") for r in rows]),
+        "correct_before_ups_out": (sum(bool(r.get("diagnosed_before_ups_out")) and bool(r["correct"]) for r in ups), len(ups))
+        if ups else None,
     }
 
 
