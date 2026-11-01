@@ -11,27 +11,51 @@ export function useSession(neutral: string) {
   const neutralRef = useRef(neutral);
   neutralRef.current = neutral;
 
+  const connecting = useRef<Promise<WebSocket> | null>(null);
+  const lost = useCallback(() => dispatch({ type: "event", ev: { type: "connection_lost" }, neutral: neutralRef.current }), []);
+
+  // one socket at a time: a second Start before the first socket opens reuses the pending connection
   const connect = useCallback((): Promise<WebSocket> => {
     if (ws.current && ws.current.readyState === WebSocket.OPEN) return Promise.resolve(ws.current);
-    return new Promise((resolve, reject) => {
+    if (connecting.current) return connecting.current;
+    connecting.current = new Promise<WebSocket>((resolve, reject) => {
       const proto = location.protocol === "https:" ? "wss" : "ws";
       const sock = new WebSocket(`${proto}://${location.host}/ws`);
       sock.onmessage = (m) => dispatch({ type: "event", ev: JSON.parse(m.data), neutral: neutralRef.current });
-      sock.onopen = () => resolve(sock);
-      sock.onerror = () => reject(new Error("WebSocket failed"));
-      sock.onclose = () => (ws.current = null);
+      sock.onopen = () => {
+        connecting.current = null;
+        resolve(sock);
+      };
+      sock.onerror = () => {
+        connecting.current = null;
+        reject(new Error("WebSocket failed"));
+      };
+      // the server ends the session with the connection: say so instead of leaving the page waiting
+      sock.onclose = () => {
+        if (ws.current === sock) ws.current = null;
+        connecting.current = null;
+        lost();
+      };
       ws.current = sock;
     });
-  }, []);
+    return connecting.current;
+  }, [lost]);
 
   useEffect(() => () => ws.current?.close(), []);
 
   const start = useCallback(
     async (opts: StartOptions) => {
       dispatch({ type: "reset", mode: opts.mode, bench: opts.bench ?? "star_delta" });
-      // a fresh session token for every start (valid 10 minutes; server/access.py)
-      const { token } = await fetch("/api/session-token").then((r) => r.json());
-      const sock = await connect();
+      let token: string;
+      let sock: WebSocket;
+      try {
+        // a fresh session token for every start (valid 10 minutes; server/access.py)
+        token = (await fetch("/api/session-token").then((r) => r.json())).token;
+        sock = await connect();
+      } catch {
+        lost();
+        return;
+      }
       // ?fault=QF1:5-6%20open picks a specific fault for reproducible demos and tests; the UI never offers it
       const fault = new URLSearchParams(location.search).get("fault") ?? undefined;
       sock.send(
@@ -49,7 +73,7 @@ export function useSession(neutral: string) {
         }),
       );
     },
-    [connect],
+    [connect, lost],
   );
 
   const tool = useCallback((name: string, args: Record<string, unknown>) => {

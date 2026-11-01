@@ -302,6 +302,12 @@ export function reducer(s: State, a: Action): State {
         stage: "",
         feed: [...s.feed, { kind: "info", id: `stopped${s.feed.length}`, text: "Session ended. Pick a fault and press Start for a new one." }],
       };
+    case "connection_lost":
+      // the server ends a session when its connection drops; a finished result stays readable
+      if (s.status === "running" || s.status === "approval")
+        return { ...s, status: "error", error: "Connection lost: the session ended. Pick a fault and press Start for a new one.", approval: null, flags: null, wiring: null, stage: "", nextStep: null };
+      if (s.status === "done") return { ...s, error: "Connection lost: the result stays here; pick a fault and press Start for a new run." };
+      return s;
     case "error":
       // after the run (compare refused, a click on an ended session): keep the state, show the message
       if (s.status === "done" || s.status === "stopped") return { ...s, error: ev.message };

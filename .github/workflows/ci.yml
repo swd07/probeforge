@@ -34,8 +34,9 @@ jobs:
           cache: npm
           cache-dependency-path: web/package-lock.json
 
-      - name: Web build (locked)
+      - name: Web unit tests and build (locked)
         working-directory: web
         run: |
           npm ci
+          npm test
           npm run build

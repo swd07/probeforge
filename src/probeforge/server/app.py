@@ -24,6 +24,7 @@ Protocol (JSON over /ws):
 """
 
 import asyncio
+import json
 import threading
 from concurrent.futures import ThreadPoolExecutor
 
@@ -51,6 +52,28 @@ _connections: dict[str, int] = {}
 @app.get("/api/meta")
 def meta() -> dict:
     return level1.meta()
+
+
+ACTIONS = {"start", "start_manual", "start_hybrid", "tool", "compare", "suggest", "approval", "flags", "wiring", "stop"}
+
+
+def message_problem(msg) -> str | None:
+    """Why a client message cannot be handled, or None (audit S4: validated before dispatch)."""
+    if not isinstance(msg, dict):
+        return "not a JSON object"
+    action = msg.get("action")
+    if action not in ACTIONS:
+        return "unknown action"
+    if action in ("approval", "flags", "wiring") and (not isinstance(msg.get("id"), int) or isinstance(msg.get("id"), bool)):
+        return "id must be an integer"
+    if action in ("approval", "flags") and not isinstance(msg.get("approve", False), bool):
+        return "approve must be true or false"
+    if action == "tool" and (not isinstance(msg.get("name"), str) or not isinstance(msg.get("args", {}), dict)):
+        return "a tool call needs a name and an args object"
+    for key in ("token", "source", "scenario", "engineer", "schematic", "bench", "effort", "fault"):
+        if key in msg and msg[key] is not None and not isinstance(msg[key], str):
+            return f"{key} must be text"
+    return None
 
 
 @app.get("/api/session-token")
@@ -143,7 +166,7 @@ async def ws(websocket: WebSocket) -> None:
     try:
         while True:
             try:
-                msg = await asyncio.wait_for(websocket.receive_json(), timeout=settings.IDLE_TIMEOUT_S)
+                text = await asyncio.wait_for(websocket.receive_text(), timeout=settings.IDLE_TIMEOUT_S)
             except asyncio.TimeoutError:
                 emit({"type": "error", "message": f"Session closed after {settings.IDLE_TIMEOUT_S // 60} minutes without activity."})
                 if session:
@@ -152,70 +175,84 @@ async def ws(websocket: WebSocket) -> None:
                 await asyncio.sleep(0.2)  # let the message go out
                 await websocket.close()
                 break
-            action = msg.get("action")
-            if action in ("start", "start_manual", "start_hybrid"):
-                if not access.valid(msg.get("token")):
-                    emit({"type": "error", "message": "The session token is missing or expired: reload the page."})
-                    continue
-                ui_runs.record(session, "replaced by a new run")
-                if session and not session.done:
-                    session.cancel(notify=False)
-                elif isinstance(session, ats.AtsSession):
-                    session.cancel(notify=False)  # close a finished ATS session's intervention
-                if msg.get("bench") == "ats":
+            try:
+                msg = json.loads(text)
+            except ValueError:
+                msg = None
+            problem = message_problem(msg)
+            if problem:  # audit S4: a bad message gets an error event; the socket and the session stay
+                emit({"type": "error", "message": f"Ignored a malformed message ({problem})."})
+                continue
+            try:
+                action = msg.get("action")
+                if action in ("start", "start_manual", "start_hybrid"):
+                    if not access.valid(msg.get("token")):
+                        emit({"type": "error", "message": "The session token is missing or expired: reload the page."})
+                        continue
+                    ui_runs.record(session, "replaced by a new run")
+                    if session and not session.done:
+                        session.cancel(notify=False)
+                    elif isinstance(session, ats.AtsSession):
+                        session.cancel(notify=False)  # close a finished ATS session's intervention
+                    if msg.get("bench") == "ats":
+                        try:
+                            session = ats.start_session(action, msg, emit, level1.client)
+                        except (ValueError, KeyError) as e:
+                            emit({"type": "error", "message": str(e)})
+                            session = None
+                            continue
+                        if isinstance(session, (ats.AtsAgentSession, ats.AtsHybridSession)):
+                            if not background(session.run, run=True):
+                                session = None
+                        else:
+                            session.start()
+                        continue
                     try:
-                        session = ats.start_session(action, msg, emit, level1.client)
+                        fault, source = pick_fault(msg)
                     except (ValueError, KeyError) as e:
                         emit({"type": "error", "message": str(e)})
-                        session = None
                         continue
-                    if isinstance(session, (ats.AtsAgentSession, ats.AtsHybridSession)):
+                    if action == "start":
+                        session = AgentSession(fault, source, settings.agent_effort(msg.get("effort")), emit)
+                        if not background(session.run, run=True):
+                            session = None
+                    elif action == "start_hybrid":
+                        session = HybridSession(fault, source, str(msg.get("schematic") or "saved"), emit)
                         if not background(session.run, run=True):
                             session = None
                     else:
+                        session = ManualSession(fault, source, str(msg.get("engineer") or ""), emit)
                         session.start()
-                    continue
-                try:
-                    fault, source = pick_fault(msg)
-                except (ValueError, KeyError) as e:
-                    emit({"type": "error", "message": str(e)})
-                    continue
-                if action == "start":
-                    session = AgentSession(fault, source, settings.agent_effort(msg.get("effort")), emit)
-                    if not background(session.run, run=True):
-                        session = None
-                elif action == "start_hybrid":
-                    session = HybridSession(fault, source, str(msg.get("schematic") or "saved"), emit)
-                    if not background(session.run, run=True):
-                        session = None
-                else:
-                    session = ManualSession(fault, source, str(msg.get("engineer") or ""), emit)
-                    session.start()
-            elif action == "tool" and isinstance(session, (ManualSession, ats.AtsSession)):
-                args = msg.get("args") if isinstance(msg.get("args"), dict) else {}
-                background(session.call, str(msg.get("name")), args)
-            elif action == "tool":
-                emit({"type": "error", "message": "No engineer session is running: choose Engineer, pick a fault and press Start."})
-            elif action == "compare" and isinstance(session, ManualSession):
-                background(session.compare, run=True)
-            elif action == "compare" and isinstance(session, ats.AtsSession):
-                background(session.compare, level1.client, run=True)
-            elif action == "suggest" and isinstance(session, ats.AtsManualSession):
-                background(session.suggest)
-            elif action in ("approval", "flags") and session:
-                session.answer(int(msg["id"]), bool(msg.get("approve")))
-            elif action == "wiring" and isinstance(session, HybridSession):
-                session.choose(int(msg["id"]), msg.get("choice"))
-            elif action == "stop" and session:
-                ui_runs.record(session, "stopped")
-                session.cancel()
-            elif action == "stop":
-                emit({"type": "error", "message": "No session is running."})
+                elif action == "tool" and isinstance(session, (ManualSession, ats.AtsSession)):
+                    args = msg.get("args") if isinstance(msg.get("args"), dict) else {}
+                    background(session.call, str(msg.get("name")), args)
+                elif action == "tool":
+                    emit({"type": "error", "message": "No engineer session is running: choose Engineer, pick a fault and press Start."})
+                elif action == "compare" and isinstance(session, ManualSession):
+                    background(session.compare, run=True)
+                elif action == "compare" and isinstance(session, ats.AtsSession):
+                    background(session.compare, level1.client, run=True)
+                elif action == "suggest" and isinstance(session, ats.AtsManualSession):
+                    background(session.suggest)
+                elif action in ("approval", "flags") and session:
+                    session.answer(int(msg["id"]), bool(msg.get("approve")))
+                elif action == "wiring" and isinstance(session, HybridSession):
+                    session.choose(int(msg["id"]), msg.get("choice"))
+                elif action == "stop" and session:
+                    ui_runs.record(session, "stopped")
+                    session.cancel()
+                elif action == "stop":
+                    emit({"type": "error", "message": "No session is running."})
+            except Exception as e:  # noqa: BLE001 - one bad message must not end the connection
+                emit({"type": "error", "message": f"Could not handle that message ({type(e).__name__})."})
     except WebSocketDisconnect:
-        if session:
-            ui_runs.record(session, "browser left")
-            session.cancel(notify=False)
+        pass
     finally:
+        # however the connection ends (closed tab, network loss, server error), the session ends with it: no
+        # orphaned approval waits or paid runs, and the local UI run list gets its row (audit S4)
+        if session:
+            ui_runs.record(session, "connection closed")
+            session.cancel(notify=False)
         sender_task.cancel()
         _connections[ip] -= 1
         if not _connections[ip]:
