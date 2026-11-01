@@ -1,169 +1,171 @@
 # How to use ProbeForge
 
-ProbeForge shows a motor starter panel (a star-delta reversing starter) with one hidden fault. Someone has to find
-the fault by pressing buttons and taking meter readings, like an electrician at a real panel. That someone can be:
+ProbeForge simulates a data center during a utility outage: the generator runs, but the automatic transfer switch
+(ASCO Series 300 Group G, our redrawing of wiring diagram 978741) has a hidden fault and does not move the critical
+load. The UPS carries it, with minutes left. Someone has to find the fault from the controller, the drawing and a
+meter, like a field technician. That someone can be:
 
-- **Agent**: the Muse Spark AI does everything itself.
-- **Hybrid**: Muse Spark reads the drawing, a planner program chooses the measurements, Muse Spark explains the result.
-- **Engineer**: you do it yourself, with the same tools and the same safety rules.
+- **Agent**: Muse Spark does everything itself, with tool calls.
+- **Hybrid**: Muse Spark's reading of the drawing, an information-gain planner that chooses the readings, and Muse
+  Spark's explanation for the technician.
+- **Engineer**: you, with the same tools and the same safety rules.
 
-Nothing in the browser can damage anything: the panel is a simulation.
+Nothing in the browser can damage anything: the switch is a simulation. The first bench, a star-delta motor
+starter, is still available (see "Motor starter" at the end).
 
 ## 1. Start and stop the server
 
-You need the project set up once (see the README: `uv sync`, and a `.env` file with `META_API_KEY=...`).
+Set up once (see the README): `uv sync --frozen`, `cd web && npm ci && npm run build`, and a `.env` file with
+`META_API_KEY=...`.
 
-1. Build the web page (only after the frontend code changed):
-   ```
-   cd web
-   npm run build
-   cd ..
-   ```
-2. Start the server:
-   ```
-   python -m uv run python -m probeforge.server
-   ```
-   (or `uv run python -m probeforge.server` if `uv` is on your PATH). Wait for `Uvicorn running on http://127.0.0.1:8000`.
-3. Open **http://127.0.0.1:8000** in a browser.
-4. To stop: press **Ctrl+C** in the terminal where the server runs.
+1. Start the server: `uv run python -m probeforge.server` (or `python -m uv run python -m probeforge.server` if `uv`
+   is not on your PATH). Wait for `Uvicorn running on http://127.0.0.1:8000`.
+2. Open **http://127.0.0.1:8000/?bench=ats** (or open http://127.0.0.1:8000 and click **ATS** in the top bar).
+3. To stop: **Ctrl+C** in the terminal.
 
-Engineer mode works without an API key. Agent, Hybrid and Compare call the Meta Model API and cost money (see
-section 6).
+Engineer mode needs no API key; `PROBEFORGE_OFFLINE=1` runs the hybrid on a saved read without model calls (no
+explanation). Agent runs and the agent column of Compare cost money (section 8).
 
 ## 2. The screen
 
-- **Top bar**: the three mode buttons (Agent, Hybrid, Engineer), the fault list, an extra setting for the mode, and
-  **Start** (it becomes **End session** while a run is going; that ends the whole session and is not the panel's red Stop push button, so Engineer mode asks for confirmation). On the right: status, which fault pool or scenario was run,
-  the number of measurements, and blocked actions in red.
-- **Front panel** (top left): the lamps **Power** (white), **Fault** (red: the motor overload has tripped),
-  **Forward** and **Reverse** (green), the buttons **Stop**, **Start Fwd**, **Start Rev**, the main breaker **QF1**
-  (ON / OFF), the motor state (stopped, star, delta, humming...) and the three line currents U, V, W.
-- **Schematic** (bottom left): the full drawing. Wires change color after a measurement:
-  **red** = measured live (voltage present), **blue** = measured dead (0 V), **purple** = part of a measurement
-  (probed). Reading labels appear next to the points that were measured. Use the mouse wheel to zoom, drag to move,
-  **Fit** to see everything. **follow probes** moves the view to each new measurement.
-- **Right panel**: depends on the mode (hypotheses, candidate faults, or your instruments); it scrolls when it is longer
-  than the screen.
-- **Log** (button at the top right of the drawing): the list of steps, floating over the drawing. It follows the newest
-  entry unless you scroll up, and stays available after the run. Agent: its short notes, each tool call with its
-  result, approvals. Hybrid: the stages, each planned reading before it is taken, the readings, the explanation.
-  Engineer: your steps and any suggestion shown. Every step passes the safety policy: a **red** step was blocked (with
-  the policy reason), an **amber** step waits for a human answer. It is a log, not a chat: there is no input box.
-- **Result card** (appears at the top right when a run ends): the verdict, the hidden fault (revealed only now),
-  the answer, the numbers, and **Show true live wiring** (paints the wires that really carry voltage).
+- **Top bar**: bench (**Motor starter** / **ATS**), mode (**Agent**, **Hybrid**, **Engineer**), the fault list, a
+  setting for the mode (effort, drawing read, or your name), **Start** (it becomes **End session** while a run
+  goes), **Compare** (after a diagnosis), **Troubleshooting sheet**, and on the right the status.
+- **Fault list**: **Random fault** (any of the 49 catalog faults visible on the controller during an outage) or one
+  of the 12 dev scenarios **dev-01 to dev-12**, listed by their symptom only. The scenario's name (it names the fault)
+  appears with the result, never before.
+- **Status column** (left): the **UPS time left** (it drains 30 s per reading or action; at 0 the critical load is
+  lost), the sources (utility, generator), the transfer switch position and the critical load, the six controller
+  lights, the controller display, the stages from "Fault detected" to "Transfer verified", and folds for the metering
+  screen and the event log. **Agent action limits** opens the policy table (generated from the code).
+- **Drawing** (middle): our redrawing, not the official drawing. Wires change color after a reading: **red** live,
+  **blue** dead, **purple** probed; reading labels sit next to the points. Mouse wheel zooms, drag pans, **+**, **-**,
+  **Home** (the operator circuit), **Fit** (the whole drawing). **follow probes** (on by default) moves the view to
+  each new reading. In Hybrid runs the next planned reading is marked **next**. After the diagnosis the view zooms to
+  the diagnosed part and outlines it in teal.
+- **Right column**: the result card and the instruments, each folded to one line (click to open); the cards of the
+  running mode; the top 3 hypotheses or candidate faults; and the **log**, which always keeps at least half of the
+  column. The log lists every step with its policy verdict: **red** blocked (with the reason), **amber** waiting for an
+  approval. It follows the newest step unless you scroll up. It is a log, not a chat.
+- **Result card**: the verdict, the injected fault (revealed only now), the answer, **UPS time left at diagnosis**,
+  the numbers, and in Hybrid runs the explanation for the technician.
 
-Verdict colors: **Correct** (green: component, failure mode and pole all right), **Justified** (the fault cannot be
-told apart from another one by any measurement, and the answer named that one or said "insufficient information"),
-**Pole open** (right component and failure mode, but no pole named), **Wrong** (red), **No diagnosis**.
+Verdicts: **Correct** (component, failure mode and part right), **Justified** (no reading can tell the fault from
+another one, and the answer named that one or said insufficient information), **Wrong**, **No diagnosis**. A correct
+diagnosis made after the UPS ran out is shown as such: critical load lost.
 
 ## 3. Agent mode
 
-1. Click **Agent**.
-2. Choose a fault: **Random fault (any of 91)**, **Clean test fault** (from the faults never used in development), or
-   one of the scenarios **s01 to s08** (named by their symptom).
-3. Leave **effort low**.
-4. Click **Start**.
-5. Watch: the **Log** shows the agent's thinking and each tool call; **Hypotheses** shows its suspects with
-   probabilities that change after every measurement; the schematic lights up where it measures.
-6. If the agent asks for something that needs approval (for example switching the power back on after a protection
-   trip), a card appears: click **Approve** or **Deny**.
-7. The result card shows whether it was right. A run takes 20 to 90 seconds and costs about $0.07.
+1. **Agent**, choose a fault, leave **effort low**, **Start**.
+2. Watch the log (the agent's short notes, every tool call and its result) and the hypotheses.
+3. **Approval** card: an action of the approval tier (for example isolating the sources while the load is not
+   powered). **Approve** or **Deny**.
+4. **Strong approval** card: isolating a powered load, or restoring the sources after a Transfer Failure (a repeat
+   transfer attempt). The card shows the readings the agent cites and the policy's own facts (for example "the load
+   is powered from the Emergency source"); tick the confirmation, then approve or deny. A request without a cited
+   meter reading is refused in code before it reaches you.
+5. A run takes 1 to 4 minutes and costs about $0.12 (up to $0.30 in the recorded runs).
 
 ## 4. Hybrid mode
 
-1. Click **Hybrid**.
-2. Choose a fault (same list as above).
-3. Choose the schematic read:
-   - **saved read of a phone photo (has errors)**: a real earlier Muse Spark read of a phone photo of the drawing.
-     Recommended for demos: fast and almost free.
-   - **saved read (run 2, has errors)**: a real earlier read of the rendered drawing, with crossover errors.
-   - **live read by Muse Spark**: Muse Spark reads the drawing three times now (about a minute, about $0.20, done once
-     per server start and then reused).
-4. Click **Start**.
-5. A card lists the **uncertain regions** of the read (places where Muse Spark was unsure, or where its reads
-   disagree); they light up on the schematic. Click **Confirm and diagnose**.
-6. Watch the planner measure. **Candidate faults** shows the share of simulated faults still consistent with all
-   readings. If a reading does not fit the drawing, the step list says so; usually an alternative wiring of an
-   uncertain region explains it. If not, Muse Spark proposes a correction, shown as a diff (red lines removed,
-   green lines added); a correction that would change what a healthy machine does is shown as rejected.
-7. If the answer depends on wiring the read was unsure of, a card asks which wiring the real panel has. Pick the
-   option that matches, or **Cannot check now** (then the pole is reported as ambiguous).
-8. The result card shows the verdict and Muse Spark's short explanation for the technician.
+1. **Hybrid**, choose a fault and the drawing read: one of the two **saved reads** (real earlier Muse Spark reads of
+   the drawing, labelled with their date). A live re-read is offered only on a machine that has the drawing crops.
+2. **Start**. The drawing-read card shows the read and the model check: the transcription must reproduce the
+   documented ASCO transfer sequence before any planning.
+3. The planner shows each next reading on the drawing (**next**), then takes it. Candidate faults shrink after each
+   reading. Approval cards work as in Agent mode.
+4. The result card has Muse Spark's explanation: what failed, the readings that show it, a fixed isolation sentence
+   added by code, then what to do. A run costs about $0.006 (the explanation call).
 
 ## 5. Engineer mode
 
-1. Click **Engineer**. The right panel becomes **Your instruments**; the **Log** lists **Your steps**.
-2. Choose a fault and type your name (the name goes into the saved trace).
-3. Click **Start**.
+1. **Engineer**, choose a fault, type your name, **Start**. Open **Your instruments** in the right column.
+2. **Meter**: choose **V** or **Ω**, click two points on the drawing (A and B), **Measure**. Resistance needs both
+   sources isolated.
+3. **Look**: **Read panel**, **Event log**, **Metering**, **Position indicator** (the mechanism flag), **Wait**.
+4. **Actions**: **Isolate sources** (approval; strong approval if the load is powered), **Restore sources**,
+   **Manual operation check** (sources isolated), **Repeat transfer** (strong approval, cite a reading).
+5. **Suggest the next reading** (optional): the planner proposes a reading from your own readings (shadow mode); your
+   trace is then marked assisted.
+6. **Diagnose...**: component, part, failure mode, confidence, the steps that prove it; or **Insufficient
+   information**.
 
-Why the front panel shows **QF1 OFF** before you start: no panel is loaded yet, so everything is dark. After
-**Start** the fault is already inside the panel and QF1 is **ON**, like a panel reported faulty. The blue **Next:**
-box in Your instruments always suggests a sensible next step.
+In Engineer mode you answer your own approval cards. The policy blocks what would be unsafe on a real switch: an
+ohmmeter on a live circuit, paralleling the sources, bypassing an interlock, operating the handle under load.
 
-What you can do:
+## 6. After the diagnosis: the intervention
 
-- **Look**: the lamps and the motor on the front panel. **Read panel** records what you see as a step.
-- **Press buttons**: click **Start Fwd**, **Start Rev** or **Stop** on the front panel. **Button hold** sets how long the
-  button is held.
-- **Wait**: lets time pass (for example to see whether the motor switches from star to delta).
-- **Measure volts**: choose **V**, click two points on the schematic (the small circles on the terminals or a wire;
-  they show up as A and B), then **Measure**. Volts need QF1 **ON**. In a live circuit an open contact shows about
-  230 V across it and a closed one 0 V; a point with no path to neutral behind it reads 0 V.
-- **Measure ohms**: switch QF1 **OFF** first (click QF1 on the front panel, or **Power off**), choose **Ω**, click two
-  points, **Measure**. "OPEN" means no connection.
-- **Request a reset**: **Reset KK1** resets the tripped motor overload. It needs approval, and switching the power
-  back on after a fuse or breaker trip also needs approval. Type a reason in the **Reason** field first. In engineer
-  mode you approve your own request on the card that appears.
-- **Diagnose...**: choose the component, the part (pole or contact) and the failure mode, set your confidence, tick
-  the steps that prove it, and **Submit**. Or choose **Insufficient information**.
+The session stays open for the authorized person, in every mode. Open **Authorized intervention**: isolate the
+sources, repair the part, restore the sources (strong approval, citing a reading taken after the repair). The stages
+end at **Transfer verified** only when the simulator confirms the load on Emergency with the position confirmed by
+the controller; the UPS clock then stops.
 
-The safety policy blocks what would be unsafe on a real panel: an ohmmeter on a live circuit, more than 3 start presses
-in a row, bypassing an interlock or changing the circuit. A blocked step flashes red and is listed in red with the
-reason.
+## 7. Compare and the troubleshooting sheet
 
-After you submit, the result card shows the verdict and saves your trace to `scenarios/engineer_traces/`.
-**Compare with agent and baseline** runs the half-split baseline and the agent on the same fault and shows all three
-side by side (measurements, blocked attempts, time, cost and every reading). Compare costs about $0.05 to $0.07.
+- **Compare** shows four columns on the same fault: you or the agent (this run), a recorded engineer trace if one
+  exists, Hybrid v2 on the default saved read, and the info-gain baseline. Re-runs use the batch approval rules. The
+  agent column re-runs the agent (about $0.12); the others are free.
+- **Troubleshooting sheet**: symptom, causes, checks in a safe order and the separating reading for families A and B,
+  generated from the simulator (not reviewed by an electrical engineer).
 
-## 6. Costs and limits
+## 8. Costs and limits
 
 | Action | Cost |
 |---|---|
 | Engineer mode | free |
-| Agent run | about $0.07 |
-| Hybrid run, saved read | about $0.01 (explanation; more only if Muse Spark has to correct the netlist) |
-| Hybrid live read | about $0.20, once per server start |
-| Compare | about $0.05 to $0.07 (one agent run) |
+| Agent run | about $0.12 (up to $0.30) |
+| Hybrid run on a saved read | about $0.006 |
+| Compare | about $0.12 (the agent column) |
 
-Live runs from the browser are capped at $5 per day (setting `PROBEFORGE_DEMO_DAILY_USD`); the whole project at $130.
-When a cap is reached, the browser shows an error instead of starting the run.
+Every model call reserves budget in a local ledger first. Live runs are capped per day (`PROBEFORGE_DEMO_DAILY_USD`,
+default $5) and in total. On a public demo (`PROBEFORGE_PUBLIC=1`): a separate ledger, runs stopped at $0.75, approval
+cards time out after 2 minutes, and visitors' Engineer traces are kept apart (they never appear in Compare). Whoever
+uses the page answers the approval cards.
 
-## 7. Common problems
+## 9. Common problems
 
 | Problem | What to do |
 |---|---|
-| The page does not open | The server is not running, or runs on another port. Start it (section 1) and open http://127.0.0.1:8000. |
-| "address already in use" when starting | An old server still runs. Close its terminal, or on Windows: `Get-NetTCPConnection -LocalPort 8000` and stop that process. |
-| The page looks old after a code change | Run `npm run build` in `web/` and reload the page (Ctrl+F5). |
-| Start is grey | Choose a fault first. After every run the fault list is cleared on purpose. |
-| "Session ended" and the instruments are grey | End session was pressed. Pick a fault and press Start for a new session. |
-| Measure is grey | Click two points on the schematic first (A and B must both be set), and the run must be going. |
-| "resistance measurement on a live circuit is not allowed" | Switch QF1 off first, then measure ohms. |
-| A voltage reading needs power but QF1 is off after a trip | Switching on after a protection trip needs approval: type a reason and click Power on, then approve. |
-| Agent, Hybrid or Compare shows an error about the key | `.env` with `META_API_KEY` is missing or wrong; Engineer mode still works. |
-| "daily cap" error | Live runs used today's $5; wait until tomorrow or raise `PROBEFORGE_DEMO_DAILY_USD`. |
-| A test session left a trace in `scenarios/engineer_traces/` | Delete that file: the folder is for real engineer traces only. |
+| The page does not open | Start the server (section 1) and open http://127.0.0.1:8000/?bench=ats. |
+| "address already in use" | An old server still runs. On Windows: `Get-NetTCPConnection -LocalPort 8000`, stop that process. |
+| The page looks old after a code change | `npm run build` in `web/`, then reload (Ctrl+F5). |
+| Start is grey | Choose a fault first; the list is cleared after every run on purpose. |
+| "Connection lost: the session ended" | The server stopped or the network dropped; the session ends with the connection. Pick a fault and press Start. |
+| "The session token is missing or expired" | Reload the page. |
+| "The server is busy with other runs" | Other runs use every run slot; try again in a minute. |
+| "A step is still pending" | Answer the approval card, or wait for the previous step. |
+| Measure is grey | Set A and B on the drawing first. |
+| An error about the key | `.env` with `META_API_KEY` is missing; Engineer mode still works. |
+| "daily cap" | Today's live runs used the cap; wait until tomorrow or raise `PROBEFORGE_DEMO_DAILY_USD`. |
+| A test session left a trace in `scenarios/engineer_traces/ats/` | Delete it: the folder is for real engineer traces only. |
 
-## 8. Meeting script (15 minutes)
+## 10. Meeting script (15 minutes)
 
 | Time | What | How |
 |---|---|---|
-| 0:00 to 1:00 | The problem | Show the screen: one hidden fault in a star-delta reversing starter; find it like an electrician, under safety rules enforced in code. |
-| 1:00 to 5:00 | Hybrid run from the phone photo | **Hybrid**, schematic **saved read of a phone photo**, fault **s07** or a **Clean test fault**, **Start**. Point at the uncertain regions on the drawing, confirm them. While the planner measures, show Candidate faults shrinking and the readings lighting up the wires. End on the result card and Muse Spark's explanation. |
-| 5:00 to 6:00 | Safety in code | In the step list, show that every step passed the policy; mention that resistance on a live circuit and repeated starts are blocked in code, not in the prompt. |
-| 6:00 to 12:00 | The engineer solves 2 or 3 faults | **Engineer**, type the engineer's name. Suggested faults: **s04** (forward does not start, reverse works: press Start Fwd and Start Rev, measure volts across the KM1 coil, switch off, measure ohms), **s03** (Fault lamp on: request Reset KK1 with a reason and approve it), and one **Random fault** if time allows. Let the engineer drive; point out the Next hint, a blocked ohmmeter reading on a live circuit, and the approval card. |
-| 12:00 to 14:00 | Compare | After one engineer run, click **Compare with agent and baseline** (about $0.07): engineer, AI agent and baseline side by side, with every reading. |
-| 14:00 to 15:00 | Wrap up | **Show true live wiring** on the last result; questions. |
+| 0:00 to 1:00 | The problem | Utility lost, generator running, the switch did not transfer, the UPS clock draining. |
+| 1:00 to 4:00 | Hybrid run | **Hybrid**, a saved read, **dev-06**, **Start**. Point at the model check, the **next** marks, the candidate faults shrinking; end on the zoom to the diagnosed part and the explanation. |
+| 4:00 to 7:00 | Agent run | **Agent**, **Random fault**, **Start** (about $0.12). Show a strong approval card with its cited readings and the policy's facts. |
+| 7:00 to 12:00 | The engineer solves a fault | **Engineer**, **dev-01**: voltage across the coil during the command, isolate, resistance; then the intervention to **Transfer verified**. |
+| 12:00 to 14:00 | Compare | **Compare** on the engineer's result: four columns, every reading. |
+| 14:00 to 15:00 | Wrap up | The UPS time left at diagnosis on each result; questions. |
 
-Before the meeting: start the server, open the page once, and do one quick Engineer run to check everything works
-(then delete its trace from `scenarios/engineer_traces/`).
+Before the meeting: start the server, do one quick Engineer run, and delete its trace from
+`scenarios/engineer_traces/ats/`.
+
+## Motor starter (Level 1)
+
+The first bench: a star-delta reversing motor starter with one hidden fault among 91. Click **Motor starter** in the
+top bar. The front panel (lamps **Power**, **Fault**, **Forward**, **Reverse**; buttons **Stop**, **Start Fwd**,
+**Start Rev**; breaker **QF1**; motor state and line currents) replaces the status column.
+
+- **Agent**: choose **Random fault**, **Clean test fault** or a scenario **s01 to s08**, effort low, **Start**
+  (about $0.07). Approvals appear for switching power back on after a protection trip.
+- **Hybrid**: choose a saved read (of the rendered drawing or of a phone photo; both have known errors) or a live read
+  (about $0.20 once per server start). Confirm the uncertain regions, then the planner measures; when the answer
+  depends on uncertain wiring, a card asks which wiring the panel has.
+- **Engineer**: press the panel's buttons, **Wait**, measure volts with QF1 on and ohms with QF1 off, request **Reset
+  KK1** with a reason, then **Diagnose...**. Traces go to `scenarios/engineer_traces/`. **Compare with agent and
+  baseline** runs the half-split baseline and the agent on the same fault.
+
+Results and the design of this stage: [LEVEL1.md](LEVEL1.md).

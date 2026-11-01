@@ -142,13 +142,15 @@ One holdout run on 28 faults nobody picked by hand, against the 12 dev cases
 | Readings per case | 13.2 | 14.5 | 3.8 | 2.6 | 2.7 |
 | Cost per case (actual) | $0.095 | $0.12 | $0.009 | $0.006 | free |
 
-The baseline is the same planner on the true netlist: a ceiling for the planner, not a peer. Hybrid v2 matched it case
-by case on the holdout.
+The baseline is the same planner on the true netlist: a ceiling for the planner, not a peer. Hybrid v2 matched its
+verdict on every holdout case. The 3 latent cases count in both "correct" and "insufficient information" (for them,
+insufficient information is the correct answer).
 
 **How the holdout was protected:** everything it depends on was frozen first: 13 fingerprints covering the agent,
 tools, policy, bench, fault catalog, scoring and the hybrid ([D45](DECISIONS.md#d45-s5-freeze-of-the-ats-bench-and-the-holdout-procedure-2026-10-31)).
 The 28 cases were then sampled by a fixed seed from the fault catalog, excluding every dev fault, their twins and every
-fault already run in the UI, and committed with their sha256 before any run
+fault already run in the UI (the one chain case, the other side of the burnout chain, shares its burnt coil with a dev
+case), and committed with their sha256 before any run
 ([holdout.yaml](scenarios/ats_holdout/holdout.yaml)). The run refused to start unless the file, its hash, the commit and
 the fingerprints matched. One run; the first 5 cases were a smoke test for technical failures only; no changes, no
 reruns; $3.54 of a $6 cap ([D46](DECISIONS.md#d46-s5-holdout-run-and-results-2026-10-31)). The fingerprints cover the
