@@ -715,3 +715,37 @@ decisions at the end (see CLAUDE.md). Architecture: [ARCHITECTURE.md](ARCHITECTU
   identical before and after (120 of 120) and identical to the holdout run's traces (56 of 56); the regenerated
   results/identity/after.json carries the current fingerprints, and scripts/verify_results.py now checks that (the
   audit's D2: the committed record had been made before D47's last edit).
+
+### D51. Server hardening before a public demo (2026-11-01)
+
+- **What:** the fixes an independent audit listed before a public deploy, all outside frozen code:
+  - S1: blocking work runs in two bounded pools (tool calls; agent, hybrid and Compare runs, refused when full); a
+    connection holds at most two tool calls (an approval waiting plus one queued); connections are capped overall
+    (40) and per IP (2 in public mode, 10 locally); a connection idle for 10 minutes is closed; approval waits are 120 s
+    in public mode (600 s locally).
+  - S2: the WebSocket accepts browsers only from the page's own host or an allow-list, and every start needs a
+    session token from `/api/session-token` (an HMAC of its time, 10 minutes); uvicorn caps messages at 64 KiB and
+    concurrency at 100. Both apply locally too.
+  - S6: the spend ledger reserves before every model call and settles after it under its file lock (a metered client
+    around the OpenAI client, so the frozen loops are unchanged); a failed run still records what it spent; public mode
+    uses a separate ledger from $0. Public runs stop at $0.75 and calls at 10,000 completion tokens: 2.5x the most
+    expensive recorded agent run ($0.30) and 2.1x the largest recorded call (4,725 tokens, from 690 calls in the
+    committed runs); repairs and live re-reads (up to 19,815 tokens) are off in public mode, so the cap never cuts them.
+  - S3: the agent's effort comes from an allow-list (low or minimal; low only in public mode).
+  - S4 and C1: every message is validated before dispatch; a bad one gets an error and the socket stays; the session
+    always ends with its connection (and gets its UI run row); the page says when the connection is lost.
+  - S5: engineer names are slugged before any path use; in public mode visitors' traces go to `runs/visitor_traces/`
+    and never into Compare; growing folders keep their newest 200 files.
+  - C2: one Compare per result at a time; a replaced run's Compare is dropped; every event carries the page's run
+    number and the page ignores older runs.
+  One switch, `PROBEFORGE_PUBLIC=1`, turns on the public-only behaviour.
+- **Why:** the audit reproduced against a live server that one anonymous client could stall every visitor for 10
+  minutes (an approval pending plus queued calls), that any page could start paid runs, that a malformed message
+  orphaned a session, that the browser chose the reasoning effort, and that a visitor's name reached a file path.
+- **Alternatives:** an asynchronous approval wait (needs the frozen toolbox changed); a provider-side spend limit alone
+  (kept as the real cap, but no protection between the server and the key).
+- **Evidence:** a test against a real uvicorn process reproduces the stall and passes after the fix; tests for the
+  connection caps, the full run pool, foreign Origins, tokens, concurrent reservations (20 threads, never past the
+  cap), the metered client, the public ledger, the effort allow-list, malformed messages, the closed connection, hostile
+  engineer names, visitor traces in public mode, the run number and the second Compare; Vitest for the reducer
+  (connection lost, older runs dropped), run in CI; browser check of the lost connection.
