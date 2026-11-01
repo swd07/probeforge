@@ -1,5 +1,7 @@
 # ProbeForge
 
+[![CI](https://github.com/swd07/probeforge/actions/workflows/ci.yml/badge.svg)](https://github.com/swd07/probeforge/actions/workflows/ci.yml)
+
 **An AI field electrician in shadow mode: it reads the drawing of a real transfer switch, chooses its own measurements and
 finds the root cause, under safety limits enforced in code.**
 

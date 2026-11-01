@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.13.6"
+
+      - name: Install (locked)
+        run: uv sync --frozen --python 3.12
+
+      - name: Tests (offline, no API key; includes the frozen fingerprint pins and the schema checks)
+        run: uv run --frozen pytest -q
+
+      - name: Committed results (holdout hash, traces, published tables)
+        run: uv run --frozen python scripts/verify_results.py
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Web build (locked)
+        working-directory: web
+        run: |
+          npm ci
+          npm run build
