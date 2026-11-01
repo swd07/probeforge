@@ -1,7 +1,9 @@
 [project]
 name = "probeforge"
 version = "0.1.0"
-description = "AI agent that diagnoses faults in a simulated relay-contactor circuit under hard safety limits"
+description = "AI field electrician in shadow mode: diagnoses a simulated ASCO transfer switch under safety limits enforced in code"
+license = "MIT"
+license-files = ["LICENSE"]
 authors = [
     { name = "Eduard Kharaev", email = "181873841+swd07@users.noreply.github.com" }
 ]

@@ -37,18 +37,22 @@ critical load lost.
 
 ## Quick start
 
-Requires Python 3.11+, [uv](https://docs.astral.sh/uv/) and Node 18+.
+Requires Python 3.11+, [uv](https://docs.astral.sh/uv/) and Node 20 or newer (tested with Node 24). It runs from a
+checkout of this repository (not as an installed package). The commands use the lockfiles.
 
 ```
-uv sync
-cd web && npm install && npm run build && cd ..
+uv sync --frozen
+cd web && npm ci && npm run build && cd ..
 echo META_API_KEY=your_key_here > .env
 uv run python -m probeforge.server --port 8000
 ```
 
 Open http://127.0.0.1:8000/?bench=ats, choose Agent, Hybrid or Engineer, pick a fault (or a random one) and press
 Start. Without a key, `PROBEFORGE_OFFLINE=1` runs Engineer mode and the hybrid on the saved drawing read without model
-calls. Tests: `uv run pytest` (280 tests). The UI step by step: [docs/HOW_TO_USE.md](docs/HOW_TO_USE.md).
+calls. Tests: `uv run pytest`. Check the committed results offline: `uv run python scripts/verify_results.py`. The UI
+step by step: [docs/HOW_TO_USE.md](docs/HOW_TO_USE.md). Architecture: [ARCHITECTURE.md](ARCHITECTURE.md); scripts:
+[scripts/README.md](scripts/README.md). License: MIT ([LICENSE](LICENSE); it covers our code and redrawings, not ASCO
+documents).
 
 ## Architecture
 
