@@ -53,8 +53,8 @@ Open http://127.0.0.1:8000/?bench=ats, choose Agent, Hybrid or Engineer, pick a 
 Start. Without a key, `PROBEFORGE_OFFLINE=1` runs Engineer mode and the hybrid on the saved drawing read without model
 calls. Tests: `uv run pytest`. Check the committed results offline: `uv run python scripts/verify_results.py`. The UI
 step by step: [docs/HOW_TO_USE.md](docs/HOW_TO_USE.md). Architecture: [ARCHITECTURE.md](ARCHITECTURE.md); scripts:
-[scripts/README.md](scripts/README.md). License: MIT ([LICENSE](LICENSE); it covers our code and redrawings, not ASCO
-documents).
+[scripts/README.md](scripts/README.md). License: MIT ([LICENSE](LICENSE)). It covers our code and redrawings, not ASCO documents
+([NOTICE](NOTICE)).
 
 ## Architecture
 

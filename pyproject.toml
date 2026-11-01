@@ -3,7 +3,7 @@ name = "probeforge"
 version = "0.1.0"
 description = "AI field electrician in shadow mode: diagnoses a simulated ASCO transfer switch under safety limits enforced in code"
 license = "MIT"
-license-files = ["LICENSE"]
+license-files = ["LICENSE", "NOTICE"]
 authors = [
     { name = "Eduard Kharaev", email = "181873841+swd07@users.noreply.github.com" }
 ]
