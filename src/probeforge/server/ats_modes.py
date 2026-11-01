@@ -292,7 +292,7 @@ def start_session(action: str, msg: dict, emit, client_fn) -> AtsSession:
     faults, source, case = pick(msg)
     common.warm_signatures()
     if action == "start":
-        return AtsAgentSession(faults, source, case, msg.get("effort") or "low", emit, client_fn)
+        return AtsAgentSession(faults, source, case, settings.agent_effort(msg.get("effort")), emit, client_fn)
     if action == "start_manual":
         return AtsManualSession(faults, source, case, str(msg.get("engineer") or ""), emit)
     if action == "start_hybrid":

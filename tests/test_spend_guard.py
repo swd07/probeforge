@@ -104,3 +104,15 @@ def test_foreign_origins_are_refused_and_runs_need_a_token():
         assert ev["type"] == "error" and "token" in ev["message"]
         ws.send_json({"action": "start_manual", "bench": "ats", "source": "random", "engineer": "x", "token": access.issue()})
         assert ws.receive_json()["type"] == "session"
+
+
+def test_the_server_chooses_the_agent_effort(monkeypatch):
+    """Audit S3: the browser's effort is ignored unless it is allowed (low or minimal; low only in public mode)."""
+    from probeforge.server import ats, settings
+
+    assert settings.agent_effort("xhigh") == "low" and settings.agent_effort(None) == "low"
+    assert settings.agent_effort("minimal") == "minimal"
+    monkeypatch.setattr(settings, "PUBLIC", True)
+    assert settings.agent_effort("minimal") == "low"
+    session = ats.start_session("start", {"source": "random", "effort": "xhigh"}, lambda ev: None, lambda: None)
+    assert session.effort == "low"

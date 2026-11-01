@@ -20,3 +20,10 @@ MAX_PER_IP = _int("PROBEFORGE_MAX_PER_IP", 2 if PUBLIC else 10)
 # tool calls (Engineer mode, intervention, suggestions): two at most per connection, so this bounds them
 TOOL_WORKERS = _int("PROBEFORGE_TOOL_WORKERS", 2 * MAX_CONNECTIONS + 8)
 JOB_WORKERS = _int("PROBEFORGE_JOB_WORKERS", 3 if PUBLIC else 4)  # agent, hybrid and Compare runs at once
+
+
+def agent_effort(requested) -> str:
+    """The reasoning effort of a paid agent run, chosen by the server, not the browser (audit S3): the budget rule
+    allows low or below; public mode allows low only. Anything else becomes low."""
+    allowed = ("low",) if PUBLIC else ("low", "minimal")
+    return requested if requested in allowed else "low"

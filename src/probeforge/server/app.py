@@ -181,7 +181,7 @@ async def ws(websocket: WebSocket) -> None:
                     emit({"type": "error", "message": str(e)})
                     continue
                 if action == "start":
-                    session = AgentSession(fault, source, msg.get("effort") or "low", emit)
+                    session = AgentSession(fault, source, settings.agent_effort(msg.get("effort")), emit)
                     if not background(session.run, run=True):
                         session = None
                 elif action == "start_hybrid":
