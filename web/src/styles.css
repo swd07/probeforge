@@ -473,7 +473,7 @@ table.quality tr.worse td { color: var(--warn); }
 .modal.limits-modal h2 { text-transform: none; }
 
 /* the UPS clock stays pinned at the top of the status column while the rest scrolls */
-.st-column .st-ups { position: sticky; top: -10px; z-index: 2; background: var(--panel); margin: -10px 0 0; padding: 10px 0 6px; }
+.st-column .st-ups { position: sticky; top: -10px; z-index: 2; background: var(--panel); margin: -10px -12px 0; padding: 10px 12px 6px; }
 
 /* the fault list keeps its width before the mode setting next to it (readable at 1440 px) */
 .topbar .controls { flex: 0 0 auto; } /* never shrinks under its controls: the run stats give way instead */
