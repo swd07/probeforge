@@ -1,15 +1,12 @@
-import { type ReactNode, useEffect, useMemo, useState } from "react";
-import { AtsTranscriptionCard, NextStepCard } from "./components/AtsHybrid";
-import { AtsManualPanel } from "./components/AtsManualPanel";
+import { useEffect, useMemo, useState } from "react";
 import { LimitsModal } from "./components/AtsPanel";
 import { AtsStatusColumn } from "./components/AtsStatus";
-import { ApprovalCard, FlagsCard, ResultCard, WiringCard } from "./components/Cards";
+import { ApprovalCard, FlagsCard, WiringCard } from "./components/Cards";
 import { CompareView } from "./components/CompareView";
 import { DiagnosisForm } from "./components/DiagnosisForm";
-import { Feed } from "./components/Feed";
 import { FrontPanel } from "./components/FrontPanel";
-import { Hypotheses } from "./components/Hypotheses";
-import { ManualPanel, type MeterState } from "./components/ManualPanel";
+import { type MeterState } from "./components/ManualPanel";
+import { RightColumn } from "./components/RightColumn";
 import { Schematic, type View } from "./components/Schematic";
 import { TopBar } from "./components/TopBar";
 import { TroubleshootingView } from "./components/Troubleshooting";
@@ -18,28 +15,11 @@ import { useSession } from "./useSession";
 
 // ATS drawing: open on the operator circuit and sensing (the right-hand region), about 1.6 times the whole-drawing fit
 const ATS_HOME: View = { x: 620, y: 90, w: 1720, h: 740 };
-const ATS_SCENARIO =
-  "Scenario: the utility fails, the generator starts, and the transfer switch should move the critical load to " +
-  "Emergency within seconds while the UPS carries it (10 min). Pick a fault and press Start.";
 
 /** The diagnosed part (or the whole component for a device fault), to zoom to and outline after the diagnosis. */
 function diagnosedPart(d: Record<string, unknown> | null): { component: string; part: string } | null {
   if (!d || typeof d.component !== "string") return null;
   return { component: d.component, part: typeof d.part === "string" ? d.part : "" };
-}
-
-/** A section that collapses to one line (closed by default); its content stays mounted, so its inputs keep state. */
-function Fold({ title, children }: { title: string; children: ReactNode }) {
-  const [open, setOpen] = useState(false);
-  return (
-    <section className={`fold ${open ? "open" : ""}`}>
-      <button className="fold-head" onClick={() => setOpen((o) => !o)} aria-expanded={open}>
-        <span>{title}</span>
-        <span className="chevron">{open ? "\u25b4" : "\u25be"}</span>
-      </button>
-      <div className="fold-body" hidden={!open}>{children}</div>
-    </section>
-  );
 }
 
 export function App() {
@@ -188,98 +168,34 @@ export function App() {
             {state.stage && state.status === "running" && <div className="stage-banner">{state.stage}</div>}
           </div>
         </div>
-        <aside className="right docked">
-          <div className="right-top">
-            {cur && state.done && (
-              <ResultCard
-                done={state.done}
-                showTruth={showTruth}
-                onToggleTruth={() => setShowTruth((v) => !v)}
-                saved={manualRun ? state.saved : undefined}
-                atsPanel={ats ? atsPanel : undefined}
-                defaultCollapsed
-                compareLabel={ats ? "Compare on this fault (agent re-run about $0.10; hybrid and baseline free)" : undefined}
-                onCompare={onCompare}
-              />
-            )}
-            {ats && (manual || atsIntervention) ? (
-              <Fold title={atsIntervention ? "Authorized intervention: isolate, repair, restore" : "Your instruments: meter, actions, Diagnose"}>
-                <AtsManualPanel
-                  meta={atsMeta}
-                  panel={atsPanel}
-                  meter={meter}
-                  setMeter={setMeter}
-                  lastProbe={cur ? lastProbe : null}
-                  feed={cur ? state.feed : []}
-                  diagnosing={atsDiagnosing}
-                  intervention={atsIntervention}
-                  started={cur && state.status !== "idle"}
-                  stopped={cur && state.status === "stopped"}
-                  onTool={tool}
-                  onDiagnose={() => setDiagnosing(true)}
-                />
-              </Fold>
-            ) : manual ? (
-              <Fold title="Your instruments: meter, buttons, Diagnose">
-                <ManualPanel
-                  meta={meta}
-                  panel={state.panel}
-                  meter={meter}
-                  setMeter={setMeter}
-                  lastProbe={lastProbe}
-                  active={manualActive}
-                  started={state.mode === "manual" && state.status !== "idle"}
-                  done={state.mode === "manual" && state.status === "done"}
-                  stopped={state.mode === "manual" && state.status === "stopped"}
-                  steps={toolSteps}
-                  onTool={tool}
-                  onDiagnose={() => setDiagnosing(true)}
-                />
-              </Fold>
-            ) : null}
-            {ats && hybrid && cur && state.atsTranscription && (
-              <Fold title="Drawing read by Muse Spark (saved transcription)">
-                <AtsTranscriptionCard t={state.atsTranscription} check={state.modelCheck} />
-              </Fold>
-            )}
-            {ats && hybrid && cur && state.nextStep && busy && <NextStepCard next={state.nextStep} />}
-            {atsDiagnosing && (
-              state.suggestion ? (
-                <NextStepCard
-                  next={state.suggestion}
-                  title="Suggestion (planner on our redrawing)"
-                  note="Shadow mode: take it or ignore it. Computed from your own readings, never from the fault; this trace is marked assisted."
-                  onUse={
-                    state.suggestion.tool === "measure_voltage" || state.suggestion.tool === "measure_resistance"
-                      ? () => setMeter((m) => ({ ...m, kind: state.suggestion!.tool === "measure_voltage" ? "V" : "R", a: state.suggestion!.points[0], b: state.suggestion!.points[1] }))
-                      : undefined
-                  }
-                />
-              ) : (
-                <button className="btn ghost suggest-btn" disabled={suggesting}
-                        onClick={() => { setSuggesting(true); suggest(); }}
-                        title="The info-gain planner replays your readings on our redrawing and proposes the next one">
-                  {suggesting ? "Computing the suggestion (simulating every candidate fault)..."
-                              : `Suggest the next reading (planner, shadow mode${state.suggestions > 0 ? `, ${state.suggestions} shown` : ""})`}
-                </button>
-              )
-            )}
-            {!manual && (
-              <Hypotheses
-                hypotheses={state.hypotheses}
-                previous={state.previous}
-                limit={3}
-                title={hybrid ? "Candidate faults (top 3)" : "Hypotheses (top 3)"}
-                subtitle={hybrid ? "share of simulated candidates still consistent" : "updated after each measurement"}
-              />
-            )}
-          </div>
-          <div className="log-dock">
-            <Feed items={logItems} manual={manual} running={manualActive}
-                  title={hybrid ? "Hybrid pipeline log" : manual ? "Your steps" : "Agent log"}
-                  idleText={ats ? ATS_SCENARIO : undefined} />
-          </div>
-        </aside>
+        <RightColumn
+          state={state}
+          cur={cur}
+          ats={ats}
+          hybrid={hybrid}
+          manual={manual}
+          manualRun={manualRun}
+          busy={busy}
+          meta={meta}
+          atsMeta={atsMeta}
+          atsPanel={atsPanel}
+          atsDiagnosing={atsDiagnosing}
+          atsIntervention={atsIntervention}
+          manualActive={manualActive}
+          toolSteps={toolSteps}
+          lastProbe={lastProbe}
+          logItems={logItems}
+          meter={meter}
+          setMeter={setMeter}
+          showTruth={showTruth}
+          setShowTruth={setShowTruth}
+          onCompare={onCompare}
+          tool={tool}
+          setDiagnosing={setDiagnosing}
+          suggesting={suggesting}
+          setSuggesting={setSuggesting}
+          suggest={suggest}
+        />
       </main>
       {flashing && lastBlocked && lastBlocked.kind === "tool" && (
         <div className="toast-blocked">Blocked by safety policy: {lastBlocked.ev.policy_reason}</div>
