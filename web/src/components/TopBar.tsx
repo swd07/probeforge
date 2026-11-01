@@ -24,6 +24,15 @@ const STATUS_TEXT: Record<string, string> = {
   error: "Error",
 };
 
+/** ATS: a short label for a scenario's symptom, so the fault list stays readable at 1440 px (the full symptom is the
+ * option's tooltip and shows on the panel after Start). Generator stopped (the panel's word) first, then a missing
+ * transfer command, then the controller event. */
+export function shortSymptom(symptom: string): string {
+  if (/generator not started/.test(symptom)) return "generator stopped";
+  if (/no transfer command/.test(symptom)) return "no transfer command";
+  return /event ([^,]+)/.exec(symptom)?.[1] ?? symptom;
+}
+
 export function TopBar({ meta, state, mode, setMode, bench, setBench, onStart, onStop, onCompare, onSheet }: Props) {
   const ats = bench === "ats";
   const [choice, setChoice] = useState("random");
@@ -101,12 +110,13 @@ export function TopBar({ meta, state, mode, setMode, bench, setBench, onStart, o
           </button>
         </div>
         <span className="next-run">{busy ? "Running" : "Next run"}</span>
-        <select value={choice} onChange={(e) => setChoice(e.target.value)} disabled={busy} aria-label="Fault">
+        <select className="fault" value={choice} onChange={(e) => setChoice(e.target.value)} disabled={busy} aria-label="Fault"
+                title={meta?.scenarios.find((s) => s.id === choice)?.symptom}>
           <option value="" disabled>
             Choose a fault...
           </option>
           {ats ? (
-            <option value="random">Random fault (any visible on the controller panel)</option>
+            <option value="random" title="Any catalog fault visible on the controller panel">Random fault</option>
           ) : (
             <>
               <option value="random">Random fault (any of 91)</option>
@@ -115,8 +125,8 @@ export function TopBar({ meta, state, mode, setMode, bench, setBench, onStart, o
           )}
           <optgroup label={ats ? "ATS dev scenarios (by symptom)" : "Scenarios (by symptom)"}>
             {meta?.scenarios.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.id}: {s.symptom}
+              <option key={s.id} value={s.id} title={s.symptom}>
+                {s.id}: {ats ? shortSymptom(s.symptom) : s.symptom}
               </option>
             ))}
           </optgroup>
@@ -181,7 +191,7 @@ export function TopBar({ meta, state, mode, setMode, bench, setBench, onStart, o
           Compare
         </button>
         {onSheet && (
-          <button className="btn ghost" onClick={onSheet} title="Generated from the simulator, not reviewed by an engineer">
+          <button className="btn ghost sheet" onClick={onSheet} title="Generated from the simulator, not reviewed by an engineer">
             Troubleshooting sheet
           </button>
         )}

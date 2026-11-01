@@ -32,8 +32,8 @@ explanation). Agent runs and the agent column of Compare cost money (section 8).
   setting for the mode (effort, drawing read, or your name), **Start** (it becomes **End session** while a run
   goes), **Compare** (after a diagnosis), **Troubleshooting sheet**, and on the right the status.
 - **Fault list**: **Random fault** (any of the 49 catalog faults visible on the controller during an outage) or one
-  of the 12 dev scenarios **dev-01 to dev-12**, listed by their symptom only. The scenario's name (it names the fault)
-  appears with the result, never before.
+  of the 12 dev scenarios **dev-01 to dev-12**, listed by a short symptom (the full symptom is the tooltip). The
+  scenario's name (it names the fault) appears with the result, never before.
 - **Status column** (left): the **UPS time left** (it drains 30 s per reading or action; at 0 the critical load is
   lost), the sources (utility, generator), the transfer switch position and the critical load, the six controller
   lights, the controller display, the stages from "Fault detected" to "Transfer verified", and folds for the metering

@@ -474,3 +474,11 @@ table.quality tr.worse td { color: var(--warn); }
 
 /* the UPS clock stays pinned at the top of the status column while the rest scrolls */
 .st-column .st-ups { position: sticky; top: -10px; z-index: 2; background: var(--panel); margin: -10px 0 0; padding: 10px 0 6px; }
+
+/* the fault list keeps its width before the mode setting next to it (readable at 1440 px) */
+.topbar .controls { flex: 0 0 auto; } /* never shrinks under its controls: the run stats give way instead */
+.topbar .controls select.fault { flex: 0 0 auto; width: clamp(245px, calc(100vw - 1180px), 360px); max-width: none; }
+.topbar .controls select:not(.fault) { flex: 0 0 auto; width: clamp(106px, calc(100vw - 1330px), 220px); max-width: none; }
+.topbar .controls .engineer { flex: 0 0 auto; width: 120px; }
+.topbar .btn.sheet { white-space: normal; line-height: 1.1; font-size: 12px; width: 108px; padding: 3px 8px; }
+.topbar .stats { flex: 1 1 0; min-width: 0; max-width: 210px; }
