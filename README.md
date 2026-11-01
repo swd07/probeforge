@@ -81,7 +81,8 @@ invariants: [ARCHITECTURE.md](ARCHITECTURE.md). Every design decision with its e
 
 All model calls go to `muse-spark-1.3` through the Meta Model API (Chat Completions); the key stays server-side.
 
-- **Reading a real drawing.** Muse Spark transcribes the drawing sheets into a netlist. The transcription is checked
+- **Reading a real drawing.** Muse Spark transcribes seven crops of the original ASCO drawing 978741 (drawing areas
+  only; the crops are not in the repository, the saved reads are) into a netlist. The transcription is checked
   against the transfer sequence documented in the Group G User's Guide (8 of 8 events in order) before any planning;
   where it fails, Muse Spark is asked to repair the region that explains the failure. On the saved read, relay
   contacts were right 4/8 before repair and 8/8 after two accepted repairs
@@ -185,7 +186,11 @@ ASCO Series 300 Group G automatic transfer switch, 200 A, 208 V, 3 phase 4 wire,
 ([scenarios/circuits/asco_300g_978741.yaml](scenarios/circuits/asco_300g_978741.yaml)) and the drawing shown in the UI
 ([docs/asco_300g_978741.svg](docs/asco_300g_978741.svg)) are redrawn by us from ASCO wiring diagram 978741 and the
 Group G Controller User's Guide; every part and net carries its source. **It is our redrawing, not the official
-drawing.** The original documents are in the public ASCO / Schneider Electric technical library:
+drawing.** What the models see differs: the agent gets an image rendered from our netlist plus the netlist as text;
+Hybrid v2's read step gets crops of the original drawing from the author's local copy of the submittal package
+(drawing areas only, never the cover pages or title blocks; listed with their hashes in
+[docs/ATS_MODEL.md](docs/ATS_MODEL.md#what-each-diagnostician-sees)). Those crops are not in the repository, so a live
+re-read needs your own copy of the drawing; the saved reads let everything else run without it. The original documents are in the public ASCO / Schneider Electric technical library:
 [Group G SE wiring, outline and mounting data](https://www.ascopower.com/us/en/products/libraries/technical-documents/300-series/asco-series-300-group-g-se-product-wiring-outline-and-mounting-data.jsp),
 [Group G wiring, outline and mounting data](https://www.se.com/us/en/work/support/product-support/technical-documents/300-series/asco-series-300-group-g-product-wiring-outline-and-mounting-data).
 Vendor PDFs are not in this repository.

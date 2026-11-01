@@ -667,3 +667,14 @@ decisions at the end (see CLAUDE.md). Architecture: [ARCHITECTURE.md](ARCHITECTU
     check, not a result; the S3 smoke had 4/5 and the dev run 10/12 on the old tools, one run each.
 - **Not fixed (frozen, documented):** the planner's cache key ignores resistance values; repeated identical readings are
   not counted as redundant. The freeze covers the listed components, not every dependency.
+
+### D48. Drawing provenance stated per diagnostician; vendor folder in .gitignore (2026-11-01)
+
+- **What:** the docs now say exactly what each diagnostician sees (docs/ATS_MODEL.md, "What each diagnostician
+  sees"): the agent an image rendered from our netlist plus the text netlist; Hybrid v2's read and repair steps seven
+  crops of the original ASCO drawing 978741 from the author's local copy of the submittal package (drawing areas only,
+  sha256 of the PDF and of the current crops recorded); the baseline our true netlist. `docs/vendor/` is in
+  `.gitignore` (it was excluded only locally before).
+- **Why:** the external review found results/runs/README.md saying the netlists were transcriptions of our redrawing,
+  which contradicted D24 and the code; and the ignore rule D24 promised was missing from the repository.
+- **Alternatives:** committing the crops (copyrighted vendor material; not ours to publish).

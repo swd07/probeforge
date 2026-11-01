@@ -2,6 +2,9 @@
 .env
 .env.*
 
+# vendor documents and crops of them (copyrighted; drawing crops are model input only)
+docs/vendor/
+
 # python
 __pycache__/
 *.pyc

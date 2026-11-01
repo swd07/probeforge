@@ -16,6 +16,32 @@ Every part and net in the YAML has a source under `provenance`; every undocument
 `tests/test_ats_netlist.py` checks the netlist against an independent transcription of the sheet 6 wire run list and
 against the documented paths of sheets 2, 3 and 4.
 
+## What each diagnostician sees
+
+| Who | Drawing input | Netlist input |
+|---|---|---|
+| Agent | an image rendered from our netlist (our redrawing, the same as the UI) | our netlist as text (`get_schematic`) |
+| Hybrid v2, read step | seven crops of the original ASCO drawing 978741 | none: it produces the netlist (the transcription) |
+| Hybrid v2, repair step | the same crops | its own transcription |
+| Hybrid v2, explanation | none | the transcription, the readings and the diagnosis |
+| Info-gain baseline | none | our netlist (the true one: a ceiling, not a peer) |
+
+The crops are rendered by `scripts/render_ats_sheets.py` from the author's local copy of the submittal package for
+drawing 978741 (sha256 `e504f926d0ea89739df94e01daa0e833e9fdbf2f6b3dfc916a1c108e7e03b75a`), drawing areas only: never
+the cover sheet, the outline and order pages, the title blocks, the wire run list headers or the PDF metadata. The
+PDF and the crops stay out of git (`docs/vendor/`). Current crop hashes (sha256, first 16 hex digits); the saved reads
+in `scenarios/transcriptions/ats/` were made from crops rendered by the same script before these were recorded:
+
+| Crop | What it shows | sha256 (16) |
+|---|---|---|
+| s3_power.png | sheet 3: main power poles | cb2af2ab6db4915b |
+| s3_operator.png | sheet 3: TS operator circuit | f8ac274a6560e1d3 |
+| s3_table.png | sheet 3: TS control (cut-off) contact table | 2a733149c810affd |
+| s4_sensing.png | sheet 4: source and load sensing, position contacts | d58c6cda08df985c |
+| s4_position.png | sheet 4: position contacts (enlarged) | c6fee8ab134f49c2 |
+| s2_engine.png | sheet 2: engine starting signals, TS auxiliary contacts | 04f92bb7fff56ba0 |
+| s6_wires.png | sheet 6: main harness wire run listing (table body) | 87ad645bc4b32186 |
+
 ## Documented and modelled (stage S0)
 
 | What | Source |

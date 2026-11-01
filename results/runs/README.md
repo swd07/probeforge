@@ -3,8 +3,10 @@
 Copies of the run folders that README.md, docs/results/ats_results.md and DECISIONS.md cite (the working folder
 `runs/` is not in the repository). JSON traces as written by the scripts: every tool call with its policy verdict and
 result, the model turns with token counts and cost, the diagnosis. They contain no drawing images, no API keys and
-nothing from the submittal's cover pages (checked before committing). Netlists in them are transcriptions of our
-redrawing's sheets or our own redrawing.
+nothing from the submittal's cover pages (checked before committing). The Hybrid v2 netlists in them are Muse Spark's
+transcriptions of crops of the original ASCO drawing 978741 (drawing areas only, never committed; see "What each
+diagnostician sees" in docs/ATS_MODEL.md). The agent traces were made from our own redrawing (an image rendered from
+our netlist) and the text netlist.
 
 | Folder | What | Cited in |
 |---|---|---|
