@@ -10,15 +10,16 @@ from probeforge.agent import loop
 from probeforge.eval.spend import SpendLedger
 from probeforge.faults import Fault
 from probeforge.server import app as server
+from probeforge.server import level1  # the motor-starter sessions, the model client and the ledger
 from tests.test_agent_loop import FakeClient, FakeMessage
 
 @pytest.fixture(autouse=True)
 def isolated(monkeypatch, tmp_path):
     """Never touch the real spend ledger or the engineer reference folder from tests."""
     ledger = SpendLedger(tmp_path / "spend.json")
-    monkeypatch.setattr(server, "ledger", lambda: ledger)
-    monkeypatch.setattr(server, "ENGINEER_DIR", tmp_path / "engineer_traces")
-    monkeypatch.setattr(server, "COMPARE_DIR", tmp_path / "compare")
+    monkeypatch.setattr(level1, "ledger", lambda: ledger)
+    monkeypatch.setattr(level1, "ENGINEER_DIR", tmp_path / "engineer_traces")
+    monkeypatch.setattr(level1, "COMPARE_DIR", tmp_path / "compare")
     return tmp_path
 
 
@@ -41,7 +42,7 @@ def script():
 
 
 def test_live_session_with_approval(monkeypatch):
-    monkeypatch.setattr(server, "client", script)
+    monkeypatch.setattr(level1, "client", script)
     monkeypatch.setattr(loop, "render_png", lambda n: b"png")
     http = TestClient(server.app)
 
@@ -84,7 +85,7 @@ def test_live_session_with_approval(monkeypatch):
 
 
 def test_random_fault_is_hidden_until_done(monkeypatch):
-    monkeypatch.setattr(server, "client", lambda: FakeClient([
+    monkeypatch.setattr(level1, "client", lambda: FakeClient([
         FakeMessage(calls=[("submit_diagnosis", {"outcome": "insufficient_information", "confidence": 0.1, "evidence": []})]),
     ]))
     monkeypatch.setattr(loop, "render_png", lambda n: b"png")
@@ -103,7 +104,7 @@ def test_clean_pool_fault_comes_from_holdout_clean(monkeypatch):
 
     from probeforge.faults.catalog import SCENARIOS_DIR
 
-    monkeypatch.setattr(server, "client", lambda: FakeClient([
+    monkeypatch.setattr(level1, "client", lambda: FakeClient([
         FakeMessage(calls=[("submit_diagnosis", {"outcome": "insufficient_information", "confidence": 0.1, "evidence": []})]),
     ]))
     monkeypatch.setattr(loop, "render_png", lambda n: b"png")
@@ -122,8 +123,8 @@ def test_clean_pool_fault_comes_from_holdout_clean(monkeypatch):
 def test_hybrid_session_saved_transcription(monkeypatch):
     from tests.test_hybrid import FakeClient as HybridFake, true_data
 
-    monkeypatch.setattr(server, "client", lambda: HybridFake(true_data()))
-    monkeypatch.setattr(server, "render_png", lambda n: b"png")
+    monkeypatch.setattr(level1, "client", lambda: HybridFake(true_data()))
+    monkeypatch.setattr(level1, "render_png", lambda n: b"png")
     http = TestClient(server.app)
     events = []
     with http.websocket_connect("/ws") as ws:
@@ -148,8 +149,8 @@ def test_hybrid_flags_need_confirmation(monkeypatch):
     from tests.test_hybrid import FakeClient as HybridFake, true_data
 
     flagged = {**true_data(), "uncertain": [{"terminals": ["KM2:1", "KM2:5"], "reason": "wires cross"}]}
-    monkeypatch.setattr(server, "client", lambda: HybridFake(true_data()))
-    monkeypatch.setattr(server, "render_png", lambda n: b"png")
+    monkeypatch.setattr(level1, "client", lambda: HybridFake(true_data()))
+    monkeypatch.setattr(level1, "render_png", lambda n: b"png")
     monkeypatch.setattr(server.HybridSession, "read", lambda self, usage: (flagged, [flagged["uncertain"][0]], "test", b"png"))
     http = TestClient(server.app)
     with http.websocket_connect("/ws") as ws:
@@ -169,7 +170,7 @@ def test_hybrid_settles_a_pole_that_depends_on_flagged_wiring(monkeypatch):
     from tests.test_hybrid_checks import STAR_PINS, _swapped_star
 
     model = {**_swapped_star(true_data()), "uncertain": [{"terminals": STAR_PINS, "reason": "star wiring crosses"}]}
-    monkeypatch.setattr(server, "client", lambda: HybridFake(None))
+    monkeypatch.setattr(level1, "client", lambda: HybridFake(None))
     monkeypatch.setattr(server.HybridSession, "read", lambda self, usage: (model, model["uncertain"], "test", b"png"))
     http = TestClient(server.app)
     seen = []

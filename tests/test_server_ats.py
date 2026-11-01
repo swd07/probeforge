@@ -13,6 +13,7 @@ from probeforge.server import ui_runs
 from probeforge.server import app as server
 from probeforge.server import ats
 from probeforge.server import ats_common  # the settings the session modules read at call time
+from probeforge.server import level1  # the model client
 from tests.test_agent_loop import FakeClient, FakeMessage
 
 
@@ -108,10 +109,8 @@ def test_agent_session_then_intervention_with_policy_fact():
             "outcome": "diagnosed", "component": "TS", "part": "17-16", "failure_mode": "stuck_open", "confidence": 0.8,
             "evidence": [{"step": 1, "type": "instrument_reading", "observation": "208 V on the load"}]})]),
     ])
-    import probeforge.server.app as app_module
-
-    orig = app_module.client
-    app_module.client = lambda: client
+    orig = level1.client
+    level1.client = lambda: client
     try:
         http = TestClient(server.app)
         events: list = []
@@ -135,7 +134,7 @@ def test_agent_session_then_intervention_with_policy_fact():
             r = tool(ws, events, "read_panel", {})
             assert r["executed"] and r["result"]["load_powered"]
     finally:
-        app_module.client = orig
+        level1.client = orig
 
 
 def test_hybrid_session_on_a_saved_transcription(monkeypatch, tmp_path):
@@ -158,7 +157,7 @@ def test_hybrid_session_on_a_saved_transcription(monkeypatch, tmp_path):
     monkeypatch.setattr(ats_common, "PLAN_PAUSE_S", 0.01)  # the display pause is counted and excluded from reported times
     monkeypatch.setenv("PROBEFORGE_OFFLINE", "1")
     monkeypatch.setattr(ats_common, "COMPARE_DIR", tmp_path / "compare")
-    monkeypatch.setattr(server, "client", lambda: (_ for _ in ()).throw(RuntimeError("no key")))  # no explanation call
+    monkeypatch.setattr(level1, "client", lambda: (_ for _ in ()).throw(RuntimeError("no key")))  # no explanation call
     http = TestClient(server.app)
     events: list = []
     with http.websocket_connect("/ws") as ws:
