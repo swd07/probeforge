@@ -188,6 +188,8 @@ baseline's tool logs and diagnoses are identical before and after (120 of 120); 
 - The page shows the explanation for the technician tidied for display: a step prefix the model repeated is
   removed, readings it spelled out are shown as numbers with units, and hyphens are restored in compounds it wrote
   apart ("de-energized", "fault-free", "cut-off contact"). The run record keeps the model's text unchanged, and the explanation check scores that text (D52).
+- A strong-approval request must cite executed instrument readings; the policy checks that they were executed, not when
+  they were taken (a reading from before a repair can be cited for the restore).
 - The ATS model, the assumptions and the troubleshooting sheet have not been reviewed by an electrical engineer.
 - Undocumented behaviour (Transfer Failure and Position Error timing, coil burnout time, coil resistance, the UPS rule)
   is labelled as an assumption with a status and a source where one exists, S1 to S7 in

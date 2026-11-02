@@ -100,7 +100,8 @@ ohmmeter on a live circuit, paralleling the sources, bypassing an interlock, ope
 ## 6. After the diagnosis: the intervention
 
 The session stays open for the authorized person, in every mode. Open **Authorized intervention**: isolate the
-sources, repair the part, restore the sources (strong approval, citing a reading taken after the repair). The stages
+sources, repair the part, restore the sources (strong approval, citing at least one executed reading from this
+session; the policy checks that the reading was executed, not when it was taken). The stages
 end at **Transfer verified** only when the simulator confirms the load on Emergency with the position confirmed by
 the controller; the UPS clock then stops.
 
