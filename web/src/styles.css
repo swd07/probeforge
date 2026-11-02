@@ -484,7 +484,7 @@ table.quality tr.worse td { color: var(--warn); }
 /* the fault list keeps its width before the mode setting next to it (readable at 1440 px) */
 .topbar .controls { flex: 0 0 auto; } /* never shrinks under its controls: the run stats give way instead */
 .topbar .controls select { font-size: 13px; padding: 5px 6px; }
-.topbar .controls select.fault { flex: 0 0 auto; width: clamp(210px, calc(100vw - 1230px), 360px); max-width: none; }
+.topbar .controls select.fault { flex: 0 0 auto; width: clamp(210px, calc(100vw - 1330px), 360px); max-width: none; }
 .topbar .controls select:not(.fault) { flex: 0 0 auto; width: clamp(106px, calc(100vw - 1330px), 220px); max-width: none; }
 .topbar .controls select.read { width: clamp(206px, calc(100vw - 1234px), 260px); } /* "Saved read, 2 repairs (Oct 31)" */
 .topbar .controls .engineer { flex: 0 0 auto; width: 120px; }
@@ -512,3 +512,25 @@ table.quality tr.worse td { color: var(--warn); }
 
 /* the ATS drawing's disclaimer, under the header in every view */
 .drawing-note { font-size: 12px; color: var(--warn); margin: -4px 0 6px; }
+
+/* narrow screens (1280 to 1439 px): the controls give the statistics room for the status chip and the counts */
+@media (max-width: 1439px) {
+  .topbar .controls select.fault { width: 208px; }
+  .topbar .controls select.read { width: 208px; }
+  .topbar .controls .engineer { width: 104px; }
+  .topbar .stats { min-width: 128px; }
+  .topbar .logo { font-size: 17px; }
+  .topbar .segmented button { font-size: 13px; padding: 5px 8px; }
+  .topbar .btn { font-size: 13px; padding: 6px 9px; }
+  .topbar .btn.sheet { width: 96px; font-size: 11px; }
+}
+
+@media (max-width: 1365px) {
+  .topbar .logo { font-size: 15px; }
+  .topbar .segmented button { padding: 5px 6px; }
+  .topbar { gap: 8px 8px; }
+}
+/* the model name stays on the result card and the drawing-read card; the status row keeps the counts readable */
+@media (max-width: 1699px) {
+  .topbar .stats .model { display: none; }
+}
