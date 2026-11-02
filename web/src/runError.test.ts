@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { errorText, stageClass } from "./runError";
+import { errorText, explanationLabel, stageClass } from "./runError";
 
 // error strings as the agent loop records them (OpenAI SDK exceptions, "Type: message")
 describe("why a run stopped", () => {
@@ -24,5 +24,18 @@ describe("flow stages", () => {
     expect(stageClass(1, 3, false)).toBe("past");
     expect(stageClass(3, 3, false)).toBe("now");
     expect(stageClass(2, 1, undefined)).toBe("");
+  });
+});
+
+describe("who wrote the explanation", () => {
+  it("Muse Spark, or the fixed template with the reason", () => {
+    expect(explanationLabel({ explanation_template: false })).toBe("Muse Spark");
+    expect(explanationLabel({})).toBe("Muse Spark");
+    expect(explanationLabel({ explanation_template: true, explanation_reason: "insufficient information" }))
+      .toBe("fixed template: insufficient information, every part still possible is listed");
+    expect(explanationLabel({ explanation_template: true, explanation_reason: "call failed: InternalServerError: Error code: 500 - {}" }))
+      .toBe("fixed template: the Meta API returned an error (HTTP 500)");
+    expect(explanationLabel({ explanation_template: true, explanation_reason: "Muse Spark's answers did not pass the explanation check" }))
+      .toBe("fixed template: Muse Spark's answers did not pass the explanation check");
   });
 });

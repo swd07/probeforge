@@ -157,6 +157,21 @@ _live: dict = {}
 _live_lock = threading.Lock()
 
 
+def explanation_source(record: dict | None) -> dict:
+    """Whether the explanation is Muse Spark's text or the fixed template the frozen explain module falls back to,
+    and why (insufficient information always gets the template; otherwise a failed call or two answers that failed
+    the check). The page labels the explanation with it."""
+    rec = record or {}
+    if not rec.get("template"):
+        return {"explanation_template": False, "explanation_reason": ""}
+    if rec.get("reason") == "insufficient information":
+        return {"explanation_template": True, "explanation_reason": "insufficient information"}
+    problems = [p for a in rec.get("attempts") or [] for p in a.get("problems") or []]
+    failed = next((p for p in reversed(problems) if p.startswith("call failed: ")), None)
+    return {"explanation_template": True,
+            "explanation_reason": failed or "Muse Spark's answers did not pass the explanation check"}
+
+
 class AtsHybridSession(AtsSession):
     """Hybrid v2 on the ATS bench: Read (saved transcription or live re-read), Model (the documented fault-free
     sequence, with the recorded repairs), Plan (info-gain on the transcription, readings on the real bench through the
@@ -274,6 +289,7 @@ class AtsHybridSession(AtsSession):
                                   "transcription": t["id"]})
         self.finish(trace, extra={
             "explanation": result.explanation,
+            **explanation_source(result.explain_record),
             "transcription": f"{t['label']} ({t['run_id']}, recorded {t['recorded']})",
             "corrections": [{"step": 0, "diff": c.get("diff", []), "explanation": c.get("explanation", ""),
                              "error": c.get("error"), "rejected": c.get("rejected"), "reasons": []}

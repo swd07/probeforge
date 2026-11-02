@@ -147,7 +147,7 @@ export function Feed({ items, manual = false, title, running = false, idleText }
           if (it.kind === "explanation")
             return (
               <div key={it.id} className="item explanation-item">
-                Explanation for the technician (Muse Spark): on the result card above
+                Explanation for the technician ({it.label}): on the result card above
               </div>
             );
           if (it.kind === "wiring")

@@ -204,6 +204,8 @@ export interface Done {
   ups_at_diagnosis?: UpsAtDiagnosis | null;
   // hybrid pipeline only
   explanation?: string;
+  explanation_template?: boolean; // ATS hybrid: the fixed template, not Muse Spark's text
+  explanation_reason?: string; // why the template was used
   cited_steps?: number[];
   transcription?: string;
   transcription_wrong_nets?: number;
@@ -243,7 +245,7 @@ export type FeedItem =
   | { kind: "correction_rejected"; id: string; step: number; diff: string[]; reasons: string[] }
   | { kind: "wiring"; id: string; text: string }
   | { kind: "plan"; id: string; next: NextStep } // ATS hybrid: the planner's next reading, before it is taken
-  | { kind: "explanation"; id: string; text: string }; // ATS hybrid: the text for the technician
+  | { kind: "explanation"; id: string; text: string; label: string }; // ATS hybrid: the text for the technician
 
 export type NetState = "live" | "dead" | "probed";
 

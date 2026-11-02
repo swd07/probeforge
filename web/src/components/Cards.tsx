@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { tidyExplanation } from "../explanationText";
-import { errorText } from "../runError";
+import { errorText, explanationLabel } from "../runError";
 import { idText, modeText, readable, sentence } from "../labels";
 import type { ApprovalRequest, AtsPanel, Done, FlagsRequest, WiringRequest } from "../types";
 
@@ -291,7 +291,7 @@ export function ResultCard({ done, showTruth, onToggleTruth, saved, onCompare, c
           )}
           {hybrid && done.explanation && (
             <div className="explanation">
-              <span className="lbl">For the technician (Muse Spark)</span>
+              <span className="lbl">For the technician ({explanationLabel(done)})</span>
               <p>{tidyExplanation(done.explanation)}</p>
             </div>
           )}

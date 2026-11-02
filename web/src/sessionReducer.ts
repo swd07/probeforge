@@ -1,6 +1,7 @@
 // The session state and its reducer: every server event becomes a state change here (useSession.ts holds the
 // WebSocket and the actions).
 import type { ApprovalRequest, AtsTranscription, Bench, CompareResult, Done, FeedItem, FlagsRequest, Hypothesis, Mode, ModelCheck, NetState, NextStep, Panel, Probe, ToolEvent, WiringRequest } from "./types";
+import { explanationLabel } from "./runError";
 
 export type Status = "idle" | "running" | "approval" | "done" | "stopped" | "error";
 
@@ -280,7 +281,7 @@ export function reducer(s: State, a: Action): State {
     case "done":
       return {
         ...s, status: "done", done: ev, panel: ev.panel, approval: null, flags: null, wiring: null, stage: "", nextStep: null,
-        feed: ev.explanation ? [...s.feed, { kind: "explanation", id: `expl${s.feed.length}`, text: ev.explanation }] : s.feed,
+        feed: ev.explanation ? [...s.feed, { kind: "explanation", id: `expl${s.feed.length}`, text: ev.explanation, label: explanationLabel(ev) }] : s.feed,
       };
     case "saved":
       return { ...s, saved: ev.path };

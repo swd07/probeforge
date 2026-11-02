@@ -834,3 +834,18 @@ decisions at the end (see CLAUDE.md). Architecture: [ARCHITECTURE.md](ARCHITECTU
 - **Evidence:** pytest: the blocked call (verdict, tier, the policy's reason, no virtual time, counted), the counter on
   a synthetic folder and a tier on every step of the committed runs; Vitest for the count text and the feed title of a
   blocked check; browser check on dev-07 before isolation.
+
+### D57. The explanation says who wrote it; a failed run says why (2026-11-02)
+
+- **What:** the hybrid's explanation is labelled by its source: "Muse Spark", or "fixed template" with the reason
+  (insufficient information, which always gets the template; a failed Muse Spark call, e.g. "the Meta API returned an
+  error (HTTP 500)"; answers that failed the explanation check). The server reads the frozen explain module's own
+  record (`explanation_source` in server/ats_modes.py). A run that stopped on an error shows "no diagnosis" and the
+  reason in words; the "Root cause identified" stage is not passed without a diagnosis.
+- **Why:** the judge-style check with a simulated Meta API failure showed the template under the label "For the
+  technician (Muse Spark)", and an agent run that failed showed "error" as its diagnosis with no reason. Every
+  insufficient-information explanation was also labelled Muse Spark although it is the template.
+- **Alternatives:** hide the template when the call fails (the template is a correct, checked text the technician can
+  use); change the frozen explain module to mark its text (not needed: its record already says so).
+- **Evidence:** pytest for the source (model, insufficient information, failed call, failed check); Vitest for the
+  labels and the error wording; browser check against a fake API returning HTTP 500.
