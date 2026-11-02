@@ -1,0 +1,71 @@
+# ProbeForge public demo: the app behind Caddy (automatic HTTPS). docs/DEPLOY.md has the steps.
+# Run from deploy/:  sudo docker compose up -d --build
+# Settings that differ per server come from deploy/.env (not secret, not committed; see compose.env.example) and the
+# app's secrets and allow-lists from the root-only env file (PROBEFORGE_ENV_FILE, see probeforge.env.example).
+name: probeforge
+
+services:
+  app:
+    image: probeforge:${PROBEFORGE_TAG:-latest}
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    env_file:
+      - ${PROBEFORGE_ENV_FILE:-/etc/probeforge/probeforge.env}
+    environment:
+      PROBEFORGE_PUBLIC: "1"
+      # proxy headers are read only from Caddy's fixed address, so the per-address limit counts the visitor
+      PROBEFORGE_FORWARDED_ALLOW_IPS: 172.30.0.10
+    volumes:
+      - probeforge-runs:/app/runs  # spend ledger, visitor traces, Compare records: kept across restarts and redeploys
+    networks:
+      web:
+        ipv4_address: 172.30.0.20
+    # no published port: only Caddy is reachable from outside
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 3g
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options: {max-size: "10m", max-file: "5"}
+
+  caddy:
+    image: caddy:2.10-alpine
+    depends_on:
+      app:
+        condition: service_healthy
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      PROBEFORGE_DOMAIN: ${PROBEFORGE_DOMAIN:-localhost}
+      ACME_EMAIL: ${ACME_EMAIL:-}
+    volumes:
+      - ./${PROBEFORGE_CADDYFILE:-Caddyfile}:/etc/caddy/Caddyfile:ro
+      - ./site:/srv/site:ro  # the personal website later (static files); empty until then
+      - caddy-data:/data  # certificates
+      - caddy-config:/config
+    networks:
+      web:
+        ipv4_address: 172.30.0.10
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options: {max-size: "10m", max-file: "5"}
+
+networks:
+  web:
+    ipam:
+      config:
+        - subnet: 172.30.0.0/24
+
+volumes:
+  probeforge-runs:
+  caddy-data:
+  caddy-config:

@@ -1,0 +1,34 @@
+# ProbeForge behind Caddy with automatic HTTPS (Let's Encrypt). The domain and the ACME e-mail come from
+# deploy/.env (PROBEFORGE_DOMAIN, ACME_EMAIL). docs/DEPLOY.md has the steps.
+{
+	email {$ACME_EMAIL}
+}
+
+# Security headers for every site. The page loads only its own script; inline styles are needed by the drawing (an
+# SVG with a <style> element) and by React style attributes; data: images by the favicon. The WebSocket is same-origin
+# (wss:// listed for browsers that do not count it as 'self').
+(security_headers) {
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=()"
+		Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' wss://{$PROBEFORGE_DOMAIN}; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'"
+		-Server
+	}
+}
+
+{$PROBEFORGE_DOMAIN} {
+	import security_headers
+	encode zstd gzip
+	reverse_proxy app:8000
+}
+
+# Your personal website later: point its domain at the server, put the files in deploy/site/, uncomment, then
+#   sudo docker compose exec caddy caddy reload --config /etc/caddy/Caddyfile
+# example.org {
+# 	import security_headers
+# 	root * /srv/site
+# 	file_server
+# }

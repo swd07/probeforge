@@ -1,0 +1,15 @@
+# Plain HTTP on port 80, for a test on the server's IP before the domain points at it, and for the CI image check.
+# Not for sharing the demo: no HTTPS. The same security headers as the domain setup, without HSTS (HTTP only).
+# Use with PROBEFORGE_CADDYFILE=Caddyfile.http in deploy/.env; docs/DEPLOY.md has the matching env file settings.
+:80 {
+	header {
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=()"
+		Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'"
+		-Server
+	}
+	encode zstd gzip
+	reverse_proxy app:8000
+}
