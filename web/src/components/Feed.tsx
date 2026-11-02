@@ -191,7 +191,7 @@ export function Feed({ items, manual = false, title, running = false, idleText }
                 </div>
                 {ev.verdict === "block" && <div className="policy">BLOCKED by safety policy: {readable(ev.policy_reason)}</div>}
                 {(ev.verdict === "error" || (!ev.executed && ev.verdict.startsWith("needs_"))) && typeof ev.result.error === "string" && (
-                  <div className="policy">{ev.result.error}</div>
+                  <div className="policy">{readable(modeText(ev.result.error))}</div>
                 )}
                 {typeof ev.result.note === "string" && <div className="note">{modeText(ev.result.note)}</div>}
                 {rec && <div className="note recommendation">recommendation: {rec}</div>}

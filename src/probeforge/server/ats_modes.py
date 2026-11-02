@@ -293,7 +293,8 @@ class AtsHybridSession(AtsSession):
         self.finish(trace, extra={
             "explanation": result.explanation,
             **explanation_source(result.explain_record),
-            "transcription": f"{t['label']} ({t['run_id']}, recorded {t['recorded']})",
+            "transcription": f"{t['label']} (recorded {t['recorded']})",
+            "transcription_run": t["run_id"],  # the committed run it comes from: the tooltip, not the text
             "corrections": [{"step": 0, "diff": c.get("diff", []), "explanation": c.get("explanation", ""),
                              "error": c.get("error"), "rejected": c.get("rejected"), "reasons": []}
                             for c in result.corrections],

@@ -1,6 +1,6 @@
 import type { CompareColumn, CompareResult } from "../types";
 import { useEscape } from "../escape";
-import { modeText } from "../labels";
+import { modeText, readable } from "../labels";
 import { errorText } from "../runError";
 
 const ORDER = [
@@ -25,7 +25,7 @@ function Column({ title, col, pending }: { title: string; col?: CompareColumn; p
       <h3>{title}</h3>
       {col.engineer && <div className="muted">{col.engineer}, recorded {col.recorded}</div>}
       {col.assisted && <div className="muted">assisted: planner suggestions were shown</div>}
-      {col.transcription && <div className="muted">{col.transcription}</div>}
+      {col.transcription && <div className="muted" title={col.transcription_run ? `run ${col.transcription_run}` : undefined}>{col.transcription}</div>}
       <span className={`verdict small v-${(col.verdict ?? "").replace(" ", "-")}`}>{col.verdict}</span>
       <div className="cmp-diag">{col.stopped ? "no diagnosis" : modeText(String(col.diagnosis ?? ""))}</div>
       {col.stopped && <p className="policy">The run stopped: {errorText(col.stopped)}.</p>}
@@ -56,7 +56,7 @@ function Column({ title, col, pending }: { title: string; col?: CompareColumn; p
       </dl>
       <ol className="sequence">
         {(col.sequence ?? []).map((s, i) => (
-          <li key={i} className={s.startsWith("blocked") ? "blocked" : ""}>{s}</li>
+          <li key={i} className={s.startsWith("blocked") ? "blocked" : ""}>{readable(modeText(s))}</li>
         ))}
         {(col.sequence ?? []).length === 0 && <li className="muted">no meter readings</li>}
       </ol>

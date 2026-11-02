@@ -220,7 +220,7 @@ class AtsSession:
                 tr = make_trace(case="compare_ats", runner="ats_hybrid", tb=r.planner.tb, diagnosis=r.diagnosis,
                                 outcome=r.outcome, seconds=r.seconds, notes=r.planner.notes)
                 columns["hybrid"] = {**column(tr, judged(tr), r.planner.tb.policy.stats.strong_approval_requests, False),
-                                     "transcription": f"{t['label']} ({t['run_id']})"}
+                                     "transcription": t["label"], "transcription_run": t["run_id"]}
             except Exception as e:  # noqa: BLE001 - one column failing must not lose the others
                 columns["hybrid"] = {"runner": "ats_hybrid", "error": f"{type(e).__name__}: {e}"}
             self.emit({"type": "compare_progress", "runner": "hybrid", "done": True})

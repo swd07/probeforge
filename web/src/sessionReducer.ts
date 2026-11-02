@@ -174,7 +174,7 @@ export function reducer(s: State, a: Action): State {
           {
             kind: "info",
             id: "ats_transcription",
-            text: `Read: ${ev.label} (${ev.run_id}, recorded ${ev.recorded}): ${ev.reads} Muse Spark reads, ${ev.components} components, ${ev.nets} nets, ${ev.flags} flagged regions`,
+            text: `Read: ${ev.label} (recorded ${ev.recorded}): ${ev.reads} Muse Spark reads, ${ev.components} components, ${ev.nets} nets, ${ev.flags} flagged regions`,
           },
         ],
       };

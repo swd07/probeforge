@@ -23,3 +23,12 @@ def test_insufficient_information_has_no_confidence():
     t = trace("insufficient_information")
     t["diagnosis"] = {"outcome": "insufficient_information", "confidence": 0.0}
     assert column(t, {"verdict": "no diagnosis"}, 0, False)["confidence"] is None
+
+
+def test_a_refused_step_is_cut_at_a_word_boundary():
+    from probeforge.server.ats_views import sequence
+    reason = "a repeat transfer attempt after a failure needs strong approval; refused: a strong-approval request needs evidence_steps: the step numbers of readings that support it"
+    line = sequence([{}, {"tool": "repeat_transfer_attempt", "verdict": "needs_strong_approval", "executed": False,
+                          "result": {"error": reason}}])[0]
+    assert line.startswith("not done: repeat transfer attempt (a repeat transfer attempt after a failure needs strong approval;")
+    assert line.endswith("...)") and " appro)" not in line and len(line) < 170

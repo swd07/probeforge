@@ -306,7 +306,7 @@ export function ResultCard({ done, showTruth, onToggleTruth, saved, onCompare, c
           {hybrid && (
             <div className="hybrid-facts">
               <div>
-                Schematic read: {done.transcription}
+                Schematic read: <span title={done.transcription_run ? `run ${done.transcription_run}` : undefined}>{done.transcription}</span>
                 {done.transcription_wrong_nets !== undefined && (
                   <em> ({done.transcription_wrong_nets === 0 ? "all nets right" : `${done.transcription_wrong_nets} of the true nets read wrong`})</em>
                 )}

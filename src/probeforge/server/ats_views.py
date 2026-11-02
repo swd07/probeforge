@@ -38,6 +38,11 @@ def describe(entry: dict) -> str:
     return tool.replace("_", " ")
 
 
+def short(text: str, n: int = 120) -> str:
+    """At most n characters, cut at a word boundary."""
+    return text if len(text) <= n else text[:n].rsplit(" ", 1)[0] + "..."
+
+
 def sequence(log: list[dict]) -> list[str]:
     """Every step after the first panel look, as one line each (blocked and refused steps marked)."""
     out = []
@@ -47,7 +52,7 @@ def sequence(log: list[dict]) -> list[str]:
         if e["verdict"] == "block":
             out.append(f"blocked: {e['tool'].replace('_', ' ')}")
         elif not e["executed"]:
-            out.append(f"not done: {e['tool'].replace('_', ' ')} ({str(e['result'].get('error', ''))[:60]})")
+            out.append(f"not done: {e['tool'].replace('_', ' ')} ({short(str(e['result'].get('error', '')))})")
         else:
             out.append(describe(e))
     return out

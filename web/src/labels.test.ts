@@ -101,3 +101,10 @@ describe("no confidence on insufficient information", () => {
     expect(describeTool(ev)).toEqual({ title: "Diagnosis: insufficient information", detail: "" });
   });
 });
+
+describe("refusal lines in the feed and Compare", () => {
+  it("show no ids", () => {
+    expect(readable("isolating both sources while the load is powered needs strong approval; refused: a strong-approval request needs evidence_steps: the step numbers of readings that support it"))
+      .toBe("isolating both sources while the load is powered needs strong approval; refused: a strong-approval request needs evidence steps: the step numbers of readings that support it");
+  });
+});

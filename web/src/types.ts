@@ -208,6 +208,7 @@ export interface Done {
   explanation_reason?: string; // why the template was used
   cited_steps?: number[];
   transcription?: string;
+  transcription_run?: string; // the committed run of the read, for the tooltip
   transcription_wrong_nets?: number;
   corrections?: { step: number; diff: string[]; explanation: string; error?: string | null; rejected?: string | null; reasons?: string[] }[];
   gave_up?: boolean;
@@ -275,6 +276,7 @@ export interface CompareColumn {
   approvals_denied?: number;
   approvals_by?: string;
   transcription?: string;
+  transcription_run?: string; // the committed run of the read, for the tooltip
   engineer?: string;
   recorded?: string;
   diagnosis?: string;
