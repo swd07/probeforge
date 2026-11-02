@@ -9,6 +9,17 @@ describe("result card", () => {
     expect(timeFigure(40, 12).title).toContain("excluding 12 s of UI display pauses");
   });
 
+  it("a run with approval cards says its time includes the waits for an answer", () => {
+    // the 2 Nov manual Hybrid run on dev-07: 195 s, about 180 s of it with the two approval cards open
+    const f = timeFigure(195, 3, 2);
+    expect(f.label).toBe("wall clock, approval waits included");
+    expect(f.title).toBe("Real time the run took, including the time approval cards waited for an answer "
+      + "(excluding 3 s of UI display pauses); outage time is the UPS clock");
+    expect(timeFigure(140, undefined, 3).title).toBe(
+      "Real time the run took, including the time approval cards waited for an answer; outage time is the UPS clock");
+    expect(timeFigure(4, 3, 0).label).toBe("wall clock (pauses excluded)");
+  });
+
   it("the Compare button stays short; the re-run cost goes on the line under it", () => {
     expect(atsCompareNote("manual")).toBe("Agent re-run about $0.12; hybrid and baseline free.");
     expect(atsCompareNote("agent")).toBe("This run is the agent column; hybrid and baseline re-runs free.");

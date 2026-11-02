@@ -201,6 +201,7 @@ def test_hybrid_session_on_a_saved_transcription(monkeypatch, tmp_path):
     pauses = len([e for e in events if e["type"] == "next_step" and e["tool"] != "submit_diagnosis"])
     assert done["display_pause_s"] == pytest.approx(0.01 * pauses)
     assert "identical here" in cmp["note"] and "exclude the UI display pause" in cmp["note"]
+    assert "column's time includes the time its approval cards waited for an answer" in cmp["note"]
     plans = [e for e in events if e["type"] == "next_step"]
     tools = [e for e in events if e["type"] == "tool" and e["tool"] != "update_hypotheses"]
     assert plans and plans[-1]["tool"] == "submit_diagnosis"

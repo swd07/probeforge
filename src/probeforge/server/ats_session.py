@@ -248,7 +248,8 @@ class AtsSession:
                   "note": f"Re-runs use the batch approval rules (approval tier approved, strong approval denied); the "
                           f"{'engineer' if own == 'human' else own} column is this session, with approvals answered live. "
                           "Hybrid v2 runs on the default saved transcription without the explanation call. Times exclude the "
-                          "UI display pause."
+                          f"UI display pause; the {'engineer' if own == 'human' else own} column's time includes the time "
+                          "its approval cards waited for an answer."
                           + (" The hybrid and baseline columns are identical here: the model Muse Spark read from the "
                              "drawing behaves like our hand redrawing, so the planner takes the same steps."
                              if columns.get("hybrid", {}).get("sequence") is not None

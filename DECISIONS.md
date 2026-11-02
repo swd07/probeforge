@@ -899,3 +899,20 @@ decisions at the end (see CLAUDE.md). Architecture: [ARCHITECTURE.md](ARCHITECTU
   8 exclusions, uid 10001, no build tools) and scripts/smoke_deploy.py with headers and a browser (Edge) passed, a
   Hybrid run on a saved read completed through Caddy under the CSP; pytest for the proxy headers (the visitor counted
   behind the proxy, a forged header ignored), the allowed hosts and the strict Origin list.
+
+### D61. The wall-clock figure says when it includes approval waits (2026-11-03)
+
+- **What:** on the result card, a run that had approval cards shows "wall clock, approval waits included", with the
+  tooltip "Real time the run took, including the time approval cards waited for an answer (excluding N s of UI display
+  pauses); outage time is the UPS clock". Runs without approvals keep "wall clock" or "wall clock (pauses excluded)".
+  The Compare note adds that the session's own column includes the time its approval cards waited for an answer.
+  Display only: the measured time is unchanged.
+- **Why:** an approval card holds the run until someone answers, and only the 1 s display pauses are subtracted. A
+  manual Hybrid run on dev-07 showed "195 s wall clock (pauses excluded)" against a 17 s holdout mean: about 3 s of
+  planner and bench, one explanation call, and about 180 s with the two cards open. The old label read as if every
+  wait were excluded.
+- **Alternatives:** subtract the approval waits from the time (changes a measured figure the committed runs and
+  Compare columns are read against; the batch approves at once, so its times are comparable as they are).
+- **Evidence:** the 195 s run's ledger (one call, the explanation, settled when the run ended) and a free re-run of the
+  same case with approvals answered at once (3.2 s reported); Vitest for the label and tooltip, pytest for the Compare
+  note.

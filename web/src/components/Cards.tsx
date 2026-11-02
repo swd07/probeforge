@@ -222,17 +222,21 @@ export function approvalFigures(done: { approvals: number; strong_approvals?: nu
 }
 
 /** The run's duration figure: real (wall-clock) time, which a viewer must not read as outage time (that is the UPS
- * clock on the ATS bench). */
-export function timeFigure(seconds: number, pauseS?: number): { value: string; label: string; title: string } {
+ * clock on the ATS bench). An approval card holds the run until someone answers it, so a run with approvals counts
+ * that wait; only the UI display pauses are subtracted. */
+export function timeFigure(seconds: number, pauseS?: number, approvals = 0): { value: string; label: string; title: string } {
+  const paused = pauseS ? `excluding ${pauseS.toFixed(0)} s of UI display pauses` : "";
   return {
     value: `${seconds.toFixed(0)} s`,
-    label: pauseS ? "wall clock (pauses excluded)" : "wall clock",
-    title: `Real time the run took${pauseS ? `, excluding ${pauseS.toFixed(0)} s of UI display pauses` : ""}; outage time is the UPS clock`,
+    label: approvals ? "wall clock, approval waits included" : pauseS ? "wall clock (pauses excluded)" : "wall clock",
+    title: approvals
+      ? `Real time the run took, including the time approval cards waited for an answer${paused ? ` (${paused})` : ""}; outage time is the UPS clock`
+      : `Real time the run took${paused ? `, ${paused}` : ""}; outage time is the UPS clock`,
   };
 }
 
 export function ResultCard({ done, showTruth, onToggleTruth, saved, onCompare, compareLabel, compareNote, atsPanel, defaultCollapsed = false }: ResultProps) {
-  const time = timeFigure(done.seconds, done.display_pause_s);
+  const time = timeFigure(done.seconds, done.display_pause_s, done.approvals + (done.strong_approvals ?? 0));
   const [collapsed, setCollapsed] = useState(defaultCollapsed);
   const manual = done.mode === "manual";
   const hybrid = done.mode === "hybrid";
