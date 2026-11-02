@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { requestTitle } from "./components/Cards";
 import { describeTool } from "./components/feedText";
-import { idText, kindText, labelIds, modeText, readable } from "./labels";
+import { DRAWING_NOTE, idText, kindText, labelIds, modeText, readable } from "./labels";
 import type { ToolEvent } from "./types";
 
 const REPAIRS = ["replace_coil", "repair_wire", "repair_connector", "replace_cutoff_contact", "adjust_cutoff_contact", "replace_controller"];
@@ -75,5 +75,12 @@ describe("failure modes shown as words", () => {
   it("leaves part ids and other words alone", () => {
     const text = "H1:W12_TS1-W12_P12 open; KM1 welded; restuck_openings";
     expect(modeText(text)).toBe(text);
+  });
+});
+
+describe("the drawing note", () => {
+  it("says it is our redrawing, not the official drawing", () => {
+    expect(DRAWING_NOTE).toMatch(/our redrawing/i);
+    expect(DRAWING_NOTE).toMatch(/not the official drawing/);
   });
 });

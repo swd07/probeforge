@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { readable } from "./labels";
+import { DRAWING_NOTE, readable } from "./labels";
 import { repairedParts } from "./repairs";
 import { LimitsModal } from "./components/AtsPanel";
 import { AtsStatusColumn } from "./components/AtsStatus";
@@ -167,6 +167,7 @@ export function App() {
               home={ats ? ATS_HOME : undefined}
               focus={ats && cur && state.done?.outcome === "diagnosed" ? diagnosedPart(state.done.diagnosis) : null}
               repaired={repaired}
+              note={ats ? DRAWING_NOTE : undefined}
             />
             {pickNote && <div className="error-banner">{pickNote}</div>}
             {cur && state.error && <div className="error-banner">{state.error}</div>}

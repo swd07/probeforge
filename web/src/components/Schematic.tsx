@@ -19,13 +19,14 @@ interface Props {
   fitKey: string; // changes at session start and at the reveal: zoom out to the home view
   home?: View; // the default view (drawing units); without it the home view is the whole drawing
   focus?: { component: string; part: string } | null;
-  repaired?: Repaired[]; // ATS: parts an approved repair changed, outlined with a pill (follow on: the view goes there) // ATS: after the diagnosis, zoom to this part and outline it
+  repaired?: Repaired[]; // ATS: parts an approved repair changed, outlined with a pill (follow on: the view goes there)
+  note?: string; // shown under the header in every view (ATS: our redrawing, not the official drawing) // ATS: after the diagnosis, zoom to this part and outline it
 }
 
 /** The schematic is the server-rendered SVG. Every wire carries data-net and every terminal data-terminal,
  * so probes and what was learned about each net are painted straight onto it (schematic/overlays.ts). Zoom and pan
  * work on the viewBox (schematic/viewBox.ts), so labels stay sharp at any zoom. */
-export function Schematic({ svg, nets, probes, truthLive, onPick, selected = [], suspects = [], planned = [], runKey, fitKey, home, focus = null, repaired = [] }: Props) {
+export function Schematic({ svg, nets, probes, truthLive, onPick, selected = [], suspects = [], planned = [], runKey, fitKey, home, focus = null, repaired = [], note }: Props) {
   const host = useRef<HTMLDivElement>(null);
   const [follow, setFollow] = useState(true);
 
@@ -163,6 +164,7 @@ export function Schematic({ svg, nets, probes, truthLive, onPick, selected = [],
           </button>
         </span>
       </div>
+      {note && <div className="drawing-note">{note}</div>}
       <div
         className={`schematic ${onPick ? "pickable" : ""}`}
         ref={host}

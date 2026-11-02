@@ -63,3 +63,6 @@ export function kindText(kind: string): string {
 export function modeText(text: string): string {
   return text.replace(/\bstuck_(open|closed)\b/g, "stuck $1");
 }
+
+/** Under the ATS drawing's header in every view, whatever the zoom (the drawing's own title can be outside it). */
+export const DRAWING_NOTE = "Our redrawing of ASCO wiring diagram 978741, not the official drawing.";

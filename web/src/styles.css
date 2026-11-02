@@ -509,3 +509,6 @@ table.quality tr.worse td { color: var(--warn); }
 /* a run that stopped on an error (Meta API failure), and the stage it skipped */
 .run-error { background: #3a1010; border-left: 3px solid #e05050; border-radius: 8px; padding: 8px 10px; margin: 6px 0; color: #ffb4b4; font-weight: 600; }
 .ats-flow .flow-step.skipped { text-decoration: line-through; opacity: 0.6; }
+
+/* the ATS drawing's disclaimer, under the header in every view */
+.drawing-note { font-size: 12px; color: var(--warn); margin: -4px 0 6px; }
