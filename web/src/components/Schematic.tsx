@@ -52,9 +52,9 @@ export function Schematic({ svg, nets, probes, truthLive, onPick, selected = [],
       [Math.min(...boxes.map((b) => b.x)), Math.min(...boxes.map((b) => b.y))],
       [Math.max(...boxes.map((b) => b.x + b.width)), Math.max(...boxes.map((b) => b.y + b.height))],
     ];
-    animateTo(normalize(around(corners, 300, 200, 620, 330, 0)));
+    animateTo(inside(normalize(around(corners, 300, 200, 620, 330, 0))));
     // focus is read through focusKey on purpose: zoom once per diagnosis
-  }, [focusKey, svg, fitKey, animateTo, normalize]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [focusKey, svg, fitKey, animateTo, normalize, inside]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const click = (e: ReactMouseEvent) => {
     if (!onPick || panned()) return; // a pan is not a click
