@@ -16,9 +16,13 @@ Timeouts for live UI runs (`timeout_s`), from the longest calls in the committed
 25.0 s (holdout h27), an explanation 14.5 s (holdout h15), a repair 91.0 s and a drawing read 121.6 s
 (20261031_003748_ats_hybrid, 20261030_222622_ats_reads). CALL_TIMEOUT_S = 120 s (4.8x the longest agent turn);
 READ_TIMEOUT_S = 360 s for runs that read the drawing live (3x the longest read). With a timeout the SDK's own
-retries are switched off, so every request is one reserved call; a call that times out may still be billed by the
-provider, so it settles at its reservation, not at $0. Batch scripts pass no timeout and keep the SDK defaults.
+retries are switched off and this client retries instead, once, and only where nothing was billed: a connection
+error, HTTP 429 or HTTP 5xx (after Retry-After, at most 10 s, else 2 s). Every attempt reserves on its own, so the
+spend guard checks the retry too. A call that times out is not retried: the provider may still finish and bill it,
+so it settles at its reservation, not at $0. Batch scripts pass no timeout and keep the SDK defaults.
 """
+
+import time
 
 import openai
 
@@ -34,6 +38,26 @@ RESERVE_PROMPT_TOKENS = 20_000  # above the largest prompt in the recorded runs 
 UNCAPPED_COMPLETION_TOKENS = 20_000  # above the largest recorded call (19,815)
 CALL_TIMEOUT_S = 120.0
 READ_TIMEOUT_S = 360.0
+RETRY_WAIT_S = 2.0
+MAX_RETRY_WAIT_S = 10.0
+
+
+def retryable(e: Exception) -> bool:
+    """A failed call that was not billed and may work a moment later: a connection error (not a timeout), 429, 5xx."""
+    if isinstance(e, openai.APITimeoutError):
+        return False
+    if isinstance(e, openai.APIConnectionError):
+        return True
+    return isinstance(e, openai.APIStatusError) and (e.status_code == 429 or e.status_code >= 500)
+
+
+def retry_wait(e: Exception) -> float:
+    """The server's Retry-After (seconds), at most MAX_RETRY_WAIT_S; RETRY_WAIT_S without one."""
+    resp = getattr(e, "response", None)
+    try:
+        return min(max(float(resp.headers.get("retry-after")), 0.0), MAX_RETRY_WAIT_S)
+    except (AttributeError, TypeError, ValueError):
+        return RETRY_WAIT_S
 
 
 class MeteredClient:
@@ -41,6 +65,8 @@ class MeteredClient:
                  max_completion_tokens: int | None = None, timeout_s: float | None = None):
         if timeout_s is not None and hasattr(client, "with_options"):
             client = client.with_options(timeout=timeout_s, max_retries=0)  # one request per reservation
+        self.attempts = 2 if timeout_s is not None else 1  # live UI runs: one retry of an unbilled failure
+        self.sleep = time.sleep
         self.client, self.ledger, self.what, self.demo = client, ledger, what, demo
         self.max_run_usd, self.max_completion_tokens = max_run_usd, max_completion_tokens
         self.spent, self.calls = 0.0, 0
@@ -50,23 +76,30 @@ class MeteredClient:
         return _cost(model, RESERVE_PROMPT_TOKENS, 0, self.max_completion_tokens or UNCAPPED_COMPLETION_TOKENS)
 
     def _create(self, **kw):
-        if self.max_run_usd is not None and self.spent >= self.max_run_usd:
-            raise SpendLimitError(f"{self.what}: this run reached its ${self.max_run_usd:.2f} limit")
         if self.max_completion_tokens and "max_completion_tokens" not in kw:
             kw["max_completion_tokens"] = self.max_completion_tokens
         model = kw.get("model") or MUSE_SPARK
         self.calls += 1
-        reserved = self._reserve_usd(model)
-        rid = self.ledger.reserve(reserved, f"{self.what}, call {self.calls}", demo=self.demo)
-        try:
-            resp = self.client.chat.completions.create(**kw)
-        except openai.APITimeoutError:
-            self.ledger.settle(rid, reserved)  # the provider may still finish and bill it: count the upper bound
-            self.spent += reserved
-            raise
-        except Exception:
-            self.ledger.settle(rid, 0.0)  # not billed: the call did not complete
-            raise
+        for attempt in range(self.attempts):
+            if self.max_run_usd is not None and self.spent >= self.max_run_usd:
+                raise SpendLimitError(f"{self.what}: this run reached its ${self.max_run_usd:.2f} limit")
+            reserved = self._reserve_usd(model)
+            # every attempt reserves on its own: the spend guard can refuse the retry
+            rid = self.ledger.reserve(reserved, f"{self.what}, call {self.calls}" + (" (retry)" if attempt else ""),
+                                      demo=self.demo)
+            try:
+                resp = self.client.chat.completions.create(**kw)
+                break
+            except openai.APITimeoutError:
+                self.ledger.settle(rid, reserved)  # the provider may still finish and bill it: count the upper bound
+                self.spent += reserved
+                raise
+            except Exception as e:
+                self.ledger.settle(rid, 0.0)  # not billed: the call did not complete
+                if attempt + 1 < self.attempts and retryable(e):
+                    self.sleep(retry_wait(e))
+                    continue
+                raise
         u = getattr(resp, "usage", None)
         details = getattr(u, "prompt_tokens_details", None) if u else None
         cached = (getattr(details, "cached_tokens", 0) or 0) if details else 0

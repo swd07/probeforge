@@ -867,3 +867,16 @@ decisions at the end (see CLAUDE.md). Architecture: [ARCHITECTURE.md](ARCHITECTU
 - **Evidence:** pytest (timeout and no retries passed to the client, a timed-out call counted at its reservation, an
   HTTP error not billed, scripts unchanged); browser check against a hanging fake API: the agent run ends after 138 s
   with "the Meta API did not answer in time", the hybrid shows the template labelled with the same reason.
+
+### D59. One retry for unbilled failures, each attempt reserved (2026-11-02)
+
+- **What:** live UI calls (those with a timeout, D58) get one retry, and only where nothing was billed: a connection
+  error (not a timeout), HTTP 429 or HTTP 5xx, after the server's Retry-After (at most 10 s) or 2 s. Each attempt
+  reserves in the ledger on its own, so the spend guard can refuse the retry; the failed attempt settles at $0. A
+  timeout is never retried and still settles at its reservation. Batch scripts keep the SDK defaults.
+- **Why:** with the SDK's retries off (D58) a single transient 503 or 429 ended a demo run; the SDK's own retries
+  cannot reserve per attempt.
+- **Alternatives:** more retries (a visitor waits longer for a failing API; the run's error is shown anyway); retrying
+  timeouts (could bill twice).
+- **Evidence:** pytest: a 503 then success (two entries, one charge), two 500s (error, $0), Retry-After honoured and
+  capped, a connection error retried, a timeout and a 400 not retried, the guard refusing the retry at the cap.
