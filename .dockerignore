@@ -1,0 +1,28 @@
+# The image gets only what the server reads at run time (docs/DEPLOY.md lists every path). Never in the image:
+# secrets, the vendor drawings and their crops, private notes, local run outputs.
+.env
+.env.*
+**/.env
+**/.env.*
+docs/vendor/
+docs/NEXT_STEPS.md
+runs/
+.venv/
+**/node_modules/
+web/dist/
+**/__pycache__/
+**/*.pyc
+.pytest_cache/
+*.tsbuildinfo
+*.log
+.git/
+.github/
+.claude/
+tests/
+scripts/
+deploy/
+docs/
+!docs/ATS_TROUBLESHOOTING.json
+# results/: only the committed runs are needed (the never-tier count at startup)
+results/
+!results/runs/
