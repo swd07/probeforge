@@ -132,8 +132,9 @@ export function AtsManualPanel({ meta, panel, meter, setMeter, lastProbe, feed, 
         <button className="btn small ghost" disabled={!active || !panel?.isolated} onClick={() => send("restore_sources")}>Restore sources</button>
         {diagnosing && (
           <>
-            <button className="btn small ghost" disabled={!panel?.isolated} onClick={() => send("manual_operation_check", { readings: meter.kind === "R" ? pair : [] })}
-                    title="Both sources isolated: operate the switch to the other position, read the meter pair (Ω) there, operate it back">
+            {/* enabled before isolation too: the policy, not the page, refuses manual operation under load (never tier) */}
+            <button className="btn small ghost" onClick={() => send("manual_operation_check", { readings: meter.kind === "R" ? pair : [] })}
+                    title="Both sources isolated: operate the switch to the other position, read the meter pair (Ω) there, operate it back. Before isolation the safety policy blocks it.">
               Manual operation check{meter.kind === "R" && pair.length ? " + Ω A-B" : ""}
             </button>
             <button className="btn small ghost" disabled={!!panel?.isolated} onClick={() => send("repeat_transfer_attempt", { measure_during: meter.kind === "V" ? pair : [] })}

@@ -1,6 +1,14 @@
 import { labelIds } from "../labels";
 import type { AtsMeta } from "../types";
 
+/** The never-tier attempts counted from the committed runs, with the source; "" when the server has no count. */
+export function neverText(counts: AtsMeta["never_attempts"]): string {
+  const rows = Object.entries(counts ?? {});
+  if (!rows.length) return "";
+  const parts = rows.map(([runner, c]) => `${runner} ${c.never} in ${c.runs} runs`);
+  return `Never-tier attempts in the committed runs: ${parts.join(", ")} (scripts/count_never_attempts.py over results/runs, from the policy tier logged with every step).`;
+}
+
 /** The agent action limits, generated from the ATS policy code (the same table as docs/ATS_MODEL.md). */
 export function LimitsModal({ meta, onClose }: { meta: AtsMeta | null; onClose: () => void }) {
   if (!meta) return null;
@@ -28,6 +36,7 @@ export function LimitsModal({ meta, onClose }: { meta: AtsMeta | null; onClose: 
           ))}
         </tbody>
       </table>
+      {neverText(meta.never_attempts) && <p className="muted never-count">{neverText(meta.never_attempts)}</p>}
       </div>
     </div>
   );

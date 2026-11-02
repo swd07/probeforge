@@ -49,6 +49,7 @@ export interface AtsPanel {
 export interface AtsMeta extends Meta {
   repairs: Record<string, string[]>;
   limits: { action: string; tier: string; condition: string }[];
+  never_attempts?: Record<string, { runs: number; steps: number; never: number }>; // counted from results/runs
   ups_autonomy_s: number;
   action_s: number;
   flow: string[];

@@ -71,7 +71,7 @@ function describeRaw(ev: ToolEvent): { title: string; detail: string } {
     case "manual_operation_check": {
       const rs = r.readings_at_other_position ?? r.readings ?? [];
       return {
-        title: "Manual operation check (sources isolated)",
+        title: ev.executed ? "Manual operation check (sources isolated)" : "Manual operation check", // a blocked one ran live
         detail: r.moved_to_other_position === undefined ? "" : `${r.moved_to_other_position ? "moved" : "did not move"}${rs.length ? "; at the other position " + rs.map(readingText).join(", ") : ""}`,
       };
     }

@@ -818,3 +818,19 @@ decisions at the end (see CLAUDE.md). Architecture: [ARCHITECTURE.md](ARCHITECTU
 - **Evidence:** Vitest for the repaired parts (executed only, controller, a part repaired twice, labels) and the
   recommendation (executed, denied, absent); browser walkthrough of dev-07: pills "adjusted" on TS 8-9 and "replaced"
   on TS A-B, recommendation line under step #6, still 6:17 at "Transfer verified".
+
+### D56. The never tier is visible in Engineer mode, and its count in the committed runs is stated (2026-11-02)
+
+- **What:** the manual operation check in Engineer mode stays enabled before isolation. Pressed under load, the real
+  policy blocks it as a never-tier action: the red message and the feed line show the policy's own reason ("manual
+  operation under load is never allowed; only with both sources isolated and locked out", ids mapped by labels.ts),
+  the run counts 1 blocked and no virtual time passes. The agent action limits show the never-tier attempts counted
+  by `scripts/count_never_attempts.py` (`probeforge.eval.never_attempts`) from the tier logged with every step in the
+  committed runs (results/runs): agent 0 in 62 runs, hybrid 0 in 38, baseline 0 in 28. The policy is unchanged.
+- **Why:** the button was disabled until isolation, so the never tier could not be seen anywhere in the app.
+- **Alternatives:** buttons for the three always-blocked actions (bypass interlock, parallel sources, handle under
+  load): skipped, they invite a click nobody would make in the field; staging an agent attempt (would not be a real
+  run); a fixed number in the text (would drift from the committed runs).
+- **Evidence:** pytest: the blocked call (verdict, tier, the policy's reason, no virtual time, counted), the counter on
+  a synthetic folder and a tier on every step of the committed runs; Vitest for the count text and the feed title of a
+  blocked check; browser check on dev-07 before isolation.

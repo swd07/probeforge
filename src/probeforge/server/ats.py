@@ -17,6 +17,7 @@ ats_session (the shared session), ats_modes (agent, Engineer, Hybrid v2). This m
 re-exports the rest, so `from probeforge.server import ats` keeps working.
 """
 
+import functools
 import random
 
 from probeforge.agent.client import MUSE_SPARK
@@ -24,6 +25,7 @@ from probeforge.ats import transcriptions
 from probeforge.ats.bench import REPAIR_KINDS
 from probeforge.ats.faults import COMPONENT_MODES, PART_MODES, validate
 from probeforge.ats.policy import RULES
+from probeforge.eval.never_attempts import count as count_never
 from probeforge.faults.model import Fault
 from probeforge.server import ats_common as common
 from probeforge.server.ats_common import (  # noqa: F401 - re-exported
@@ -36,6 +38,13 @@ from probeforge.server.ats_modes import (  # noqa: F401 - re-exported
 from probeforge.server.ats_session import AtsSession, Cancelled  # noqa: F401 - re-exported
 from probeforge.server.ats_views import (  # noqa: F401 - re-exported
     TWIN_NOTE, column, describe, diagnosis_text, engineer_trace, sequence, snapshot, terminal_of)
+
+
+@functools.cache
+def never_attempts() -> dict:
+    """Never-tier attempts in the committed runs (results/runs), shown under the action limits with that source;
+    empty on a host without the committed runs."""
+    return count_never(ROOT / "results" / "runs")
 
 
 def meta() -> dict:
@@ -56,6 +65,7 @@ def meta() -> dict:
         "components": comps,
         "repairs": {a: [p.id for p in NETLIST.parts.values() if p.kind in kinds] or ["CP"] for a, kinds in REPAIR_KINDS.items()},
         "limits": [{"action": a, "tier": t, "condition": c} for a, t, c in RULES],
+        "never_attempts": never_attempts(),
         "ups_autonomy_s": BENCH.a["ups_autonomy_s"],
         "action_s": 30,
         "flow": FLOW,
