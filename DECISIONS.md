@@ -749,3 +749,17 @@ decisions at the end (see CLAUDE.md). Architecture: [ARCHITECTURE.md](ARCHITECTU
   cap), the metered client, the public ledger, the effort allow-list, malformed messages, the closed connection, hostile
   engineer names, visitor traces in public mode, the run number and the second Compare; Vitest for the reducer
   (connection lost, older runs dropped), run in CI; browser check of the lost connection.
+
+### D52. The explanation for the technician is tidied for display only (2026-11-02)
+
+- **What:** the result card shows the hybrid's explanation through a display formatter in the page
+  (`web/src/explanationText.ts`): the repeated step prefix ("Step 20: Step 20 measured ...") becomes "Step 20:
+  Measured ...". The run record keeps the text exactly as the model and the frozen `render()` produced it, and the
+  explanation check scores that text.
+- **Why:** `render()` (frozen explain module) writes "Step N:" before each evidence sentence and the model often starts
+  the sentence with "Step N" itself: 20 of the 87 distinct recorded explanation texts repeat the prefix. It is a
+  display problem, not a wrong explanation.
+- **Alternatives:** strip the prefix in `render()`: changes a frozen module (D50 route: new fingerprint, identity proof,
+  offline rescoring) for a display problem.
+- **Evidence:** Vitest cases from the recorded wordings ("Step N: Step N", "Step N: At step N"; a different step
+  number is kept).

@@ -78,6 +78,8 @@ diagnosis made after the UPS ran out is shown as such: critical load lost.
    reading. Approval cards work as in Agent mode.
 4. The result card has Muse Spark's explanation: what failed, the readings that show it, a fixed isolation sentence
    added by code, then what to do. A run costs about $0.006 (the explanation call).
+   The page tidies the text for display (a repeated step prefix removed); the run record keeps the model's text
+   unchanged.
 
 ## 5. Engineer mode
 

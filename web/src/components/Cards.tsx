@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { tidyExplanation } from "../explanationText";
 import type { ApprovalRequest, AtsPanel, Done, FlagsRequest, WiringRequest } from "../types";
 
 /** ATS bench strong approval: the policy's own facts next to the requester's reason, the cited readings, and a second
@@ -261,7 +262,7 @@ export function ResultCard({ done, showTruth, onToggleTruth, saved, onCompare, c
           {hybrid && done.explanation && (
             <div className="explanation">
               <span className="lbl">For the technician (Muse Spark)</span>
-              <p>{done.explanation}</p>
+              <p>{tidyExplanation(done.explanation)}</p>
             </div>
           )}
           {hybrid && (
