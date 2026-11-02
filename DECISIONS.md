@@ -754,12 +754,20 @@ decisions at the end (see CLAUDE.md). Architecture: [ARCHITECTURE.md](ARCHITECTU
 
 - **What:** the result card shows the hybrid's explanation through a display formatter in the page
   (`web/src/explanationText.ts`): the repeated step prefix ("Step 20: Step 20 measured ...") becomes "Step 20:
-  Measured ...". The run record keeps the text exactly as the model and the frozen `render()` produced it, and the
+  Measured ..."; readings the model spelled out become numbers with units ("about two hundred eight volts" to "about
+  208 V", "zero ohms" to "0 ohm"; only number words followed by volt or ohm, up to 999); hyphens are restored in the
+  compounds the model writes apart ("de energized" to "de-energized", "re energize", "fault free", "cut off contact"
+  and "cutoff contact" to "cut-off contact"; the verb "cut off" stays). The run record keeps the text exactly as the model and the frozen `render()` produced it, and the
   explanation check scores that text.
 - **Why:** `render()` (frozen explain module) writes "Step N:" before each evidence sentence and the model often starts
-  the sentence with "Step N" itself: 20 of the 87 distinct recorded explanation texts repeat the prefix. It is a
-  display problem, not a wrong explanation.
-- **Alternatives:** strip the prefix in `render()`: changes a frozen module (D50 route: new fingerprint, identity proof,
-  offline rescoring) for a display problem.
-- **Evidence:** Vitest cases from the recorded wordings ("Step N: Step N", "Step N: At step N"; a different step
-  number is kept).
+  the sentence with "Step N" itself: 20 of the 87 distinct recorded explanation texts repeat the prefix. No check
+  rule rejects digits (the planner gives the model "208.0 V"); under the frozen prompt's "Plain English, no dashes as
+  punctuation" the model spells readings out in 37 of the 87 texts and drops hyphens. These are display problems, not
+  wrong explanations.
+- **Alternatives:** strip the prefix in `render()`, or a prompt line asking for digits with units: both change the
+  frozen explain module (D50 route: new fingerprint, identity proof, offline rescoring; for the prompt also a paid
+  re-measure of about $0.20) for a display problem.
+- **Evidence:** Vitest cases from the recorded wordings ("Step N: Step N", "Step N: At step N", "Two hundred eight
+  volts", "one hundred twenty volts", "Zero ohms", "de energized", "fault free", "cut off contact", "cutoff contact";
+  a different step number, digits, number words without a unit and the verb "cut off" are kept). Over the 87 recorded
+  texts the formatter changes 62; it leaves a bare "zero" without a unit as written.
