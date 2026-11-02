@@ -97,7 +97,8 @@ function describeRaw(ev: ToolEvent): { title: string; detail: string } {
       }
       return {
         title: a.outcome === "insufficient_information" ? "Diagnosis: insufficient information" : `Diagnosis: ${a.component}${a.part ? " " + a.part : ""} ${a.failure_mode}`,
-        detail: a.confidence !== undefined ? `confidence ${(Number(a.confidence) * 100).toFixed(0)}%` : "",
+        // a confidence belongs to a named fault, not to "insufficient information"
+        detail: a.confidence !== undefined && a.outcome !== "insufficient_information" ? `confidence ${(Number(a.confidence) * 100).toFixed(0)}%` : "",
       };
     default:
       return { title: ev.tool, detail: "" };

@@ -76,7 +76,8 @@ def column(trace: dict, judged: dict, strong: int, live_approvals: bool) -> dict
     d = trace["diagnosis"] or {}
     text, twins = diagnosis_text(trace["diagnosis"], trace["outcome"])
     return {"runner": trace["runner"], "diagnosis": text,
-            "confidence": None if twins else d.get("confidence"), "verdict": judged["verdict"], "measurements": trace["measurements"],
+            "confidence": None if twins or trace["outcome"] != "diagnosed" else d.get("confidence"),
+            "verdict": judged["verdict"], "measurements": trace["measurements"],
             "redundant": trace["redundant_measurements"], "blocked": trace["policy"]["blocked"],
             "approvals": trace["policy"]["approval_requests"], "strong_approvals": strong,
             "approvals_denied": trace["policy"]["approvals_denied"], "seconds": trace["seconds"],

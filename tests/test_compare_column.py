@@ -17,3 +17,9 @@ def test_a_stopped_run_carries_its_error():
 
 def test_a_diagnosis_has_no_stop_reason():
     assert column(trace("diagnosed"), {"verdict": "correct"}, 0, False)["stopped"] is None
+
+
+def test_insufficient_information_has_no_confidence():
+    t = trace("insufficient_information")
+    t["diagnosis"] = {"outcome": "insufficient_information", "confidence": 0.0}
+    assert column(t, {"verdict": "no diagnosis"}, 0, False)["confidence"] is None

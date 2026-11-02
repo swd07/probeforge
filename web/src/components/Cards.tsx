@@ -263,7 +263,7 @@ export function ResultCard({ done, showTruth, onToggleTruth, saved, onCompare, c
             <div>
               <span className="lbl">{manual ? "Your diagnosis" : hybrid ? "Pipeline diagnosis" : "Agent diagnosis"}</span>
               <span className="val">{modeText(said)}</span>
-              {typeof d.confidence === "number" && !done.twins_named && <span className="tag">{(Number(d.confidence) * 100).toFixed(0)}%</span>}
+              {typeof d.confidence === "number" && !done.twins_named && done.outcome === "diagnosed" && <span className="tag">{(Number(d.confidence) * 100).toFixed(0)}%</span>}
             </div>
             {typeof d.note === "string" && d.note && !done.twins_named && (
               <div>

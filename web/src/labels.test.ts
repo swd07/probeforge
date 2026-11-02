@@ -94,3 +94,10 @@ describe("who wrote an approval request's reason", () => {
     expect(reasonLabel("agent", true)).toBe("Your reason");
   });
 });
+
+describe("no confidence on insufficient information", () => {
+  it("the feed line of an insufficient-information diagnosis has no percentage", () => {
+    const ev = { tool: "submit_diagnosis", args: { outcome: "insufficient_information", confidence: 0 }, result: {} } as unknown as ToolEvent;
+    expect(describeTool(ev)).toEqual({ title: "Diagnosis: insufficient information", detail: "" });
+  });
+});
