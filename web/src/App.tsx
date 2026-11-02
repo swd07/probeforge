@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { DRAWING_NOTE, readable } from "./labels";
+import { DRAWING_NOTE, readable, reasonLabel } from "./labels";
 import { repairedParts } from "./repairs";
 import { LimitsModal } from "./components/AtsPanel";
 import { AtsStatusColumn } from "./components/AtsStatus";
@@ -208,7 +208,7 @@ export function App() {
       )}
       {state.flags && <FlagsCard req={state.flags} onAnswer={(ok) => confirmFlags(state.flags!.id, ok)} />}
       {state.wiring && <WiringCard req={state.wiring} onChoose={(c) => chooseWiring(state.wiring!.id, c)} />}
-      {state.approval && <ApprovalCard req={state.approval} human={manualRun} onAnswer={(ok) => answer(state.approval!.id, ok)} />}
+      {state.approval && <ApprovalCard req={state.approval} human={manualRun} who={reasonLabel(state.mode, !!state.done)} onAnswer={(ok) => answer(state.approval!.id, ok)} />}
       {diagnosing && curMeta && (
         <DiagnosisForm
           meta={curMeta}

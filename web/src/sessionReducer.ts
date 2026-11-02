@@ -2,6 +2,7 @@
 // WebSocket and the actions).
 import type { ApprovalRequest, AtsTranscription, Bench, CompareResult, Done, FeedItem, FlagsRequest, Hypothesis, Mode, ModelCheck, NetState, NextStep, Panel, Probe, ToolEvent, WiringRequest } from "./types";
 import { explanationLabel } from "./runError";
+import { reasonLabel } from "./labels";
 
 export type Status = "idle" | "running" | "approval" | "done" | "stopped" | "error";
 
@@ -269,7 +270,7 @@ export function reducer(s: State, a: Action): State {
         ...s,
         status: "approval",
         approval: ev,
-        feed: [...s.feed, { kind: "approval", id: `a${ev.id}`, req: ev }],
+        feed: [...s.feed, { kind: "approval", id: `a${ev.id}`, req: ev, who: reasonLabel(s.mode, !!s.done) }],
       };
     case "approval_answer":
       return {

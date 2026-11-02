@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { requestTitle } from "./components/Cards";
 import { describeTool } from "./components/feedText";
-import { DRAWING_NOTE, idText, kindText, labelIds, modeText, readable } from "./labels";
+import { DRAWING_NOTE, idText, kindText, labelIds, modeText, readable, reasonLabel } from "./labels";
 import type { ToolEvent } from "./types";
 
 const REPAIRS = ["replace_coil", "repair_wire", "repair_connector", "replace_cutoff_contact", "adjust_cutoff_contact", "replace_controller"];
@@ -82,5 +82,15 @@ describe("the drawing note", () => {
   it("says it is our redrawing, not the official drawing", () => {
     expect(DRAWING_NOTE).toMatch(/our redrawing/i);
     expect(DRAWING_NOTE).toMatch(/not the official drawing/);
+  });
+});
+
+describe("who wrote an approval request's reason", () => {
+  it("the planner in Hybrid, the agent in Agent mode, the person in Engineer mode and after any diagnosis", () => {
+    expect(reasonLabel("hybrid", false)).toBe("Planner's reason");
+    expect(reasonLabel("agent", false)).toBe("Agent's reason");
+    expect(reasonLabel("manual", false)).toBe("Your reason");
+    expect(reasonLabel("hybrid", true)).toBe("Your reason"); // the intervention after the pipeline's diagnosis
+    expect(reasonLabel("agent", true)).toBe("Your reason");
   });
 });

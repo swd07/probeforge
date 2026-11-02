@@ -173,7 +173,7 @@ export function Feed({ items, manual = false, title, running = false, idleText }
               <div key={it.id} className={`item approval ${it.approved === undefined ? "pending" : it.approved ? "granted" : "denied"}`}>
                 <span className="step">#{it.req.step}</span> {it.req.strong ? "STRONG approval" : "human approval"} requested: {readable(it.req.policy_reason)}
                 {it.req.facts?.map((f, i) => <div key={i} className="detail fact">policy: {f}</div>)}
-                <div className="detail">{manual ? "your reason" : "agent's reason"}: {it.req.agent_reason}</div>
+                <div className="detail">{it.who.toLowerCase()}: {it.req.agent_reason}</div>
                 <div className="detail">{it.approved === undefined ? "waiting..." : it.approved ? "approved by human" : "denied by human"}</div>
               </div>
             );

@@ -237,7 +237,7 @@ export type FeedItem =
   | { kind: "thought"; id: string; text: string; turn: number }
   | { kind: "tool"; id: string; ev: ToolEvent }
   | { kind: "hypotheses"; id: string; step: number; top: Hypothesis | null }
-  | { kind: "approval"; id: string; req: ApprovalRequest; approved?: boolean }
+  | { kind: "approval"; id: string; req: ApprovalRequest; approved?: boolean; who: string }
   | { kind: "info"; id: string; text: string }
   | { kind: "transcription"; id: string; how: string; flags: Flag[]; components: number; nets: number; accepted?: boolean }
   | { kind: "conflict"; id: string; step: number; action: string; actual: string; candidates: number }

@@ -66,3 +66,10 @@ export function modeText(text: string): string {
 
 /** Under the ATS drawing's header in every view, whatever the zoom (the drawing's own title can be outside it). */
 export const DRAWING_NOTE = "Our redrawing of ASCO wiring diagram 978741, not the official drawing.";
+
+/** Who wrote the reason of an approval request: the person (Engineer mode, and every intervention after a diagnosis),
+ * the hybrid's planner, or the agent. */
+export function reasonLabel(mode: string | null | undefined, afterDiagnosis: boolean): string {
+  if (mode === "manual" || afterDiagnosis) return "Your reason";
+  return mode === "hybrid" ? "Planner's reason" : "Agent's reason";
+}

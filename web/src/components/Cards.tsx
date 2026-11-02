@@ -6,7 +6,7 @@ import type { ApprovalRequest, AtsPanel, Done, FlagsRequest, WiringRequest } fro
 
 /** ATS bench strong approval: the policy's own facts next to the requester's reason, the cited readings, and a second
  * explicit confirmation before the approval goes through. */
-function StrongApprovalCard({ req, onAnswer, human }: { req: ApprovalRequest; onAnswer: (approve: boolean) => void; human: boolean }) {
+function StrongApprovalCard({ req, onAnswer, human, who }: { req: ApprovalRequest; onAnswer: (approve: boolean) => void; human: boolean; who?: string }) {
   const [checked, setChecked] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const what = requestTitle(req);
@@ -22,7 +22,7 @@ function StrongApprovalCard({ req, onAnswer, human }: { req: ApprovalRequest; on
           </p>
         ))}
         <div className="agent-reason">
-          <span>{human ? "Your reason" : "Agent's reason"}</span>
+          <span>{who ?? (human ? "Your reason" : "Agent's reason")}</span>
           <p>{req.agent_reason}</p>
         </div>
         <div className="evidence-list">
@@ -65,8 +65,8 @@ export function requestTitle(req: Pick<ApprovalRequest, "tool" | "args">): strin
   return sentence(what);
 }
 
-export function ApprovalCard({ req, onAnswer, human = false }: { req: ApprovalRequest; onAnswer: (approve: boolean) => void; human?: boolean }) {
-  if (req.strong) return <StrongApprovalCard key={req.id} req={req} onAnswer={onAnswer} human={human} />;
+export function ApprovalCard({ req, onAnswer, human = false, who }: { req: ApprovalRequest; onAnswer: (approve: boolean) => void; human?: boolean; who?: string }) {
+  if (req.strong) return <StrongApprovalCard key={req.id} req={req} onAnswer={onAnswer} human={human} who={who} />;
   const what = requestTitle(req);
   return (
     <div className="modal-backdrop">
@@ -86,7 +86,7 @@ export function ApprovalCard({ req, onAnswer, human = false }: { req: ApprovalRe
           </p>
         )}
         <div className="agent-reason">
-          <span>{human ? "Your reason" : "Agent's reason"}</span>
+          <span>{who ?? (human ? "Your reason" : "Agent's reason")}</span>
           <p>{req.agent_reason}</p>
         </div>
         <div className="modal-actions">
