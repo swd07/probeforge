@@ -82,7 +82,8 @@ def column(trace: dict, judged: dict, strong: int, live_approvals: bool) -> dict
             "approvals_denied": trace["policy"]["approvals_denied"], "seconds": trace["seconds"],
             "cost_usd": trace["cost_usd"], "sequence": sequence(trace["tool_log"]),
             "approvals_by": "answered live in this session" if live_approvals else "batch rules",
-            "assisted": bool(trace.get("assisted")), "ups_at_diagnosis": trace.get("ups_at_diagnosis")}
+            "assisted": bool(trace.get("assisted")), "ups_at_diagnosis": trace.get("ups_at_diagnosis"),
+            "stopped": trace.get("error") if trace["outcome"] == "error" else None}
 
 
 def engineer_trace(faults: list[Fault]) -> dict | None:

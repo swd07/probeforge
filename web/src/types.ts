@@ -269,6 +269,7 @@ export interface CompareColumn {
   runner: string;
   ups_at_diagnosis?: UpsAtDiagnosis | null;
   missing?: string; // ATS: no engineer trace recorded
+  stopped?: string | null; // ATS: the run stopped on this error (no diagnosis)
   assisted?: boolean; // ATS engineer trace: planner suggestions were shown
   strong_approvals?: number;
   approvals_denied?: number;

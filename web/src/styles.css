@@ -256,7 +256,7 @@ button, select { font: inherit; }
 .compare-note { margin: 4px 0 0; font-size: 12px; }
 .saved { word-break: break-all; }
 .compare-modal { width: min(1280px, 96vw); max-height: 90vh; overflow-y: auto; border-color: var(--accent); }
-.compare-modal h2 { margin: 4px 0 0; font-family: ui-monospace, Consolas, monospace; color: var(--warn); }
+.compare-modal h2 { margin: 4px 0 0; font-family: ui-monospace, Consolas, monospace; color: var(--warn); text-transform: none; }
 .cmp-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 14px 0 8px; }
 .cmp-col { background: var(--panel-2); border-radius: 10px; padding: 12px 14px; }
 .cmp-col h3 { margin: 0 0 8px; }

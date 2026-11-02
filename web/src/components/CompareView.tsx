@@ -1,5 +1,6 @@
 import type { CompareColumn, CompareResult } from "../types";
 import { modeText } from "../labels";
+import { errorText } from "../runError";
 
 const ORDER = [
   ["human", "Engineer"],
@@ -17,7 +18,7 @@ const ATS_ORDER = [
 function Column({ title, col, pending }: { title: string; col?: CompareColumn; pending: string }) {
   if (!col) return <div className="cmp-col pending"><h3>{title}</h3><p className="muted">{pending}</p></div>;
   if (col.missing) return <div className="cmp-col"><h3>{title}</h3><p className="muted">{col.missing}</p></div>;
-  if (col.error) return <div className="cmp-col"><h3>{title}</h3><p className="policy">{col.error}</p></div>;
+  if (col.error) return <div className="cmp-col"><h3>{title}</h3><p className="policy">{errorText(col.error)}</p></div>;
   return (
     <div className="cmp-col">
       <h3>{title}</h3>
@@ -25,7 +26,8 @@ function Column({ title, col, pending }: { title: string; col?: CompareColumn; p
       {col.assisted && <div className="muted">assisted: planner suggestions were shown</div>}
       {col.transcription && <div className="muted">{col.transcription}</div>}
       <span className={`verdict small v-${(col.verdict ?? "").replace(" ", "-")}`}>{col.verdict}</span>
-      <div className="cmp-diag">{modeText(String(col.diagnosis ?? ""))}</div>
+      <div className="cmp-diag">{col.stopped ? "no diagnosis" : modeText(String(col.diagnosis ?? ""))}</div>
+      {col.stopped && <p className="policy">The run stopped: {errorText(col.stopped)}.</p>}
       {typeof col.confidence === "number" && <div className="muted">confidence {(col.confidence * 100).toFixed(0)}%</div>}
       <dl>
         <dt>measurements</dt><dd>{col.measurements}</dd>
