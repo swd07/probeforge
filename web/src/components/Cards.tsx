@@ -178,6 +178,7 @@ interface ResultProps {
   saved?: string;
   onCompare?: () => void;
   compareLabel?: string;
+  compareNote?: string; // the cost of the re-runs, on a line under the button
   atsPanel?: AtsPanel | null; // ATS: the live panel, for the critical load lost after the diagnosis
   defaultCollapsed?: boolean;
 }
@@ -211,7 +212,18 @@ function UpsOutcome({ done, panel }: { done: Done; panel?: AtsPanel | null }) {
 }
 
 /** Docked at the top of the right panel so the schematic stays visible; collapses to one line. */
-export function ResultCard({ done, showTruth, onToggleTruth, saved, onCompare, compareLabel, atsPanel, defaultCollapsed = false }: ResultProps) {
+/** The run's duration figure: real (wall-clock) time, which a viewer must not read as outage time (that is the UPS
+ * clock on the ATS bench). */
+export function timeFigure(seconds: number, pauseS?: number): { value: string; label: string; title: string } {
+  return {
+    value: `${seconds.toFixed(0)} s`,
+    label: pauseS ? "wall clock (pauses excluded)" : "wall clock",
+    title: `Real time the run took${pauseS ? `, excluding ${pauseS.toFixed(0)} s of UI display pauses` : ""}; outage time is the UPS clock`,
+  };
+}
+
+export function ResultCard({ done, showTruth, onToggleTruth, saved, onCompare, compareLabel, compareNote, atsPanel, defaultCollapsed = false }: ResultProps) {
+  const time = timeFigure(done.seconds, done.display_pause_s);
   const [collapsed, setCollapsed] = useState(defaultCollapsed);
   const manual = done.mode === "manual";
   const hybrid = done.mode === "hybrid";
@@ -251,6 +263,18 @@ export function ResultCard({ done, showTruth, onToggleTruth, saved, onCompare, c
             )}
           </div>
           <UpsOutcome done={done} panel={atsPanel} />
+          {/* the actions right under the verdict, so they stay in view when the card is taller than its half of the column */}
+          <div className="result-actions">
+            <button className="btn ghost" onClick={onToggleTruth}>
+              {showTruth ? "Show the measurements" : "Show true live wiring"}
+            </button>
+            {onCompare && (
+              <button className="btn primary" onClick={onCompare}>
+                {compareLabel ?? "Compare with agent and baseline"}
+              </button>
+            )}
+          </div>
+          {onCompare && compareNote && <p className="muted compare-note">{compareNote}</p>}
           {dec && (
             <div className="decisive">
               <span className="lbl">Decisive {dec.meter ? "measurement" : "observation"} (step {dec.step})</span>
@@ -297,23 +321,13 @@ export function ResultCard({ done, showTruth, onToggleTruth, saved, onCompare, c
             {!manual && <div><b>{done.turns}</b><span>{hybrid ? "model calls" : "turns"}</span></div>}
             {!manual && <div><b>{(done.tokens / 1000).toFixed(0)}k</b><span>tokens</span></div>}
             {!manual && <div><b>${done.cost_usd.toFixed(3)}</b><span>cost</span></div>}
-            <div title={done.display_pause_s ? `excludes ${done.display_pause_s.toFixed(0)} s of UI display pauses` : undefined}>
-              <b>{done.seconds.toFixed(0)} s</b><span>{done.display_pause_s ? "time (pauses excluded)" : "time"}</span>
+            <div title={time.title}>
+              <b>{time.value}</b><span>{time.label}</span>
             </div>
             <div><b>{done.policy_blocked}</b><span>blocked</span></div>
             <div><b>{done.approvals}</b><span>approvals</span></div>
           </div>
           {saved && <p className="muted saved">Trace saved: {saved}</p>}
-          <div className="result-actions">
-            <button className="btn ghost" onClick={onToggleTruth}>
-              {showTruth ? "Show the measurements" : "Show true live wiring"}
-            </button>
-            {onCompare && (
-              <button className="btn primary" onClick={onCompare}>
-                {compareLabel ?? "Compare with agent and baseline"}
-              </button>
-            )}
-          </div>
         </div>
       )}
     </section>

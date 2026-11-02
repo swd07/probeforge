@@ -252,7 +252,8 @@ button, select { font: inherit; }
 .etype { font-size: 11px; border-radius: 4px; padding: 1px 6px; background: #2a3440; }
 .etype.instrument_reading { background: #c2410c; }
 
-.result-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.result-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+.compare-note { margin: 4px 0 0; font-size: 12px; }
 .saved { word-break: break-all; }
 .compare-modal { width: min(1280px, 96vw); max-height: 90vh; overflow-y: auto; border-color: var(--accent); }
 .compare-modal h2 { margin: 4px 0 0; font-family: ui-monospace, Consolas, monospace; color: var(--warn); }
