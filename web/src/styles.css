@@ -381,7 +381,8 @@ table.quality tr.worse td { color: var(--warn); }
 .next-note { font-size: 12px; margin-top: 6px; }
 .schematic svg circle.terminal.planned { fill: var(--warn); }
 .schematic svg .planned-mark circle { fill: none; stroke: var(--warn); stroke-width: 2.5; stroke-dasharray: 4 3; }
-.schematic svg .planned-mark text { fill: var(--warn); font-size: 13px; font-weight: 700; }
+.schematic svg .planned-mark rect { fill: #fff6e0; stroke: var(--warn); stroke-width: 1.5; }
+.schematic svg .planned-mark text { fill: #8a5200; font-size: 12px; font-weight: 700; }
 .controls select[aria-label="Drawing read"] { max-width: 230px; }
 
 /* ATS troubleshooting sheet */
@@ -489,3 +490,11 @@ table.quality tr.worse td { color: var(--warn); }
 .topbar .controls .engineer { flex: 0 0 auto; width: 120px; }
 .topbar .btn.sheet { white-space: normal; line-height: 1.1; font-size: 12px; width: 108px; padding: 3px 8px; }
 .topbar .stats { flex: 1 1 0; min-width: 0; max-width: 210px; }
+
+/* top bar statistics: two rows that never wrap (a longer status such as "Waiting for approval" used to add a third
+   line and move the whole page down) */
+.topbar .stats { display: flex; flex-direction: column; flex-wrap: nowrap; align-items: flex-end; justify-content: center; gap: 2px; overflow: hidden; }
+.topbar .stats-row { display: flex; gap: 0 10px; align-items: center; justify-content: flex-end; max-width: 100%; min-width: 0; white-space: nowrap; overflow: hidden; }
+.topbar .stats-row > span { white-space: nowrap; flex-shrink: 0; }
+.topbar .stats-row .source { flex-shrink: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+@media (min-width: 1800px) { .topbar .stats { max-width: 330px; } }

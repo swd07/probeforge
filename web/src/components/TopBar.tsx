@@ -221,14 +221,19 @@ export function TopBar({ meta, state, mode, setMode, bench, setBench, onStart, o
           </button>
         )}
       </div>
+      {/* two fixed rows that never wrap, so the top bar keeps its height whatever the status says */}
       <div className="stats">
-        <span className={`status status-${state.status}`}>{statusText}</span>
-        {state.source && <span className="source">{state.source}</span>}
-        {shown === "agent" && <span>turn {state.turns}</span>}
-        <span>{state.measurements} measurements</span>
-        {shown === "agent" && <span>{(state.tokens / 1000).toFixed(1)}k tokens</span>}
-        {state.blocked > 0 && <span className="blocked-count">{state.blocked} blocked</span>}
-        {shown !== "manual" && <span className="model">{meta?.model}</span>}
+        <div className="stats-row" title={state.source || undefined}>
+          <span className={`status status-${state.status}`}>{statusText}</span>
+          {state.source && <span className="source">{state.source}</span>}
+        </div>
+        <div className="stats-row">
+          {shown === "agent" && <span>turn {state.turns}</span>}
+          <span>{state.measurements} measurements</span>
+          {shown === "agent" && <span>{(state.tokens / 1000).toFixed(1)}k tokens</span>}
+          {state.blocked > 0 && <span className="blocked-count">{state.blocked} blocked</span>}
+          {shown !== "manual" && <span className="model">{meta?.model}</span>}
+        </div>
       </div>
     </header>
   );

@@ -82,26 +82,53 @@ export function paint(el: SVGSVGElement, { nets, probes, truthLive, selected, su
     g.append(ring, rect, text);
     overlay.append(g);
   }
-  planned.forEach((term, i) => {
-    const c = el.querySelector(`circle[data-terminal="${CSS.escape(term)}"]`);
-    if (!c) return;
+  const circles = planned.map((term) => el.querySelector(`circle[data-terminal="${CSS.escape(term)}"]`));
+  const points = circles.map((c) => (c ? { x: Number(c.getAttribute("cx")), y: Number(c.getAttribute("cy")) } : null));
+  const labels = plannedLabels(points);
+  circles.forEach((c, i) => {
+    const p = points[i], l = labels[i];
+    if (!c || !p || !l) return;
     c.classList.add("planned");
-    const x = Number(c.getAttribute("cx"));
-    const y = Number(c.getAttribute("cy"));
     const g = document.createElementNS(SVG_NS, "g");
     g.setAttribute("class", "planned-mark");
     const ring = document.createElementNS(SVG_NS, "circle");
-    ring.setAttribute("cx", String(x));
-    ring.setAttribute("cy", String(y));
+    ring.setAttribute("cx", String(p.x));
+    ring.setAttribute("cy", String(p.y));
     ring.setAttribute("r", "11");
+    const rect = document.createElementNS(SVG_NS, "rect");
+    rect.setAttribute("x", String(l.x - l.w / 2));
+    rect.setAttribute("y", String(l.y));
+    rect.setAttribute("width", String(l.w));
+    rect.setAttribute("height", String(PILL_H));
+    rect.setAttribute("rx", "5");
     const text = document.createElementNS(SVG_NS, "text");
-    text.setAttribute("x", String(x - 14));
-    text.setAttribute("y", String(i === 1 ? y - 16 : y + 26)); // B above its terminal, so close pairs stay readable
-    text.textContent = planned.length > 1 ? `next ${i === 0 ? "A" : "B"}` : "next";
-    g.append(ring, text);
+    text.setAttribute("x", String(l.x));
+    text.setAttribute("y", String(l.y + PILL_H - 5));
+    text.setAttribute("text-anchor", "middle");
+    text.textContent = l.text;
+    g.append(ring, rect, text);
     overlay.append(g);
   });
   el.append(overlay);
+}
+
+const PILL_H = 18;
+const LABEL_DY = 36; // below the terminal number, which the drawing puts about 20 to 33 px under the terminal
+
+/** Where the "next A" / "next B" labels of a planned reading go: on an opaque pill centred under each terminal, one
+ * row below the terminal's own number (the drawing writes terminal names above and numbers below, so labels at the
+ * terminal covered them). A pill that would touch an earlier one drops a row. Null for a terminal not in the drawing. */
+export function plannedLabels(points: ({ x: number; y: number } | null)[]): ({ x: number; y: number; w: number; text: string } | null)[] {
+  const out: ({ x: number; y: number; w: number; text: string } | null)[] = [];
+  points.forEach((p, i) => {
+    if (!p) return out.push(null);
+    const text = points.length > 1 ? `next ${i === 0 ? "A" : "B"}` : "next";
+    const w = 10 + text.length * 7;
+    let y = p.y + LABEL_DY;
+    while (out.some((q) => q && Math.abs(q.y - y) < PILL_H + 2 && Math.abs(q.x - p.x) < (q.w + w) / 2 + 4)) y += PILL_H + 4;
+    out.push({ x: p.x, y, w, text });
+  });
+  return out;
 }
 
 /** The terminal within a few screen pixels of a click (terminals are small), or null. */
