@@ -1,4 +1,5 @@
 import type { CompareColumn, CompareResult } from "../types";
+import { useEscape } from "../escape";
 import { modeText } from "../labels";
 import { errorText } from "../runError";
 
@@ -64,6 +65,7 @@ function Column({ title, col, pending }: { title: string; col?: CompareColumn; p
 }
 
 export function CompareView({ result, progress, onClose, ats = false }: { result: CompareResult | null; progress: { baseline: boolean; agentTurn: number; hybrid?: boolean } | null; onClose: () => void; ats?: boolean }) {
+  useEscape(onClose);
   const cols = result?.columns ?? {};
   const order = ats ? ATS_ORDER : ORDER;
   return (

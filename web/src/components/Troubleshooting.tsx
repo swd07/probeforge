@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useEscape } from "../escape";
 import { modeText } from "../labels";
 
 interface Check {
@@ -23,6 +24,7 @@ interface Sheet {
 
 /** The troubleshooting sheet for families A and B (docs/ATS_TROUBLESHOOTING.md), generated from the simulator. */
 export function TroubleshootingView({ onClose }: { onClose: () => void }) {
+  useEscape(onClose);
   const [data, setData] = useState<{ label: string; sheets: Sheet[] } | null>(null);
   const [error, setError] = useState("");
   const [tab, setTab] = useState(0);

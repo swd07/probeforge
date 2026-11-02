@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useEscape } from "../escape";
 import type { FeedItem, Meta } from "../types";
 import { describeTool } from "./Feed";
 import { kindText, modeText } from "../labels";
@@ -29,6 +30,7 @@ type Component = Meta["components"][number];
 const defaultPart = (c: Component | undefined) => (!c || c.modes.length ? "" : c.parts.find((p) => p.modes.length)?.name ?? "");
 
 export function DiagnosisForm({ meta, feed, onSubmit, onCancel }: { meta: Meta; feed: FeedItem[]; onSubmit: (args: Record<string, unknown>) => void; onCancel: () => void }) {
+  useEscape(onCancel);
   const [outcome, setOutcome] = useState<"diagnosed" | "insufficient_information">("diagnosed");
   const [component, setComponent] = useState(meta.components[0]?.id ?? "");
   const [part, setPart] = useState(defaultPart(meta.components[0]));

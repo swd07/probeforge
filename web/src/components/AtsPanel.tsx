@@ -1,4 +1,5 @@
 import { labelIds } from "../labels";
+import { useEscape } from "../escape";
 import type { AtsMeta } from "../types";
 
 /** The never-tier attempts counted from the committed runs, with the source; "" when the server has no count. */
@@ -11,6 +12,7 @@ export function neverText(counts: AtsMeta["never_attempts"]): string {
 
 /** The agent action limits, generated from the ATS policy code (the same table as docs/ATS_MODEL.md). */
 export function LimitsModal({ meta, onClose }: { meta: AtsMeta | null; onClose: () => void }) {
+  useEscape(onClose);
   if (!meta) return null;
   return (
     <div className="modal-backdrop" onClick={onClose}>
