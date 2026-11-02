@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import type { FeedItem, Hypothesis, NextStep, ToolEvent } from "../types";
 import { idText, modeText, readable } from "../labels";
-import { ICON, describeTool, plain } from "./feedText";
+import { ICON, describeTool, plain, recommendation } from "./feedText";
 
 export { describeTool } from "./feedText";
 
@@ -179,6 +179,7 @@ export function Feed({ items, manual = false, title, running = false, idleText }
             );
           const ev = it.ev;
           const { title, detail } = describeTool(ev);
+          const rec = recommendation(ev);
           const cls = ev.verdict === "block" ? "blocked" : ev.verdict === "needs_approval" || ev.verdict === "needs_strong_approval" ? "needs-approval" : ev.verdict === "error" ? "error" : "";
           return (
             <div key={it.id} className={`item tool ${cls} ${ev.tool}`}>
@@ -193,6 +194,7 @@ export function Feed({ items, manual = false, title, running = false, idleText }
                   <div className="policy">{ev.result.error}</div>
                 )}
                 {typeof ev.result.note === "string" && <div className="note">{modeText(ev.result.note)}</div>}
+                {rec && <div className="note recommendation">recommendation: {rec}</div>}
                 {"plan" in it && it.plan && it.plan.tool !== "submit_diagnosis" && (
                   <div className="detail planned-detail">
                     planned: {it.plan.why}

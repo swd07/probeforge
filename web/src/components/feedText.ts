@@ -106,3 +106,9 @@ function describeRaw(ev: ToolEvent): { title: string; detail: string } {
 
 /** Model text is shown as written, except dashes used as punctuation (project style rule). */
 export const plain = (text: string) => text.replace(/\s*[\u2014\u2013]\s*/g, ", ");
+
+/** A recommendation an executed tool returned, verbatim (the coil replacement returns the operator manual's
+ * "relubricate the operator when the TS coil is replaced"); null otherwise. */
+export function recommendation(ev: ToolEvent): string | null {
+  return ev.executed && typeof ev.result.recommendation === "string" ? ev.result.recommendation : null;
+}
