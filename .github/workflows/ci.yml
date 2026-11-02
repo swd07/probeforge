@@ -40,3 +40,46 @@ jobs:
           npm ci
           npm test
           npm run build
+
+  image:
+    # the deployable image: built, checked from inside, then run with Caddy and smoke-tested from outside (no API key,
+    # no paid call), so a file missing from the image fails here, not on the server
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: astral-sh/setup-uv@v10.3.3
+        with:
+          version: "0.13.6"
+
+      - name: Install the smoke test's tools (locked) and Chromium
+        run: |
+          uv sync --frozen --python 3.12
+          uv run --frozen playwright install --with-deps chromium
+
+      - name: Build the image
+        run: docker build -t probeforge:ci .
+
+      - name: Every runtime path is in the image, nothing that must stay out is
+        run: docker run --rm -v "$PWD/deploy/check_image.py:/tmp/check_image.py:ro" probeforge:ci python /tmp/check_image.py
+
+      - name: Start the app and Caddy (plain HTTP setup, CI env file without a key)
+        working-directory: deploy
+        env:
+          PROBEFORGE_TAG: ci
+          PROBEFORGE_ENV_FILE: ./ci.env
+          PROBEFORGE_CADDYFILE: Caddyfile.http
+        run: docker compose up -d --wait --wait-timeout 180
+
+      - name: Smoke test through Caddy (headers, WebSocket, browser)
+        run: uv run --frozen python scripts/smoke_deploy.py http://localhost --headers --browser
+
+      - name: Logs
+        if: failure()
+        working-directory: deploy
+        env:
+          PROBEFORGE_TAG: ci
+          PROBEFORGE_ENV_FILE: ./ci.env
+          PROBEFORGE_CADDYFILE: Caddyfile.http
+        run: docker compose logs --no-color
