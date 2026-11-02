@@ -38,7 +38,8 @@ explanation). Agent runs and the agent column of Compare cost money (section 8).
   lost), the sources (utility, generator), the transfer switch position and the critical load, the six controller
   lights, the controller display, the stages from "Fault detected" to "Transfer verified", and folds for the metering
   screen and the event log. **Agent action limits** opens the policy table (generated from the code).
-- **Drawing** (middle): our redrawing, not the official drawing. Wires change color after a reading: **red** live,
+- **Drawing** (middle): our redrawing, not the official drawing (the note under the header says so in every view).
+  Wires change color after a reading: **red** live,
   **blue** dead, **purple** probed; reading labels sit next to the points. Mouse wheel zooms, drag pans, **+**, **-**,
   **Home** (the operator circuit), **Fit** (the whole drawing). **follow probes** (on by default) moves the view to
   each new reading. In Hybrid runs the next planned reading is marked **next**. After the diagnosis the view zooms to
@@ -48,7 +49,9 @@ explanation). Agent runs and the agent column of Compare cost money (section 8).
   column. The log lists every step with its policy verdict: **red** blocked (with the reason), **amber** waiting for an
   approval. It follows the newest step unless you scroll up. It is a log, not a chat.
 - **Result card**: the verdict, the injected fault (revealed only now), the answer, **UPS time left at diagnosis**,
-  the numbers, and in Hybrid runs the explanation for the technician.
+  the numbers (approvals and strong approvals counted apart), and in Hybrid runs the explanation for the technician.
+- **Esc** closes the action limits, the troubleshooting sheet, Compare and the diagnosis form; an approval card needs
+  an answer.
 
 Verdicts: **Correct** (component, failure mode and part right), **Justified** (no reading can tell the fault from
 another one, and the answer named that one or said insufficient information), **Wrong**, **No diagnosis**. A correct
@@ -71,13 +74,15 @@ diagnosis made after the UPS ran out is shown as such: critical load lost.
 1. **Hybrid**, choose a fault and the drawing read: one of the two **saved reads** (real earlier Muse Spark reads of
    the drawing, labelled by kind, repairs and date, for example "Saved read, 2 repairs (Oct 31)"; the full description
    is the tooltip and is on the drawing-read card). A live re-read is offered only on a machine that has the drawing
-   crops (its cost is the tooltip and the confirmation on Start).
+   crops (its cost is the tooltip and the confirmation on Start); on a public demo it is shown disabled.
 2. **Start**. The drawing-read card shows the read and the model check: the transcription must reproduce the
    documented ASCO transfer sequence before any planning.
 3. The planner shows each next reading on the drawing (**next**), then takes it. Candidate faults shrink after each
    reading. Approval cards work as in Agent mode.
 4. The result card has Muse Spark's explanation: what failed, the readings that show it, a fixed isolation sentence
-   added by code, then what to do. A run costs about $0.006 (the explanation call).
+   added by code, then what to do. A run costs about $0.01 (the explanation call; $0.009 on average over the 22
+   browser runs of Nov 2). When the explanation is the fixed template instead (always for insufficient information;
+   otherwise when the Muse Spark call failed or its answers failed the check), the label says "fixed template" and why.
    The page tidies the text for display (a repeated step prefix removed, readings as numbers with units, hyphens
    restored in compounds); the run record keeps the model's text unchanged.
 
@@ -88,7 +93,8 @@ diagnosis made after the UPS ran out is shown as such: critical load lost.
    sources isolated.
 3. **Look**: **Read panel**, **Event log**, **Metering**, **Position indicator** (the mechanism flag), **Wait**.
 4. **Actions**: **Isolate sources** (approval; strong approval if the load is powered), **Restore sources**,
-   **Manual operation check** (sources isolated), **Repeat transfer** (strong approval, cite a reading).
+   **Manual operation check** (sources isolated; pressed under load, the safety policy blocks it as never allowed),
+   **Repeat transfer** (strong approval, cite a reading).
 5. **Suggest the next reading** (optional): the planner proposes a reading from your own readings (shadow mode); your
    trace is then marked assisted.
 6. **Diagnose...**: component, part, failure mode, confidence, the steps that prove it; or **Insufficient
@@ -103,7 +109,9 @@ The session stays open for the authorized person, in every mode. Open **Authoriz
 sources, repair the part, restore the sources (strong approval, citing at least one executed reading from this
 session; the policy checks that the reading was executed, not when it was taken). The stages
 end at **Transfer verified** only when the simulator confirms the load on Emergency with the position confirmed by
-the controller; the UPS clock then stops.
+the controller; the UPS clock then stops. Each part an approved repair changed is outlined on the drawing with a pill
+(**adjusted**, **replaced**), and a recommendation a tool returns (the coil replacement: relubricate the operator) is
+shown in the log.
 
 While the repair is under way (sources isolated, or restored and not yet verified), **Start** asks first: the
 button turns into "End the repair and start new?" and only a second click within 5 s starts a new run.
@@ -123,13 +131,15 @@ button turns into "End the repair and start new?" and only a second click within
 |---|---|
 | Engineer mode | free |
 | Agent run | about $0.12 (up to $0.30) |
-| Hybrid run on a saved read | about $0.006 |
+| Hybrid run on a saved read | about $0.01 |
 | Compare | free after an agent run; about $0.12 after a Hybrid or Engineer run (the agent re-run) |
 
 Every model call reserves budget in a local ledger first. Live runs are capped per day (`PROBEFORGE_DEMO_DAILY_USD`,
-default $5) and in total. On a public demo (`PROBEFORGE_PUBLIC=1`): a separate ledger, runs stopped at $0.75, approval
-cards time out after 2 minutes, and visitors' Engineer traces are kept apart (they never appear in Compare). Whoever
-uses the page answers the approval cards.
+default $5) and in total. On a public demo (`PROBEFORGE_PUBLIC=1`): a separate ledger with its own total
+(`PROBEFORGE_PUBLIC_TOTAL_USD`), runs stopped at $0.75, approval cards time out after 2 minutes, no live re-read,
+two open sessions per address, and visitors' Engineer traces are kept apart (they never appear in Compare). Whoever
+uses the page answers the approval cards. A model call that gets no answer within 120 s (360 s with a live drawing
+read) stops the run with that reason.
 
 ## 9. Common problems
 
@@ -146,6 +156,9 @@ uses the page answers the approval cards.
 | Measure is grey | Set A and B on the drawing first. |
 | An error about the key | `.env` with `META_API_KEY` is missing; Engineer mode still works. |
 | "daily cap" | Today's live runs used the cap; wait until tomorrow or raise `PROBEFORGE_DEMO_DAILY_USD`. |
+| "The public demo's model budget is used up" | The public ledger reached its total: Agent and Hybrid runs are paused; Engineer mode still works (no model calls). |
+| "This address already has 2 open ProbeForge sessions" | Close another tab of the page, then press Start. |
+| "The run stopped before a diagnosis: the Meta API ..." | The Meta API failed or did not answer in time; try again later. Engineer mode does not need it. |
 | A test session left a trace in `scenarios/engineer_traces/ats/` | Delete it: the folder is for real engineer traces only. |
 
 ## 10. Meeting script (15 minutes)
