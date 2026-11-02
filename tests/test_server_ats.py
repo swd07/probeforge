@@ -188,7 +188,8 @@ def test_hybrid_session_on_a_saved_transcription(monkeypatch, tmp_path):
         ws.send_json({"action": "compare"})
         cmp = until(ws, "compare", events)
     assert done["mode"] == "hybrid" and done["verdict"] == "correct" and done["fault"] == "TS:A-B open"
-    assert done["transcription"].startswith("Test read (test_run")
+    assert done["transcription"].startswith("Test read (recorded ")  # the run id is the tooltip, not the text
+    assert done["transcription_run"] == "test_run"
     cols = cmp["columns"]
     assert cmp["own"] == "hybrid" and cols["hybrid"]["approvals_by"] == "answered live in this session"
     assert cols["baseline"]["verdict"] == "correct" and cols["baseline"]["approvals_by"] == "batch rules"
