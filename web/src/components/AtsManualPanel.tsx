@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import type { AtsMeta, AtsPanel, FeedItem, Probe } from "../types";
 import { describeTool } from "./Feed";
+import { toolArgs, type ToolArgs } from "../manualArgs";
 import type { MeterState } from "./ManualPanel";
 
 interface Props {
@@ -14,7 +15,7 @@ interface Props {
   intervention: boolean; // after the diagnosis: the authorized person isolates, repairs, restores
   started: boolean;
   stopped: boolean;
-  onTool: (name: string, args: Record<string, unknown>) => void;
+  onTool: (name: string, args: ToolArgs) => void;
   onDiagnose: () => void;
 }
 
@@ -52,12 +53,13 @@ export function AtsManualPanel({ meta, panel, meter, setMeter, lastProbe, feed, 
     [feed],
   );
   const targets = meta?.repairs[repair] ?? [];
-  const send = (name: string, extra: Record<string, unknown> = {}) =>
-    onTool(name, { reason: meter.reason, evidence_steps: [...cited], ...extra });
+  // every call goes through the shared argument list: a tool gets only the arguments its schema accepts
+  const call = (name: string, values: ToolArgs = {}) => onTool(name, toolArgs(name, values));
+  const send = (name: string, extra: ToolArgs = {}) => call(name, { reason: meter.reason, evidence_steps: [...cited], ...extra });
   const pair = meter.a && meter.b ? [{ point_a: meter.a, point_b: meter.b }] : [];
   const measure = () => {
     if (!meter.a || !meter.b) return;
-    onTool(meter.kind === "V" ? "measure_voltage" : "measure_resistance", { point_a: meter.a, point_b: meter.b });
+    call(meter.kind === "V" ? "measure_voltage" : "measure_resistance", { point_a: meter.a, point_b: meter.b });
     setMeter({ ...meter, a: null, b: null });
   };
   const reading = lastProbe
@@ -94,17 +96,17 @@ export function AtsManualPanel({ meta, panel, meter, setMeter, lastProbe, feed, 
         </div>
       </div>
       <div className="manual-row">
-        <button className="btn small ghost" disabled={!active} onClick={() => onTool("read_panel", {})}>Read panel</button>
-        <button className="btn small ghost" disabled={!active} onClick={() => onTool("read_event_log", {})}>Event log</button>
-        <button className="btn small ghost" disabled={!active} onClick={() => onTool("read_metering", {})}>Metering</button>
-        <button className="btn small ghost" disabled={!active} onClick={() => onTool("read_position_indicator", {})}
+        <button className="btn small ghost" disabled={!active} onClick={() => call("read_panel")}>Read panel</button>
+        <button className="btn small ghost" disabled={!active} onClick={() => call("read_event_log")}>Event log</button>
+        <button className="btn small ghost" disabled={!active} onClick={() => call("read_metering")}>Metering</button>
+        <button className="btn small ghost" disabled={!active} onClick={() => call("read_position_indicator")}
                 title="Look at the position flag on the mechanism (a reading: 30 s, the same tool as the agent's)">
           Position indicator
         </button>
         <select value={waitS} onChange={(e) => setWaitS(Number(e.target.value))} aria-label="Wait seconds">
           {[10, 30, 60, 120].map((s) => <option key={s} value={s}>{s} s</option>)}
         </select>
-        <button className="btn small ghost" disabled={!active} onClick={() => onTool("wait", { seconds: waitS })}>Wait</button>
+        <button className="btn small ghost" disabled={!active} onClick={() => call("wait", { seconds: waitS })}>Wait</button>
       </div>
       <label className="reason-row">
         Reason (sent with requests that need approval)

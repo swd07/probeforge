@@ -1,0 +1,18 @@
+{
+  "about": "ATS Engineer mode: the arguments the panel sends for each tool (web/src/manualArgs.ts builds them from this list; tests/test_engineer_contract.py checks every entry against the frozen tool schema, which refuses any other argument since D47).",
+  "tools": {
+    "read_panel": [],
+    "read_event_log": [],
+    "read_metering": [],
+    "read_position_indicator": [],
+    "wait": ["seconds"],
+    "measure_voltage": ["point_a", "point_b"],
+    "measure_resistance": ["point_a", "point_b"],
+    "isolate_sources": ["reason", "evidence_steps"],
+    "restore_sources": ["reason", "evidence_steps"],
+    "manual_operation_check": ["reason", "readings"],
+    "repeat_transfer_attempt": ["reason", "evidence_steps", "measure_during"],
+    "perform_action": ["action", "target", "reason", "evidence_steps"],
+    "submit_diagnosis": ["outcome", "component", "part", "failure_mode", "confidence", "evidence"]
+  }
+}

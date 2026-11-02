@@ -1,12 +1,7 @@
 import { useMemo, useState } from "react";
 import type { FeedItem, Meta } from "../types";
 import { describeTool } from "./Feed";
-
-interface Evidence {
-  step: number;
-  type: "functional_test" | "instrument_reading";
-  observation: string;
-}
+import { diagnosisArgs, type Evidence } from "../manualArgs";
 
 const FUNCTIONAL = new Set(["read_indicators", "press_button", "wait", "read_panel", "read_event_log", "read_metering", "read_position_indicator",
   "manual_operation_check", "repeat_transfer_attempt", "isolate_sources", "restore_sources"]);
@@ -46,12 +41,7 @@ export function DiagnosisForm({ meta, feed, onSubmit, onCancel }: { meta: Meta; 
   const evidence = options.filter((_, i) => chosen.has(i));
   const valid = outcome === "insufficient_information" || (component && mode && evidence.length > 0);
 
-  const submit = () =>
-    onSubmit(
-      outcome === "diagnosed"
-        ? { outcome, component, part, failure_mode: mode, confidence: confidence / 100, evidence }
-        : { outcome, confidence: confidence / 100, evidence },
-    );
+  const submit = () => onSubmit(diagnosisArgs(outcome, component, part, mode, confidence, evidence));
 
   return (
     <div className="modal-backdrop">
