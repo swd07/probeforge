@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import type { AtsMeta, AtsPanel, FeedItem, Probe } from "../types";
 import { describeTool } from "./Feed";
+import { idText } from "../labels";
 import { toolArgs, type ToolArgs } from "../manualArgs";
 import type { MeterState } from "./ManualPanel";
 
@@ -145,7 +146,7 @@ export function AtsManualPanel({ meta, panel, meter, setMeter, lastProbe, feed, 
       {intervention && (
         <div className="manual-row">
           <select value={repair} onChange={(e) => { setRepair(e.target.value); setTarget(""); }} aria-label="Repair">
-            {Object.keys(meta?.repairs ?? {}).map((a) => <option key={a} value={a}>{a.replace(/_/g, " ")}</option>)}
+            {Object.keys(meta?.repairs ?? {}).map((a) => <option key={a} value={a}>{idText(a)}</option>)}
           </select>
           <select value={target} onChange={(e) => setTarget(e.target.value)} aria-label="Part">
             <option value="" disabled>part...</option>

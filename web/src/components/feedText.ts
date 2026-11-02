@@ -1,3 +1,4 @@
+import { idText } from "../labels";
 import type { ToolEvent } from "../types";
 
 // What the log shows for a tool call (also the readings list of the Engineer panel and the diagnosis form).
@@ -49,7 +50,7 @@ export function describeTool(ev: ToolEvent): { title: string; detail: string } {
     case "get_schematic":
       return { title: "Read netlist", detail: "" };
     case "perform_action":
-      return { title: `Request ${String(a.action).replace("_", " ")} ${a.target ?? ""}`, detail: a.reason ? `reason: ${a.reason}` : "" };
+      return { title: `Request ${idText(String(a.action))} ${a.target ?? ""}`, detail: a.reason ? `reason: ${a.reason}` : "" };
     case "read_panel":
       return { title: "Read controller panel", detail: r.display ? `${r.display}${r.load_lost && !r.load_powered ? ", critical load LOST (UPS depleted)" : r.load_powered ? ", load powered" : ", load on UPS"}` : "" };
     case "read_event_log":

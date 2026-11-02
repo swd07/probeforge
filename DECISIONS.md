@@ -771,3 +771,20 @@ decisions at the end (see CLAUDE.md). Architecture: [ARCHITECTURE.md](ARCHITECTU
   volts", "one hundred twenty volts", "Zero ohms", "de energized", "fault free", "cut off contact", "cutoff contact";
   a different step number, digits, number words without a unit and the verb "cut off" are kept). Over the 87 recorded
   texts the formatter changes 62; it leaves a bare "zero" without a unit as written.
+
+### D53. Ids are shown as words on screen, display only (2026-11-02)
+
+- **What:** the page shows the action and tool ids the policy, the tools and the planner send as words
+  (`web/src/labels.ts`): approval card titles in sentence case ("Adjust cut-off contact TS:8-9", "Isolate sources"),
+  policy reasons ("adjust cut-off contact needs human approval"), the feed's repair line ("Request adjust cut-off
+  contact TS:8-9"), the repair list and the part kinds of the diagnosis form ("8-9 (cut-off contact, closed on
+  Normal)"). One spelling on screen: "cut-off". The "Agent action limits" table keeps every id, the agent's real
+  vocabulary, with its label next to it. Run records, traces, the policy and the frozen modules keep the ids.
+- **Why:** the dev-07 Engineer walkthrough for the video showed "adjust_cutoff_contact needs human approval",
+  "Request adjust cutoff_contact" and the title "Adjust Cutoff Contact" (CSS capitalize) next to "cut-off" in every
+  other text; the reasons come from the frozen policy (`f"{action} needs human approval"`).
+- **Alternatives:** change the policy's reason strings (frozen module, and the agent sees them as tool results);
+  replace every underscore (would change part ids such as `H1:W12_TS1-W12_P12`): only lowercase ids joined by
+  underscores are mapped.
+- **Evidence:** Vitest cases with the walkthrough's strings; part ids unchanged; no repair label holds an underscore or
+  "cutoff".

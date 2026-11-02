@@ -1,3 +1,4 @@
+import { labelIds } from "../labels";
 import type { AtsMeta } from "../types";
 
 /** The agent action limits, generated from the ATS policy code (the same table as docs/ATS_MODEL.md). */
@@ -17,7 +18,10 @@ export function LimitsModal({ meta, onClose }: { meta: AtsMeta | null; onClose: 
         <tbody>
           {meta.limits.map((l, i) => (
             <tr key={i} className={`tier-${l.tier.replace(" ", "-")}`}>
-              <td>{l.action}</td>
+              <td>
+                {labelIds(l.action).map((p, j) =>
+                  p.label ? <span key={j}><code>{p.text}</code> <span className="id-label">({p.label})</span></span> : <span key={j}>{p.text}</span>)}
+              </td>
               <td className="tier">{l.tier}</td>
               <td>{l.condition}</td>
             </tr>

@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import type { FeedItem, Meta } from "../types";
 import { describeTool } from "./Feed";
+import { kindText } from "../labels";
 import { diagnosisArgs, type Evidence } from "../manualArgs";
 
 const FUNCTIONAL = new Set(["read_indicators", "press_button", "wait", "read_panel", "read_event_log", "read_metering", "read_position_indicator",
@@ -86,7 +87,7 @@ export function DiagnosisForm({ meta, feed, onSubmit, onCancel }: { meta: Meta; 
                 {(comp?.modes.length ?? 0) > 0 && <option value="">whole device</option>}
                 {comp?.parts.filter((p) => p.modes.length).map((p) => (
                   <option key={p.name} value={p.name}>
-                    {p.name} ({p.kind.replace("_", " ")})
+                    {p.name} ({kindText(p.kind)})
                   </option>
                 ))}
               </select>

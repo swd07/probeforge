@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import type { FeedItem, Hypothesis, NextStep, ToolEvent } from "../types";
+import { idText, readable } from "../labels";
 import { ICON, describeTool, plain } from "./feedText";
 
 export { describeTool } from "./feedText";
@@ -135,7 +136,7 @@ export function Feed({ items, manual = false, title, running = false, idleText }
             const pts = n.points.length === 2 ? `${n.points[0]} → ${n.points[1]}` : n.points.join(", ");
             return (
               <div key={it.id} className="item plan">
-                <span className="step">next</span> <b>Planned:</b> {n.tool.replace(/_/g, " ")} {pts}
+                <span className="step">next</span> <b>Planned:</b> {idText(n.tool)} {pts}
                 <div className="detail">
                   {n.why}
                   {n.gain_bits !== undefined && ` (${n.gain_bits.toFixed(2)} bits)`}; {n.causes_left} causes left
@@ -170,7 +171,7 @@ export function Feed({ items, manual = false, title, running = false, idleText }
           if (it.kind === "approval")
             return (
               <div key={it.id} className={`item approval ${it.approved === undefined ? "pending" : it.approved ? "granted" : "denied"}`}>
-                <span className="step">#{it.req.step}</span> {it.req.strong ? "STRONG approval" : "human approval"} requested: {it.req.policy_reason}
+                <span className="step">#{it.req.step}</span> {it.req.strong ? "STRONG approval" : "human approval"} requested: {readable(it.req.policy_reason)}
                 {it.req.facts?.map((f, i) => <div key={i} className="detail fact">policy: {f}</div>)}
                 <div className="detail">{manual ? "your reason" : "agent's reason"}: {it.req.agent_reason}</div>
                 <div className="detail">{it.approved === undefined ? "waiting..." : it.approved ? "approved by human" : "denied by human"}</div>
@@ -187,7 +188,7 @@ export function Feed({ items, manual = false, title, running = false, idleText }
                   <span className="step">#{ev.step}</span> {title}
                   {detail && <span className="detail-inline"> {detail}</span>}
                 </div>
-                {ev.verdict === "block" && <div className="policy">BLOCKED by safety policy: {ev.policy_reason}</div>}
+                {ev.verdict === "block" && <div className="policy">BLOCKED by safety policy: {readable(ev.policy_reason)}</div>}
                 {(ev.verdict === "error" || (!ev.executed && ev.verdict.startsWith("needs_"))) && typeof ev.result.error === "string" && (
                   <div className="policy">{ev.result.error}</div>
                 )}

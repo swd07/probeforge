@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { tidyExplanation } from "../explanationText";
+import { idText, readable, sentence } from "../labels";
 import type { ApprovalRequest, AtsPanel, Done, FlagsRequest, WiringRequest } from "../types";
 
 /** ATS bench strong approval: the policy's own facts next to the requester's reason, the cited readings, and a second
@@ -7,13 +8,13 @@ import type { ApprovalRequest, AtsPanel, Done, FlagsRequest, WiringRequest } fro
 function StrongApprovalCard({ req, onAnswer, human }: { req: ApprovalRequest; onAnswer: (approve: boolean) => void; human: boolean }) {
   const [checked, setChecked] = useState(false);
   const [confirming, setConfirming] = useState(false);
-  const what = req.tool === "perform_action" ? `${String(req.args.action ?? "").replace(/_/g, " ")} ${req.args.target ?? ""}` : req.tool.replace(/_/g, " ");
+  const what = requestTitle(req);
   return (
     <div className="modal-backdrop">
       <div className="modal approval-modal strong" role="dialog" aria-label="Strong approval request">
         <div className="modal-kicker strong">Strong approval required</div>
         <h2>{what}</h2>
-        <p className="policy-reason">{req.policy_reason}</p>
+        <p className="policy-reason">{readable(req.policy_reason)}</p>
         {(req.facts ?? []).map((f, i) => (
           <p key={i} className="policy-fact">
             Policy: {f}
@@ -56,20 +57,22 @@ function StrongApprovalCard({ req, onAnswer, human }: { req: ApprovalRequest; on
   );
 }
 
+/** The card title in sentence case: "Adjust cut-off contact TS:8-9", "Isolate sources". */
+export function requestTitle(req: Pick<ApprovalRequest, "tool" | "args">): string {
+  if (req.tool === "set_power") return "Re-apply power";
+  const what = req.tool === "perform_action" ? `${idText(String(req.args.action ?? ""))} ${req.args.target ?? ""}`.trim() : idText(req.tool);
+  return sentence(what);
+}
+
 export function ApprovalCard({ req, onAnswer, human = false }: { req: ApprovalRequest; onAnswer: (approve: boolean) => void; human?: boolean }) {
   if (req.strong) return <StrongApprovalCard key={req.id} req={req} onAnswer={onAnswer} human={human} />;
-  const what =
-    req.tool === "set_power"
-      ? "Re-apply power"
-      : req.tool === "perform_action"
-        ? `${String(req.args.action ?? "").replace(/_/g, " ")} ${req.args.target ?? ""}`
-        : req.tool.replace(/_/g, " ");
+  const what = requestTitle(req);
   return (
     <div className="modal-backdrop">
       <div className="modal approval-modal" role="dialog" aria-label="Approval request">
         <div className="modal-kicker">Human approval required</div>
         <h2>{what}</h2>
-        <p className="policy-reason">{req.policy_reason}</p>
+        <p className="policy-reason">{readable(req.policy_reason)}</p>
         {(req.facts ?? []).map((f, i) => (
           <p key={i} className="policy-fact">
             Policy: {f}

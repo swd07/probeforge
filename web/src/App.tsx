@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { readable } from "./labels";
 import { LimitsModal } from "./components/AtsPanel";
 import { AtsStatusColumn } from "./components/AtsStatus";
 import { ApprovalCard, FlagsCard, WiringCard } from "./components/Cards";
@@ -198,7 +199,7 @@ export function App() {
         />
       </main>
       {flashing && lastBlocked && lastBlocked.kind === "tool" && (
-        <div className="toast-blocked">Blocked by safety policy: {lastBlocked.ev.policy_reason}</div>
+        <div className="toast-blocked">Blocked by safety policy: {readable(lastBlocked.ev.policy_reason)}</div>
       )}
       {state.flags && <FlagsCard req={state.flags} onAnswer={(ok) => confirmFlags(state.flags!.id, ok)} />}
       {state.wiring && <WiringCard req={state.wiring} onChoose={(c) => chooseWiring(state.wiring!.id, c)} />}

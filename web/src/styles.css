@@ -161,6 +161,9 @@ button, select { font: inherit; }
 .modal { background: var(--panel); border: 1px solid var(--warn); border-radius: 14px; padding: 22px 26px; width: 460px; box-shadow: 0 20px 60px #000c; }
 .modal-kicker { color: var(--warn); font-weight: 700; text-transform: uppercase; font-size: 12px; letter-spacing: 1px; }
 .modal h2 { margin: 6px 0 4px; text-transform: capitalize; }
+.approval-modal h2 { text-transform: none; } /* titles come in sentence case from requestTitle (labels.ts) */
+.limits-table code { font-size: 12px; }
+.limits-table .id-label { color: var(--muted); }
 .policy-reason { color: var(--muted); margin-top: 0; }
 .agent-reason { background: var(--panel-2); border-radius: 8px; padding: 10px 12px; }
 .agent-reason span { font-size: 12px; color: var(--muted); }
