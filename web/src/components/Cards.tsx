@@ -213,6 +213,14 @@ function UpsOutcome({ done, panel }: { done: Done; panel?: AtsPanel | null }) {
 }
 
 /** Docked at the top of the right panel so the schematic stays visible; collapses to one line. */
+/** The approval figures: approvals and, on the ATS bench, strong approvals as their own figure (a strong approval
+ * is a second, explicit confirmation; one combined count would hide it). */
+export function approvalFigures(done: { approvals: number; strong_approvals?: number }): { value: number; label: string }[] {
+  const out = [{ value: done.approvals, label: "approvals" }];
+  if (typeof done.strong_approvals === "number") out.push({ value: done.strong_approvals, label: "strong approvals" });
+  return out;
+}
+
 /** The run's duration figure: real (wall-clock) time, which a viewer must not read as outage time (that is the UPS
  * clock on the ATS bench). */
 export function timeFigure(seconds: number, pauseS?: number): { value: string; label: string; title: string } {
@@ -328,7 +336,7 @@ export function ResultCard({ done, showTruth, onToggleTruth, saved, onCompare, c
               <b>{time.value}</b><span>{time.label}</span>
             </div>
             <div><b>{done.policy_blocked}</b><span>blocked</span></div>
-            <div><b>{done.approvals}</b><span>approvals</span></div>
+            {approvalFigures(done).map((f) => <div key={f.label}><b>{f.value}</b><span>{f.label}</span></div>)}
           </div>
           {saved && <p className="muted saved">Trace saved: {saved}</p>}
         </div>
