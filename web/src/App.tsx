@@ -47,6 +47,11 @@ export function App() {
     fetch("/api/schematic").then((r) => r.text()).then(setSvg);
   }, []);
 
+  // the public demo shows the transfer switch bench only (the server refuses the motor starter there too)
+  useEffect(() => {
+    if (meta?.public && !ats) setBench("ats");
+  }, [meta, ats]);
+
   useEffect(() => {
     if (!ats || atsMeta) return;
     fetch("/api/ats/meta").then((r) => r.json()).then(setAtsMeta);
@@ -133,7 +138,7 @@ export function App() {
 
   return (
     <div className={`app ${flashing ? "flash" : ""}`}>
-      <TopBar meta={curMeta} state={state} mode={chosenMode} setMode={setChosenMode} bench={bench} setBench={setBench}
+      <TopBar meta={curMeta} state={state} mode={chosenMode} setMode={setChosenMode} bench={bench} setBench={setBench} publicDemo={!!meta?.public}
               onStart={(o) => start(o)} onStop={stop} onCompare={onCompare} onSheet={ats ? () => setSheetOpen(true) : undefined} />
       <main className={`layout ${ats ? "ats" : ""}`}>
         {ats && (

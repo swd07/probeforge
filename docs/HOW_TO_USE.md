@@ -178,7 +178,7 @@ Before the meeting: start the server, do one quick Engineer run, and delete its 
 ## Motor starter (Level 1)
 
 The first bench: a star-delta reversing motor starter with one hidden fault among 91. Click **Motor starter** in the
-top bar. The front panel (lamps **Power**, **Fault**, **Forward**, **Reverse**; buttons **Stop**, **Start Fwd**,
+top bar (local servers only: the public demo shows the transfer switch bench only). The front panel (lamps **Power**, **Fault**, **Forward**, **Reverse**; buttons **Stop**, **Start Fwd**,
 **Start Rev**; breaker **QF1**; motor state and line currents) replaces the status column.
 
 - **Agent**: choose **Random fault**, **Clean test fault** or a scenario **s01 to s08**, effort low, **Start**

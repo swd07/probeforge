@@ -74,6 +74,7 @@ class Cancelled(Exception):
 
 def meta() -> dict:
     return {
+        "public": settings.PUBLIC,  # the public demo shows only the ATS bench
         "model": MUSE_SPARK,
         "title": NETLIST.title,
         "neutral": NETLIST.neutral,

@@ -225,7 +225,8 @@ ProbeForge began on a simulated star-delta reversing motor starter (17 component
 38 visible faults the agent got 30/38 at pole level against 25/38 for a half-split baseline and 35/38 for the
 information-gain ceiling ([results](docs/results/2026-10-27_clean.md)). It showed the approach works and that a
 textbook circuit is too easy, so the work moved to real equipment. That stage, its hybrid pipeline and its findings:
-[docs/LEVEL1.md](docs/LEVEL1.md). The UI still offers it under "Motor starter".
+[docs/LEVEL1.md](docs/LEVEL1.md). The UI still offers it under "Motor starter" when run locally; the public demo shows
+the transfer switch bench only.
 
 ## Cost and spend guard
 

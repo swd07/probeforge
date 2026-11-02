@@ -1,4 +1,5 @@
 export interface Meta {
+  public?: boolean; // the public demo: the ATS bench only
   model: string;
   title: string;
   neutral: string;

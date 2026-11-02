@@ -55,6 +55,7 @@ def meta() -> dict:
     return level1.meta()
 
 
+PUBLIC_BENCH_MESSAGE = "The public demo shows the transfer switch bench only; the motor starter runs locally."
 ACTIONS = {"start", "start_manual", "start_hybrid", "tool", "compare", "suggest", "approval", "flags", "wiring", "stop"}
 
 
@@ -216,6 +217,9 @@ async def ws(websocket: WebSocket) -> None:
                         session.cancel(notify=False)
                     elif isinstance(session, ats.AtsSession):
                         session.cancel(notify=False)  # close a finished ATS session's intervention
+                    if settings.PUBLIC and msg.get("bench") != "ats":
+                        emit({"type": "error", "message": PUBLIC_BENCH_MESSAGE})
+                        continue
                     if msg.get("bench") == "ats":
                         try:
                             session = owner["session"] = ats.start_session(action, msg, out, level1.client)
