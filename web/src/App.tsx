@@ -138,6 +138,7 @@ export function App() {
       <main className={`layout ${ats ? "ats" : ""}`}>
         {ats && (
           <AtsStatusColumn meta={atsMeta} panel={atsPanel} checkedPosition={atsDiagnosing ? checkedPosition : undefined}
+                           diagnosed={cur && state.done ? state.done.outcome === "diagnosed" : undefined}
                            onLimits={() => setLimitsOpen(true)} />
         )}
         <div className="left">

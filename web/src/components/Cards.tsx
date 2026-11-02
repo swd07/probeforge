@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { tidyExplanation } from "../explanationText";
+import { errorText } from "../runError";
 import { idText, modeText, readable, sentence } from "../labels";
 import type { ApprovalRequest, AtsPanel, Done, FlagsRequest, WiringRequest } from "../types";
 
@@ -228,7 +229,8 @@ export function ResultCard({ done, showTruth, onToggleTruth, saved, onCompare, c
   const manual = done.mode === "manual";
   const hybrid = done.mode === "hybrid";
   const d = done.diagnosis ?? {};
-  const said = done.diagnosis_text ? done.diagnosis_text : done.outcome === "diagnosed"
+  const stopped = done.outcome === "error" ? errorText(done.error) ?? "an error" : null;
+  const said = stopped ? "no diagnosis" : done.diagnosis_text ? done.diagnosis_text : done.outcome === "diagnosed"
       ? `${d.component}${d.part ? " " + d.part : ""} ${d.failure_mode}`
       : done.outcome === "insufficient_information"
         ? "insufficient information"
@@ -262,6 +264,7 @@ export function ResultCard({ done, showTruth, onToggleTruth, saved, onCompare, c
               </div>
             )}
           </div>
+          {stopped && <div className="run-error">The run stopped before a diagnosis: {stopped}.</div>}
           <UpsOutcome done={done} panel={atsPanel} />
           {/* the actions right under the verdict, so they stay in view when the card is taller than its half of the column */}
           <div className="result-actions">

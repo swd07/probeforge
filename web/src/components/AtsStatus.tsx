@@ -1,4 +1,5 @@
 import type { AtsMeta, AtsPanel as Panel } from "../types";
+import { stageClass } from "../runError";
 
 const LIGHTS: [string, string][] = [
   ["Normal accepted", "green"],
@@ -16,6 +17,8 @@ interface Props {
   panel: Panel | null;
   /** Engineer mode: the position only as last checked with the position indicator tool (undefined: always shown). */
   checkedPosition?: string | null;
+  /** after the result: whether there is a diagnosis ("Root cause identified" is not passed without one) */
+  diagnosed?: boolean;
 }
 
 function UpsClock({ meta, panel: p }: Props) {
@@ -78,11 +81,11 @@ function Display({ panel: p }: Props) {
   );
 }
 
-function Stages({ meta, panel: p, vertical = false }: Props & { vertical?: boolean }) {
+function Stages({ meta, panel: p, diagnosed, vertical = false }: Props & { vertical?: boolean }) {
   return (
     <div className={`ats-flow ${vertical ? "vertical" : ""}`} aria-label="UPS status">
       {(meta?.flow ?? []).map((f, i) => (
-        <span key={f} className={`flow-step ${p && i < p.flow ? "past" : ""} ${p && i === p.flow ? "now" : ""}`}>{f}</span>
+        <span key={f} className={`flow-step ${stageClass(i, p ? p.flow : null, diagnosed)}`}>{f}</span>
       ))}
     </div>
   );
