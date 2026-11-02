@@ -32,12 +32,16 @@ from concurrent.futures import ThreadPoolExecutor
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import Response
 from fastapi.staticfiles import StaticFiles
+from starlette.middleware.trustedhost import TrustedHostMiddleware
 
-from probeforge.server import access, ats, level1, settings, ui_runs
+from probeforge.eval.spend import SpendLimitError
+from probeforge.server import access, ats, ats_common, level1, settings, ui_runs
 from probeforge.server.level1 import (  # noqa: F401 - re-exported (tests and scripts use app.<name>)
     ROOT, AgentSession, HybridSession, ManualSession, Session, pick_fault)
 
 app = FastAPI(title="ProbeForge")
+if access.ALLOWED_HOSTS:  # deployed: only the demo's host names (and the container's own health check)
+    app.add_middleware(TrustedHostMiddleware, allowed_hosts=[*access.ALLOWED_HOSTS, "127.0.0.1", "localhost"])
 
 # Blocking work runs in two bounded pools (audit S1): tool calls, one in flight per connection, and runs (agent,
 # hybrid, Compare), refused when all are busy. A connection holds two tool workers at most (a pending approval and one
@@ -78,6 +82,18 @@ def message_problem(msg) -> str | None:
         if key in msg and msg[key] is not None and not isinstance(msg[key], str):
             return f"{key} must be text"
     return None
+
+
+@app.get("/api/health")
+def health() -> dict:
+    """For the container's health check and the smoke test: the app answers, the mode, and whether paid runs are
+    open (no amounts)."""
+    try:
+        ats_common.ledger().check(ats_common.EST_HYBRID_SAVED_USD, what="the health check", demo=True)
+        paid = True
+    except SpendLimitError:
+        paid = False
+    return {"ok": True, "public": settings.PUBLIC, "paid_runs_open": paid}
 
 
 @app.get("/api/session-token")
