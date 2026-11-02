@@ -262,8 +262,7 @@ class AtsHybridSession(AtsSession):
                 else:
                     ready = common.warm_transcription(t["id"])
                     if not ready.is_set():
-                        self.emit({"type": "stage", "text": "Simulating every candidate fault of the transcription (once "
-                                                            "per transcription, about 80 s)..."})
+                        self.emit({"type": "stage", "text": common.warm_stage_text(t["id"])})
                         while not ready.wait(0.5):
                             if self.cancelled:
                                 raise Cancelled()

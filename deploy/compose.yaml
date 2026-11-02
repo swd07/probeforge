@@ -49,6 +49,7 @@ services:
     volumes:
       - ./${PROBEFORGE_CADDYFILE:-Caddyfile}:/etc/caddy/Caddyfile:ro
       - ./site:/srv/site:ro  # the personal website later (static files); empty until then
+      - ./status:/srv/status:ro  # the starting page while the app warms up (D62)
       - caddy-data:/data  # certificates
       - caddy-config:/config
     networks:

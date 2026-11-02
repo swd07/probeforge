@@ -20,6 +20,8 @@ MAX_PER_IP = _int("PROBEFORGE_MAX_PER_IP", 2 if PUBLIC else 10)
 # tool calls (Engineer mode, intervention, suggestions): two at most per connection, so this bounds them
 TOOL_WORKERS = _int("PROBEFORGE_TOOL_WORKERS", 2 * MAX_CONNECTIONS + 8)
 JOB_WORKERS = _int("PROBEFORGE_JOB_WORKERS", 3 if PUBLIC else 4)  # agent, hybrid and Compare runs at once
+# simulate what a first visitor would wait for at server start, before /api/ready lets the proxy send visitors (D62)
+WARM_AT_START = os.environ.get("PROBEFORGE_WARM_AT_START", "1" if PUBLIC else "0") == "1"
 
 
 def agent_effort(requested) -> str:

@@ -19,6 +19,12 @@ visitor ──HTTPS──> Caddy (container, ports 80/443, automatic certificate
   sessions) counts the visitor, not the proxy, and a visitor cannot choose an address.
 - The Origin check and the host check accept only the demo's own origin and host name, from the env file.
 - The public spend limits are the defaults: $30 in total for the public ledger, $5 per day, $0.75 per run.
+- At every start the app first simulates what a visitor would otherwise wait for: every candidate fault of the default
+  saved read (about 2.5 minutes on a 4 vCPU machine), the Engineer suggestion and the twin signatures. Until that is
+  done, `/api/ready` answers 503, and Caddy, which checks it every 5 s, shows visitors a starting page that reloads
+  itself (`deploy/status/starting.html`) instead of sending them to the app. `/api/health` stays the liveness check
+  (Docker's health check) and also reports `ready`. So a restart or redeploy means about 2 to 3 minutes of the
+  starting page, and the first visitor afterwards waits for nothing.
 
 ## 2. What the image contains
 
@@ -128,7 +134,11 @@ git rev-parse --short HEAD                        # the tag for this build
 cp compose.env.example .env && nano .env          # the domain, the e-mail, PROBEFORGE_TAG=<that hash>
 sudo docker compose up -d --build --wait
 sudo docker compose ps                            # app: healthy, caddy: running
+sudo docker compose exec app python -c "import urllib.request as u; print(u.urlopen('http://127.0.0.1:8000/api/health').read().decode())"
+                                                  # "ready": false while warming up, then true
 ```
+
+For the first 2 to 3 minutes after every start the site shows the starting page (section 1); that is expected.
 
 IP-only test before the domain points here: in `deploy/.env` set `PROBEFORGE_CADDYFILE=Caddyfile.http`; in the env
 file set `PROBEFORGE_ALLOWED_ORIGINS=http://<server IP>` and `PROBEFORGE_ALLOWED_HOSTS=<server IP>`; then
@@ -141,7 +151,8 @@ Then, from your own machine, the smoke test (no key, no paid call):
 uv run python scripts/smoke_deploy.py https://demo.example.org --headers --browser
 ```
 
-It checks the health endpoint and public mode, the page and its script, the 12 dev cases, the saved Hybrid read, the
+It first waits until the warm-up is done (checking the starting page if it sees it), then checks the health endpoint
+and public mode, the page and its script, the 12 dev cases, the saved Hybrid read, the
 never-tier count, the drawing SVG, the troubleshooting sheet, that repo files are not served, the security headers,
 the WebSocket through Caddy (a foreign Origin refused, a missing or forged token refused, an Engineer session opened
 and a reading taken), whether paid runs are open, and the page in Chromium with no console error. The spend ledger
@@ -178,7 +189,7 @@ cd deploy && nano .env                            # PROBEFORGE_TAG=<new short co
 sudo docker compose up -d --build --wait
 ```
 
-then the smoke test from your machine. Each tag stays as a local image, and the volume keeps the ledger and the
+then the smoke test from your machine (it waits for the 2 to 3 minute warm-up). Each tag stays as a local image, and the volume keeps the ledger and the
 traces, so a redeploy never resets the caps.
 
 Rollback: `git checkout <previous commit>` (if the compose or Caddy files changed), set `PROBEFORGE_TAG` back to the

@@ -22,7 +22,21 @@
 {$PROBEFORGE_DOMAIN} {
 	import security_headers
 	encode zstd gzip
-	reverse_proxy app:8000
+	# visitors only once the app has simulated everything in advance (/api/ready, D62); until then the starting page.
+	# The check sends Host: localhost, which the app's host allow-list always accepts.
+	reverse_proxy app:8000 {
+		health_uri /api/ready
+		health_interval 5s
+		health_timeout 4s
+		health_headers {
+			Host localhost
+		}
+	}
+	handle_errors 502 503 {
+		root * /srv/status
+		rewrite * /starting.html
+		file_server
+	}
 }
 
 # Your personal website later: point its domain at the server, put the files in deploy/site/, uncomment, then

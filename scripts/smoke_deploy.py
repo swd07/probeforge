@@ -2,7 +2,8 @@
 
     uv run python scripts/smoke_deploy.py https://demo.example.org [--headers] [--browser]
 
-Checks: the health endpoint and public mode; the page and its script; the ATS meta (the 12 dev cases, the saved
+Waits first until the app has finished its start-up warm-up (/api/ready, D62); while it warms, the proxy serves the
+starting page, which is checked when seen. Checks: the health endpoint and public mode; the page and its script; the ATS meta (the 12 dev cases, the saved
 Hybrid read listed, the never-tier count from the committed runs); the drawing SVG; the troubleshooting sheet; that
 repo files are not served; the WebSocket through the proxy: a foreign Origin refused, a start without or with a forged
 token refused, a free Engineer session opened with a valid token and a reading taken; whether paid runs are open.
@@ -16,6 +17,7 @@ import json
 import os
 import re
 import sys
+import time
 import urllib.error
 import urllib.request
 from urllib.parse import urlparse
@@ -37,7 +39,26 @@ def get(base: str, path: str) -> tuple[int, dict, bytes]:
         with urllib.request.urlopen(base + path, timeout=60) as r:
             return r.status, {k.lower(): v for k, v in r.headers.items()}, r.read()
     except urllib.error.HTTPError as e:
-        return e.code, {k.lower(): v for k, v in e.headers.items()}, b""
+        return e.code, {k.lower(): v for k, v in e.headers.items()}, e.read()
+
+
+def wait_ready(base: str, timeout_s: float) -> None:
+    """Until /api/ready says ready. Behind Caddy every request gets the starting page (503) while the app warms up."""
+    t0, seen_starting = time.monotonic(), False
+    while True:
+        code, _, body = get(base, "/api/ready")
+        if code == 200 and json.loads(body).get("ready") is True:
+            break
+        if code == 503 and not seen_starting:
+            code_page, _, page = get(base, "/")
+            if code_page == 503 and b"ProbeForge is starting" in page:
+                seen_starting = True
+                check("starting page while the app warms up", True)
+        if time.monotonic() - t0 > timeout_s:
+            check("ready (start-up warm-up done)", False, f"not ready after {timeout_s:.0f} s")
+            return
+        time.sleep(3)
+    check("ready (start-up warm-up done)", True, f"after {time.monotonic() - t0:.0f} s of waiting")
 
 
 def http_checks(base: str, headers: bool) -> None:
@@ -45,6 +66,7 @@ def http_checks(base: str, headers: bool) -> None:
     health = json.loads(body) if code == 200 else {}
     check("health", code == 200 and health.get("ok") is True, str(health))
     check("public mode", health.get("public") is True)
+    check("warm-up done at start (public mode)", health.get("warm", {}).get("warm_at_start") is True and health.get("ready") is True)
     print(f"     paid runs open: {health.get('paid_runs_open')}")
 
     code, h, body = get(base, "/")
@@ -140,8 +162,10 @@ def main() -> None:
     ap.add_argument("url")
     ap.add_argument("--headers", action="store_true", help="the security headers are expected (behind Caddy)")
     ap.add_argument("--browser", action="store_true", help="load the page in Chromium (playwright)")
+    ap.add_argument("--ready-timeout", type=float, default=600, help="seconds to wait for the start-up warm-up")
     a = ap.parse_args()
     base = a.url.rstrip("/")
+    wait_ready(base, a.ready_timeout)
     http_checks(base, a.headers)
     asyncio.run(ws_checks(base))
     if a.browser:

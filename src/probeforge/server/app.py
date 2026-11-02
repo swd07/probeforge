@@ -28,9 +28,10 @@ import itertools
 import json
 import threading
 from concurrent.futures import ThreadPoolExecutor
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
-from fastapi.responses import Response
+from fastapi.responses import JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
@@ -39,7 +40,16 @@ from probeforge.server import access, ats, ats_common, level1, settings, ui_runs
 from probeforge.server.level1 import (  # noqa: F401 - re-exported (tests and scripts use app.<name>)
     ROOT, AgentSession, HybridSession, ManualSession, Session, pick_fault)
 
-app = FastAPI(title="ProbeForge")
+
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    if settings.WARM_AT_START:  # public mode: visitors wait for nothing the server can simulate in advance (D62)
+        ats_common.warm_at_start()
+    yield
+
+
+app = FastAPI(title="ProbeForge", lifespan=lifespan)
 if access.ALLOWED_HOSTS:  # deployed: only the demo's host names (and the container's own health check)
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=[*access.ALLOWED_HOSTS, "127.0.0.1", "localhost"])
 
@@ -93,7 +103,16 @@ def health() -> dict:
         paid = True
     except SpendLimitError:
         paid = False
-    return {"ok": True, "public": settings.PUBLIC, "paid_runs_open": paid}
+    warm = ats_common.warm_status()
+    return {"ok": True, "public": settings.PUBLIC, "paid_runs_open": paid, "ready": warm["ready"], "warm": warm}
+
+
+@app.get("/api/ready")
+def ready() -> JSONResponse:
+    """For the proxy's health check (deploy/Caddyfile): 503 until the start-up warm-up is done, so the first visitor
+    after a restart does not wait for it; /api/health stays the liveness check."""
+    warm = ats_common.warm_status()
+    return JSONResponse(warm, status_code=200 if warm["ready"] else 503)
 
 
 @app.get("/api/session-token")

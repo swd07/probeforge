@@ -916,3 +916,25 @@ decisions at the end (see CLAUDE.md). Architecture: [ARCHITECTURE.md](ARCHITECTU
 - **Evidence:** the 195 s run's ledger (one call, the explanation, settled when the run ended) and a free re-run of the
   same case with approvals answered at once (3.2 s reported); Vitest for the label and tooltip, pytest for the Compare
   note.
+
+### D62. The public server warms up before it lets visitors in (2026-11-03)
+
+- **What:** in public mode (`PROBEFORGE_WARM_AT_START`, on by default there) the app simulates at start everything a
+  visitor would otherwise wait for: every candidate fault of the default saved read, the Engineer suggestion's
+  candidates on our redrawing and the twin signatures. `/api/ready` answers 503 until that is done; Caddy checks it
+  every 5 s (Host: localhost, which the host allow-list always accepts) and shows a self-reloading starting page
+  (`deploy/status/starting.html`) instead of the app until then. `/api/health` stays the liveness check and reports
+  `ready`. The Hybrid stage text no longer says "about 80 s": it gives the warm-up last measured on this server (kept in
+  `runs/warm.json`), or "about 2 to 3 minutes" before the first measurement, and how long ago it started. The smoke
+  test waits for ready. Local use is unchanged (warm-up on first use). The frozen planner and pipeline are called,
+  not changed.
+- **Why:** on a fresh process the warm-up took 146 s on the laptop (the text said about 80 s). On the public demo a
+  judge can be the first visitor after a restart: the video take R1c sat 91 s on the simulation stage for exactly
+  this reason, and the first Engineer suggestion took 13 s.
+- **Alternatives:** warm at start without holding visitors (the first visitor still waits, now without knowing why);
+  keep the app reachable and only disable Start until ready (more UI states for a few minutes after a restart);
+  cache the simulated candidates on disk (pickling the frozen planner's cache from outside it).
+- **Evidence:** pytest (ready 503 then 200 around a held warm-up, off outside public mode, the stage text from the
+  measurement, the suggestion's cache key); the image with Caddy locally: the starting page (503) while warming, ready
+  after 148 s (default read 132.5 s), scripts/smoke_deploy.py 0 failed with headers and a browser, and the first Hybrid
+  run after ready went straight to planning with no simulation stage.

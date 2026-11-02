@@ -2,7 +2,9 @@
 warm-ups. Settings that tests replace (folders, the spend ledger, the warm-ups, the plan pause) are read by the other
 modules as common.NAME at call time, so replacing them here takes effect everywhere."""
 
+import json
 import threading
+import time
 from pathlib import Path
 
 import yaml
@@ -13,6 +15,7 @@ from probeforge.ats.bench import AtsBench
 from probeforge.ats.faults import all_faults
 from probeforge.ats.hybrid.pipeline import healthy_sequence, warm
 from probeforge.ats.hybrid.read import SHEET_DIR, SHEETS, to_netlist
+from probeforge.ats.infogain import _scenario_benches
 from probeforge.eval.metered import CALL_TIMEOUT_S, PUBLIC_MAX_COMPLETION_TOKENS, MeteredClient
 from probeforge.eval.spend import server_ledger as ledger  # read as common.ledger() (tests replace it)
 from probeforge.faults.model import Fault
@@ -25,6 +28,7 @@ ENGINEER_DIR = ROOT / "scenarios" / "engineer_traces" / "ats"
 COMPARE_DIR = ROOT / "runs" / "compare"
 # public mode: what visitors save in Engineer mode stays out of the recorded engineer traces (and out of Compare)
 VISITOR_DIR = ROOT / "runs" / "visitor_traces" / "ats"
+WARM_FILE = ROOT / "runs" / "warm.json"  # the last measured warm-up of the default saved read (the stage text's estimate)
 BENCH = AtsBench()
 NETLIST = BENCH.n
 SVG = render_svg(NETLIST)
@@ -111,26 +115,89 @@ def warm_signatures() -> None:
 
 _warm_lock = threading.Lock()
 _warm_events: dict[str, threading.Event] = {}
+_warm_started: dict[str, float] = {}
 
 
 def warm_transcription(tid: str) -> threading.Event:
-    """Simulate every candidate of a saved transcription in the background (about 80 s, once per transcription and
-    server process; the frozen planner caches them by netlist content). The event is set when they are ready."""
+    """Simulate every candidate of a saved transcription in the background (once per transcription and server process;
+    the frozen planner caches them by netlist content). The event is set when they are ready. The default read's
+    duration is measured and kept (WARM_FILE) for the estimate in the stage text."""
     with _warm_lock:
         ev = _warm_events.get(tid)
         if ev is None:
             ev = _warm_events[tid] = threading.Event()
+            _warm_started[tid] = time.monotonic()
 
             def job():
                 try:
                     t = transcriptions.load(tid)
                     if healthy_sequence(to_netlist(t["data"]))[0]:
                         warm(t["data"], t["flags"])
+                        if tid == transcriptions.DEFAULT:
+                            save_warm_s(time.monotonic() - _warm_started[tid])
                 finally:
                     ev.set()
 
             threading.Thread(target=job, daemon=True).start()
     return ev
+
+
+def save_warm_s(seconds: float) -> None:
+    try:
+        WARM_FILE.parent.mkdir(parents=True, exist_ok=True)
+        WARM_FILE.write_text(json.dumps({"transcription_s": round(seconds, 1)}), encoding="utf-8")
+    except OSError:  # a read-only folder only loses the estimate
+        pass
+
+
+def measured_warm_s() -> float | None:
+    try:
+        return float(json.loads(WARM_FILE.read_text(encoding="utf-8"))["transcription_s"])
+    except (OSError, ValueError, KeyError, TypeError):
+        return None
+
+
+def warm_stage_text(tid: str) -> str:
+    """The stage shown while a Hybrid run waits for the simulation: the last measured duration on this server (or a
+    range before the first measurement) and how long ago it started."""
+    est = measured_warm_s()
+    about = f"about {est:.0f} s" if est else "about 2 to 3 minutes"
+    started = _warm_started.get(tid)
+    ago = f"; started {time.monotonic() - started:.0f} s ago" if started is not None else ""
+    return f"Simulating every candidate fault of the transcription (once per server start, {about}{ago})..."
+
+
+def warm_suggestions() -> None:
+    """The Engineer mode suggestion's candidates on our redrawing (the key suggest_next's planner uses)."""
+    _scenario_benches(NETLIST, ("true", 0))
+
+
+_start: dict = {"enabled": False, "t0": None, "done": threading.Event()}
+
+
+def warm_at_start() -> None:
+    """Public mode: simulate everything a first visitor would wait for (the default saved read, the Engineer
+    suggestion, the twin signatures) before the proxy lets visitors in (/api/ready)."""
+    _start["enabled"], _start["t0"] = True, time.monotonic()
+
+    def job():
+        try:
+            warm_signatures()
+            warm_transcription(transcriptions.DEFAULT).wait()
+            warm_suggestions()
+        finally:
+            _start["done"].set()
+
+    threading.Thread(target=job, daemon=True, name="warm-at-start").start()
+
+
+def warm_status() -> dict:
+    """Whether the start-up warm-up is done (always ready when it is off: local use warms on first use)."""
+    if not _start["enabled"]:
+        return {"ready": True, "warm_at_start": False}
+    done = _start["done"].is_set()
+    return {"ready": done, "warm_at_start": True, "elapsed_s": round(time.monotonic() - _start["t0"], 1),
+            "estimate_s": measured_warm_s()}
 
 
 def live_read_available() -> bool:
