@@ -43,6 +43,14 @@ export function useViewBox(host: RefObject<HTMLDivElement | null>, svg: string, 
     return { x: cx - w / 2, y: cy - h / 2, w, h };
   }, [host]);
 
+  /** A normalized view moved back inside the drawing on each axis where it is smaller than the drawing: centring
+   * points near an edge must not show an empty band past that edge (the points then sit off centre). */
+  const inside = useCallback((v: View): View => {
+    const f = full.current!;
+    const clamp = (p: number, size: number, lo: number, span: number) => (size >= span ? p : Math.min(Math.max(p, lo), lo + span - size));
+    return { ...v, x: clamp(v.x, v.w, f.x, f.w), y: clamp(v.y, v.h, f.y, f.h) };
+  }, []);
+
   const animateTo = useCallback((target: View, ms = 450) => {
     cancelAnimationFrame(anim.current);
     const from = view.current ?? target;
@@ -151,10 +159,11 @@ export function useViewBox(host: RefObject<HTMLDivElement | null>, svg: string, 
     animateTo(normalize({ x: v.x + (v.w * (1 - k)) / 2, y: v.y + (v.h * (1 - k)) / 2, w: v.w * k, h: v.h * k }), 200);
   };
 
-  return { root, full, normalize, animateTo, fit, goHome, zoomBy, panned, pointer: { onPointerDown, onPointerMove, onPointerUp } };
+  return { root, full, normalize, inside, animateTo, fit, goHome, zoomBy, panned, pointer: { onPointerDown, onPointerMove, onPointerUp } };
 }
 
-/** A view around these drawing points, at least minW x minH, slightly above centre (labels sit above terminals). */
+/** A view around these drawing points, at least minW x minH, centred on them (lift moves the view up: the points sit
+ * lower in it). */
 export function around(pts: [number, number][], padW: number, padH: number, minW: number, minH: number, lift = 20): View {
   const xs = pts.map((p) => p[0]);
   const ys = pts.map((p) => p[1]);

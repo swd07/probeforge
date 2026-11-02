@@ -29,7 +29,7 @@ export function Schematic({ svg, nets, probes, truthLive, onPick, selected = [],
 
   useEffect(() => setFollow(true), [runKey]);
 
-  const { root, full, normalize, animateTo, fit, goHome, zoomBy, panned, pointer } = useViewBox(host, svg, home, () => setFollow(false));
+  const { root, full, normalize, inside, animateTo, fit, goHome, zoomBy, panned, pointer } = useViewBox(host, svg, home, () => setFollow(false));
 
   useEffect(() => {
     goHome();
@@ -83,9 +83,9 @@ export function Schematic({ svg, nets, probes, truthLive, onPick, selected = [],
     if (!el) return;
     const pts = terminalPoints(el, probes.filter((q) => q.step === lastStep).flatMap((p) => [p.term_a, p.term_b]));
     if (!pts.length) return;
-    animateTo(normalize(around(pts, 360, 240, 880, 460)));
+    animateTo(inside(normalize(around(pts, 360, 240, 880, 460, 0))));
     // probes is read through lastStep on purpose: zoom only when a new measurement arrives
-  }, [lastStep, follow, animateTo, normalize]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [lastStep, follow, animateTo, normalize, inside]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ATS hybrid: with follow on, zoom to the next planned reading as soon as it is planned
   const plannedKey = planned.join("|");
@@ -95,9 +95,9 @@ export function Schematic({ svg, nets, probes, truthLive, onPick, selected = [],
     if (!el) return;
     const pts = terminalPoints(el, planned);
     if (!pts.length) return;
-    animateTo(normalize(around(pts, 360, 240, 880, 460)));
+    animateTo(inside(normalize(around(pts, 360, 240, 880, 460, 0))));
     // planned is read through plannedKey on purpose: zoom only when the plan changes
-  }, [plannedKey, follow, animateTo, normalize]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [plannedKey, follow, animateTo, normalize, inside]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <section className="schematic-card">
