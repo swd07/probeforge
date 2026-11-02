@@ -463,6 +463,7 @@ table.quality tr.worse td { color: var(--warn); }
 .st-column .event-log { max-height: none; }
 .ats-flow.vertical .flow-step { white-space: normal; }
 .limits-open { margin-top: auto; text-align: left; white-space: normal; }
+.st-column > * { flex-shrink: 0; } /* the column scrolls; its blocks never shrink below their text (the limits button was cut at 1280x800) */
 .limits-modal { max-width: min(980px, 94vw); }
 .limits-table { border-collapse: collapse; width: 100%; font-size: 13px; }
 .limits-table td { padding: 5px 8px; border-top: 1px solid var(--line); vertical-align: top; }
