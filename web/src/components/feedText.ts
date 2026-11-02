@@ -1,4 +1,4 @@
-import { idText } from "../labels";
+import { idText, modeText } from "../labels";
 import type { ToolEvent } from "../types";
 
 // What the log shows for a tool call (also the readings list of the Engineer panel and the diagnosis form).
@@ -25,6 +25,11 @@ export const ICON: Record<string, string> = {
 export const readingText = (x: any) => `${x.point_a}→${x.point_b} ${x.volts !== undefined ? `${x.volts} V` : x.ohms === "open" ? "open" : `${x.ohms} Ω`}`;
 
 export function describeTool(ev: ToolEvent): { title: string; detail: string } {
+  const { title, detail } = describeRaw(ev);
+  return { title: modeText(title), detail: modeText(detail) };
+}
+
+function describeRaw(ev: ToolEvent): { title: string; detail: string } {
   const a = ev.args as Record<string, any>;
   const r = ev.result as Record<string, any>;
   switch (ev.tool) {

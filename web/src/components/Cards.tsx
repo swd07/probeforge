@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { tidyExplanation } from "../explanationText";
-import { idText, readable, sentence } from "../labels";
+import { idText, modeText, readable, sentence } from "../labels";
 import type { ApprovalRequest, AtsPanel, Done, FlagsRequest, WiringRequest } from "../types";
 
 /** ATS bench strong approval: the policy's own facts next to the requester's reason, the cited readings, and a second
@@ -147,7 +147,7 @@ export function WiringCard({ req, onChoose }: { req: WiringRequest; onChoose: (c
           {req.options.map((o, i) => (
             <li key={i}>
               <button className="btn ghost wiring-option" onClick={() => onChoose(i)}>
-                <b>{o.fault}</b> if the wiring is:
+                <b>{modeText(o.fault)}</b> if the wiring is:
                 <span className="flag-terms">{o.wiring.join("; ")}</span>
               </button>
             </li>
@@ -226,7 +226,7 @@ export function ResultCard({ done, showTruth, onToggleTruth, saved, onCompare, c
     <section className={`result-card docked ${collapsed ? "collapsed" : ""}`}>
       <button className="result-head" onClick={() => setCollapsed((c) => !c)} aria-expanded={!collapsed}>
         <span className={`verdict v-${done.verdict.replace(" ", "-")}`}>{VERDICT_TEXT[done.verdict]}</span>
-        <span className="head-fault">{done.fault}</span>
+        <span className="head-fault">{modeText(done.fault)}</span>
         <span className="chevron">{collapsed ? "▾" : "▴"}</span>
       </button>
       {!collapsed && (
@@ -235,18 +235,18 @@ export function ResultCard({ done, showTruth, onToggleTruth, saved, onCompare, c
           <div className="reveal">
             <div>
               <span className="lbl">Injected fault</span>
-              <span className="val fault">{done.fault}</span>
+              <span className="val fault">{modeText(done.fault)}</span>
               {done.latent && <span className="tag">latent</span>}
             </div>
             <div>
               <span className="lbl">{manual ? "Your diagnosis" : hybrid ? "Pipeline diagnosis" : "Agent diagnosis"}</span>
-              <span className="val">{said}</span>
+              <span className="val">{modeText(said)}</span>
               {typeof d.confidence === "number" && !done.twins_named && <span className="tag">{(Number(d.confidence) * 100).toFixed(0)}%</span>}
             </div>
             {typeof d.note === "string" && d.note && !done.twins_named && (
               <div>
                 <span className="lbl">Note</span>
-                <span className="val">{d.note}</span>
+                <span className="val">{modeText(d.note)}</span>
               </div>
             )}
           </div>
@@ -290,7 +290,7 @@ export function ResultCard({ done, showTruth, onToggleTruth, saved, onCompare, c
               )}
             </div>
           )}
-          {done.twins.length > 0 && <p className="twins">No tool can tell this fault apart from: {done.twins.join(", ")}.</p>}
+          {done.twins.length > 0 && <p className="twins">No tool can tell this fault apart from: {modeText(done.twins.join(", "))}.</p>}
           <div className="figures">
             <div><b>{done.measurements}</b><span>measurements</span></div>
             <div><b>{done.redundant}</b><span>redundant</span></div>

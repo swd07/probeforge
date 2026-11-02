@@ -1,4 +1,5 @@
 import type { Hypothesis } from "../types";
+import { modeText } from "../labels";
 import { hypKey } from "../useSession";
 
 export function Hypotheses({
@@ -32,7 +33,7 @@ export function Hypotheses({
               <div className="hyp-head">
                 <span className="hyp-name">
                   {h.component}
-                  {h.part ? ` ${h.part}` : ""} <em>{h.failure_mode.replace("_", " ")}</em>
+                  {h.part ? ` ${h.part}` : ""} <em>{modeText(h.failure_mode)}</em>
                 </span>
                 <span className="hyp-p">
                   {(h.probability * 100).toFixed(0)}%

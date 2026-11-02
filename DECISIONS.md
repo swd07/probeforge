@@ -778,7 +778,9 @@ decisions at the end (see CLAUDE.md). Architecture: [ARCHITECTURE.md](ARCHITECTU
   (`web/src/labels.ts`): approval card titles in sentence case ("Adjust cut-off contact TS:8-9", "Isolate sources"),
   policy reasons ("adjust cut-off contact needs human approval"), the feed's repair line ("Request adjust cut-off
   contact TS:8-9"), the repair list and the part kinds of the diagnosis form ("8-9 (cut-off contact, closed on
-  Normal)"). One spelling on screen: "cut-off". The "Agent action limits" table keeps every id, the agent's real
+  Normal)"). One spelling on screen: "cut-off". Failure modes read as words wherever a fault or cause is shown
+  ("TS 8-9 stuck closed": suggestion and next-step cards, candidate faults, result card, feed, Compare, troubleshooting
+  sheet, diagnosis form). The "Agent action limits" table keeps every id, the agent's real
   vocabulary, with its label next to it. Run records, traces, the policy and the frozen modules keep the ids.
 - **Why:** the dev-07 Engineer walkthrough for the video showed "adjust_cutoff_contact needs human approval",
   "Request adjust cutoff_contact" and the title "Adjust Cutoff Contact" (CSS capitalize) next to "cut-off" in every

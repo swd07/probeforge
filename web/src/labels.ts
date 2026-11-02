@@ -57,3 +57,9 @@ const KIND_TEXT: Record<string, string> = {
 export function kindText(kind: string): string {
   return KIND_TEXT[kind] ?? kind.replace(/_/g, " ");
 }
+
+/** Failure modes as words in a fault or cause text: "TS 8-9 stuck_closed" -> "TS 8-9 stuck closed". Only the
+ * two-word modes are changed, so part ids keep their underscores. */
+export function modeText(text: string): string {
+  return text.replace(/\bstuck_(open|closed)\b/g, "stuck $1");
+}

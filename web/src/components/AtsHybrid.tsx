@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { modeText } from "../labels";
 import type { AtsTranscription, ModelCheck, NextStep } from "../types";
 
 const pct = (x: number) => `${(x * 100).toFixed(0)}%`;
@@ -137,7 +138,7 @@ export function NextStepCard({ next, title = "Next step (planner)", note, onUse 
           {next.outcomes.map((o, i) => (
             <li key={i}>
               <span className="next-reading">if {o.reading}:</span>{" "}
-              {o.causes.join(", ")}
+              {modeText(o.causes.join(", "))}
               {o.n > o.causes.length && <em> and {o.n - o.causes.length} more</em>}
             </li>
           ))}

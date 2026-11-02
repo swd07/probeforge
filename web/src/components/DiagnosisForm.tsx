@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import type { FeedItem, Meta } from "../types";
 import { describeTool } from "./Feed";
-import { kindText } from "../labels";
+import { kindText, modeText } from "../labels";
 import { diagnosisArgs, type Evidence } from "../manualArgs";
 
 const FUNCTIONAL = new Set(["read_indicators", "press_button", "wait", "read_panel", "read_event_log", "read_metering", "read_position_indicator",
@@ -98,7 +98,7 @@ export function DiagnosisForm({ meta, feed, onSubmit, onCancel }: { meta: Meta; 
                 <option value="">choose</option>
                 {modes.map((m) => (
                   <option key={m} value={m}>
-                    {m.replace("_", " ")}
+                    {modeText(m)}
                   </option>
                 ))}
               </select>

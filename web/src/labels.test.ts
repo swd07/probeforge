@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { requestTitle } from "./components/Cards";
 import { describeTool } from "./components/feedText";
-import { idText, kindText, labelIds, readable } from "./labels";
+import { idText, kindText, labelIds, modeText, readable } from "./labels";
 import type { ToolEvent } from "./types";
 
 const REPAIRS = ["replace_coil", "repair_wire", "repair_connector", "replace_cutoff_contact", "adjust_cutoff_contact", "replace_controller"];
@@ -54,5 +54,26 @@ describe("Agent action limits keep the ids, with a label", () => {
       { text: " (open 52U, lock out the generator)" },
     ]);
     expect(labelIds("the same replacement again")).toEqual([{ text: "the same replacement again" }]);
+  });
+});
+
+// strings recorded in the walkthrough: the suggestion card, the result card and the feed
+describe("failure modes shown as words", () => {
+  it("fault and cause texts", () => {
+    expect(modeText("TS:8-9 stuck_closed or TS:71-72 stuck_closed (root cause; also present: TS:A-B burnt)"))
+      .toBe("TS:8-9 stuck closed or TS:71-72 stuck closed (root cause; also present: TS:A-B burnt)");
+    expect(modeText("TS jammed, TS A-B open, TS A-B burnt, TS 8-9 stuck_closed, TS 6-7 stuck_closed"))
+      .toBe("TS jammed, TS A-B open, TS A-B burnt, TS 8-9 stuck closed, TS 6-7 stuck closed");
+    expect(modeText("SE X1-J2 stuck_open")).toBe("SE X1-J2 stuck open");
+  });
+
+  it("the feed's diagnosis line", () => {
+    const ev = { tool: "submit_diagnosis", args: { outcome: "diagnosed", component: "TS", part: "8-9", failure_mode: "stuck_closed", confidence: 0.8 }, result: {} } as unknown as ToolEvent;
+    expect(describeTool(ev)).toEqual({ title: "Diagnosis: TS 8-9 stuck closed", detail: "confidence 80%" });
+  });
+
+  it("leaves part ids and other words alone", () => {
+    const text = "H1:W12_TS1-W12_P12 open; KM1 welded; restuck_openings";
+    expect(modeText(text)).toBe(text);
   });
 });

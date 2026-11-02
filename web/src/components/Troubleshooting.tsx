@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { modeText } from "../labels";
 
 interface Check {
   check: string;
@@ -71,7 +72,7 @@ export function TroubleshootingView({ onClose }: { onClose: () => void }) {
                 <h4>Possible causes ({s.causes.length})</h4>
                 <ol className="sheet-causes">
                   {s.causes.map((c) => (
-                    <li key={c}>{c}</li>
+                    <li key={c}>{modeText(c)}</li>
                   ))}
                 </ol>
               </div>
@@ -87,7 +88,7 @@ export function TroubleshootingView({ onClose }: { onClose: () => void }) {
                             <span key={j}>
                               {j > 0 && "; "}
                               <span className="next-reading">{reading}:</span>{" "}
-                              {j === g.length - 1 && causes.length > 2 ? `the other ${causes.length}` : causes.join(", ")}
+                              {j === g.length - 1 && causes.length > 2 ? `the other ${causes.length}` : modeText(causes.join(", "))}
                             </span>
                           ))}
                         </div>
@@ -116,7 +117,7 @@ export function TroubleshootingView({ onClose }: { onClose: () => void }) {
                 <tbody>
                   {s.causes.map((cause) => (
                     <tr key={cause}>
-                      <td>{cause}</td>
+                      <td>{modeText(cause)}</td>
                       {meas.map((c) => (
                         <td key={c.check}>{c.expected[cause]}</td>
                       ))}

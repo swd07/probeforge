@@ -1,4 +1,5 @@
 import type { CompareColumn, CompareResult } from "../types";
+import { modeText } from "../labels";
 
 const ORDER = [
   ["human", "Engineer"],
@@ -24,7 +25,7 @@ function Column({ title, col, pending }: { title: string; col?: CompareColumn; p
       {col.assisted && <div className="muted">assisted: planner suggestions were shown</div>}
       {col.transcription && <div className="muted">{col.transcription}</div>}
       <span className={`verdict small v-${(col.verdict ?? "").replace(" ", "-")}`}>{col.verdict}</span>
-      <div className="cmp-diag">{col.diagnosis}</div>
+      <div className="cmp-diag">{modeText(String(col.diagnosis ?? ""))}</div>
       {typeof col.confidence === "number" && <div className="muted">confidence {(col.confidence * 100).toFixed(0)}%</div>}
       <dl>
         <dt>measurements</dt><dd>{col.measurements}</dd>
@@ -69,7 +70,7 @@ export function CompareView({ result, progress, onClose, ats = false }: { result
         <div className="result-head">
           <div>
             <div className="modal-kicker">Same fault, {ats ? "four" : "three"} diagnosticians</div>
-            <h2>{result ? result.fault : ats ? "Running the others on the same fault..." : "Running the agent and the baseline..."}</h2>
+            <h2>{result ? modeText(result.fault) : ats ? "Running the others on the same fault..." : "Running the agent and the baseline..."}</h2>
           </div>
           <button className="close" onClick={onClose} aria-label="Close comparison">{"×"}</button>
         </div>

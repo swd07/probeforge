@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import type { FeedItem, Hypothesis, NextStep, ToolEvent } from "../types";
-import { idText, readable } from "../labels";
+import { idText, modeText, readable } from "../labels";
 import { ICON, describeTool, plain } from "./feedText";
 
 export { describeTool } from "./feedText";
@@ -163,7 +163,7 @@ export function Feed({ items, manual = false, title, running = false, idleText }
                 {it.top && (
                   <span className="hyp-top">
                     {" "}lead: {it.top.component}
-                    {it.top.part ? ` ${it.top.part}` : ""} {it.top.failure_mode} {(it.top.probability * 100).toFixed(0)}%
+                    {it.top.part ? ` ${it.top.part}` : ""} {modeText(it.top.failure_mode)} {(it.top.probability * 100).toFixed(0)}%
                   </span>
                 )}
               </div>
@@ -192,12 +192,12 @@ export function Feed({ items, manual = false, title, running = false, idleText }
                 {(ev.verdict === "error" || (!ev.executed && ev.verdict.startsWith("needs_"))) && typeof ev.result.error === "string" && (
                   <div className="policy">{ev.result.error}</div>
                 )}
-                {typeof ev.result.note === "string" && <div className="note">{ev.result.note}</div>}
+                {typeof ev.result.note === "string" && <div className="note">{modeText(ev.result.note)}</div>}
                 {"plan" in it && it.plan && it.plan.tool !== "submit_diagnosis" && (
                   <div className="detail planned-detail">
                     planned: {it.plan.why}
                     {it.plan.gain_bits !== undefined && ` (${it.plan.gain_bits.toFixed(2)} bits)`}, {it.plan.causes_left} causes
-                    {it.lead && ` · lead after: ${it.lead.component}${it.lead.part ? " " + it.lead.part : ""} ${it.lead.failure_mode} ${(it.lead.probability * 100).toFixed(0)}%`}
+                    {it.lead && ` · lead after: ${it.lead.component}${it.lead.part ? " " + it.lead.part : ""} ${modeText(it.lead.failure_mode)} ${(it.lead.probability * 100).toFixed(0)}%`}
                   </div>
                 )}
               </div>
