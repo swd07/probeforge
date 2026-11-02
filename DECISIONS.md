@@ -880,3 +880,22 @@ decisions at the end (see CLAUDE.md). Architecture: [ARCHITECTURE.md](ARCHITECTU
   timeouts (could bill twice).
 - **Evidence:** pytest: a 503 then success (two entries, one charge), two 500s (error, $0), Retry-After honoured and
   capped, a connection error retried, a timeout and a 400 not retried, the guard refusing the retry at the cap.
+
+### D60. The public demo runs in Docker behind Caddy on one VPS (2026-11-02)
+
+- **What:** a provider-agnostic deployment (docs/DEPLOY.md): a three-stage image (no build tools, non-root, health
+  check) and Caddy with automatic HTTPS in one compose file, the `runs/` folder on a named volume (the public ledger
+  and visitor traces survive redeploys), uvicorn reading X-Forwarded-For only from Caddy's fixed address, the Origin
+  allow-list and the allowed hosts from the root-only env file that also holds the key, a hardened Ubuntu 24.04 host
+  (SSH keys only, ufw 22/80/443, fail2ban, unattended upgrades). CI builds the image, checks every runtime path inside
+  it and smoke-tests it behind Caddy, in a browser, with no key.
+- **Why:** the public demo must run 24/7 with its spend caps intact across restarts, without the key ever in the repo
+  or the image, and a missing file must fail CI rather than the server; the server should also host a personal site
+  later (a second Caddy block).
+- **Alternatives:** a platform service (provider lock-in, often no persistent disk or WebSockets on free tiers); nginx
+  plus certbot (more moving parts than Caddy's automatic certificates); several uvicorn workers (the sessions live in
+  memory).
+- **Evidence:** the image built and ran locally with Caddy in its HTTP setup: deploy/check_image.py (16 runtime paths,
+  8 exclusions, uid 10001, no build tools) and scripts/smoke_deploy.py with headers and a browser (Edge) passed, a
+  Hybrid run on a saved read completed through Caddy under the CSP; pytest for the proxy headers (the visitor counted
+  behind the proxy, a forged header ignored), the allowed hosts and the strict Origin list.
