@@ -498,3 +498,10 @@ table.quality tr.worse td { color: var(--warn); }
 .topbar .stats-row > span { white-space: nowrap; flex-shrink: 0; }
 .topbar .stats-row .source { flex-shrink: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 @media (min-width: 1800px) { .topbar .stats { max-width: 330px; } }
+
+/* parts an approved repair changed (the diagnosed outline keeps its own colour) */
+.schematic svg .repaired:not(.diagnosed) line, .schematic svg .repaired:not(.diagnosed) path,
+.schematic svg .repaired:not(.diagnosed) rect, .schematic svg .repaired:not(.diagnosed) circle.sym {
+  stroke: #2f9e44 !important; stroke-width: 4; }
+.schematic svg .repaired-mark rect { fill: #e6fcf0; stroke: #2f9e44; stroke-width: 1.5; }
+.schematic svg .repaired-mark text { fill: #1b6b30; font-size: 12px; font-weight: 700; }

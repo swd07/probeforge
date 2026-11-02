@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from "react";
+import type { Repaired } from "../repairs";
 import type { NetState, Probe } from "../types";
-import { nearestTerminal, paint, terminalPoints } from "./schematic/overlays";
+import { nearestTerminal, paint, partElements, terminalPoints } from "./schematic/overlays";
 import { around, useViewBox, type View } from "./schematic/viewBox";
 
 export type { View } from "./schematic/viewBox";
@@ -17,13 +18,14 @@ interface Props {
   runKey: number | null; // changes at every new run: "follow probes" turns back on (a manual zoom turns it off)
   fitKey: string; // changes at session start and at the reveal: zoom out to the home view
   home?: View; // the default view (drawing units); without it the home view is the whole drawing
-  focus?: { component: string; part: string } | null; // ATS: after the diagnosis, zoom to this part and outline it
+  focus?: { component: string; part: string } | null;
+  repaired?: Repaired[]; // ATS: parts an approved repair changed, outlined with a pill (follow on: the view goes there) // ATS: after the diagnosis, zoom to this part and outline it
 }
 
 /** The schematic is the server-rendered SVG. Every wire carries data-net and every terminal data-terminal,
  * so probes and what was learned about each net are painted straight onto it (schematic/overlays.ts). Zoom and pan
  * work on the viewBox (schematic/viewBox.ts), so labels stay sharp at any zoom. */
-export function Schematic({ svg, nets, probes, truthLive, onPick, selected = [], suspects = [], planned = [], runKey, fitKey, home, focus = null }: Props) {
+export function Schematic({ svg, nets, probes, truthLive, onPick, selected = [], suspects = [], planned = [], runKey, fitKey, home, focus = null, repaired = [] }: Props) {
   const host = useRef<HTMLDivElement>(null);
   const [follow, setFollow] = useState(true);
 
@@ -72,8 +74,26 @@ export function Schematic({ svg, nets, probes, truthLive, onPick, selected = [],
   // paint nets, probe points and reading labels
   useEffect(() => {
     const el = root();
-    if (el) paint(el, { nets, probes, truthLive, selected, suspects, planned });
-  }, [svg, nets, probes, truthLive, selected, suspects, planned]); // eslint-disable-line react-hooks/exhaustive-deps
+    if (el) paint(el, { nets, probes, truthLive, selected, suspects, planned, repaired });
+  }, [svg, nets, probes, truthLive, selected, suspects, planned, repaired]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ATS intervention: with follow on, the view goes to a part as soon as its repair is done
+  const lastRepair = repaired.length ? repaired[repaired.length - 1] : null;
+  const repairKey = lastRepair ? `${lastRepair.step}:${lastRepair.part}` : "";
+  useEffect(() => {
+    if (!follow || !lastRepair || !full.current) return;
+    const el = root();
+    if (!el) return;
+    const parts = partElements(el, lastRepair.part);
+    if (!parts.length) return;
+    const boxes = parts.map((n) => n.getBBox());
+    const corners: [number, number][] = [
+      [Math.min(...boxes.map((b) => b.x)), Math.min(...boxes.map((b) => b.y))],
+      [Math.max(...boxes.map((b) => b.x + b.width)), Math.max(...boxes.map((b) => b.y + b.height))],
+    ];
+    animateTo(inside(normalize(around(corners, 300, 200, 620, 330, 0))));
+    // repaired is read through repairKey on purpose: zoom once per repair
+  }, [repairKey, follow, animateTo, normalize, inside]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // agent mode: zoom to the area of the latest measurement
   const lastStep = probes.length ? probes[probes.length - 1].step : -1;

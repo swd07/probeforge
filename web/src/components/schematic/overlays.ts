@@ -1,3 +1,4 @@
+import type { Repaired } from "../../repairs";
 import type { NetState, Probe } from "../../types";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
@@ -16,15 +17,23 @@ export interface Marks {
   selected: (string | null)[];
   suspects: { component: string; part: string }[];
   planned: string[];
+  repaired?: Repaired[];
+}
+
+/** The drawing's elements of a repaired part (a component prefix such as "CP:" selects all its parts). */
+export function partElements(el: SVGSVGElement, part: string): SVGGraphicsElement[] {
+  const sel = part.endsWith(":") ? `[data-part^="${CSS.escape(part)}"]` : `[data-part="${CSS.escape(part)}"]`;
+  return Array.from(el.querySelectorAll<SVGGraphicsElement>(sel));
 }
 
 /** Paint what is known onto the server-rendered SVG (every wire carries data-net, every terminal data-terminal,
  * every part data-part): net states, picked points, suspects, probe points with reading labels, the planned reading. */
-export function paint(el: SVGSVGElement, { nets, probes, truthLive, selected, suspects, planned }: Marks): void {
+export function paint(el: SVGSVGElement, { nets, probes, truthLive, selected, suspects, planned, repaired = [] }: Marks): void {
   el.querySelectorAll(".probe-overlay").forEach((n) => n.remove());
   el.querySelectorAll("[data-net]").forEach((n) => n.classList.remove(...NET_CLASSES, "picked"));
   el.querySelectorAll("circle[data-terminal]").forEach((n) => n.classList.remove("probe-active", "probe-old", "picked", "planned"));
   el.querySelectorAll("[data-part].suspect").forEach((n) => n.classList.remove("suspect"));
+  el.querySelectorAll("[data-part].repaired").forEach((n) => n.classList.remove("repaired"));
   for (const s of suspects) {
     const sel = s.part ? `[data-part="${CSS.escape(`${s.component}:${s.part}`)}"]` : `[data-part^="${CSS.escape(`${s.component}:`)}"]`;
     el.querySelectorAll(sel).forEach((n) => n.classList.add("suspect"));
@@ -109,10 +118,37 @@ export function paint(el: SVGSVGElement, { nets, probes, truthLive, selected, su
     g.append(ring, rect, text);
     overlay.append(g);
   });
+  // parts an approved repair has changed: outlined, with a pill centred under the part, below the terminal numbers
+  // (above it are the component headings and the reading labels)
+  for (const r of repaired) {
+    const parts = partElements(el, r.part);
+    if (!parts.length) continue;
+    parts.forEach((n) => n.classList.add("repaired"));
+    const boxes = parts.map((n) => n.getBBox());
+    const mid = (Math.min(...boxes.map((b) => b.x)) + Math.max(...boxes.map((b) => b.x + b.width))) / 2;
+    const top = Math.max(...boxes.map((b) => b.y + b.height)) + REPAIR_DY;
+    const w = 12 + r.label.length * 7;
+    const g = document.createElementNS(SVG_NS, "g");
+    g.setAttribute("class", "repaired-mark");
+    const rect = document.createElementNS(SVG_NS, "rect");
+    rect.setAttribute("x", String(mid - w / 2));
+    rect.setAttribute("y", String(top));
+    rect.setAttribute("width", String(w));
+    rect.setAttribute("height", String(PILL_H));
+    rect.setAttribute("rx", "5");
+    const text = document.createElementNS(SVG_NS, "text");
+    text.setAttribute("x", String(mid));
+    text.setAttribute("y", String(top + PILL_H - 5));
+    text.setAttribute("text-anchor", "middle");
+    text.textContent = r.label;
+    g.append(rect, text);
+    overlay.append(g);
+  }
   el.append(overlay);
 }
 
 const PILL_H = 18;
+const REPAIR_DY = 22; // under a repaired part's outline, clear of the terminal numbers
 const LABEL_DY = 36; // below the terminal number, which the drawing puts about 20 to 33 px under the terminal
 
 /** Where the "next A" / "next B" labels of a planned reading go: on an opaque pill centred under each terminal, one

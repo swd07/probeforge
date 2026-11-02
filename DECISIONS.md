@@ -803,3 +803,18 @@ decisions at the end (see CLAUDE.md). Architecture: [ARCHITECTURE.md](ARCHITECTU
   transfer is verified (a repair that cannot succeed would trap the visitor).
 - **Evidence:** Vitest for the condition (isolated, restored and not verified, verified, no intervention, motor
   starter bench); browser check of both clicks.
+
+### D55. The intervention is visible on the drawing and in the feed (2026-11-02)
+
+- **What:** after an approved repair has run, the drawing outlines the part in green with a pill under it
+  ("adjusted", "replaced", "repaired"; a controller replacement marks all CP parts), and with "follow probes" on the
+  view goes to that part (`web/src/repairs.ts`). The feed shows the recommendation a tool returns, verbatim (the coil
+  replacement: "relubricate the operator when the TS coil is replaced", from the operator's manual, docs/ATS_MODEL.md
+  S3). Denied or pending requests mark nothing. Display only: tools, policy and records unchanged.
+- **Why:** in the dev-07 walkthrough for the video the repair moments had no visual on the drawing, and the
+  recommendation the frozen tool already returned was never shown.
+- **Alternatives:** clearing the diagnosed outline after the repair (the diagnosis stays a fact of the run); marking on
+  the request (a denied repair would look done).
+- **Evidence:** Vitest for the repaired parts (executed only, controller, a part repaired twice, labels) and the
+  recommendation (executed, denied, absent); browser walkthrough of dev-07: pills "adjusted" on TS 8-9 and "replaced"
+  on TS A-B, recommendation line under step #6, still 6:17 at "Transfer verified".

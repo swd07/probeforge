@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { readable } from "./labels";
+import { repairedParts } from "./repairs";
 import { LimitsModal } from "./components/AtsPanel";
 import { AtsStatusColumn } from "./components/AtsStatus";
 import { ApprovalCard, FlagsCard, WiringCard } from "./components/Cards";
@@ -91,6 +92,7 @@ export function App() {
   const cur = state.bench === bench;
   const logItems = view === state.mode && cur ? state.feed : [];
   const curMeta = ats ? atsMeta : meta;
+  const repaired = useMemo(() => (ats && cur ? repairedParts(state.feed) : []), [ats, cur, state.feed]);
   const atsPanel = ats && cur ? (state.panel as unknown as AtsPanelState | null) : null;
   const atsDiagnosing = ats && cur && manual && state.mode === "manual" && state.status === "running" && !state.done;
   const atsIntervention = ats && cur && !!state.done?.intervention && state.status !== "stopped" && state.status !== "error";
@@ -163,6 +165,7 @@ export function App() {
               fitKey={state.done ? "reveal" : state.feed.length === 0 ? "start" : "run"}
               home={ats ? ATS_HOME : undefined}
               focus={ats && cur && state.done?.outcome === "diagnosed" ? diagnosedPart(state.done.diagnosis) : null}
+              repaired={repaired}
             />
             {pickNote && <div className="error-banner">{pickNote}</div>}
             {cur && state.error && <div className="error-banner">{state.error}</div>}
