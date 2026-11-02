@@ -188,6 +188,8 @@ baseline's tool logs and diagnoses are identical before and after (120 of 120); 
 - The page shows the explanation for the technician tidied for display: a step prefix the model repeated is
   removed, readings it spelled out are shown as numbers with units, and hyphens are restored in compounds it wrote
   apart ("de-energized", "fault-free", "cut-off contact"). The run record keeps the model's text unchanged, and the explanation check scores that text (D52).
+- The explanation check verifies the repair order, the isolation sentence and that the cited readings were taken, but
+  not how the text interprets a reading: two recorded explanations misread the manual-check reading and passed.
 - A strong-approval request must cite executed instrument readings; the policy checks that they were executed, not when
   they were taken (a reading from before a repair can be cited for the restore).
 - The ATS model, the assumptions and the troubleshooting sheet have not been reviewed by an electrical engineer.
