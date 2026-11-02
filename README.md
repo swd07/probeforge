@@ -8,7 +8,9 @@ finds the root cause, under safety limits enforced in code.**
 Built during the Meta Global AI Developer Hackathon, Oct 26 to Nov 4, 2026 (Indie Developer track). Solo project by
 Eduard Kharaev.
 
-![Hybrid v2 diagnosing a transfer switch fault](docs/screenshots/ats_hybrid_midrun.png)
+![Hybrid v2 mid-run on a transfer switch fault: the next planned reading ringed on the drawing, the candidate faults, the pipeline log and the UPS clock draining](docs/screenshots/ats_hybrid_midrun.png)
+
+*Hybrid v2 mid-run on a saved drawing read: the planner's next reading is ringed on the drawing ("next A", "next B"), the log lists every reading with its policy check, and the UPS clock drains 30 s per reading.*
 
 ## The problem
 
@@ -35,7 +37,9 @@ Every reading or action passes the policy first. Anything risky waits for a huma
 allowed. The UPS clock drains 30 s per reading, and a correct diagnosis after the UPS ran out is shown as what it is:
 critical load lost.
 
-![Result card: verdict, UPS time left at diagnosis, explanation for the technician](docs/screenshots/ats_result.png)
+![Result card after the same run: verdict Correct, the injected fault revealed, UPS time left at diagnosis, Muse Spark's explanation for the technician, and the diagnosed part outlined on the drawing](docs/screenshots/ats_result.png)
+
+*The same run's result: the diagnosed part outlined on the drawing, the injected fault revealed only now, the UPS time left at diagnosis and Muse Spark's explanation for the technician.*
 
 ## Quick start
 
@@ -126,6 +130,10 @@ table is in the UI and in [docs/ATS_MODEL.md](docs/ATS_MODEL.md).
 
 Blocked attempts return to the diagnostician as an error and are counted. In the holdout run the batch approver
 approved the approval tier and denied every strong approval.
+
+![Engineer mode: an approval card for isolating both sources, with the technician's reason and Deny / Approve buttons](docs/screenshots/ats_engineer_approval.png)
+
+*Engineer mode: isolating the sources for an ohmmeter check waits for a human approval, with the reason on the card.*
 
 ## Results
 
