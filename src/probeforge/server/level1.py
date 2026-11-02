@@ -222,7 +222,7 @@ class AgentSession(Session):
         try:
             ledger().check(EST_PER_AGENT_RUN_USD, what="an agent run", demo=True)
         except SpendLimitError as e:
-            self.emit({"type": "error", "message": str(e)})
+            self.emit({"type": "error", "message": settings.spend_message(e)})
             self.done = True
             return
         self.emit({"type": "session", "mode": "agent", "source": self.source, "effort": self.effort,
@@ -329,7 +329,7 @@ class HybridSession(Session):
         try:
             ledger().check(EST_PER_AGENT_RUN_USD, what="a hybrid run", demo=True)
         except SpendLimitError as e:
-            self.emit({"type": "error", "message": str(e)})
+            self.emit({"type": "error", "message": settings.spend_message(e)})
             self.done = True
             return
         self.emit({"type": "session", "mode": "hybrid", "source": self.source, "model": MUSE_SPARK,
@@ -469,7 +469,7 @@ class ManualSession(Session):
                                  seconds=run.seconds, run=run)
             columns["agent"] = summary(a_trace, verdict(NETLIST, str(CIRCUIT_PATH), self.fault, run.diagnosis, run.outcome))
         except SpendLimitError as e:
-            columns["agent"] = {"runner": "agent", "error": str(e)}
+            columns["agent"] = {"runner": "agent", "error": settings.spend_message(e)}
         except Exception as e:
             columns["agent"] = {"runner": "agent", "error": f"{type(e).__name__}: {e}"}
 

@@ -21,6 +21,7 @@ from probeforge.eval.spend import EST_PER_AGENT_RUN_USD, SpendLimitError
 from probeforge.eval.trace import make_trace
 from probeforge.faults.model import Fault
 from probeforge.server import ats_common as common
+from probeforge.server import settings
 from probeforge.server.ats_common import APPROVAL_TIMEOUT_S, INTERVENTION_TOOLS, LIVE_V, NETLIST, _f, _outage
 from probeforge.server.names import prune
 from probeforge.server.ats_views import column, describe, diagnosis_text, engineer_trace, snapshot
@@ -241,7 +242,7 @@ class AtsSession:
                 columns["agent"] = column(tr, judged(tr), tb.policy.stats.strong_approval_requests, False)
             except Exception as e:  # noqa: BLE001 - spend limit, no key, offline mode, API down
                 columns["agent"] = {"runner": "ats_agent", "error": f"{type(e).__name__}: {e}" if not isinstance(
-                    e, SpendLimitError) else str(e)}
+                    e, SpendLimitError) else settings.spend_message(e)}
         fault = self.judge(self.trace["diagnosis"], self.trace["outcome"])["fault"]
         result = {"type": "compare", "bench": "ats", "fault": fault, "columns": columns, "own": own,
                   "note": f"Re-runs use the batch approval rules (approval tier approved, strong approval denied); the "

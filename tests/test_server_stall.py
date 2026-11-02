@@ -97,9 +97,11 @@ def test_connections_over_the_per_ip_cap_are_refused(monkeypatch):
     monkeypatch.setattr(server.settings, "MAX_PER_IP", 1)
     client = TestClient(server.app)
     with client.websocket_connect("/ws"):
-        with pytest.raises(WebSocketDisconnect) as refused:
-            with client.websocket_connect("/ws"):
-                pass
+        with client.websocket_connect("/ws") as second:  # accepted only to say why, then closed
+            msg = second.receive_json()
+            assert msg["type"] == "error" and "Close another tab" in msg["message"]
+            with pytest.raises(WebSocketDisconnect) as refused:
+                second.receive_json()
         assert refused.value.code == 1013  # try again later
 
 

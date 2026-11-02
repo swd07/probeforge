@@ -115,7 +115,14 @@ async def ws(websocket: WebSocket) -> None:
     if not access.origin_allowed(websocket.headers.get("origin"), websocket.headers.get("host")):
         await websocket.close(code=1008)  # policy violation: a page from another site
         return
-    if sum(_connections.values()) >= settings.MAX_CONNECTIONS or _connections.get(ip, 0) >= settings.MAX_PER_IP:
+    full = sum(_connections.values()) >= settings.MAX_CONNECTIONS
+    if full or _connections.get(ip, 0) >= settings.MAX_PER_IP:
+        # accepted only to say why (a refused handshake reaches the page as a bare "connection lost"), then closed
+        await websocket.accept()
+        await websocket.send_json({"type": "error", "message": (
+            "The server has the most open sessions it allows right now. Try again in a minute." if full else
+            f"This address already has {settings.MAX_PER_IP} open ProbeForge sessions, the most allowed. Close another "
+            "tab, then press Start.")})
         await websocket.close(code=1013)  # try again later
         return
     _connections[ip] = _connections.get(ip, 0) + 1

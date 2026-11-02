@@ -38,7 +38,7 @@ class AtsAgentSession(AtsSession):
         try:
             common.ledger().check(EST_PER_AGENT_RUN_USD, what="an ATS agent run", demo=True)
         except SpendLimitError as e:
-            self.emit({"type": "error", "message": str(e)})
+            self.emit({"type": "error", "message": settings.spend_message(e)})
             self.closed = True
             return
         self.emit({"type": "session", "mode": "agent", "bench": "ats", "source": self.source, "effort": self.effort,
@@ -237,7 +237,7 @@ class AtsHybridSession(AtsSession):
             common.ledger().check(EST_HYBRID_LIVE_USD if live else EST_HYBRID_SAVED_USD, what="an ATS hybrid run", demo=True)
             t = None if live else transcriptions.load(self.transcription)
         except (SpendLimitError, KeyError) as e:
-            self.emit({"type": "error", "message": str(e)})
+            self.emit({"type": "error", "message": settings.spend_message(e) if isinstance(e, SpendLimitError) else str(e)})
             self.closed = True
             return
         self.emit({"type": "session", "mode": "hybrid", "bench": "ats", "source": self.source, "model": MUSE_SPARK,

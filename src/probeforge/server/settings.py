@@ -27,3 +27,19 @@ def agent_effort(requested) -> str:
     allows low or below; public mode allows low only. Anything else becomes low."""
     allowed = ("low",) if PUBLIC else ("low", "minimal")
     return requested if requested in allowed else "low"
+
+
+def spend_message(e: Exception) -> str:
+    """What a visitor reads when the spend guard refuses a paid run. Engineer mode makes no model calls (no ledger
+    check, suggestions come from the planner), so it still works when the budget is used up. Private servers keep
+    the ledger's own message."""
+    msg = str(e)
+    if not PUBLIC:
+        return msg
+    if "daily cap" in msg:
+        return ("Today's model budget for the public demo is used up, so Agent and Hybrid runs are paused until "
+                "tomorrow. Engineer mode still works: it makes no model calls.")
+    if "demo runs are stopped" in msg:
+        return ("The public demo's model budget is used up, so Agent and Hybrid runs are paused. Engineer mode still "
+                "works: it makes no model calls.")
+    return msg
