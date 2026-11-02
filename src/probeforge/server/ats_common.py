@@ -13,7 +13,7 @@ from probeforge.ats.bench import AtsBench
 from probeforge.ats.faults import all_faults
 from probeforge.ats.hybrid.pipeline import healthy_sequence, warm
 from probeforge.ats.hybrid.read import SHEET_DIR, SHEETS, to_netlist
-from probeforge.eval.metered import PUBLIC_MAX_COMPLETION_TOKENS, MeteredClient
+from probeforge.eval.metered import CALL_TIMEOUT_S, PUBLIC_MAX_COMPLETION_TOKENS, MeteredClient
 from probeforge.eval.spend import server_ledger as ledger  # read as common.ledger() (tests replace it)
 from probeforge.faults.model import Fault
 from probeforge.server import settings
@@ -137,8 +137,8 @@ def live_read_available() -> bool:
     return all((SHEET_DIR / s).exists() for s in SHEETS)
 
 
-def metered(client, what: str) -> MeteredClient:
+def metered(client, what: str, timeout_s: float = CALL_TIMEOUT_S) -> MeteredClient:
     """The model client of a live UI run: every call reserves and settles in the server ledger; in public mode with
     the per-call token cap (eval/metered.py has the values and their basis)."""
     return MeteredClient(client, ledger(), what, demo=True,
-                         max_completion_tokens=PUBLIC_MAX_COMPLETION_TOKENS if settings.PUBLIC else None)
+                         max_completion_tokens=PUBLIC_MAX_COMPLETION_TOKENS if settings.PUBLIC else None, timeout_s=timeout_s)

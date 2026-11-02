@@ -14,6 +14,7 @@ from probeforge.ats.hybrid.read import read_consensus, sheet_images, to_netlist
 from probeforge.ats.infogain import AtsInfoGain, Step, _value
 from probeforge.ats.nextstep import planned_next
 from probeforge.ats.tools import AtsToolBox
+from probeforge.eval.metered import CALL_TIMEOUT_S, READ_TIMEOUT_S
 from probeforge.eval.spend import EST_PER_AGENT_RUN_USD, SpendLimitError
 from probeforge.eval.trace import make_trace
 from probeforge.hybrid.llm import Usage
@@ -187,7 +188,9 @@ class AtsHybridSession(AtsSession):
 
     def _client(self):
         try:
-            return common.metered(self.client_fn(), f"ui ATS hybrid run ({self.source})")
+            # a live re-read makes the long transcription and repair calls (eval/metered.py has the measured times)
+            return common.metered(self.client_fn(), f"ui ATS hybrid run ({self.source})",
+                                  timeout_s=READ_TIMEOUT_S if self.transcription == "live" else CALL_TIMEOUT_S)
         except Exception:  # noqa: BLE001 - no key: the saved model still runs, only the explanation is skipped
             return None
 

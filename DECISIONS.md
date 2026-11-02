@@ -849,3 +849,21 @@ decisions at the end (see CLAUDE.md). Architecture: [ARCHITECTURE.md](ARCHITECTU
   use); change the frozen explain module to mark its text (not needed: its record already says so).
 - **Evidence:** pytest for the source (model, insufficient information, failed call, failed check); Vitest for the
   labels and the error wording; browser check against a fake API returning HTTP 500.
+
+### D58. Live UI calls have a timeout from the recorded call times, one request per reservation (2026-11-02)
+
+- **What:** model calls of live UI runs time out after 120 s (agent and explanation calls) or 360 s (runs with a live
+  drawing read; also the motor starter bench, which has no committed call timings). With a timeout the SDK's own
+  retries are off, so every request is one call reserved in the ledger; a call that times out settles at its
+  reservation, because the provider may still finish and bill it. Batch scripts keep the SDK defaults.
+- **Why:** the judge-style check with a hanging Meta API showed "Agent working" with no end: the SDK default is 600 s
+  and 2 retries, up to 30 minutes. The SDK's retries also ran inside one reservation, and a timed-out call settled at
+  $0, so the ledger could undercount.
+- **Numbers:** the longest calls in the committed runs (results/runs/): drawing read 121.6 s, repair 91.0 s, agent
+  turn 25.0 s (holdout h27), explanation 14.5 s (holdout h15). 120 s is 4.8x the longest agent turn and 8x the longest
+  explanation; 360 s is 3x the longest read.
+- **Alternatives:** keep retries (each would need its own reservation, which the SDK does not expose); one long
+  timeout for every call (a hanging agent run would wait 6 minutes).
+- **Evidence:** pytest (timeout and no retries passed to the client, a timed-out call counted at its reservation, an
+  HTTP error not billed, scripts unchanged); browser check against a hanging fake API: the agent run ends after 138 s
+  with "the Meta API did not answer in time", the hybrid shows the template labelled with the same reason.

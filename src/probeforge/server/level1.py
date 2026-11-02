@@ -16,7 +16,7 @@ import yaml
 from probeforge.agent.client import MUSE_SPARK, make_client
 from probeforge.agent.loop import run_agent
 from probeforge.baseline import HalfSplitBaseline
-from probeforge.eval.metered import PUBLIC_MAX_COMPLETION_TOKENS, MeteredClient
+from probeforge.eval.metered import PUBLIC_MAX_COMPLETION_TOKENS, READ_TIMEOUT_S, MeteredClient
 from probeforge.eval.spend import EST_PER_AGENT_RUN_USD, SpendLedger, SpendLimitError, server_ledger
 from probeforge.eval.trace import decisive_measurement, make_trace, summary, verdict
 from probeforge.faults import Fault
@@ -62,8 +62,10 @@ def ledger() -> SpendLedger:
 
 def metered(c, what: str) -> MeteredClient:
     """Every call of a live UI run reserves and settles in the server ledger (public mode: with the token cap)."""
+    # the motor bench has no committed call timings: the drawing-read bound covers its live reads too
     return MeteredClient(c, ledger(), what, demo=True,
-                         max_completion_tokens=PUBLIC_MAX_COMPLETION_TOKENS if settings.PUBLIC else None)
+                         max_completion_tokens=PUBLIC_MAX_COMPLETION_TOKENS if settings.PUBLIC else None,
+                         timeout_s=READ_TIMEOUT_S)
 
 
 class Cancelled(Exception):
