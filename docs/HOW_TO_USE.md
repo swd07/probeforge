@@ -104,6 +104,9 @@ sources, repair the part, restore the sources (strong approval, citing a reading
 end at **Transfer verified** only when the simulator confirms the load on Emergency with the position confirmed by
 the controller; the UPS clock then stops.
 
+While the repair is under way (sources isolated, or restored and not yet verified), **Start** asks first: the
+button turns into "End the repair and start new?" and only a second click within 5 s starts a new run.
+
 ## 7. Compare and the troubleshooting sheet
 
 - **Compare** shows four columns on the same fault: this run in its own column (you, the agent or the hybrid), a

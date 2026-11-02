@@ -790,3 +790,16 @@ decisions at the end (see CLAUDE.md). Architecture: [ARCHITECTURE.md](ARCHITECTU
   underscores are mapped.
 - **Evidence:** Vitest cases with the walkthrough's strings; part ids unchanged; no repair label holds an underscore or
   "cutoff".
+
+### D54. Start asks first while a repair is under way (2026-11-02)
+
+- **What:** on the ATS bench, after the diagnosis, while the sources are isolated or restored with the transfer not
+  yet verified, the first click on Start turns the button into "End the repair and start new?" for 5 s; only a second
+  click starts a new run (`web/src/intervention.ts`). Before any intervention and after "Transfer verified" Start
+  stays one click.
+- **Why:** after the diagnosis the top bar shows Start again while the intervention goes on; one click started a new
+  session and cancelled the repair (seen in the dev-07 walkthrough for the video, a judge would hit it too).
+- **Alternatives:** a native confirm dialog (looks out of place in a demo recording); disabling Start until the
+  transfer is verified (a repair that cannot succeed would trap the visitor).
+- **Evidence:** Vitest for the condition (isolated, restored and not verified, verified, no intervention, motor
+  starter bench); browser check of both clicks.

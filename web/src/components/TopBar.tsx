@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { repairUnderWay } from "../intervention";
 import type { AtsMeta, Bench, Meta, Mode } from "../types";
 import type { StartOptions, State } from "../useSession";
 
@@ -54,6 +55,15 @@ export function TopBar({ meta, state, mode, setMode, bench, setBench, onStart, o
   const [atsRead, setAtsRead] = useState("");
   const atsReadChoice = atsRead || atsMeta?.default_transcription || "";
   const busy = state.status === "running" || state.status === "approval";
+  // a repair under way (ATS, after the diagnosis): the first click on Start only asks, for 5 s
+  const underway = ats && repairUnderWay({ status: state.status, done: state.done, panel: state.panel as { isolated?: boolean; flow?: number } | null });
+  const [armed, setArmed] = useState(false);
+  useEffect(() => {
+    if (!armed) return;
+    const t = setTimeout(() => setArmed(false), 5000);
+    return () => clearTimeout(t);
+  }, [armed]);
+  useEffect(() => setArmed(false), [underway, state.status]);
   const shown = busy || state.status === "done" ? state.mode : mode; // run statistics belong to the run's mode
 
   // after a run the dropdown is cleared, so it cannot look like the result belongs to whatever it shows;
@@ -195,8 +205,10 @@ export function TopBar({ meta, state, mode, setMode, bench, setBench, onStart, o
             End session
           </button>
         ) : (
-          <button className="btn start" onClick={start} disabled={!meta || !choice}>
-            Start
+          <button className={`btn start ${armed ? "armed" : ""}`} disabled={!meta || !choice}
+                  onClick={underway && !armed ? () => setArmed(true) : start}
+                  title={underway ? "A repair is under way: the first click asks, a second click within 5 s ends it and starts a new run" : undefined}>
+            {armed ? "End the repair and start new?" : "Start"}
           </button>
         )}
         <button className="btn ghost" onClick={onCompare} disabled={!onCompare}
