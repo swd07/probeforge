@@ -55,7 +55,7 @@ export interface AtsMeta extends Meta {
   flow: string[];
   transcriptions: { id: string; label: string; run_id: string; recorded: string; reads: number; repairs: number; cost_usd: number }[];
   default_transcription: string;
-  live_read: { available: boolean; estimate: string };
+  live_read: { available: boolean; estimate: string; short?: string; reason?: string };
 }
 
 /** ATS hybrid: the planner's next step (probeforge.ats.nextstep), sent before every reading. */

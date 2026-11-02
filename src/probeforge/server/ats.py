@@ -28,6 +28,7 @@ from probeforge.ats.policy import RULES
 from probeforge.eval.never_attempts import count as count_never
 from probeforge.faults.model import Fault
 from probeforge.server import ats_common as common
+from probeforge.server import settings
 from probeforge.server.ats_common import (  # noqa: F401 - re-exported
     BENCH, CASES, CASES_DIR, FLOW, INTERVENTION_TOOLS, LIVE_READ_TEXT, MANUAL_TOOLS, NETLIST, OUTAGE_S, PUBLIC_IDS,
     PUBLIC_OF, ROOT, SVG, _f, _outage, catalog_signatures, live_read_available, load_cases, visible_pool,
@@ -45,6 +46,18 @@ def never_attempts() -> dict:
     """Never-tier attempts in the committed runs (results/runs), shown under the action limits with that source;
     empty on a host without the committed runs."""
     return count_never(ROOT / "results" / "runs")
+
+
+def live_read_meta() -> dict:
+    """The live re-read option: offered only on a private server with the drawing crops; otherwise shown disabled
+    with the reason (the server refuses it in public mode in any case)."""
+    if settings.PUBLIC:
+        return {"available": False, "estimate": LIVE_READ_TEXT, "short": "off in the public demo",
+                "reason": "The public demo uses the saved reads; a live read costs model calls."}
+    if not live_read_available():
+        return {"available": False, "estimate": LIVE_READ_TEXT, "short": "unavailable",
+                "reason": "Needs the drawing crops on this machine."}
+    return {"available": True, "estimate": LIVE_READ_TEXT, "short": "", "reason": ""}
 
 
 def meta() -> dict:
@@ -71,7 +84,7 @@ def meta() -> dict:
         "flow": FLOW,
         "transcriptions": transcriptions.available(),
         "default_transcription": transcriptions.DEFAULT,
-        "live_read": {"available": live_read_available(), "estimate": LIVE_READ_TEXT},
+        "live_read": live_read_meta(),
     }
 
 

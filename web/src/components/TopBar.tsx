@@ -161,8 +161,8 @@ export function TopBar({ meta, state, mode, setMode, bench, setBench, onStart, o
               </option>
             ))}
             <option value="live" disabled={!atsMeta?.live_read.available}
-                    title={atsMeta?.live_read.available ? atsMeta.live_read.estimate : "Needs the drawing crops on this machine"}>
-              Live re-read{atsMeta?.live_read.available ? "" : " (unavailable)"}
+                    title={atsMeta?.live_read.available ? atsMeta.live_read.estimate : atsMeta?.live_read.reason}>
+              Live re-read{atsMeta?.live_read.available ? "" : ` (${atsMeta?.live_read.short ?? "unavailable"})`}
             </option>
           </select>
         ) : mode === "hybrid" ? (
