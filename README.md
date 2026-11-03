@@ -1,5 +1,7 @@
 <p align="center"><img src="docs/brand/logo.jpg" alt="ProbeForge: the name in brushed metal with an orange lightning bolt" width="720"></p>
 
+<p align="center"><b>Live demo: <a href="https://probeforge.swd07.com">probeforge.swd07.com</a></b></p>
+
 # ProbeForge
 
 [![CI](https://github.com/swd07/probeforge/actions/workflows/ci.yml/badge.svg)](https://github.com/swd07/probeforge/actions/workflows/ci.yml)
