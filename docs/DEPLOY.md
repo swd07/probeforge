@@ -4,6 +4,9 @@ From a fresh Ubuntu 24.04 VPS (4 vCPU, 6 to 8 GB RAM, any provider) to ProbeForg
 HTTPS, with room for a second website on the same server. Nothing here needs the repository's history or a build
 tool on your own machine: the server builds the image from a clone of the public repository.
 
+The hosted demo built this way runs at https://probeforge.swd07.com; `demo.example.org` below stands for your own
+domain.
+
 ## 1. What runs where
 
 ```
@@ -24,7 +27,7 @@ visitor ──HTTPS──> Caddy (container, ports 80/443, automatic certificate
   done, `/api/ready` answers 503, and Caddy, which checks it every 5 s, shows visitors a starting page that reloads
   itself (`deploy/status/starting.html`) instead of sending them to the app. `/api/health` stays the liveness check
   (Docker's health check) and also reports `ready`. The warm-up takes 2 to 3 minutes on a fast machine and up to
-  about 15 on a small shared VPS (8.5 and 9.9 minutes measured on a 4 vCPU Contabo VPS), so every restart or redeploy shows
+  about 15 on a small shared VPS (513, 594, 625 and 673 s, so 8.6 to 11.2 minutes, measured on a 4 vCPU Contabo VPS), so every restart or redeploy shows
   the starting page that long; the first visitor afterwards waits for nothing.
 
 ## 2. What the image contains
@@ -215,7 +218,7 @@ cd deploy && nano .env                            # PROBEFORGE_TAG=<new short co
 sudo docker compose up -d --build --wait
 ```
 
-then the smoke test from your machine (it waits for the warm-up, up to about 15 minutes). Each tag stays as a local image, and the volume keeps the ledger and the
+then the smoke test from your machine (it waits up to 20 minutes; the warm-up itself takes up to about 15). Each tag stays as a local image, and the volume keeps the ledger and the
 traces, so a redeploy never resets the caps.
 
 Rollback: `git checkout <previous commit>` (if the compose or Caddy files changed), set `PROBEFORGE_TAG` back to the
