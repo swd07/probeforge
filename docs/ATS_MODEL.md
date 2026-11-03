@@ -169,7 +169,7 @@ on this unit or not relevant to the diagnosis.
 
 `src/probeforge/ats/faults.py`: 118 single faults (wires and pins open; TS main, cut-off and auxiliary contacts and
 controller relay contacts stuck open or stuck closed; the solenoid open or burnt; a controller input failed; the
-mechanism jammed). In the outage scenario 51 are visible on the controller panel, 17 give exactly the same readings as
+mechanism jammed). In the outage scenario 51 are visible on the controller panel or event log during the first 60 s (49 on the face at 60 s, the UI's random pool), 17 give exactly the same readings as
 a healthy switch everywhere (normal-side parts that only matter on retransfer, the redundant engine-start path), and
 the rest need measurements. The only observational twins (`src/probeforge/ats/ambiguity.py`) are physically justified:
 parallel engine-start contacts (TS 14B and NR NC), coil open versus burnt open, and the series SE / ER contacts inside

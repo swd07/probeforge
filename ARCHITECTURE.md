@@ -4,7 +4,7 @@ ProbeForge diagnoses a hidden fault in a simulated ASCO Series 300 Group G autom
 wiring diagram 978741) during a utility outage. Three diagnosticians work through the same tools and the same safety
 policy: a Muse Spark agent, Hybrid v2 (Muse Spark in three checked roles around an information-gain planner) and a
 human in Engineer mode. The first stage, a star-delta motor starter, is described in
-[docs/ARCHITECTURE_LEVEL1.md](docs/ARCHITECTURE_LEVEL1.md); it still runs under "Motor starter" in the UI.
+[docs/ARCHITECTURE_LEVEL1.md](docs/ARCHITECTURE_LEVEL1.md); it still runs under "Motor starter" in the UI on a local server; the public demo shows only the ATS bench.
 
 ## Code map
 
@@ -12,7 +12,7 @@ human in Engineer mode. The first stage, a star-delta motor starter, is describe
 |---|---|
 | `src/probeforge/ats/bench.py` | The bench: sources (utility, generator), the Group G controller sequence, the transfer mechanism, coil burnout, the UPS countdown; deterministic |
 | `scenarios/circuits/asco_300g_978741.yaml` | Our netlist of the switch, every part and net with its source |
-| `src/probeforge/ats/faults.py`, `ambiguity.py` | The fault catalog (118 faults, 49 visible on the panel during an outage) and the observational twin check |
+| `src/probeforge/ats/faults.py`, `ambiguity.py` | The fault catalog (118 faults; 49 change the controller face 60 s into the outage, the random-fault pool) and the observational twin check |
 | `src/probeforge/ats/tools.py` | The toolbox: panel, meter, isolation, manual operation check, repeat transfer, repairs, diagnosis; 30 s of virtual time per reading or action; arguments checked against each tool's schema |
 | `src/probeforge/ats/policy.py` | The safety policy: allowed / approval / strong approval / never, with the evidence rule for strong approvals |
 | `src/probeforge/ats/agent.py`, `prompts.py` | The Muse Spark agent loop (Chat Completions, tool calling, low reasoning effort) |
@@ -85,8 +85,9 @@ trace as assisted.
 | Explanation (hybrid) | diagnosis, readings, part names | strict JSON (`response_format` json_schema) | low |
 
 All calls go to `muse-spark-1.3` through the Meta Model API (Chat Completions; the Responses transport is an unused
-experiment). The key stays on the server. Every call records its cost in a local ledger (`eval/spend.py`); the
-ledger checks an estimate before a run starts, a soft guard rather than an atomic budget.
+experiment). The key stays on the server. Every model call reserves its estimate in a local ledger before it is sent
+and settles the actual cost afterwards (`eval/spend.py`, under a cross-process lock); the public demo uses a separate
+ledger. It is a per-machine guard: the provider-side limit on the key is the real cap.
 
 ## Server and UI
 
@@ -95,6 +96,11 @@ the panel snapshot and the planned next reading), approval requests and the fina
 only in the final result. After a run ends, the server appends the fault to a local, git-ignored list of UI runs
 (D44), which the holdout sampler excludes. The UI shows the status column, our redrawing with live probes, the
 hypotheses and the step log; Compare runs the other diagnosticians on the same fault.
+
+With `PROBEFORGE_PUBLIC=1` (the hosted demo, [docs/DEPLOY.md](docs/DEPLOY.md)) the server warms up at start and
+`/api/ready` answers 503 until then (D62); approval cards wait 120 s (600 s on a private server; the hosted demo sets
+300 s, D66) and a connection with no message for 600 s is closed. Live model calls time out after 120 s (360 s with a
+live drawing read) and are retried once only when nothing was billed (D58, D59).
 
 ## Evaluation
 
@@ -116,7 +122,7 @@ hypotheses and the step log; Compare runs the other diagnosticians on the same f
 4. **Dev versus holdout.** Dev results are labelled dev; the holdout is the only unseen test.
 5. **Frozen fingerprints.** `ats_frozen_hashes()` (`src/probeforge/ats/freeze.py`), pinned by a test. Changing a
    fingerprinted component needs the user's agreement and a decision entry. They cover the listed components, not
-   every dependency (for example `sim/netlist.py` and the drawing crop bytes). Current values (after D47):
+   every dependency (for example `sim/netlist.py` and the drawing crop bytes). Current values (after D47 and D50):
 
    | Key | Covers | Value |
    |---|---|---|
@@ -135,7 +141,7 @@ hypotheses and the step log; Compare runs the other diagnosticians on the same f
    | ats_sheet_crops | crop coordinates | 5687e25c8ce3 |
 
    The holdout ran with the values stored in `scenarios/ats_holdout/holdout.yaml` (tag `holdout-2026-10-31`); D47
-   changed ats_tools, ats_policy and ats_hybrid_explain. The motor-starter fingerprints are in
+   changed ats_tools, ats_policy and ats_hybrid_explain; D50 changed ats_hybrid_explain again. The motor-starter fingerprints are in
    `scripts/run_scenarios.py`.
 6. **No prerecorded outputs presented as live.** Every diagnosis in the UI is computed live; saved transcriptions are
    real earlier Muse Spark reads, labelled as saved. A public demo may replay a run recorded earlier only when it is
