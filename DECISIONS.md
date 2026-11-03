@@ -960,3 +960,14 @@ decisions at the end (see CLAUDE.md). Architecture: [ARCHITECTURE.md](ARCHITECTU
 - **Alternatives:** show the server's own last measurement on the page (a Caddy template reading the runs volume: more
   moving parts and the volume mounted into Caddy, for a page seen a few minutes per restart).
 - **Evidence:** the server's health endpoint after the first start (warm elapsed 512.8 s, saved read 460.3 s).
+
+### D65. No unplanned restarts of the public stack during judging (2026-11-03)
+
+- **What:** on the server: Docker live-restore (containers survive a dockerd restart); unattended-upgrades blacklists
+  the Docker packages and never reboots; needrestart never restarts docker or containerd. Security updates stay on.
+  docs/DEPLOY.md, server preparation step 7.
+- **Why:** a restart costs the start-up warm-up (8.5 minutes on this server, the starting page meanwhile), and the
+  judging runs Nov 5 to 9; an automatic Docker upgrade or a needrestart service restart would cause one unannounced.
+- **Alternatives:** turn unattended upgrades off (security updates matter more on a public server); pin the Docker
+  packages with apt-mark hold (also blocks manual upgrades by accident).
+- **Evidence:** applied without a restart (systemctl reload docker); checks recorded in the deploy report.

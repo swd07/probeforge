@@ -94,6 +94,26 @@ As root on the fresh server, then never again as root:
 6. Docker Engine and the compose plugin from Docker's own apt repository (docs.docker.com, "Install Docker Engine on
    Ubuntu"). Do not add `deploy` to the `docker` group (that is root-equivalent): the commands below use `sudo`, which
    also lets compose read the root-only env file.
+7. No unplanned restarts of the stack (each restart costs the warm-up, up to about 10 minutes):
+   - Docker live-restore, so the containers keep running when dockerd restarts (a reload, not a restart, applies it):
+     ```
+     echo '{"live-restore": true}' | sudo tee /etc/docker/daemon.json
+     sudo systemctl reload docker && sudo docker info --format '{{.LiveRestoreEnabled}}'
+     ```
+   - unattended-upgrades never upgrades the Docker packages (they come from Docker's repository, which is not among its
+     allowed origins anyway; the blacklist makes it explicit), and never reboots on its own:
+     `/etc/apt/apt.conf.d/51probeforge-no-docker`:
+     ```
+     Unattended-Upgrade::Package-Blacklist { "docker-ce"; "docker-ce-cli"; "containerd.io"; "docker-buildx-plugin"; "docker-compose-plugin"; };
+     Unattended-Upgrade::Automatic-Reboot "false";
+     ```
+   - needrestart never restarts Docker or containerd after a library update (other services still can):
+     `/etc/needrestart/conf.d/90-probeforge.conf`:
+     ```
+     $nrconf{override_rc}{qr(^docker)} = 0;
+     $nrconf{override_rc}{qr(^containerd)} = 0;
+     ```
+   Security updates stay on (Ubuntu's security origin, daily); upgrade Docker yourself at a planned time.
 
 ## 4. Domain
 
