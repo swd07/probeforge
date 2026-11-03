@@ -11,7 +11,10 @@ meter, like a field technician. That someone can be:
 - **Engineer**: you, with the same tools and the same safety rules.
 
 Nothing in the browser can damage anything: the switch is a simulation. The first bench, a star-delta motor
-starter, is still available (see "Motor starter" at the end).
+starter, is still available on a local server (see "Motor starter" at the end).
+
+No installation needed to try it: the public demo runs at https://probeforge.swd07.com (transfer switch bench only,
+with the limits in section 8). Sections 1 and 9 are about running it on your own machine.
 
 ## 1. Start and stop the server
 
@@ -28,7 +31,7 @@ explanation). Agent runs and the agent column of Compare cost money (section 8).
 
 ## 2. The screen
 
-- **Top bar**: bench (**Motor starter** / **ATS**), mode (**Agent**, **Hybrid**, **Engineer**), the fault list, a
+- **Top bar**: bench (**ATS**; **Motor starter** too on a local server), mode (**Agent**, **Hybrid**, **Engineer**), the fault list, a
   setting for the mode (effort, drawing read, or your name), **Start** (it becomes **End session** while a run
   goes), **Compare** (after a diagnosis), **Troubleshooting sheet**, and on the right the status.
 - **Fault list**: **Random fault** (any of the 49 catalog faults visible on the controller during an outage) or one
@@ -80,8 +83,7 @@ diagnosis made after the UPS ran out is shown as such: critical load lost.
 3. The planner shows each next reading on the drawing (**next**), then takes it. Candidate faults shrink after each
    reading. Approval cards work as in Agent mode.
 4. The result card has Muse Spark's explanation: what failed, the readings that show it, a fixed isolation sentence
-   added by code, then what to do. A run costs about $0.01 (the explanation call; $0.009 on average over the 22
-   browser runs of Nov 2). When the explanation is the fixed template instead (always for insufficient information;
+   added by code, then what to do. A run costs about $0.01 (the explanation call). When the explanation is the fixed template instead (always for insufficient information;
    otherwise when the Muse Spark call failed or its answers failed the check), the label says "fixed template" and why.
    The page tidies the text for display (a repeated step prefix removed, readings as numbers with units, hyphens
    restored in compounds); the run record keeps the model's text unchanged.
@@ -135,9 +137,11 @@ button turns into "End the repair and start new?" and only a second click within
 | Compare | free after an agent run; about $0.12 after a Hybrid or Engineer run (the agent re-run) |
 
 Every model call reserves budget in a local ledger first. Live runs are capped per day (`PROBEFORGE_DEMO_DAILY_USD`,
-default $5) and in total. On a public demo (`PROBEFORGE_PUBLIC=1`): a separate ledger with its own total
-(`PROBEFORGE_PUBLIC_TOTAL_USD`), runs stopped at $0.75, no live re-read, two open sessions per address, and visitors'
-Engineer traces are kept apart (they never appear in Compare). Whoever uses the page answers the approval cards. A
+default $5) and in total, and every live run stops at $0.75. On a public demo (`PROBEFORGE_PUBLIC=1`): a separate
+ledger with its own total (`PROBEFORGE_PUBLIC_TOTAL_USD`, $30 by default), model calls capped at 10,000 completion
+tokens, no live re-read, two open sessions per address, and visitors' Engineer traces are kept apart (they never
+appear in Compare). After a server restart the public demo shows a starting page for up to about 15 minutes while it
+simulates every candidate fault in advance. Whoever uses the page answers the approval cards. A
 model call that gets no answer within 120 s (360 s with a live drawing read) stops the run with that reason.
 
 **Two time limits** (they matter most on a public demo, where people step away from the page):
@@ -159,7 +163,7 @@ model call that gets no answer within 120 s (360 s with a live drawing read) sto
 
 | Problem | What to do |
 |---|---|
-| The page does not open | Start the server (section 1) and open http://127.0.0.1:8000/?bench=ats. |
+| The page does not open | Start the server (section 1) and open http://127.0.0.1:8000. |
 | "address already in use" | An old server still runs. On Windows: `Get-NetTCPConnection -LocalPort 8000`, stop that process. |
 | The page looks old after a code change | `npm run build` in `web/`, then reload (Ctrl+F5). |
 | Start is grey | Choose a fault first; the list is cleared after every run on purpose. |
@@ -172,6 +176,7 @@ model call that gets no answer within 120 s (360 s with a live drawing read) sto
 | Measure is grey | Set A and B on the drawing first. |
 | An error about the key | `.env` with `META_API_KEY` is missing; Engineer mode still works. |
 | "daily cap" | Today's live runs used the cap; wait until tomorrow or raise `PROBEFORGE_DEMO_DAILY_USD`. |
+| "Today's model budget for the public demo is used up" | The public demo's daily cap is reached: Agent and Hybrid runs resume tomorrow; Engineer mode still works (no model calls). |
 | "The public demo's model budget is used up" | The public ledger reached its total: Agent and Hybrid runs are paused; Engineer mode still works (no model calls). |
 | "This address already has 2 open ProbeForge sessions" | Close another tab of the page, then press Start. |
 | "The run stopped before a diagnosis: the Meta API ..." | The Meta API failed or did not answer in time; try again later. Engineer mode does not need it. |
