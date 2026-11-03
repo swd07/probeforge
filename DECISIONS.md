@@ -1003,3 +1003,14 @@ decisions at the end (see CLAUDE.md). Architecture: [ARCHITECTURE.md](ARCHITECTU
   starter default locally (the ATS bench is the project's main bench).
 - **Evidence:** Vitest (benchChoice.test.ts: the default, before /api/meta, public and private servers); a first-paint
   check in Edge against the public demo after the deploy.
+
+### D69. The idle message stays on screen after a finished run (2026-11-03)
+
+- **What:** web/src/sessionReducer.ts: when the connection closes after a finished run, a "Session closed after ...
+  without activity." message already on screen is kept instead of being replaced by "Connection lost: ...".
+  HOW_TO_USE updated.
+- **Why:** the server sends the idle reason and then closes; the close replaced the reason within a moment, so a
+  visitor back from a break saw "Connection lost" and could not tell an idle close from a dropped connection.
+- **Alternatives:** a close code carrying the reason (the reason already arrives as a message just before the close).
+- **Evidence:** Vitest (sessionReducer.test.ts: the idle message survives the close; without it, "Connection lost"
+  still appears).

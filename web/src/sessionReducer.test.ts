@@ -25,6 +25,14 @@ describe("connection lost (audit C1)", () => {
     expect(s.error).toMatch(/result stays/);
   });
 
+  it("keeps the server's idle message after a finished run instead of replacing it", () => {
+    const done: State = { ...running(), status: "done" };
+    const idle = event(done, { type: "error", message: "Session closed after 10 minutes without activity." });
+    const s = event(idle, { type: "connection_lost" });
+    expect(s.status).toBe("done");
+    expect(s.error).toBe("Session closed after 10 minutes without activity.");
+  });
+
   it("does nothing before any session", () => {
     expect(event(initial, { type: "connection_lost" })).toBe(initial);
   });
