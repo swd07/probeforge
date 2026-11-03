@@ -141,6 +141,9 @@ Two files on the server, neither in the repository:
    - `PROBEFORGE_TOKEN_SECRET`: a random value, `openssl rand -hex 32`, so session tokens survive a restart.
    - `PROBEFORGE_ALLOWED_ORIGINS=https://demo.example.org` and `PROBEFORGE_ALLOWED_HOSTS=demo.example.org`: the demo's
      origin and host name; the server accepts nothing else.
+   - `PROBEFORGE_APPROVAL_TIMEOUT_S=300`: an approval card waits 5 minutes for its answer (the public default is 2), so
+     someone reading a card carefully is not cut off; an unanswered card counts as denied (docs/HOW_TO_USE.md,
+     section 8). A change needs `sudo docker compose up -d --wait` (one restart, so one warm-up).
 2. `deploy/.env`, compose's settings (not secret), from `deploy/compose.env.example`: `PROBEFORGE_DOMAIN`,
    `PROBEFORGE_TAG`, `PROBEFORGE_ENV_FILE`, `PROBEFORGE_CADDYFILE`. No ACME e-mail is needed: Caddy gets and renews
    the certificate without one (you only miss Let's Encrypt's expiry notices, which automatic renewal makes moot).

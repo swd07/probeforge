@@ -971,3 +971,14 @@ decisions at the end (see CLAUDE.md). Architecture: [ARCHITECTURE.md](ARCHITECTU
 - **Alternatives:** turn unattended upgrades off (security updates matter more on a public server); pin the Docker
   packages with apt-mark hold (also blocks manual upgrades by accident).
 - **Evidence:** applied without a restart (systemctl reload docker); checks recorded in the deploy report.
+
+### D66. The hosted demo gives an approval card 5 minutes (2026-11-03)
+
+- **What:** the public demo's env file sets PROBEFORGE_APPROVAL_TIMEOUT_S=300 (the code's public default stays 120 s,
+  600 s on a private server); deploy/probeforge.env.example and docs/DEPLOY.md carry the setting.
+- **Why:** an unanswered card counts as denied, and a judge reading a card and its cited readings carefully could take
+  longer than 2 minutes; a denied isolation ends a Hybrid run's measurements.
+- **Alternatives:** change the public default in code (also applies to anyone else's public server; the env file is
+  the deployment's own choice); no limit (a pending card holds a run slot indefinitely).
+- **Evidence:** the approver waits APPROVAL_TIMEOUT_S and returns "not approved" on timeout (server/ats_session.py,
+  level1.py); the tool result then reads "...; the human denied the request" (ats/tools.py).
