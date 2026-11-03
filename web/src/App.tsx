@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { initialBench, motorAllowed, shownBench } from "./benchChoice";
 import { DRAWING_NOTE, readable, reasonLabel } from "./labels";
 import { repairedParts } from "./repairs";
 import { LimitsModal } from "./components/AtsPanel";
@@ -29,7 +30,10 @@ export function App() {
   const [svg, setSvg] = useState("");
   const [atsMeta, setAtsMeta] = useState<AtsMeta | null>(null);
   const [atsSvg, setAtsSvg] = useState("");
-  const [bench, setBench] = useState<Bench>(() => (new URLSearchParams(location.search).get("bench") === "ats" ? "ats" : "star_delta"));
+  // the bench asked for (the address or the top bar); the one on screen is shownBench: ATS unless the server allows the
+  // motor starter, so nothing from the motor starter flashes before /api/meta answers
+  const [requestedBench, setBench] = useState<Bench>(() => initialBench(location.search));
+  const bench = shownBench(requestedBench, meta);
   const [pickNote, setPickNote] = useState("");
   const [showTruth, setShowTruth] = useState(false);
   const [diagnosing, setDiagnosing] = useState(false);
@@ -46,11 +50,6 @@ export function App() {
     fetch("/api/meta").then((r) => r.json()).then(setMeta);
     fetch("/api/schematic").then((r) => r.text()).then(setSvg);
   }, []);
-
-  // the public demo shows the transfer switch bench only (the server refuses the motor starter there too)
-  useEffect(() => {
-    if (meta?.public && !ats) setBench("ats");
-  }, [meta, ats]);
 
   useEffect(() => {
     if (!ats || atsMeta) return;
@@ -138,7 +137,7 @@ export function App() {
 
   return (
     <div className={`app ${flashing ? "flash" : ""}`}>
-      <TopBar meta={curMeta} state={state} mode={chosenMode} setMode={setChosenMode} bench={bench} setBench={setBench} publicDemo={!!meta?.public}
+      <TopBar meta={curMeta} state={state} mode={chosenMode} setMode={setChosenMode} bench={bench} setBench={setBench} motorAllowed={motorAllowed(meta)}
               onStart={(o) => start(o)} onStop={stop} onCompare={onCompare} onSheet={ats ? () => setSheetOpen(true) : undefined} />
       <main className={`layout ${ats ? "ats" : ""}`}>
         {ats && (

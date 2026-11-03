@@ -20,7 +20,7 @@ Set up once (see the README): `uv sync --frozen`, `cd web && npm ci && npm run b
 
 1. Start the server: `uv run python -m probeforge.server` (or `python -m uv run python -m probeforge.server` if `uv`
    is not on your PATH). Wait for `Uvicorn running on http://127.0.0.1:8000`.
-2. Open **http://127.0.0.1:8000/?bench=ats** (or open http://127.0.0.1:8000 and click **ATS** in the top bar).
+2. Open **http://127.0.0.1:8000**: the transfer switch (ATS) bench opens by default (`?bench=ats` still works).
 3. To stop: **Ctrl+C** in the terminal.
 
 Engineer mode needs no API key; `PROBEFORGE_OFFLINE=1` runs the hybrid on a saved read without model calls (no
@@ -194,7 +194,8 @@ Before the meeting: start the server, do one quick Engineer run, and delete its 
 ## Motor starter (Level 1)
 
 The first bench: a star-delta reversing motor starter with one hidden fault among 91. Click **Motor starter** in the
-top bar (local servers only: the public demo shows the transfer switch bench only). The front panel (lamps **Power**, **Fault**, **Forward**, **Reverse**; buttons **Stop**, **Start Fwd**,
+top bar, or open `?bench=star_delta` (local servers only: the button appears once the server has confirmed it allows the
+motor starter; the public demo shows the transfer switch bench only). The front panel (lamps **Power**, **Fault**, **Forward**, **Reverse**; buttons **Stop**, **Start Fwd**,
 **Start Rev**; breaker **QF1**; motor state and line currents) replaces the status column.
 
 - **Agent**: choose **Random fault**, **Clean test fault** or a scenario **s01 to s08**, effort low, **Start**

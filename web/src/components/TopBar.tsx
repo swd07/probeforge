@@ -14,7 +14,7 @@ interface Props {
   onStop: () => void;
   onCompare?: () => void; // after a diagnosis: the other diagnosticians on the same fault
   onSheet?: () => void; // ATS: the troubleshooting sheet
-  publicDemo?: boolean; // the public demo: no motor starter bench
+  motorAllowed?: boolean; // the server has confirmed the motor starter bench (never on the public demo; not before it answers)
 }
 
 const STATUS_TEXT: Record<string, string> = {
@@ -46,7 +46,7 @@ export function shortRead(t: { label: string; recorded: string; repairs: number 
   return `${kind} read, ${repairs}${m ? ` (${MONTHS[Number(m) - 1]} ${Number(d)})` : ""}`;
 }
 
-export function TopBar({ meta, state, mode, setMode, bench, setBench, onStart, onStop, onCompare, onSheet, publicDemo = false }: Props) {
+export function TopBar({ meta, state, mode, setMode, bench, setBench, onStart, onStop, onCompare, onSheet, motorAllowed = false }: Props) {
   const ats = bench === "ats";
   const [choice, setChoice] = useState("random");
   const [effort, setEffort] = useState("low");
@@ -105,7 +105,7 @@ export function TopBar({ meta, state, mode, setMode, bench, setBench, onStart, o
       </div>
       <div className="controls">
         <div className="segmented bench" role="tablist" aria-label="Bench">
-          {!publicDemo && (
+          {motorAllowed && (
             <button className={!ats ? "on" : ""} onClick={() => { setBench("star_delta"); setChoice("random"); }} disabled={busy}
                     title="Level 1: star-delta reversing motor starter">
               Motor starter

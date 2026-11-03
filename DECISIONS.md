@@ -991,3 +991,15 @@ decisions at the end (see CLAUDE.md). Architecture: [ARCHITECTURE.md](ARCHITECTU
   took 513 s. Shared cores vary.
 - **Alternatives:** keep 10 (the page would be wrong on a slower start).
 - **Evidence:** the smoke test after the D64/D65 restart: warm-up elapsed 594.2 s.
+
+### D68. The page opens on the ATS bench; the motor starter only after the server allows it (2026-11-03)
+
+- **What:** web/src/benchChoice.ts: the bench on screen is the transfer switch unless the address asks for
+  `?bench=star_delta` and /api/meta has answered that the server is not a public demo; the "Motor starter" button
+  appears only then. The session reducer starts on the ATS bench. HOW_TO_USE updated.
+- **Why:** the page started on the motor starter and switched to ATS only after /api/meta reported public mode, so the
+  public demo flashed the old interface (and its button) for about a second on every load.
+- **Alternatives:** wait for /api/meta before rendering anything (a blank page instead of a flash); keep the motor
+  starter default locally (the ATS bench is the project's main bench).
+- **Evidence:** Vitest (benchChoice.test.ts: the default, before /api/meta, public and private servers); a first-paint
+  check in Edge against the public demo after the deploy.

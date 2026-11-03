@@ -46,7 +46,7 @@ export interface State {
 export const initial: State = {
   status: "idle",
   mode: "agent",
-  bench: "star_delta",
+  bench: "ats",
   engineer: "",
   saved: "",
   compare: null,
