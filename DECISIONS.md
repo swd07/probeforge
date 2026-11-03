@@ -1014,3 +1014,20 @@ decisions at the end (see CLAUDE.md). Architecture: [ARCHITECTURE.md](ARCHITECTU
 - **Alternatives:** a close code carrying the reason (the reason already arrives as a message just before the close).
 - **Evidence:** Vitest (sessionReducer.test.ts: the idle message survives the close; without it, "Connection lost"
   still appears).
+
+### D70. Corrections and changes not recorded before (2026-11-03, documentation audit)
+
+- **What:** five points the current state contradicts or that no entry recorded.
+  1. D43 and D44: the floating step log (72 % of the window, a Hide button) no longer exists; since Oct 31 the log is
+     docked in the right column and keeps at least half of its height (web/src/styles.css, `.log-dock`).
+  2. D17: the $20 reserve belongs to the author's local ledger. The public demo has its own ledger from $0 with its own
+     total (PROBEFORGE_PUBLIC_TOTAL_USD, default $30) and the same daily cap (eval/spend.py, `server_ledger`).
+  3. D51: the $0.75 per-run cap applies to every live UI run, not only in public mode (eval/metered.py, MAX_RUN_USD);
+     batch scripts have none, so a local live drawing re-read (estimated $0.30 to $1.00) can stop at the cap.
+  4. D68: on a private server the "Motor starter" button appears once /api/meta answers, whatever the address;
+     `?bench=star_delta` only chooses the bench the page opens on (web/src/benchChoice.ts, TopBar.tsx).
+  5. Since Nov 2 a public server refuses any start that is not on the ATS bench ("The public demo shows the transfer
+     switch bench only; the motor starter runs locally.", server/app.py, PUBLIC_BENCH_MESSAGE).
+- **Why:** old entries are not rewritten; the documentation audit found these contradictions without a later entry.
+- **Alternatives:** none (the log is append-only).
+- **Evidence:** the audit's checks against the code named in each point.
