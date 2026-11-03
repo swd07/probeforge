@@ -136,10 +136,24 @@ button turns into "End the repair and start new?" and only a second click within
 
 Every model call reserves budget in a local ledger first. Live runs are capped per day (`PROBEFORGE_DEMO_DAILY_USD`,
 default $5) and in total. On a public demo (`PROBEFORGE_PUBLIC=1`): a separate ledger with its own total
-(`PROBEFORGE_PUBLIC_TOTAL_USD`), runs stopped at $0.75, approval cards time out after 2 minutes, no live re-read,
-two open sessions per address, and visitors' Engineer traces are kept apart (they never appear in Compare). Whoever
-uses the page answers the approval cards. A model call that gets no answer within 120 s (360 s with a live drawing
-read) stops the run with that reason.
+(`PROBEFORGE_PUBLIC_TOTAL_USD`), runs stopped at $0.75, no live re-read, two open sessions per address, and visitors'
+Engineer traces are kept apart (they never appear in Compare). Whoever uses the page answers the approval cards. A
+model call that gets no answer within 120 s (360 s with a live drawing read) stops the run with that reason.
+
+**Two time limits** (they matter most on a public demo, where people step away from the page):
+
+- **A session closes after 10 minutes without a click** (`PROBEFORGE_IDLE_TIMEOUT_S`, 600 s, local servers too). Only
+  your own actions count (Start, a reading, an approval, Compare, ...); the steps of a running Agent or Hybrid run do
+  not, but a run takes a few minutes. The server cancels a run still in progress and closes the connection, and the
+  page says "Session closed after 10 minutes without activity." After a finished run it says "Connection lost: the
+  result stays here; ..." instead, and the result card stays readable. Press **Start** for a new session.
+- **An approval card waits a limited time for its answer**: 2 minutes by default on a public server, 10 minutes on a
+  local one (`PROBEFORGE_APPROVAL_TIMEOUT_S`); the hosted demo sets 5 minutes. When the time runs out, the request
+  counts as denied, exactly as if **Deny** had been pressed: the card closes, the action is not carried out, the step
+  log shows the request as "denied by human", and the result card counts it among the denied approvals. What follows
+  depends on the mode: the agent gets the refusal and chooses another step or submits its diagnosis; the Hybrid
+  planner stops measuring and submits its diagnosis from the readings it has (often "insufficient information"); in
+  Engineer mode and during the intervention nothing changes on the bench, and you can make the request again.
 
 ## 9. Common problems
 
@@ -150,6 +164,8 @@ read) stops the run with that reason.
 | The page looks old after a code change | `npm run build` in `web/`, then reload (Ctrl+F5). |
 | Start is grey | Choose a fault first; the list is cleared after every run on purpose. |
 | "Connection lost: the session ended" | The server stopped or the network dropped; the session ends with the connection. Pick a fault and press Start. |
+| "Session closed after 10 minutes without activity" | No click for 10 minutes (section 8); press Start for a new session. |
+| "Connection lost: the result stays here; ..." | The connection closed after the run: 10 minutes without a click, a computer that went to sleep (the server drops a connection that stops answering its pings, within about 40 s), or a server restart. The result card stays readable; press Start for a new run. |
 | "The session token is missing or expired" | Reload the page. |
 | "The server is busy with other runs" | Other runs use every run slot; try again in a minute. |
 | "A step is still pending" | Answer the approval card, or wait for the previous step. |
