@@ -1,8 +1,6 @@
-# ProbeForge behind Caddy with automatic HTTPS (Let's Encrypt). The domain and the ACME e-mail come from
-# deploy/.env (PROBEFORGE_DOMAIN, ACME_EMAIL). docs/DEPLOY.md has the steps.
-{
-	email {$ACME_EMAIL}
-}
+# ProbeForge behind Caddy with automatic HTTPS (Let's Encrypt). The domain comes from deploy/.env (PROBEFORGE_DOMAIN).
+# No ACME account e-mail: certificates are issued and renewed without one (an empty e-mail directive is a config
+# error, so there is none). docs/DEPLOY.md has the steps.
 
 # Security headers for every site. The page loads only its own script; inline styles are needed by the drawing (an
 # SVG with a <style> element) and by React style attributes; data: images by the favicon. The WebSocket is same-origin

@@ -938,3 +938,14 @@ decisions at the end (see CLAUDE.md). Architecture: [ARCHITECTURE.md](ARCHITECTU
   measurement, the suggestion's cache key); the image with Caddy locally: the starting page (503) while warming, ready
   after 148 s (default read 132.5 s), scripts/smoke_deploy.py 0 failed with headers and a browser, and the first Hybrid
   run after ready went straight to planning with no simulation stage.
+
+### D63. No ACME account e-mail in the Caddy setup (2026-11-03)
+
+- **What:** deploy/Caddyfile no longer sets a global `email`; compose.yaml, compose.env.example and docs/DEPLOY.md no
+  longer mention ACME_EMAIL. Caddy obtains and renews the Let's Encrypt certificate without an account e-mail.
+- **Why:** the deployment has no ACME e-mail, and an empty `email {$ACME_EMAIL}` is a Caddyfile error ("wrong argument
+  count"), so the domain setup could not start without inventing an address.
+- **Alternatives:** keep the directive with a placeholder address (notices to nobody); make it conditional (the
+  Caddyfile has no clean way to drop an empty global option).
+- **Evidence:** `caddy validate` failed with an empty ACME_EMAIL (2026-11-03, locally); the domain Caddyfile is
+  validated again on the server before the first start.

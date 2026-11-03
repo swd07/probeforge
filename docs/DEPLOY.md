@@ -121,7 +121,8 @@ Two files on the server, neither in the repository:
    - `PROBEFORGE_ALLOWED_ORIGINS=https://demo.example.org` and `PROBEFORGE_ALLOWED_HOSTS=demo.example.org`: the demo's
      origin and host name; the server accepts nothing else.
 2. `deploy/.env`, compose's settings (not secret), from `deploy/compose.env.example`: `PROBEFORGE_DOMAIN`,
-   `ACME_EMAIL` (Let's Encrypt notices), `PROBEFORGE_TAG`, `PROBEFORGE_ENV_FILE`, `PROBEFORGE_CADDYFILE`.
+   `PROBEFORGE_TAG`, `PROBEFORGE_ENV_FILE`, `PROBEFORGE_CADDYFILE`. No ACME e-mail is needed: Caddy gets and renews
+   the certificate without one (you only miss Let's Encrypt's expiry notices, which automatic renewal makes moot).
 
 ## 6. First start
 
@@ -131,7 +132,7 @@ As `deploy`:
 git clone https://github.com/swd07/probeforge.git ~/probeforge
 cd ~/probeforge/deploy
 git rev-parse --short HEAD                        # the tag for this build
-cp compose.env.example .env && nano .env          # the domain, the e-mail, PROBEFORGE_TAG=<that hash>
+cp compose.env.example .env && nano .env          # the domain, PROBEFORGE_TAG=<that hash>
 sudo docker compose up -d --build --wait
 sudo docker compose ps                            # app: healthy, caddy: running
 sudo docker compose exec app python -c "import urllib.request as u; print(u.urlopen('http://127.0.0.1:8000/api/health').read().decode())"

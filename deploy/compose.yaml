@@ -45,7 +45,6 @@ services:
       - "443:443/udp"
     environment:
       PROBEFORGE_DOMAIN: ${PROBEFORGE_DOMAIN:-localhost}
-      ACME_EMAIL: ${ACME_EMAIL:-}
     volumes:
       - ./${PROBEFORGE_CADDYFILE:-Caddyfile}:/etc/caddy/Caddyfile:ro
       - ./site:/srv/site:ro  # the personal website later (static files); empty until then
