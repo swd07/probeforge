@@ -2,8 +2,8 @@
 
 ProbeForge started on a simulated star-delta reversing motor starter: 17 components, 91 possible single faults, a
 Muse Spark agent, two baselines and a hybrid pipeline, all frozen and tested on a clean holdout before the work moved
-to the ASCO transfer switch (the main bench, see the [README](../../README.md)). This page is the original README of that
-stage, kept as it was apart from the links. The live UI still offers this bench under "Motor starter".
+to the ASCO transfer switch (the main bench, see the [README](../README.md)). This page is the original README of that
+stage, kept as it was apart from the links. The UI still offers this bench under "Motor starter" on a local server; the public demo shows only the ATS bench.
 
 ## Setup
 
