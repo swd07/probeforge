@@ -247,3 +247,8 @@ demo, with a daily cap. In public mode a separate ledger starts at $0 on the ser
 at 10,000 completion tokens (2.1x the largest call in the recorded runs). The ledger is per machine and not
 committed; the provider-side spend limit on the key is the real cap. The author's ledger recorded about $56 for the
 whole project.
+
+## Demo video credits
+
+Clips: Seedance 2.5 (AI-generated) · Music: 'Blackout Protocol', made with ElevenMusic · Voices: Microsoft neural TTS ·
+Sources: the outage numbers in [The problem](#the-problem).
