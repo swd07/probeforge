@@ -19,6 +19,11 @@ load onto it. The UPS carries the load, and it has minutes left. A technician ha
 controller's lights, a drawing and a meter, without making things worse: no bypassing interlocks, no paralleling
 sources, no operating the switch by hand under load.
 
+Power is the leading cause of such outages: power issues accounted for 45 percent of respondents' most impactful
+outages in 2025, and one in five outages now exceeds $1 million in total costs (Uptime Institute,
+[Annual Outage Analysis 2026](https://atd.uptimeinstitute.com/resources/research-and-reports/annual-outages-analysis-2026),
+as reported by [The Register, 13 May 2026](https://www.theregister.com/on-prem/2026/05/13/datacenters-are-having-fewer-but-bigger-failures/5239951)).
+
 ## What ProbeForge does
 
 ProbeForge simulates that situation on an ASCO Series 300 Group G transfer switch (our redrawing of wiring diagram
