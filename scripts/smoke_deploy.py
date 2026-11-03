@@ -162,7 +162,7 @@ def main() -> None:
     ap.add_argument("url")
     ap.add_argument("--headers", action="store_true", help="the security headers are expected (behind Caddy)")
     ap.add_argument("--browser", action="store_true", help="load the page in Chromium (playwright)")
-    ap.add_argument("--ready-timeout", type=float, default=600, help="seconds to wait for the start-up warm-up")
+    ap.add_argument("--ready-timeout", type=float, default=900, help="seconds to wait for the start-up warm-up (up to about 10 min on a small VPS)")
     a = ap.parse_args()
     base = a.url.rstrip("/")
     wait_ready(base, a.ready_timeout)

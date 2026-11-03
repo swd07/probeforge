@@ -53,7 +53,7 @@ def test_stage_text_uses_the_measured_duration(monkeypatch, tmp_path):
     fresh_start(monkeypatch, tmp_path)
     tid = transcriptions.DEFAULT
     text = ats_common.warm_stage_text(tid)
-    assert "about 2 to 3 minutes" in text and "80 s" not in text  # before the first measurement on this server
+    assert "a few minutes" in text and "80 s" not in text  # before the first measurement on this server
     ats_common.save_warm_s(146.2)
     ats_common._warm_started[tid] = time.monotonic() - 40
     text = ats_common.warm_stage_text(tid)

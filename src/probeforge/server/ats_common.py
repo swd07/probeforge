@@ -161,7 +161,7 @@ def warm_stage_text(tid: str) -> str:
     """The stage shown while a Hybrid run waits for the simulation: the last measured duration on this server (or a
     range before the first measurement) and how long ago it started."""
     est = measured_warm_s()
-    about = f"about {est:.0f} s" if est else "about 2 to 3 minutes"
+    about = f"about {est:.0f} s" if est else "a few minutes"
     started = _warm_started.get(tid)
     ago = f"; started {time.monotonic() - started:.0f} s ago" if started is not None else ""
     return f"Simulating every candidate fault of the transcription (once per server start, {about}{ago})..."

@@ -949,3 +949,14 @@ decisions at the end (see CLAUDE.md). Architecture: [ARCHITECTURE.md](ARCHITECTU
   Caddyfile has no clean way to drop an empty global option).
 - **Evidence:** `caddy validate` failed with an empty ACME_EMAIL (2026-11-03, locally); the domain Caddyfile is
   validated again on the server before the first start.
+
+### D64. The starting page says the warm-up can take up to about 10 minutes (2026-11-03)
+
+- **What:** deploy/status/starting.html says "Starting up. On this server this can take up to about 10 minutes."; the
+  Hybrid stage text before the first measurement says "a few minutes"; docs/DEPLOY.md gives 2 to 3 minutes on a fast
+  machine and up to about 10 on a small shared VPS; the smoke test waits up to 15 minutes for ready.
+- **Why:** the warm-up took 513 s on the public demo's server (a 4 vCPU Contabo VPS, shared cores) against 146 s on the
+  laptop and 270 s on the CI runner; the page promised 2 to 3 minutes.
+- **Alternatives:** show the server's own last measurement on the page (a Caddy template reading the runs volume: more
+  moving parts and the volume mounted into Caddy, for a page seen a few minutes per restart).
+- **Evidence:** the server's health endpoint after the first start (warm elapsed 512.8 s, saved read 460.3 s).

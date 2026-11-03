@@ -20,11 +20,12 @@ visitor ──HTTPS──> Caddy (container, ports 80/443, automatic certificate
 - The Origin check and the host check accept only the demo's own origin and host name, from the env file.
 - The public spend limits are the defaults: $30 in total for the public ledger, $5 per day, $0.75 per run.
 - At every start the app first simulates what a visitor would otherwise wait for: every candidate fault of the default
-  saved read (about 2.5 minutes on a 4 vCPU machine), the Engineer suggestion and the twin signatures. Until that is
+  saved read, the Engineer suggestion and the twin signatures. Until that is
   done, `/api/ready` answers 503, and Caddy, which checks it every 5 s, shows visitors a starting page that reloads
   itself (`deploy/status/starting.html`) instead of sending them to the app. `/api/health` stays the liveness check
-  (Docker's health check) and also reports `ready`. So a restart or redeploy means about 2 to 3 minutes of the
-  starting page, and the first visitor afterwards waits for nothing.
+  (Docker's health check) and also reports `ready`. The warm-up takes 2 to 3 minutes on a fast machine and up to
+  about 10 on a small shared VPS (8.5 minutes measured on a 4 vCPU Contabo VPS), so every restart or redeploy shows
+  the starting page that long; the first visitor afterwards waits for nothing.
 
 ## 2. What the image contains
 
@@ -139,7 +140,8 @@ sudo docker compose exec app python -c "import urllib.request as u; print(u.urlo
                                                   # "ready": false while warming up, then true
 ```
 
-For the first 2 to 3 minutes after every start the site shows the starting page (section 1); that is expected.
+For the first minutes after every start (2 to 3 on a fast machine, up to about 10 on a small shared VPS) the site shows
+the starting page (section 1); that is expected.
 
 IP-only test before the domain points here: in `deploy/.env` set `PROBEFORGE_CADDYFILE=Caddyfile.http`; in the env
 file set `PROBEFORGE_ALLOWED_ORIGINS=http://<server IP>` and `PROBEFORGE_ALLOWED_HOSTS=<server IP>`; then
@@ -190,7 +192,7 @@ cd deploy && nano .env                            # PROBEFORGE_TAG=<new short co
 sudo docker compose up -d --build --wait
 ```
 
-then the smoke test from your machine (it waits for the 2 to 3 minute warm-up). Each tag stays as a local image, and the volume keeps the ledger and the
+then the smoke test from your machine (it waits for the warm-up, up to about 10 minutes). Each tag stays as a local image, and the volume keeps the ledger and the
 traces, so a redeploy never resets the caps.
 
 Rollback: `git checkout <previous commit>` (if the compose or Caddy files changed), set `PROBEFORGE_TAG` back to the
