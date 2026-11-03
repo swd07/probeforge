@@ -25,7 +25,7 @@ sources, no operating the switch by hand under load.
 
 Power is the leading cause of such outages: power issues accounted for 45 percent of respondents' most impactful
 outages in 2025, and one in five outages now exceeds $1 million in total costs (Uptime Institute,
-[Annual Outage Analysis 2026](https://atd.uptimeinstitute.com/resources/research-and-reports/annual-outages-analysis-2026),
+[Annual Outage Analysis 2026](https://intelligence.uptimeinstitute.com/resource/annual-outage-analysis-2026),
 as reported by [The Register, 13 May 2026](https://www.theregister.com/on-prem/2026/05/13/datacenters-are-having-fewer-but-bigger-failures/5239951)).
 
 ## What ProbeForge does
@@ -52,6 +52,11 @@ critical load lost.
 
 ## Quick start
 
+**Try it online: https://probeforge.swd07.com (no install).** The public demo shows the transfer switch bench, with
+the limits described in [docs/HOW_TO_USE.md](docs/HOW_TO_USE.md) (section 8).
+
+### Run it locally
+
 Requires Python 3.11+, [uv](https://docs.astral.sh/uv/) and Node 20 or newer (tested with Node 24). It runs from a
 checkout of this repository (not as an installed package). The commands use the lockfiles.
 
@@ -62,8 +67,8 @@ echo META_API_KEY=your_key_here > .env
 uv run python -m probeforge.server --port 8000
 ```
 
-Open http://127.0.0.1:8000/?bench=ats, choose Agent, Hybrid or Engineer, pick a fault (or a random one) and press
-Start. Without a key, `PROBEFORGE_OFFLINE=1` runs Engineer mode and the hybrid on the saved drawing read without model
+Open http://127.0.0.1:8000 (the transfer switch bench opens by default), choose Agent, Hybrid or Engineer, pick a
+fault (or a random one) and press Start. Without a key, `PROBEFORGE_OFFLINE=1` runs Engineer mode and the hybrid on the saved drawing read without model
 calls. Tests: `uv run pytest`. Check the committed results offline: `uv run python scripts/verify_results.py`. The UI
 step by step: [docs/HOW_TO_USE.md](docs/HOW_TO_USE.md). Architecture: [ARCHITECTURE.md](ARCHITECTURE.md); scripts:
 [scripts/README.md](scripts/README.md). License: MIT ([LICENSE](LICENSE)). It covers our code and redrawings, not ASCO documents
@@ -226,7 +231,7 @@ Hybrid v2's read step gets crops of the original drawing from the author's local
 (drawing areas only, never the cover pages or title blocks; listed with their hashes in
 [docs/ATS_MODEL.md](docs/ATS_MODEL.md#what-each-diagnostician-sees)). Those crops are not in the repository, so a live
 re-read needs your own copy of the drawing; the saved reads let everything else run without it. The original documents are in the public ASCO / Schneider Electric technical library:
-[Group G SE wiring, outline and mounting data](https://www.ascopower.com/us/en/products/libraries/technical-documents/300-series/asco-series-300-group-g-se-product-wiring-outline-and-mounting-data.jsp),
+[Series 300 service entrance drawings](https://www.se.com/us/en/work/support/product-support/technical-documents/300-series/asco-series-300-se-product-wiring-outline-and-mounting-data.jsp),
 [Group G wiring, outline and mounting data](https://www.se.com/us/en/work/support/product-support/technical-documents/300-series/asco-series-300-group-g-product-wiring-outline-and-mounting-data).
 Vendor PDFs are not in this repository.
 
@@ -244,9 +249,10 @@ the transfer switch bench only.
 Live UI runs and the maintained paid scripts go through a metered client that reserves an upper bound in a local
 ledger before every model call and settles it with the actual cost afterwards, so concurrent runs cannot pass on the
 same balance and a run that fails midway still records what it spent ([eval/spend.py](src/probeforge/eval/spend.py),
-[eval/metered.py](src/probeforge/eval/metered.py)). Batches stop at $110 of the $130 total; the rest is for the public
-demo, with a daily cap. In public mode a separate ledger starts at $0 on the server, runs are capped at $0.75 and calls
-at 10,000 completion tokens (2.1x the largest call in the recorded runs). The ledger is per machine and not
+[eval/metered.py](src/probeforge/eval/metered.py)). Batches stop at $110 of the $130 total; the rest is for live UI runs
+on the author's machine, with a daily cap. Every live UI run stops at $0.75. In public mode a separate ledger starts at
+$0 on the server with its own total ($30 by default) and the same daily cap, and calls are capped at 10,000 completion
+tokens (2.1x the largest call in the recorded runs). The ledger is per machine and not
 committed; the provider-side spend limit on the key is the real cap. The author's ledger recorded about $56 for the
 whole project.
 
