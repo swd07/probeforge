@@ -982,3 +982,12 @@ decisions at the end (see CLAUDE.md). Architecture: [ARCHITECTURE.md](ARCHITECTU
   the deployment's own choice); no limit (a pending card holds a run slot indefinitely).
 - **Evidence:** the approver waits APPROVAL_TIMEOUT_S and returns "not approved" on timeout (server/ats_session.py,
   level1.py); the tool result then reads "...; the human denied the request" (ats/tools.py).
+
+### D67. The starting page says up to about 15 minutes (2026-11-03)
+
+- **What:** deploy/status/starting.html and docs/DEPLOY.md say up to about 15 minutes on a small shared VPS (was 10,
+  D64); the smoke test waits up to 20 minutes for ready.
+- **Why:** the second start on the server took 594 s (9.9 minutes), at the edge of the 10 the page promised; the first
+  took 513 s. Shared cores vary.
+- **Alternatives:** keep 10 (the page would be wrong on a slower start).
+- **Evidence:** the smoke test after the D64/D65 restart: warm-up elapsed 594.2 s.

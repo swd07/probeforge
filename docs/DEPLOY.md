@@ -24,7 +24,7 @@ visitor ──HTTPS──> Caddy (container, ports 80/443, automatic certificate
   done, `/api/ready` answers 503, and Caddy, which checks it every 5 s, shows visitors a starting page that reloads
   itself (`deploy/status/starting.html`) instead of sending them to the app. `/api/health` stays the liveness check
   (Docker's health check) and also reports `ready`. The warm-up takes 2 to 3 minutes on a fast machine and up to
-  about 10 on a small shared VPS (8.5 minutes measured on a 4 vCPU Contabo VPS), so every restart or redeploy shows
+  about 15 on a small shared VPS (8.5 and 9.9 minutes measured on a 4 vCPU Contabo VPS), so every restart or redeploy shows
   the starting page that long; the first visitor afterwards waits for nothing.
 
 ## 2. What the image contains
@@ -94,7 +94,7 @@ As root on the fresh server, then never again as root:
 6. Docker Engine and the compose plugin from Docker's own apt repository (docs.docker.com, "Install Docker Engine on
    Ubuntu"). Do not add `deploy` to the `docker` group (that is root-equivalent): the commands below use `sudo`, which
    also lets compose read the root-only env file.
-7. No unplanned restarts of the stack (each restart costs the warm-up, up to about 10 minutes):
+7. No unplanned restarts of the stack (each restart costs the warm-up, up to about 15 minutes):
    - Docker live-restore, so the containers keep running when dockerd restarts (a reload, not a restart, applies it):
      ```
      echo '{"live-restore": true}' | sudo tee /etc/docker/daemon.json
@@ -163,7 +163,7 @@ sudo docker compose exec app python -c "import urllib.request as u; print(u.urlo
                                                   # "ready": false while warming up, then true
 ```
 
-For the first minutes after every start (2 to 3 on a fast machine, up to about 10 on a small shared VPS) the site shows
+For the first minutes after every start (2 to 3 on a fast machine, up to about 15 on a small shared VPS) the site shows
 the starting page (section 1); that is expected.
 
 IP-only test before the domain points here: in `deploy/.env` set `PROBEFORGE_CADDYFILE=Caddyfile.http`; in the env
@@ -215,7 +215,7 @@ cd deploy && nano .env                            # PROBEFORGE_TAG=<new short co
 sudo docker compose up -d --build --wait
 ```
 
-then the smoke test from your machine (it waits for the warm-up, up to about 10 minutes). Each tag stays as a local image, and the volume keeps the ledger and the
+then the smoke test from your machine (it waits for the warm-up, up to about 15 minutes). Each tag stays as a local image, and the volume keeps the ledger and the
 traces, so a redeploy never resets the caps.
 
 Rollback: `git checkout <previous commit>` (if the compose or Caddy files changed), set `PROBEFORGE_TAG` back to the
